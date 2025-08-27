@@ -21,6 +21,7 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 - **`get-transactions`** - Retrieve and filter transactions by account, date, amount, category, or payee
 - **`get-accounts`** - Retrieve a list of all accounts with their current balance and ID
 - **`balance-history`** - View account balance changes over time
+- **`create-transaction`** - Create new transactions with all fields, automatically creating payees and categories if needed
 
 #### Reporting & Analytics
 
@@ -230,6 +231,8 @@ Once connected, you can ask Claude questions like:
 - "How much did I spend on groceries in January?"
 - "What's my savings rate over the past 3 months?"
 - "Analyze my budget and suggest areas to improve"
+- "Create a transaction for $25.50 at Grocery Store in my Checking account for Food category"
+- "Add a new expense of $100 for rent to my account"
 
 ## Development
 
