@@ -72,6 +72,18 @@ export const UpdateTransactionArgsSchema = z.object({
 });
 
 export type UpdateTransactionArgs = z.infer<typeof UpdateTransactionArgsSchema>;
+export const CreateTransactionArgsSchema = z.object({
+  accountId: z.string(),
+  date: z.string(),
+  amount: z.number(),
+  payee: z.string().optional(),
+  category: z.string().optional(),
+  categoryGroup: z.string().optional(),
+  notes: z.string().optional(),
+  cleared: z.boolean().optional(),
+});
+
+export type CreateTransactionArgs = z.infer<typeof CreateTransactionArgsSchema>;
 
 // Additional types used in implementation
 export interface CategoryGroupInfo {

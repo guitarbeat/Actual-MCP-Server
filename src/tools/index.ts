@@ -5,7 +5,20 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi, shutdownActualApi } from '../actual-api.js';
+import {
+  GetTransactionsArgs,
+  SpendingByCategoryArgs,
+  MonthlySummaryArgs,
+  BalanceHistoryArgs,
+  CreateTransactionArgs,
+} from '../types.js';
+import { handler as getTransactionsHandler } from './get-transactions/index.js';
+import { handler as spendingByCategoryHandler } from './spending-by-category/index.js';
+import { handler as monthlySummaryHandler } from './monthly-summary/index.js';
+import { handler as balanceHistoryHandler } from './balance-history/index.js';
+import { handler as createTransactionHandler } from './create-transaction/index.js';
 import { error, errorFromCatch } from '../utils/response.js';
+import { handler as getAccountsHandler } from './get-accounts/index.js';
 
 import * as balanceHistory from './balance-history/index.js';
 import * as createCategoryGroup from './categories/create-category-group/index.js';
@@ -28,6 +41,7 @@ import * as getRules from './rules/get-rules/index.js';
 import * as updateRule from './rules/update-rule/index.js';
 import * as spendingByCategory from './spending-by-category/index.js';
 import * as updateTransaction from './update-transaction/index.js';
+import * as createTransaction from './create-transaction/index.js';
 
 const readTools = [
   getTransactions,
@@ -54,6 +68,7 @@ const writeTools = [
   updateRule,
   deleteRule,
   updateTransaction,
+  createTransaction,
 ];
 
 export const setupTools = (server: Server, enableWrite: boolean): void => {
@@ -80,6 +95,36 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       const tool = allTools.find((t) => t.schema.name === name);
       if (!tool) {
         return error(`Unknown tool ${name}`);
+      }
+      // Execute the requested tool
+      switch (name) {
+        case 'get-transactions': {
+          // TODO: Validate against schema
+          return getTransactionsHandler(args as unknown as GetTransactionsArgs);
+        }
+
+        case 'spending-by-category': {
+          return spendingByCategoryHandler(args as unknown as SpendingByCategoryArgs);
+        }
+
+        case 'monthly-summary': {
+          return monthlySummaryHandler(args as unknown as MonthlySummaryArgs);
+        }
+
+        case 'balance-history': {
+          return balanceHistoryHandler(args as unknown as BalanceHistoryArgs);
+        }
+
+        case 'get-accounts': {
+          return getAccountsHandler();
+        }
+
+        case 'create-transaction': {
+          return createTransactionHandler(args as unknown as CreateTransactionArgs);
+        }
+
+        default:
+          return error(`Unknown tool ${name}`);
       }
 
       // @ts-expect-error: Argument type is handled by Zod schema validation
