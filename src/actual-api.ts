@@ -225,3 +225,22 @@ export async function deleteCategoryGroup(id: string): Promise<unknown> {
   await initActualApi();
   return api.deleteCategoryGroup(id);
 }
+
+/**
+ * Add transactions to an account (ensures API is initialized)
+ */
+export async function addTransactions(
+  accountId: string,
+  transactions: Array<{
+    date: string;
+    amount: number;
+    payee?: string | null;
+    category?: string | null;
+    notes?: string;
+    cleared?: boolean;
+  }>,
+  options?: { learnCategories?: boolean; runTransfers?: boolean }
+): Promise<void> {
+  await initActualApi();
+  await api.addTransactions(accountId, transactions, options);
+}
