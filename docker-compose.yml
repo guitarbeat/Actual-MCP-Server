@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  actual-mcp:
+    build: .
+    image: actual-mcp:local
+    container_name: actual-mcp
+    ports:
+      - '3000:3000'
+    environment:
+      ACTUAL_PASSWORD: process.env.ACTUAL_PASSWORD
+      ACTUAL_SERVER_URL: process.env.ACTUAL_SERVER_URL
+      ACTUAL_BUDGET_SYNC_ID: process.env.ACTUAL_BUDGET_SYNC_ID
+      BEARER_TOKEN: process.env.BEARER_TOKEN
+    volumes:
+      - ./dockerdata/data:/data
+    command: ['--sse', '--enable-write']
+    restart: unless-stopped
