@@ -35,9 +35,23 @@ export async function initActualApi(): Promise<void> {
   try {
     console.error('Initializing Actual Budget API...');
     const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
+    console.error(`[LOG] ACTUAL_DATA_DIR: ${process.env.ACTUAL_DATA_DIR}`);
+    console.error(`[LOG] DEFAULT_DATA_DIR: ${DEFAULT_DATA_DIR}`);
+    console.error(`[LOG] Using dataDir: ${dataDir}`);
+    console.error(`[LOG] ACTUAL_SERVER_URL: ${process.env.ACTUAL_SERVER_URL}`);
+    console.error(`[LOG] ACTUAL_PASSWORD: ${process.env.ACTUAL_PASSWORD ? '***' : '(empty)'}`);
+    console.error(`[LOG] ACTUAL_BUDGET_SYNC_ID: ${process.env.ACTUAL_BUDGET_SYNC_ID}`);
     if (!fs.existsSync(dataDir)) {
+      console.error(`[LOG] dataDir does not exist, creating...`);
       fs.mkdirSync(dataDir, { recursive: true });
     }
+    console.log(
+      JSON.stringify({
+        dataDir,
+        serverURL: process.env.ACTUAL_SERVER_URL,
+        password: process.env.ACTUAL_PASSWORD,
+      })
+    );
     await api.init({
       dataDir,
       serverURL: process.env.ACTUAL_SERVER_URL,
@@ -45,14 +59,22 @@ export async function initActualApi(): Promise<void> {
     });
 
     const budgets: BudgetFile[] = await api.getBudgets();
+    console.error(`[LOG] Budgets found: ${budgets.length}`);
     if (!budgets || budgets.length === 0) {
       throw new Error('No budgets found. Please create a budget in Actual first.');
     }
 
     // Use specified budget or the first one
     const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    console.error(`Loading budget: ${budgetId}`);
-    await api.downloadBudget(budgetId);
+    console.error(`[LOG] Using budgetId: ${budgetId}`);
+    console.error(`[LOG] Loading budget: ${budgetId}`);
+    try {
+      await api.downloadBudget(budgetId);
+      console.error('[LOG] Budget downloaded successfully');
+    } catch (budgetError) {
+      console.error('[LOG] Error downloading budget:', budgetError);
+      throw budgetError;
+    }
 
     initialized = true;
     console.error('Actual Budget API initialized successfully');

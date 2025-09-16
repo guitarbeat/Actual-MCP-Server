@@ -1,0 +1,7 @@
+# Use official Node.js image
+FROM node:20-alpine
+WORKDIR /app
+COPY log-server.js ./
+RUN npm install express
+EXPOSE 4000
+CMD ["node", "log-server.js"]
