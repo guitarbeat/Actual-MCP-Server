@@ -17,8 +17,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL -e ACTUAL_PASSWORD=$ACTUAL_PASSWORD -e ACTUAL_BUDGET_SYNC_ID=$ACTUAL_BUDGET_SYNC_ID node build/index.js",
     "start": "tsx src/index.ts",
+    "inspector": "dotenv -e .env -- sh -c 'npx @modelcontextprotocol/inspector -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL -e ACTUAL_PASSWORD=$ACTUAL_PASSWORD -e ACTUAL_BUDGET_SYNC_ID=$ACTUAL_BUDGET_SYNC_ID node build/index.js'",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
@@ -33,12 +33,12 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@actual-app/api": "^25.8.0",
+    "@actual-app/api": "25.9.0",
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "zod": "^3.25.76",
-    "zod-to-json-schema": "^3.24.6",
-    "dotenv": "^16.4.7"
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",
@@ -46,6 +46,7 @@
     "@types/node": "^22.13.14",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",

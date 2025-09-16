@@ -7,11 +7,27 @@ services:
     ports:
       - '3000:3000'
     environment:
-      ACTUAL_PASSWORD: process.env.ACTUAL_PASSWORD
-      ACTUAL_SERVER_URL: process.env.ACTUAL_SERVER_URL
-      ACTUAL_BUDGET_SYNC_ID: process.env.ACTUAL_BUDGET_SYNC_ID
-      BEARER_TOKEN: process.env.BEARER_TOKEN
+      ACTUAL_PASSWORD: ${ACTUAL_PASSWORD}
+      ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL}
+      ACTUAL_BUDGET_SYNC_ID: ${ACTUAL_BUDGET_SYNC_ID}
+      # BEARER_TOKEN: ${BEARER_TOKEN}
+      FASTMCP_HOST: 0.0.0.0
+    env_file:
+      - .env
     volumes:
       - ./dockerdata/data:/data
     command: ['--sse', '--enable-write']
+    restart: unless-stopped
+
+  log-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.logserver
+    container_name: log-server
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./log-server.js:/app/log-server.js
+    working_dir: /app
+    command: node log-server.js
     restart: unless-stopped

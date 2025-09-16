@@ -179,9 +179,30 @@ async function main(): Promise<void> {
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
       server.connect(transport).then(() => {
-        console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+        // Función para enviar logs al log-server
+        const sendToLogServer = async (level: 'info' | 'error', message: string): Promise<void> => {
+          try {
+            await fetch('http://log-server:4000/log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: `[${level}] ${message}` }),
+            });
+          } catch (e) {
+            // fallback local log
+            process.stderr.write(`[log-server error] ${(e as Error).message}\n`);
+          }
+        };
 
-        console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+        // Redefinir console.log y console.error
+        console.log = (message: string) => {
+          server.sendLoggingMessage({ level: 'info', message });
+          sendToLogServer('info', message);
+        };
+
+        console.error = (message: string) => {
+          server.sendLoggingMessage({ level: 'error', message });
+          sendToLogServer('error', message);
+        };
 
         console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
       });
