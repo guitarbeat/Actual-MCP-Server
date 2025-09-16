@@ -13,6 +13,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'node:util';
@@ -171,9 +172,32 @@ async function main(): Promise<void> {
       console.error('Bearer authentication disabled - endpoints are public');
     }
 
-    // Placeholder for future HTTP transport (stateless)
+    // Implementación HTTP streamable (stateless, MCP moderno)
     app.post('/mcp', bearerAuth, async (req: Request, res: Response) => {
-      res.status(501).json({ error: 'HTTP transport not implemented yet' });
+      try {
+        // Crear nueva instancia de transport y conectar el server en cada request
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined, // stateless
+        });
+        res.on('close', () => {
+          transport.close();
+          server.close();
+        });
+        await server.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+      } catch (error) {
+        console.error('Error handling MCP request:', error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            jsonrpc: '2.0',
+            error: {
+              code: -32603,
+              message: 'Internal server error',
+            },
+            id: null,
+          });
+        }
+      }
     });
 
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
@@ -215,11 +239,11 @@ async function main(): Promise<void> {
       }
     });
 
-    app.listen(resolvedPort, (error) => {
+    app.listen(resolvedPort, '0.0.0.0', (error) => {
       if (error) {
         console.error('Error:', error);
       } else {
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort} (0.0.0.0)`);
       }
     });
   } else {
