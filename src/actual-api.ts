@@ -32,6 +32,8 @@ export async function initActualApi(): Promise<void> {
     return;
   }
 
+  initializing = true;
+
   try {
     console.error('Initializing Actual Budget API...');
     const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
