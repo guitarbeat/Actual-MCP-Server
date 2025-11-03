@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
+  "framework": null,
+  "functions": {
+    "build/index.js": {
+      "includeFiles": "build/**"
+    }
+  }
+}
+

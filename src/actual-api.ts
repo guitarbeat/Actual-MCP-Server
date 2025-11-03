@@ -66,10 +66,16 @@ export async function initActualApi(): Promise<void> {
 
     // Use specified budget or the first one
     const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
+    const budgetPassword: string | undefined = process.env.ACTUAL_BUDGET_PASSWORD;
     console.error(`[LOG] Using budgetId: ${budgetId}`);
     console.error(`[LOG] Loading budget: ${budgetId}`);
+    console.error(`[LOG] ACTUAL_BUDGET_PASSWORD: ${budgetPassword ? '***' : '(not set)'}`);
     try {
-      await api.downloadBudget(budgetId);
+      if (budgetPassword) {
+        await api.downloadBudget(budgetId, { password: budgetPassword });
+      } else {
+        await api.downloadBudget(budgetId);
+      }
       console.error('[LOG] Budget downloaded successfully');
     } catch (budgetError) {
       console.error('[LOG] Error downloading budget:', budgetError);
@@ -447,10 +453,16 @@ export async function getBudgets(): Promise<BudgetFile[]> {
 
 /**
  * Download a budget (ensures API is initialized)
+ * @param budgetId - The budget sync ID
+ * @param password - Optional password for end-to-end encrypted budgets
  */
-export async function downloadBudget(budgetId: string): Promise<void> {
+export async function downloadBudget(budgetId: string, password?: string): Promise<void> {
   await initActualApi();
-  await api.downloadBudget(budgetId);
+  if (password) {
+    await api.downloadBudget(budgetId, { password });
+  } else {
+    await api.downloadBudget(budgetId);
+  }
 }
 
 /**
