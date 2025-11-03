@@ -16,31 +16,28 @@ export class BalanceHistoryReportGenerator {
       markdown += `| Month | End of Month Balance | Monthly Change | Transactions |\n`;
       markdown += `| ----- | -------------------- | -------------- | ------------ |\n`;
     } else {
-      markdown += `| Account | End of Month Balance | Monthly Change | Transactions |\n`;
-      markdown += `| ------- | -------------------- | -------------- | ------------ |\n`;
+      markdown += `| Month | Account | End of Month Balance | Monthly Change | Transactions |\n`;
+      markdown += `| ----- | ------- | -------------------- | -------------- | ------------ |\n`;
     }
 
-    let previousMonth = '';
-
     sortedMonths.forEach((month) => {
-      const accountName = month.account;
       const monthName: string = new Date(month.year, month.month - 1, 1).toLocaleString('default', { month: 'long' });
+      const monthLabel = `${monthName} ${month.year}`;
       const balance: string = formatAmount(month.balance);
 
-      let change = '';
-
-      const changeFormatted: string = formatAmount(month.change);
-      const direction: string = month.change! > 0 ? '↑' : month.change! < 0 ? '↓' : '';
-      change = `${direction} ${changeFormatted}`;
+      let changeDisplay: string;
+      if (month.change === undefined) {
+        changeDisplay = 'N/A';
+      } else {
+        const direction = month.change > 0 ? '↑ ' : month.change < 0 ? '↓ ' : '';
+        changeDisplay = `${direction}${formatAmount(month.change)}`;
+      }
 
       if (account) {
-        markdown += `| ${monthName} ${month.year} | ${balance} | ${change} | ${month.transactions} |\n`;
+        markdown += `| ${monthLabel} | ${balance} | ${changeDisplay} | ${month.transactions} |\n`;
       } else {
-        if (monthName != previousMonth) {
-          previousMonth = monthName;
-          markdown += `| ${monthName} ${month.year} |\n`;
-        }
-        markdown += `${accountName} | ${balance} | ${change} | ${month.transactions} |\n`;
+        const accountName = month.account ?? 'Unknown account';
+        markdown += `| ${monthLabel} | ${accountName} | ${balance} | ${changeDisplay} | ${month.transactions} |\n`;
       }
     });
 
