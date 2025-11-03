@@ -49,7 +49,7 @@ export async function initActualApi(): Promise<void> {
       JSON.stringify({
         dataDir,
         serverURL: process.env.ACTUAL_SERVER_URL,
-        password: process.env.ACTUAL_PASSWORD,
+        password: process.env.ACTUAL_PASSWORD ? '***' : '(empty)',
       })
     );
     await api.init({
