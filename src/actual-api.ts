@@ -148,6 +148,14 @@ export async function getRules(): Promise<RuleEntity[]> {
   return api.getRules();
 }
 
+/**
+ * Get account balance for a specific account and date (ensures API is initialized)
+ */
+export async function getAccountBalance(accountId: string, date?: string): Promise<number> {
+  await initActualApi();
+  return api.getAccountBalance(accountId, date);
+}
+
 // ----------------------------
 // ACTION
 // ----------------------------
@@ -265,4 +273,198 @@ export async function addTransactions(
 ): Promise<void> {
   await initActualApi();
   await api.addTransactions(accountId, transactions, options);
+}
+
+/**
+ * Create a new account (ensures API is initialized)
+ */
+export async function createAccount(args: Record<string, unknown>): Promise<string> {
+  await initActualApi();
+  return api.createAccount(args);
+}
+
+/**
+ * Update an account (ensures API is initialized)
+ */
+export async function updateAccount(id: string, args: Record<string, unknown>): Promise<unknown> {
+  await initActualApi();
+  return api.updateAccount(id, args);
+}
+
+/**
+ * Close an account (ensures API is initialized)
+ */
+export async function closeAccount(id: string): Promise<unknown> {
+  await initActualApi();
+  return api.closeAccount(id);
+}
+
+/**
+ * Reopen a closed account (ensures API is initialized)
+ */
+export async function reopenAccount(id: string): Promise<unknown> {
+  await initActualApi();
+  return api.reopenAccount(id);
+}
+
+/**
+ * Delete an account (ensures API is initialized)
+ */
+export async function deleteAccount(id: string): Promise<unknown> {
+  await initActualApi();
+  return api.deleteAccount(id);
+}
+
+/**
+ * Set budget amount for a category in a specific month (ensures API is initialized)
+ */
+export async function setBudgetAmount(month: string, categoryId: string, amount: number): Promise<unknown> {
+  await initActualApi();
+  return api.setBudgetAmount(month, categoryId, amount);
+}
+
+/**
+ * Set budget carryover for a category (ensures API is initialized)
+ */
+export async function setBudgetCarryover(categoryId: string, flag: boolean): Promise<unknown> {
+  await initActualApi();
+  return api.setBudgetCarryover(categoryId, flag);
+}
+
+/**
+ * Hold budget for next month (ensures API is initialized)
+ */
+export async function holdBudgetForNextMonth(categoryId: string, flag: boolean): Promise<unknown> {
+  await initActualApi();
+  return api.holdBudgetForNextMonth(categoryId, flag);
+}
+
+/**
+ * Reset budget hold for a category (ensures API is initialized)
+ */
+export async function resetBudgetHold(categoryId: string): Promise<unknown> {
+  await initActualApi();
+  return api.resetBudgetHold(categoryId);
+}
+
+/**
+ * Create a new schedule (ensures API is initialized)
+ */
+export async function createSchedule(args: Record<string, unknown>): Promise<string> {
+  await initActualApi();
+  return api.createSchedule(args);
+}
+
+/**
+ * Update a schedule (ensures API is initialized)
+ */
+export async function updateSchedule(id: string, args: Record<string, unknown>): Promise<unknown> {
+  await initActualApi();
+  return api.updateSchedule(id, args);
+}
+
+/**
+ * Delete a schedule (ensures API is initialized)
+ */
+export async function deleteSchedule(id: string): Promise<unknown> {
+  await initActualApi();
+  return api.deleteSchedule(id);
+}
+
+/**
+ * Get all schedules (ensures API is initialized)
+ */
+export async function getSchedules(): Promise<unknown[]> {
+  await initActualApi();
+  return api.getSchedules();
+}
+
+/**
+ * Merge multiple payees into a target payee (ensures API is initialized)
+ */
+export async function mergePayees(targetId: string, sourceIds: string[]): Promise<unknown> {
+  await initActualApi();
+  return api.mergePayees(targetId, sourceIds);
+}
+
+/**
+ * Get rules for a specific payee (ensures API is initialized)
+ */
+export async function getPayeeRules(payeeId: string): Promise<RuleEntity[]> {
+  await initActualApi();
+  return api.getPayeeRules(payeeId);
+}
+
+/**
+ * Get all budgets (ensures API is initialized)
+ */
+export async function getBudgets(): Promise<BudgetFile[]> {
+  await initActualApi();
+  return api.getBudgets();
+}
+
+/**
+ * Download a budget (ensures API is initialized)
+ */
+export async function downloadBudget(budgetId: string): Promise<void> {
+  await initActualApi();
+  await api.downloadBudget(budgetId);
+}
+
+/**
+ * Load a budget (ensures API is initialized)
+ * Note: This may be the same as downloadBudget in some API versions
+ */
+export async function loadBudget(budgetId: string): Promise<void> {
+  await initActualApi();
+  if (typeof api.loadBudget === 'function') {
+    await api.loadBudget(budgetId);
+  } else {
+    // Fallback to downloadBudget if loadBudget doesn't exist
+    await api.downloadBudget(budgetId);
+  }
+}
+
+/**
+ * Sync with the server (ensures API is initialized)
+ */
+export async function sync(): Promise<unknown> {
+  await initActualApi();
+  if (typeof api.sync === 'function') {
+    return api.sync();
+  }
+  throw new Error('sync method is not available in this version of the API');
+}
+
+/**
+ * Run bank sync (ensures API is initialized)
+ */
+export async function runBankSync(accountId?: string): Promise<unknown> {
+  await initActualApi();
+  if (typeof api.runBankSync === 'function') {
+    return api.runBankSync(accountId);
+  }
+  throw new Error('runBankSync method is not available in this version of the API');
+}
+
+/**
+ * Run import (ensures API is initialized)
+ */
+export async function runImport(file: string, importType?: string): Promise<unknown> {
+  await initActualApi();
+  if (typeof api.runImport === 'function') {
+    return api.runImport(file, importType);
+  }
+  throw new Error('runImport method is not available in this version of the API');
+}
+
+/**
+ * Batch budget updates (ensures API is initialized)
+ */
+export async function batchBudgetUpdates(updates: Array<Record<string, unknown>>): Promise<unknown> {
+  await initActualApi();
+  if (typeof api.batchBudgetUpdates === 'function') {
+    return api.batchBudgetUpdates(updates);
+  }
+  throw new Error('batchBudgetUpdates method is not available in this version of the API');
 }
