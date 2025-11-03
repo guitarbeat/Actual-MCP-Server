@@ -16,10 +16,12 @@ describe('CreateTransactionReportGenerator', () => {
         cleared: true,
       };
 
-      const result: EntityCreationResult & { transactionId: string } = {
-        transactionId: 'created',
+      const result: EntityCreationResult = {
+        transactionIds: ['created'],
         createdPayee: false,
         createdCategory: false,
+        wasAdded: true,
+        wasUpdated: false,
       };
 
       const report = generator.generate(input, result);
@@ -29,7 +31,7 @@ describe('CreateTransactionReportGenerator', () => {
       expect(report).toContain('- **Amount**: $25.50');
       expect(report).toContain('- **Account ID**: account-123');
       expect(report).toContain('- **Status**: Cleared');
-      expect(report).toContain('successfully added to your budget');
+      expect(report).toContain('- ✓ Transaction was **added** to the budget');
     });
 
     it('should generate report for complete transaction with existing entities', () => {
@@ -43,12 +45,14 @@ describe('CreateTransactionReportGenerator', () => {
         cleared: false,
       };
 
-      const result: EntityCreationResult & { transactionId: string } = {
-        transactionId: 'created',
+      const result: EntityCreationResult = {
+        transactionIds: ['created'],
         payeeId: 'payee-1',
         categoryId: 'cat-1',
         createdPayee: false,
         createdCategory: false,
+        wasAdded: true,
+        wasUpdated: false,
       };
 
       const report = generator.generate(input, result);
@@ -72,11 +76,13 @@ describe('CreateTransactionReportGenerator', () => {
         cleared: true,
       };
 
-      const result: EntityCreationResult & { transactionId: string } = {
-        transactionId: 'created',
+      const result: EntityCreationResult = {
+        transactionIds: ['created'],
         payeeId: 'payee-new',
         createdPayee: true,
         createdCategory: false,
+        wasAdded: true,
+        wasUpdated: false,
       };
 
       const report = generator.generate(input, result);
@@ -95,11 +101,13 @@ describe('CreateTransactionReportGenerator', () => {
         cleared: true,
       };
 
-      const result: EntityCreationResult & { transactionId: string } = {
-        transactionId: 'created',
+      const result: EntityCreationResult = {
+        transactionIds: ['created'],
         categoryId: 'cat-new',
         createdPayee: false,
         createdCategory: true,
+        wasAdded: true,
+        wasUpdated: false,
       };
 
       const report = generator.generate(input, result);
@@ -119,12 +127,14 @@ describe('CreateTransactionReportGenerator', () => {
         cleared: true,
       };
 
-      const result: EntityCreationResult & { transactionId: string } = {
-        transactionId: 'created',
+      const result: EntityCreationResult = {
+        transactionIds: ['created'],
         payeeId: 'payee-new',
         categoryId: 'cat-new',
         createdPayee: true,
         createdCategory: true,
+        wasAdded: true,
+        wasUpdated: false,
       };
 
       const report = generator.generate(input, result);
@@ -146,10 +156,12 @@ describe('CreateTransactionReportGenerator', () => {
         cleared: true,
       };
 
-      const result: EntityCreationResult & { transactionId: string } = {
-        transactionId: 'created',
+      const result: EntityCreationResult = {
+        transactionIds: ['created'],
         createdPayee: false,
         createdCategory: false,
+        wasAdded: true,
+        wasUpdated: false,
       };
 
       const report = generator.generate(input, result);

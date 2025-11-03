@@ -33,6 +33,7 @@ export async function initActualApi(): Promise<void> {
   }
 
   initializing = true;
+
   initializationError = null;
   try {
     console.error('Initializing Actual Budget API...');
