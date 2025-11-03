@@ -11,6 +11,18 @@ import {
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 
+type ExtendedActualApi = typeof api & {
+  createSchedule?: (args: Record<string, unknown>) => Promise<string>;
+  updateSchedule?: (id: string, args: Record<string, unknown>) => Promise<unknown>;
+  deleteSchedule?: (id: string) => Promise<unknown>;
+  getSchedules?: () => Promise<unknown[]>;
+  runBankSync?: (options?: { accountId: string }) => Promise<unknown>;
+  getServerVersion?: () => Promise<{ error?: string } | { version: string }>;
+  getIDByName?: (args: { type: string; string: string }) => Promise<string>;
+};
+
+const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
+
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
 // API initialization state
@@ -307,7 +319,17 @@ export async function importTransactions(
   }>
 ): Promise<{ errors?: string[]; added: string[]; updated: string[] }> {
   await initActualApi();
-  return api.importTransactions(accountId, transactions);
+  const transactionsWithAccount = transactions.map((transaction) => ({
+    account: accountId,
+    ...transaction,
+    payee: transaction.payee ?? undefined,
+    category: transaction.category ?? undefined,
+    subtransactions: transaction.subtransactions?.map((subtransaction) => ({
+      ...subtransaction,
+      category: subtransaction.category ?? undefined,
+    })),
+  }));
+  return api.importTransactions(accountId, transactionsWithAccount);
 }
 
 /**
@@ -403,7 +425,10 @@ export async function resetBudgetHold(month: string): Promise<unknown> {
  */
 export async function createSchedule(args: Record<string, unknown>): Promise<string> {
   await initActualApi();
-  return api.createSchedule(args);
+  if (!extendedApi.createSchedule) {
+    throw new Error('createSchedule method is not available in this version of the API');
+  }
+  return extendedApi.createSchedule(args);
 }
 
 /**
@@ -411,7 +436,10 @@ export async function createSchedule(args: Record<string, unknown>): Promise<str
  */
 export async function updateSchedule(id: string, args: Record<string, unknown>): Promise<unknown> {
   await initActualApi();
-  return api.updateSchedule(id, args);
+  if (!extendedApi.updateSchedule) {
+    throw new Error('updateSchedule method is not available in this version of the API');
+  }
+  return extendedApi.updateSchedule(id, args);
 }
 
 /**
@@ -419,7 +447,10 @@ export async function updateSchedule(id: string, args: Record<string, unknown>):
  */
 export async function deleteSchedule(id: string): Promise<unknown> {
   await initActualApi();
-  return api.deleteSchedule(id);
+  if (!extendedApi.deleteSchedule) {
+    throw new Error('deleteSchedule method is not available in this version of the API');
+  }
+  return extendedApi.deleteSchedule(id);
 }
 
 /**
@@ -427,7 +458,10 @@ export async function deleteSchedule(id: string): Promise<unknown> {
  */
 export async function getSchedules(): Promise<unknown[]> {
   await initActualApi();
-  return api.getSchedules();
+  if (!extendedApi.getSchedules) {
+    throw new Error('getSchedules method is not available in this version of the API');
+  }
+  return extendedApi.getSchedules();
 }
 
 /**
@@ -498,8 +532,8 @@ export async function sync(): Promise<unknown> {
  */
 export async function runBankSync(accountId?: string): Promise<unknown> {
   await initActualApi();
-  if (typeof api.runBankSync === 'function') {
-    return api.runBankSync(accountId);
+  if (extendedApi.runBankSync) {
+    return extendedApi.runBankSync(accountId ? { accountId } : undefined);
   }
   throw new Error('runBankSync method is not available in this version of the API');
 }
@@ -542,8 +576,8 @@ export async function runQuery(query: string): Promise<unknown> {
  */
 export async function getServerVersion(): Promise<{ error?: string } | { version: string }> {
   await initActualApi();
-  if (typeof api.getServerVersion === 'function') {
-    return api.getServerVersion();
+  if (extendedApi.getServerVersion) {
+    return extendedApi.getServerVersion();
   }
   throw new Error('getServerVersion method is not available in this version of the API');
 }
@@ -553,8 +587,8 @@ export async function getServerVersion(): Promise<{ error?: string } | { version
  */
 export async function getIDByName(type: string, name: string): Promise<string> {
   await initActualApi();
-  if (typeof api.getIDByName === 'function') {
-    return api.getIDByName({ type, string: name });
+  if (extendedApi.getIDByName) {
+    return extendedApi.getIDByName({ type, string: name });
   }
   throw new Error('getIDByName method is not available in this version of the API');
 }
