@@ -1,13 +1,13 @@
 // ----------------------------
-// RESET BUDGET HOLD TOOL
+// GET BUDGET MONTH TOOL
 // ----------------------------
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import { resetBudgetHold } from '../../../actual-api.js';
+import { getBudgetMonth } from '../../../actual-api.js';
 
 export const schema = {
-  name: 'reset-budget-hold',
-  description: 'Reset the budget hold for a specific month',
+  name: 'get-budget-month',
+  description: 'Get budget data for a specific month',
   inputSchema: {
     type: 'object',
     properties: {
@@ -28,10 +28,11 @@ export async function handler(
       return errorFromCatch('month is required and must be a string in YYYY-MM format');
     }
 
-    await resetBudgetHold(args.month as string);
+    const budget = await getBudgetMonth(args.month as string);
 
-    return successWithJson('Successfully reset budget hold for month ' + args.month);
+    return successWithJson(budget);
   } catch (err) {
     return errorFromCatch(err);
   }
 }
+

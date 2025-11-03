@@ -7,7 +7,7 @@ import {
   getCategoryGroups,
   createPayee,
   createCategory,
-  addTransactions,
+  importTransactions,
 } from '../../actual-api.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 
@@ -107,13 +107,18 @@ export class CreateTransactionDataFetcher {
   }
 
   /**
-   * Creates the transaction after ensuring all entities exist
+   * Creates the transaction using importTransactions for better duplicate detection and rule execution
    */
-  async createTransaction(input: CreateTransactionInput): Promise<EntityCreationResult & { transactionId: string }> {
+  async createTransaction(input: CreateTransactionInput): Promise<EntityCreationResult & { 
+    transactionIds: string[];
+    wasAdded: boolean;
+    wasUpdated: boolean;
+    errors?: string[];
+  }> {
     // Validate account exists
     await this.validateAccount(input.accountId);
 
-    // Ensure payee exists
+    // Ensure payee exists (or use payee_name for automatic creation by importTransactions)
     const { payeeId, created: createdPayee } = await this.ensurePayeeExists(input.payee);
 
     // Ensure category exists
@@ -125,21 +130,36 @@ export class CreateTransactionDataFetcher {
     // Convert amount to cents (Actual uses integer cents)
     const amountInCents = Math.round(input.amount * 100);
 
-    // Prepare transaction object
+    // Prepare transaction object for importTransactions
+    // * Use payee_name instead of payee_id if payee was provided as a name, allowing API to create it
+    // * This enables better automatic handling, but we still create it first to ensure consistency
     const transaction = {
       date: input.date,
       amount: amountInCents,
       payee: payeeId || null,
+      // Also include payee_name if we have a payee name but no ID (for automatic creation)
+      payee_name: input.payee && !payeeId ? input.payee : undefined,
       category: categoryId || null,
       notes: input.notes || '',
-      cleared: input.cleared || true,
+      cleared: input.cleared !== undefined ? input.cleared : true,
+      // Generate a unique imported_id to help with duplicate detection if needed
+      // Using date + amount + accountId as a simple fingerprint
+      imported_id: `manual-${input.accountId}-${input.date}-${amountInCents}-${Date.now()}`,
     };
 
-    // Add the transaction
-    await addTransactions(input.accountId, [transaction], { learnCategories: true });
+    // Import the transaction (this will run rules, detect duplicates, etc.)
+    const importResult = await importTransactions(input.accountId, [transaction]);
+
+    // Determine if transaction was added or updated
+    const wasAdded = importResult.added.length > 0;
+    const wasUpdated = importResult.updated.length > 0;
+    const transactionIds = [...importResult.added, ...importResult.updated];
 
     return {
-      transactionId: 'created', // The API doesn't return the created transaction ID directly
+      transactionIds,
+      wasAdded,
+      wasUpdated,
+      errors: importResult.errors,
       payeeId,
       categoryId,
       createdPayee,

@@ -7,20 +7,20 @@ import { holdBudgetForNextMonth } from '../../../actual-api.js';
 
 export const schema = {
   name: 'hold-budget-for-next-month',
-  description: 'Hold or release budget funds for the next month',
+  description: 'Hold a budget amount for the next month',
   inputSchema: {
     type: 'object',
     properties: {
-      categoryId: {
+      month: {
         type: 'string',
-        description: 'ID of the category',
+        description: 'Month in YYYY-MM format',
       },
-      hold: {
-        type: 'boolean',
-        description: 'Whether to hold the budget for next month',
+      amount: {
+        type: 'number',
+        description: 'Amount to hold for the next month',
       },
     },
-    required: ['categoryId', 'hold'],
+    required: ['month', 'amount'],
   },
 };
 
@@ -28,17 +28,17 @@ export async function handler(
   args: Record<string, unknown>
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (!args.categoryId || typeof args.categoryId !== 'string') {
-      return errorFromCatch('categoryId is required and must be a string');
+    if (!args.month || typeof args.month !== 'string') {
+      return errorFromCatch('month is required and must be a string in YYYY-MM format');
     }
-    if (args.hold === undefined || typeof args.hold !== 'boolean') {
-      return errorFromCatch('hold is required and must be a boolean');
+    if (args.amount === undefined || typeof args.amount !== 'number') {
+      return errorFromCatch('amount is required and must be a number');
     }
 
-    await holdBudgetForNextMonth(args.categoryId as string, args.hold as boolean);
+    await holdBudgetForNextMonth(args.month as string, args.amount as number);
 
     return successWithJson(
-      `Successfully ${args.hold ? 'held' : 'released'} budget for next month for category ${args.categoryId}`
+      `Successfully held budget amount of ${args.amount} for next month in ${args.month}`
     );
   } catch (err) {
     return errorFromCatch(err);

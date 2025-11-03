@@ -12,7 +12,7 @@ vi.mock('../../actual-api.js', () => ({
   getCategoryGroups: vi.fn(),
   createPayee: vi.fn(),
   createCategory: vi.fn(),
-  addTransactions: vi.fn(),
+  importTransactions: vi.fn(),
 }));
 
 const mockApi = vi.hoisted(() => ({
@@ -22,7 +22,7 @@ const mockApi = vi.hoisted(() => ({
   getCategoryGroups: vi.fn(),
   createPayee: vi.fn(),
   createCategory: vi.fn(),
-  addTransactions: vi.fn(),
+  importTransactions: vi.fn(),
 }));
 
 vi.mock('../../actual-api.js', async () => mockApi);
@@ -54,7 +54,7 @@ describe('CreateTransactionDataFetcher', () => {
       const result = await fetcher.ensurePayeeExists('New Restaurant');
 
       expect(result).toEqual({ payeeId: 'payee-2', created: true });
-      expect(mockApi.createPayee).toHaveBeenCalledWith('New Restaurant');
+      expect(mockApi.createPayee).toHaveBeenCalledWith({ name: 'New Restaurant' });
     });
 
     it('should return no payee when name not provided', async () => {
@@ -90,7 +90,7 @@ describe('CreateTransactionDataFetcher', () => {
       const result = await fetcher.ensureCategoryExists('New Category');
 
       expect(result).toEqual({ categoryId: 'cat-3', created: true });
-      expect(mockApi.createCategory).toHaveBeenCalledWith('New Category', 'group-1');
+      expect(mockApi.createCategory).toHaveBeenCalledWith({ name: 'New Category', group: 'group-1' });
     });
   });
 
@@ -116,7 +116,7 @@ describe('CreateTransactionDataFetcher', () => {
     });
   });
 
-  describe('createTransaction - failure case', () => {
+  describe('createTransaction - happy path', () => {
     it('should handle transaction creation with all entities', async () => {
       const input: CreateTransactionInput = {
         accountId: 'account-1',
@@ -135,32 +135,98 @@ describe('CreateTransactionDataFetcher', () => {
       mockApi.getCategories.mockResolvedValue([]);
       mockApi.getCategoryGroups.mockResolvedValue([{ id: 'group-1', name: 'Expenses', is_income: false }]);
       mockApi.createCategory.mockResolvedValue('cat-new');
-      mockApi.addTransactions.mockResolvedValue(undefined);
+      mockApi.importTransactions.mockResolvedValue({
+        added: ['txn-123'],
+        updated: [],
+        errors: undefined,
+      });
 
       const result = await fetcher.createTransaction(input);
 
       expect(result).toEqual({
-        transactionId: 'created',
+        transactionIds: ['txn-123'],
+        wasAdded: true,
+        wasUpdated: false,
+        errors: undefined,
         payeeId: 'payee-new',
         categoryId: 'cat-new',
         createdPayee: true,
         createdCategory: true,
       });
 
-      expect(mockApi.addTransactions).toHaveBeenCalledWith(
+      expect(mockApi.importTransactions).toHaveBeenCalledWith(
         'account-1',
         [
-          {
+          expect.objectContaining({
             date: '2023-12-15',
             amount: 2550, // Amount in cents
             payee: 'payee-new',
             category: 'cat-new',
             notes: 'Test transaction',
             cleared: true,
-          },
-        ],
-        { learnCategories: true }
+            imported_id: expect.stringContaining('manual-account-1-2023-12-15-2550-'),
+          }),
+        ]
       );
+    });
+
+    it('should handle transaction update when duplicate detected', async () => {
+      const input: CreateTransactionInput = {
+        accountId: 'account-1',
+        date: '2023-12-15',
+        amount: 25.5,
+        payee: 'Existing Store',
+        category: 'Food',
+        cleared: true,
+      };
+
+      mockApi.getAccounts.mockResolvedValue([{ id: 'account-1', name: 'Checking', closed: false }]);
+      mockApi.getPayees.mockResolvedValue([{ id: 'payee-1', name: 'Existing Store' }]);
+      mockApi.getCategories.mockResolvedValue([{ id: 'cat-1', name: 'Food', group_id: 'group-1' }]);
+      mockApi.getCategoryGroups.mockResolvedValue([{ id: 'group-1', name: 'Expenses', is_income: false }]);
+      mockApi.importTransactions.mockResolvedValue({
+        added: [],
+        updated: ['txn-456'],
+        errors: undefined,
+      });
+
+      const result = await fetcher.createTransaction(input);
+
+      expect(result).toEqual({
+        transactionIds: ['txn-456'],
+        wasAdded: false,
+        wasUpdated: true,
+        errors: undefined,
+        payeeId: 'payee-1',
+        categoryId: 'cat-1',
+        createdPayee: false,
+        createdCategory: false,
+      });
+    });
+
+    it('should handle import errors', async () => {
+      const input: CreateTransactionInput = {
+        accountId: 'account-1',
+        date: '2023-12-15',
+        amount: 25.5,
+        cleared: true,
+      };
+
+      mockApi.getAccounts.mockResolvedValue([{ id: 'account-1', name: 'Checking', closed: false }]);
+      mockApi.getPayees.mockResolvedValue([]);
+      mockApi.getCategories.mockResolvedValue([]);
+      mockApi.getCategoryGroups.mockResolvedValue([{ id: 'group-1', name: 'Expenses', is_income: false }]);
+      mockApi.importTransactions.mockResolvedValue({
+        added: [],
+        updated: [],
+        errors: ['Some import error occurred'],
+      });
+
+      const result = await fetcher.createTransaction(input);
+
+      expect(result.errors).toEqual(['Some import error occurred']);
+      expect(result.wasAdded).toBe(false);
+      expect(result.wasUpdated).toBe(false);
     });
   });
 });

@@ -3,11 +3,11 @@
 // ----------------------------
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import { getAccounts, getCategories, getCategoryGroups, getPayees } from '../../../actual-api.js';
+import { getIDByName } from '../../../actual-api.js';
 
 export const schema = {
   name: 'get-id-by-name',
-  description: 'Get the ID of an account, category, payee, or category group by its name',
+  description: 'Get the ID of an account, category, payee, or schedule by its name using the API getIDByName method',
   inputSchema: {
     type: 'object',
     properties: {
@@ -17,8 +17,8 @@ export const schema = {
       },
       type: {
         type: 'string',
-        enum: ['account', 'category', 'payee', 'category-group'],
-        description: 'Type of entity to search for',
+        enum: ['accounts', 'categories', 'payees', 'schedules'],
+        description: 'Type of entity to search for (must be plural: accounts, categories, payees, or schedules)',
       },
     },
     required: ['name', 'type'],
@@ -39,50 +39,32 @@ export async function handler(
     const name = args.name as string;
     const type = args.type as string;
 
-    let result: { id: string; name: string; type: string } | null = null;
-
-    switch (type) {
-      case 'account': {
-        const accounts = await getAccounts();
-        const account = accounts.find((a) => a.name === name);
-        if (account) {
-          result = { id: account.id, name: account.name, type: 'account' };
-        }
-        break;
-      }
-      case 'category': {
-        const categories = await getCategories();
-        const category = categories.find((c) => c.name === name);
-        if (category) {
-          result = { id: category.id, name: category.name, type: 'category' };
-        }
-        break;
-      }
-      case 'payee': {
-        const payees = await getPayees();
-        const payee = payees.find((p) => p.name === name);
-        if (payee) {
-          result = { id: payee.id, name: payee.name, type: 'payee' };
-        }
-        break;
-      }
-      case 'category-group': {
-        const groups = await getCategoryGroups();
-        const group = groups.find((g) => g.name === name);
-        if (group) {
-          result = { id: group.id, name: group.name, type: 'category-group' };
-        }
-        break;
-      }
-      default:
-        return errorFromCatch(`Invalid type: ${type}. Must be one of: account, category, payee, category-group`);
+    // Validate type is one of the allowed values
+    const allowedTypes = ['accounts', 'categories', 'payees', 'schedules'];
+    if (!allowedTypes.includes(type)) {
+      return errorFromCatch(
+        `Invalid type: ${type}. Must be one of: ${allowedTypes.join(', ')}`
+      );
     }
 
-    if (!result) {
-      return errorFromCatch(`No ${type} found with name "${name}"`);
-    }
+    try {
+      const id = await getIDByName(type, name);
 
-    return successWithJson(result);
+      return successWithJson({
+        id,
+        name,
+        type,
+      });
+    } catch (apiError) {
+      // If the API method is not available, provide a helpful error
+      if (apiError instanceof Error && apiError.message.includes('not available')) {
+        return errorFromCatch(
+          `getIDByName method is not available in this version of the API. The method requires Actual Budget API support.`
+        );
+      }
+      // Re-throw other errors (like "not found")
+      throw apiError;
+    }
   } catch (err) {
     return errorFromCatch(err);
   }
