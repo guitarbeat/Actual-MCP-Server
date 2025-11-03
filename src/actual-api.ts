@@ -32,6 +32,8 @@ export async function initActualApi(): Promise<void> {
     return;
   }
 
+  initializing = true;
+  initializationError = null;
   try {
     console.error('Initializing Actual Budget API...');
     const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
@@ -49,7 +51,7 @@ export async function initActualApi(): Promise<void> {
       JSON.stringify({
         dataDir,
         serverURL: process.env.ACTUAL_SERVER_URL,
-        password: process.env.ACTUAL_PASSWORD,
+        password: process.env.ACTUAL_PASSWORD ? '***' : '(empty)',
       })
     );
     await api.init({
