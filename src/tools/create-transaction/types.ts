@@ -29,4 +29,8 @@ export interface EntityCreationResult {
   categoryId?: string;
   createdPayee?: boolean;
   createdCategory?: boolean;
+  transactionIds: string[];
+  wasAdded: boolean;
+  wasUpdated: boolean;
+  errors?: string[];
 }

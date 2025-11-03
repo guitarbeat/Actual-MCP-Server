@@ -276,6 +276,32 @@ export async function addTransactions(
 }
 
 /**
+ * Import transactions with duplicate detection and rule execution (ensures API is initialized)
+ */
+export async function importTransactions(
+  accountId: string,
+  transactions: Array<{
+    date: string;
+    amount: number;
+    payee?: string | null;
+    payee_name?: string;
+    imported_payee?: string;
+    category?: string | null;
+    notes?: string;
+    imported_id?: string;
+    cleared?: boolean;
+    subtransactions?: Array<{
+      amount: number;
+      category?: string | null;
+      notes?: string;
+    }>;
+  }>
+): Promise<{ errors?: string[]; added: string[]; updated: string[] }> {
+  await initActualApi();
+  return api.importTransactions(accountId, transactions);
+}
+
+/**
  * Create a new account (ensures API is initialized)
  */
 export async function createAccount(args: Record<string, unknown>): Promise<string> {
@@ -316,6 +342,22 @@ export async function deleteAccount(id: string): Promise<unknown> {
 }
 
 /**
+ * Get all budget months (ensures API is initialized)
+ */
+export async function getBudgetMonths(): Promise<string[]> {
+  await initActualApi();
+  return api.getBudgetMonths();
+}
+
+/**
+ * Get budget data for a specific month (ensures API is initialized)
+ */
+export async function getBudgetMonth(month: string): Promise<unknown> {
+  await initActualApi();
+  return api.getBudgetMonth(month);
+}
+
+/**
  * Set budget amount for a category in a specific month (ensures API is initialized)
  */
 export async function setBudgetAmount(month: string, categoryId: string, amount: number): Promise<unknown> {
@@ -324,27 +366,27 @@ export async function setBudgetAmount(month: string, categoryId: string, amount:
 }
 
 /**
- * Set budget carryover for a category (ensures API is initialized)
+ * Set budget carryover for a category in a specific month (ensures API is initialized)
  */
-export async function setBudgetCarryover(categoryId: string, flag: boolean): Promise<unknown> {
+export async function setBudgetCarryover(month: string, categoryId: string, flag: boolean): Promise<unknown> {
   await initActualApi();
-  return api.setBudgetCarryover(categoryId, flag);
+  return api.setBudgetCarryover(month, categoryId, flag);
 }
 
 /**
- * Hold budget for next month (ensures API is initialized)
+ * Hold budget amount for next month (ensures API is initialized)
  */
-export async function holdBudgetForNextMonth(categoryId: string, flag: boolean): Promise<unknown> {
+export async function holdBudgetForNextMonth(month: string, amount: number): Promise<unknown> {
   await initActualApi();
-  return api.holdBudgetForNextMonth(categoryId, flag);
+  return api.holdBudgetForNextMonth(month, amount);
 }
 
 /**
- * Reset budget hold for a category (ensures API is initialized)
+ * Reset budget hold for a specific month (ensures API is initialized)
  */
-export async function resetBudgetHold(categoryId: string): Promise<unknown> {
+export async function resetBudgetHold(month: string): Promise<unknown> {
   await initActualApi();
-  return api.resetBudgetHold(categoryId);
+  return api.resetBudgetHold(month);
 }
 
 /**
@@ -467,4 +509,37 @@ export async function batchBudgetUpdates(updates: Array<Record<string, unknown>>
     return api.batchBudgetUpdates(updates);
   }
   throw new Error('batchBudgetUpdates method is not available in this version of the API');
+}
+
+/**
+ * Run an ActualQL query (ensures API is initialized)
+ */
+export async function runQuery(query: string): Promise<unknown> {
+  await initActualApi();
+  if (typeof api.runQuery === 'function') {
+    return api.runQuery({ query });
+  }
+  throw new Error('runQuery method is not available in this version of the API');
+}
+
+/**
+ * Get server version (ensures API is initialized)
+ */
+export async function getServerVersion(): Promise<{ error?: string } | { version: string }> {
+  await initActualApi();
+  if (typeof api.getServerVersion === 'function') {
+    return api.getServerVersion();
+  }
+  throw new Error('getServerVersion method is not available in this version of the API');
+}
+
+/**
+ * Get ID by name for accounts, categories, payees, or schedules (ensures API is initialized)
+ */
+export async function getIDByName(type: string, name: string): Promise<string> {
+  await initActualApi();
+  if (typeof api.getIDByName === 'function') {
+    return api.getIDByName({ type, string: name });
+  }
+  throw new Error('getIDByName method is not available in this version of the API');
 }
