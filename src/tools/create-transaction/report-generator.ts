@@ -6,7 +6,14 @@ import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 export class CreateTransactionReportGenerator {
   generate(input: CreateTransactionInput, result: EntityCreationResult): string {
     const { accountId, date, amount, payee, category, categoryGroup, notes, cleared } = input;
-    const { createdPayee, createdCategory, transactionIds, wasAdded, wasUpdated, errors } = result;
+    const {
+      createdPayee,
+      createdCategory,
+      transactionIds = [],
+      wasAdded,
+      wasUpdated,
+      errors,
+    } = result;
 
     let report = `# Transaction ${wasUpdated ? 'Updated' : 'Created'} Successfully\n\n`;
 
