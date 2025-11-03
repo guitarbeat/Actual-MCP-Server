@@ -69,6 +69,8 @@ import * as getPayeeRules from './payees/get-payee-rules/index.js';
 
 // Budget file management tools
 import * as getBudgets from './budgets/get-budgets/index.js';
+import * as getBudgetMonths from './budgets/get-budget-months/index.js';
+import * as getBudgetMonth from './budgets/get-budget-month/index.js';
 import * as loadBudget from './budgets/load-budget/index.js';
 import * as downloadBudget from './budgets/download-budget/index.js';
 import * as sync from './budgets/sync/index.js';
@@ -77,6 +79,8 @@ import * as runImport from './budgets/run-import/index.js';
 
 // Utility tools
 import * as getIdByName from './utilities/get-id-by-name/index.js';
+import * as runQuery from './utilities/run-query/index.js';
+import * as getServerVersion from './utilities/get-server-version/index.js';
 
 const readTools = [
   getTransactions,
@@ -91,7 +95,11 @@ const readTools = [
   getRules,
   getSchedules,
   getBudgets,
+  getBudgetMonths,
+  getBudgetMonth,
   getIdByName,
+  runQuery,
+  getServerVersion,
 ];
 
 const writeTools = [
