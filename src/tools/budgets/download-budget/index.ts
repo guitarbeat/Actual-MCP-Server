@@ -7,13 +7,17 @@ import { downloadBudget } from '../../../actual-api.js';
 
 export const schema = {
   name: 'download-budget',
-  description: 'Download a budget from the server',
+  description: 'Download a budget from the server. Supports end-to-end encrypted budgets with password.',
   inputSchema: {
     type: 'object',
     properties: {
       budgetId: {
         type: 'string',
         description: 'ID of the budget to download',
+      },
+      password: {
+        type: 'string',
+        description: 'Optional password for end-to-end encrypted budgets',
       },
     },
     required: ['budgetId'],
@@ -28,9 +32,12 @@ export async function handler(
       return errorFromCatch('budgetId is required and must be a string');
     }
 
-    await downloadBudget(args.budgetId as string);
+    const budgetId = args.budgetId as string;
+    const password = args.password && typeof args.password === 'string' ? args.password : undefined;
 
-    return successWithJson('Successfully downloaded budget ' + args.budgetId);
+    await downloadBudget(budgetId, password);
+
+    return successWithJson(`Successfully downloaded budget ${budgetId}${password ? ' (with E2E encryption)' : ''}`);
   } catch (err) {
     return errorFromCatch(err);
   }

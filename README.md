@@ -78,7 +78,7 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 
 - **`get-budgets`** - Get a list of all available budgets
 - **`load-budget`** - Load a budget by its ID (requires `--enable-write`)
-- **`download-budget`** - Download a budget from the server (requires `--enable-write`)
+- **`download-budget`** - Download a budget from the server, with optional support for end-to-end encrypted budgets (requires `--enable-write`)
 - **`sync`** - Sync the budget with the server (requires `--enable-write`)
 - **`run-bank-sync`** - Run bank sync for an account or all accounts (requires `--enable-write`)
 - **`run-import`** - Run an import from a file (requires `--enable-write`)
@@ -148,6 +148,9 @@ export ACTUAL_PASSWORD="your-password"
 
 # Specific budget to use (optional)
 export ACTUAL_BUDGET_SYNC_ID="your-budget-id"
+
+# Password for end-to-end encrypted budgets (optional)
+export ACTUAL_BUDGET_PASSWORD="your-budget-password"
 ```
 
 ## Usage with Claude Desktop
@@ -180,7 +183,8 @@ Add the following to your configuration...
         "ACTUAL_DATA_DIR": "path/to/your/data",
         "ACTUAL_PASSWORD": "your-password",
         "ACTUAL_SERVER_URL": "http://your-actual-server.com",
-        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
+        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id",
+        "ACTUAL_BUDGET_PASSWORD": "your-budget-password"
       }
     }
   }
@@ -198,7 +202,8 @@ Add the following to your configuration...
         "ACTUAL_DATA_DIR": "path/to/your/data",
         "ACTUAL_PASSWORD": "your-password",
         "ACTUAL_SERVER_URL": "http://your-actual-server.com",
-        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
+        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id",
+        "ACTUAL_BUDGET_PASSWORD": "your-budget-password"
       }
     }
   }
@@ -224,6 +229,8 @@ Add the following to your configuration...
         "ACTUAL_SERVER_URL=https://your-actual-server.com",
         "-e",
         "ACTUAL_BUDGET_SYNC_ID=your-budget-id",
+        "-e",
+        "ACTUAL_BUDGET_PASSWORD=your-budget-password",
         "sstefanov/actual-mcp:latest",
         "--enable-write"
       ]
@@ -236,7 +243,21 @@ After saving the configuration, restart Claude Desktop.
 
 > 💡 `ACTUAL_DATA_DIR` is optional if you're using `ACTUAL_SERVER_URL`.
 
+> 💡 `ACTUAL_BUDGET_PASSWORD` is only required for end-to-end encrypted budgets.
+
 > 💡 Use `--enable-write` to enable write-access tools.
+
+## Deployment
+
+This MCP server can be deployed to various platforms. The build output in the `build/` directory is required for deployment.
+
+### Platform-Specific Notes
+
+- **Vercel/Netlify**: Configuration files (`vercel.json`, `netlify.toml`) are included. The platform will automatically run `npm run build` during deployment.
+- **Railway/Render**: Use the included `railway.json` or ensure the build command runs before starting the server.
+- **Docker**: The included `Dockerfile` handles building automatically.
+
+**Important**: Ensure your deployment platform runs `npm run build` before starting the server, as the `build/` directory is gitignored.
 
 ## Running an SSE Server
 
@@ -249,6 +270,7 @@ docker run -i --rm \
   -e ACTUAL_PASSWORD="your-password" \
   -e ACTUAL_SERVER_URL="http://your-actual-server.com" \
   -e ACTUAL_BUDGET_SYNC_ID="your-budget-id" \
+  -e ACTUAL_BUDGET_PASSWORD="your-budget-password" \
   -e BEARER_TOKEN="your-bearer-token" \
   sstefanov/actual-mcp:latest \
   --sse --enable-write --enable-bearer
