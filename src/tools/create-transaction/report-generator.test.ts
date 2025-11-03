@@ -17,6 +17,7 @@ describe('CreateTransactionReportGenerator', () => {
       };
 
       const result: EntityCreationResult = {
+        transactionIds: ['txn-1'],
         transactionIds: ['created'],
         createdPayee: false,
         createdCategory: false,
@@ -31,6 +32,7 @@ describe('CreateTransactionReportGenerator', () => {
       expect(report).toContain('- **Amount**: $25.50');
       expect(report).toContain('- **Account ID**: account-123');
       expect(report).toContain('- **Status**: Cleared');
+      expect(report).toContain('- **Transaction ID**: txn-1');
       expect(report).toContain('- ✓ Transaction was **added** to the budget');
     });
 
@@ -46,6 +48,7 @@ describe('CreateTransactionReportGenerator', () => {
       };
 
       const result: EntityCreationResult = {
+        transactionIds: ['txn-2'],
         transactionIds: ['created'],
         payeeId: 'payee-1',
         categoryId: 'cat-1',
@@ -77,6 +80,7 @@ describe('CreateTransactionReportGenerator', () => {
       };
 
       const result: EntityCreationResult = {
+        transactionIds: ['txn-3'],
         transactionIds: ['created'],
         payeeId: 'payee-new',
         createdPayee: true,
@@ -102,6 +106,7 @@ describe('CreateTransactionReportGenerator', () => {
       };
 
       const result: EntityCreationResult = {
+        transactionIds: ['txn-4'],
         transactionIds: ['created'],
         categoryId: 'cat-new',
         createdPayee: false,
@@ -128,6 +133,7 @@ describe('CreateTransactionReportGenerator', () => {
       };
 
       const result: EntityCreationResult = {
+        transactionIds: ['txn-5'],
         transactionIds: ['created'],
         payeeId: 'payee-new',
         categoryId: 'cat-new',
@@ -157,6 +163,7 @@ describe('CreateTransactionReportGenerator', () => {
       };
 
       const result: EntityCreationResult = {
+        transactionIds: ['txn-6'],
         transactionIds: ['created'],
         createdPayee: false,
         createdCategory: false,
