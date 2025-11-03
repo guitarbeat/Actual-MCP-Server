@@ -14,6 +14,7 @@ export class CreateTransactionReportGenerator {
       wasUpdated,
       errors,
     } = result;
+    const { createdPayee, createdCategory, transactionIds = [], wasAdded, wasUpdated, errors } = result;
 
     let report = `# Transaction ${wasUpdated ? 'Updated' : 'Created'} Successfully\n\n`;
 

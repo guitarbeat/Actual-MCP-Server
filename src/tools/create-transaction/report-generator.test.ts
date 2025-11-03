@@ -18,6 +18,7 @@ describe('CreateTransactionReportGenerator', () => {
 
       const result: EntityCreationResult = {
         transactionIds: ['txn-1'],
+        transactionIds: ['created'],
         createdPayee: false,
         createdCategory: false,
         wasAdded: true,
@@ -48,6 +49,7 @@ describe('CreateTransactionReportGenerator', () => {
 
       const result: EntityCreationResult = {
         transactionIds: ['txn-2'],
+        transactionIds: ['created'],
         payeeId: 'payee-1',
         categoryId: 'cat-1',
         createdPayee: false,
@@ -79,6 +81,7 @@ describe('CreateTransactionReportGenerator', () => {
 
       const result: EntityCreationResult = {
         transactionIds: ['txn-3'],
+        transactionIds: ['created'],
         payeeId: 'payee-new',
         createdPayee: true,
         createdCategory: false,
@@ -104,6 +107,7 @@ describe('CreateTransactionReportGenerator', () => {
 
       const result: EntityCreationResult = {
         transactionIds: ['txn-4'],
+        transactionIds: ['created'],
         categoryId: 'cat-new',
         createdPayee: false,
         createdCategory: true,
@@ -130,6 +134,7 @@ describe('CreateTransactionReportGenerator', () => {
 
       const result: EntityCreationResult = {
         transactionIds: ['txn-5'],
+        transactionIds: ['created'],
         payeeId: 'payee-new',
         categoryId: 'cat-new',
         createdPayee: true,
@@ -159,6 +164,7 @@ describe('CreateTransactionReportGenerator', () => {
 
       const result: EntityCreationResult = {
         transactionIds: ['txn-6'],
+        transactionIds: ['created'],
         createdPayee: false,
         createdCategory: false,
         wasAdded: true,
