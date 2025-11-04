@@ -8,7 +8,11 @@ import EventSource from 'eventsource';
 import fetch from 'node-fetch';
 
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
-const BEARER_TOKEN = process.env.BEARER_TOKEN || '9d7ed444f28745aa225d7ab219c00b1500414949121412002b2d34ad7f1bc97b';
+const BEARER_TOKEN = process.env.BEARER_TOKEN;
+if (!BEARER_TOKEN) {
+  console.error('Error: BEARER_TOKEN environment variable is required');
+  process.exit(1);
+}
 
 let connectionId = null;
 let testsPassed = 0;

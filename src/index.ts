@@ -433,10 +433,13 @@ async function main(): Promise<void> {
     // * Root route - basic server info
     app.get('/', (req: Request, res: Response) => {
       res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.send(`
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
           <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Actual Budget MCP Server</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
             <style>
@@ -527,14 +530,16 @@ async function main(): Promise<void> {
       
       // ! Check if headers have already been sent (should not happen, but safety check)
       if (res.headersSent) {
-        console.error('Headers already sent before SSE transport setup');
-        return;
+        console.error('Headers already sent before SSE transport setup - connection may be from a previous request');
+        // Don't return - try to continue, but log the issue
       }
 
       try {
         // * Set connection ID in response header before transport connects
         // This allows clients to read it from headers if needed
-        res.setHeader('X-MCP-Connection-ID', connectionId);
+        if (!res.headersSent) {
+          res.setHeader('X-MCP-Connection-ID', connectionId);
+        }
         
         // * Create SSE transport for this connection
         // The transport will set up SSE headers automatically when connected
@@ -547,7 +552,9 @@ async function main(): Promise<void> {
         // * a single connection. If issues arise, we may need to create a new Server
         // * instance per connection instead.
         await server.connect(transport).catch((error) => {
-          console.error('Error connecting SSE transport:', error);
+          console.error(`Error connecting SSE transport (connectionId: ${connectionId}):`, error);
+          // * Clean up transport from map if it was added
+          activeTransports.delete(connectionId);
           if (!res.headersSent) {
             res.status(500).json({
               error: 'Failed to establish SSE connection',

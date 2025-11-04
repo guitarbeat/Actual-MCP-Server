@@ -2,7 +2,11 @@ node_modules/
 build/
 coverage/
 *.log
-# .env.test
+.env
+.env.test
+.env_test
+.env.local
+.env.*.local
 data/**
 .DS_Store
 pnpm-lock.yaml
