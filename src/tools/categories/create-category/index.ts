@@ -4,6 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { createCategory } from '../../../actual-api.js';
+import { assertUuid } from '../../../utils/validators.js';
 
 export const schema = {
   name: 'create-category',
@@ -32,9 +33,11 @@ export async function handler(
       return errorFromCatch('name is required and must be a string');
     }
 
+    const groupId = assertUuid(args.groupId, 'groupId');
+
     const data: Record<string, unknown> = {
       name: args.name,
-      group_id: args.groupId,
+      group_id: groupId,
     };
 
     const id: string = await createCategory(data);
