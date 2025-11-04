@@ -121,6 +121,33 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 
 // Start the server
 async function main(): Promise<void> {
+  // Get deployment info for logging
+  const startupTime = new Date().toISOString();
+  let deploymentId = 'unknown';
+  try {
+    const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+    deploymentId = commitHash;
+  } catch {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      const pkgPath = join(__dirname, '..', 'package.json');
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+      deploymentId = `v${pkg.version}-${Date.now().toString(36)}`;
+    } catch {
+      // Fallback to unknown
+    }
+  }
+
+  // Startup banner (skip for test modes)
+  if (!testResources && !testCustom) {
+    console.error('='.repeat(60));
+    console.error('🚀 ACTUAL BUDGET MCP SERVER STARTING');
+    console.error(`📅 ${startupTime}`);
+    console.error(`🔖 Deployment ID: ${deploymentId}`);
+    console.error('='.repeat(60));
+  }
+
   // If testing resources, verify connectivity and list accounts, then exit
   if (testResources) {
     console.log('Testing resources...');
@@ -167,10 +194,18 @@ async function main(): Promise<void> {
 
   // Initialize Actual Budget API at startup
   if (!testResources && !testCustom) {
+    console.error('');
+    console.error('📋 PHASE 1: Initializing Actual Budget API...');
+    console.error('─'.repeat(60));
     try {
       await initActualApi();
-      console.error('✓ Actual Budget API ready');
+      console.error('─'.repeat(60));
+      console.error('✅ PHASE 1 COMPLETE: Actual Budget API ready');
+      console.error('');
     } catch (error) {
+      console.error('─'.repeat(60));
+      console.error('❌ PHASE 1 FAILED: Actual Budget API initialization error');
+      console.error('─'.repeat(60));
       console.error('✗ Failed to initialize Actual Budget API:', error);
       console.error('Server cannot start without Actual Budget connection');
       process.exit(1);
@@ -178,6 +213,9 @@ async function main(): Promise<void> {
   }
 
   if (useSse) {
+    console.error('📋 PHASE 2: Starting HTTP server...');
+    console.error('─'.repeat(60));
+
     const app = express();
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
@@ -322,34 +360,21 @@ async function main(): Promise<void> {
       if (error) {
         console.error('Error:', error);
       } else {
-        // Get deployment info (git commit hash if available)
-        let deploymentInfo = 'unknown';
-        try {
-          const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
-          deploymentInfo = commitHash;
-        } catch (_e) {
-          // Git not available or not in a git repo - use package version
-          try {
-            const __filename = fileURLToPath(import.meta.url);
-            const __dirname = dirname(__filename);
-            const pkgPath = join(__dirname, '..', 'package.json');
-            const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-            deploymentInfo = `v${pkg.version}`;
-          } catch (_e2) {
-            // Fallback to unknown
-          }
-        }
-
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort} (0.0.0.0)`);
-        console.error(`Deployment: ${deploymentInfo}`);
-        console.error(`Endpoints available:`);
-        console.error(`  - SSE Endpoint: http://0.0.0.0:${resolvedPort}/sse`);
-        console.error(`  - Messages Endpoint: http://0.0.0.0:${resolvedPort}/messages`);
+        console.error('─'.repeat(60));
+        console.error('✅ PHASE 2 COMPLETE: Server ready');
+        console.error('='.repeat(60));
+        console.error(`🌐 Server listening on port ${resolvedPort} (0.0.0.0)`);
+        console.error(`📡 Endpoints:`);
+        console.error(`   GET  /      - Server status page`);
+        console.error(`   GET  /sse   - SSE transport endpoint`);
+        console.error(`   POST /messages - Messages endpoint`);
         if (enableBearer) {
-          console.error(`  - Bearer authentication: ENABLED`);
+          console.error(`🔒 Bearer authentication: ENABLED`);
         } else {
-          console.error(`  - Bearer authentication: DISABLED (not recommended for production)`);
+          console.error(`⚠️  Bearer authentication: DISABLED`);
         }
+        console.error(`🔖 Deployment ID: ${deploymentId}`);
+        console.error('='.repeat(60));
       }
     });
   } else {
