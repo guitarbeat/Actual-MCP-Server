@@ -165,6 +165,18 @@ async function main(): Promise<void> {
     console.error('If your server requires authentication, initialization will fail.');
   }
 
+  // Initialize Actual Budget API at startup
+  if (!testResources && !testCustom) {
+    try {
+      await initActualApi();
+      console.error('✓ Actual Budget API ready');
+    } catch (error) {
+      console.error('✗ Failed to initialize Actual Budget API:', error);
+      console.error('Server cannot start without Actual Budget connection');
+      process.exit(1);
+    }
+  }
+
   if (useSse) {
     const app = express();
 
