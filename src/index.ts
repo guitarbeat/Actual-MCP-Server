@@ -86,7 +86,7 @@ const server = new Server(
   }
 );
 
-const resolvedPort = port ? parseInt(port, 10) : 3000;
+const resolvedPort = port ? parseInt(port, 10) : process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Bearer authentication middleware
 const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
