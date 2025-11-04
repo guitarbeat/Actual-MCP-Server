@@ -93,5 +93,3 @@ export async function handler(
     return errorFromCatch(err);
   }
 }
-
-

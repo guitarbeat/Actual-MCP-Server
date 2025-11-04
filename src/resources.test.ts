@@ -17,7 +17,10 @@ const { fetchAllAccounts } = await import('./core/data/fetch-accounts.js');
 
 type RequestHandler = (request: unknown, extra?: unknown) => Promise<unknown>;
 
-const getRequestHandler = (server: Server, schema: typeof ListResourcesRequestSchema | typeof ListResourceTemplatesRequestSchema): RequestHandler => {
+const getRequestHandler = (
+  server: Server,
+  schema: typeof ListResourcesRequestSchema | typeof ListResourceTemplatesRequestSchema
+): RequestHandler => {
   const handlers = (server as unknown as { _requestHandlers: Map<string, RequestHandler> })._requestHandlers;
   const handler = handlers.get(schema.shape.method.value);
   if (!handler) {
@@ -36,7 +39,9 @@ describe('setupResources', () => {
     setupResources(server);
 
     const handler = getRequestHandler(server, ListResourceTemplatesRequestSchema);
-    const result = (await handler({ method: 'resources/templates/list', params: {} })) as { resourceTemplates: typeof RESOURCE_TEMPLATES };
+    const result = (await handler({ method: 'resources/templates/list', params: {} })) as {
+      resourceTemplates: typeof RESOURCE_TEMPLATES;
+    };
 
     expect(result.resourceTemplates).toEqual(RESOURCE_TEMPLATES);
     const uriTemplates = result.resourceTemplates.map((template) => template.uriTemplate);

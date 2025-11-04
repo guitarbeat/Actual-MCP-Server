@@ -42,9 +42,7 @@ export async function handler(
     // Validate type is one of the allowed values
     const allowedTypes = ['accounts', 'categories', 'payees', 'schedules'];
     if (!allowedTypes.includes(type)) {
-      return errorFromCatch(
-        `Invalid type: ${type}. Must be one of: ${allowedTypes.join(', ')}`
-      );
+      return errorFromCatch(`Invalid type: ${type}. Must be one of: ${allowedTypes.join(', ')}`);
     }
 
     try {
