@@ -334,21 +334,30 @@ async function main(): Promise<void> {
         .connect(transport)
         .then(() => {
           transportReady = true;
-          console.error('[SSE] ✅ Transport connected successfully');
+          originalConsoleError('[SSE] ✅ Transport connected successfully');
           // Override console methods to send via MCP logging
+          // Only override if transport is still ready
           console.log = (message: string) => {
-            try {
-              server.sendLoggingMessage({ level: 'info', message });
-            } catch {
-              // If connection closed, use original console
+            if (transportReady && transport) {
+              try {
+                server.sendLoggingMessage({ level: 'info', message });
+              } catch {
+                // If connection closed, use original console
+                originalConsoleLog(message);
+              }
+            } else {
               originalConsoleLog(message);
             }
           };
           console.error = (message: string) => {
-            try {
-              server.sendLoggingMessage({ level: 'error', message });
-            } catch {
-              // If connection closed, use original console
+            if (transportReady && transport) {
+              try {
+                server.sendLoggingMessage({ level: 'error', message });
+              } catch {
+                // If connection closed, use original console
+                originalConsoleError(message);
+              }
+            } else {
               originalConsoleError(message);
             }
           };
@@ -364,10 +373,11 @@ async function main(): Promise<void> {
 
       // Clean up transport when connection closes
       res.on('close', () => {
-        // Restore original console methods before logging
+        // Mark as not ready first, then restore console methods
+        transportReady = false;
         console.error = originalConsoleError;
         console.log = originalConsoleLog;
-        console.error('[SSE] Connection closed');
+        originalConsoleError('[SSE] Connection closed');
         if (transport) {
           try {
             transport.close();
@@ -375,7 +385,6 @@ async function main(): Promise<void> {
             // Ignore cleanup errors
           }
           transport = null;
-          transportReady = false;
         }
       });
     });
