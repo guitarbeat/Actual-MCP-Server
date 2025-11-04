@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node build/index.js --sse --enable-write",
+    "startCommand": "node build/index.js --sse --enable-write --enable-bearer",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
