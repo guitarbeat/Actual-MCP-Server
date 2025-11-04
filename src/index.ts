@@ -319,6 +319,10 @@ async function main(): Promise<void> {
     // If you need stateless HTTP transport, use /sse endpoint with SSE transport
 
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
+      // Store original console methods before overriding
+      const originalConsoleError = console.error;
+      const originalConsoleLog = console.log;
+      
       console.error(`[SSE] Connection attempt from ${req.ip || req.socket.remoteAddress}`);
       console.error(`[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], 'accept': req.headers.accept })}`);
       
@@ -331,13 +335,28 @@ async function main(): Promise<void> {
         .then(() => {
           transportReady = true;
           console.error('[SSE] ✅ Transport connected successfully');
-          console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
-          console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+          // Override console methods to send via MCP logging
+          console.log = (message: string) => {
+            try {
+              server.sendLoggingMessage({ level: 'info', message });
+            } catch {
+              // If connection closed, use original console
+              originalConsoleLog(message);
+            }
+          };
+          console.error = (message: string) => {
+            try {
+              server.sendLoggingMessage({ level: 'error', message });
+            } catch {
+              // If connection closed, use original console
+              originalConsoleError(message);
+            }
+          };
         })
         .catch((error) => {
           transportReady = false;
-          console.error('[SSE] ❌ Error connecting SSE transport:', error);
-          console.error('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
+          originalConsoleError('[SSE] ❌ Error connecting SSE transport:', error);
+          originalConsoleError('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
           if (!res.headersSent) {
             res.status(500).json({ error: 'Failed to establish SSE connection' });
           }
@@ -345,6 +364,9 @@ async function main(): Promise<void> {
 
       // Clean up transport when connection closes
       res.on('close', () => {
+        // Restore original console methods before logging
+        console.error = originalConsoleError;
+        console.log = originalConsoleLog;
         console.error('[SSE] Connection closed');
         if (transport) {
           try {
