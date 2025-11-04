@@ -204,6 +204,7 @@ async function main(): Promise<void> {
     
     app.use(express.json());
     let transport: SSEServerTransport | null = null;
+    let transportReady = false;
 
     // Log bearer auth status
     if (enableBearer) {
@@ -281,16 +282,40 @@ async function main(): Promise<void> {
 
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
+      transportReady = false;
       server.connect(transport).then(() => {
+        transportReady = true;
         console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
         console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+      }).catch((error) => {
+        transportReady = false;
+        console.error('Error connecting SSE transport:', error);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to establish SSE connection' });
+        }
+      });
+      
+      // Clean up transport when connection closes
+      res.on('close', () => {
+        if (transport) {
+          try {
+            transport.close();
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+          transport = null;
+          transportReady = false;
+        }
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
-      if (transport) {
+      if (transport && transportReady) {
         await transport.handlePostMessage(req, res, req.body);
       } else {
-        res.status(500).json({ error: 'Transport not initialized' });
+        res.status(503).json({ 
+          error: 'Transport not ready', 
+          message: transport ? 'Transport is initializing, please wait' : 'Transport not initialized. Connect to /sse first.'
+        });
       }
     });
 
