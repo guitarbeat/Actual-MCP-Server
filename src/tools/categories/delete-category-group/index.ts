@@ -4,6 +4,7 @@
 
 import { deleteCategoryGroup } from '../../../actual-api.js';
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { deleteCategoryGroupArgsSchema, type DeleteCategoryGroupArgs } from './types.js';
 
 export const schema = {
   name: 'delete-category-group',
@@ -21,16 +22,14 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: DeleteCategoryGroupArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (!args.id || typeof args.id !== 'string') {
-      return errorFromCatch('id is required and must be a string');
-    }
+    const parsedArgs = deleteCategoryGroupArgsSchema.parse(args);
 
-    await deleteCategoryGroup(args.id);
+    await deleteCategoryGroup(parsedArgs.id);
 
-    return successWithJson('Successfully deleted category group ' + args.id);
+    return successWithJson('Successfully deleted category group ' + parsedArgs.id);
   } catch (err) {
     return errorFromCatch(err);
   }

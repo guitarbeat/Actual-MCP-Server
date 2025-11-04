@@ -4,7 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { setBudgetAmount } from '../../../actual-api.js';
-import { assertMonth, assertPositiveIntegerCents, assertUuid } from '../../../utils/validators.js';
+import { setBudgetAmountArgsSchema, type SetBudgetAmountArgs } from './types.js';
 
 export const schema = {
   name: 'set-budget-amount',
@@ -30,17 +30,15 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: SetBudgetAmountArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const month = assertMonth(args.month, 'month');
-    const categoryId = assertUuid(args.categoryId, 'categoryId');
-    const amount = assertPositiveIntegerCents(args.amount, 'amount');
+    const parsedArgs = setBudgetAmountArgsSchema.parse(args);
 
-    await setBudgetAmount(month, categoryId, amount);
+    await setBudgetAmount(parsedArgs.month, parsedArgs.categoryId, parsedArgs.amount);
 
     return successWithJson(
-      `Successfully set budget amount of ${amount} for category ${categoryId} in month ${month}`
+      `Successfully set budget amount of ${parsedArgs.amount} for category ${parsedArgs.categoryId} in month ${parsedArgs.month}`
     );
   } catch (err) {
     return errorFromCatch(err);

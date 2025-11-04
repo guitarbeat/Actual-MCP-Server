@@ -4,7 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { setBudgetCarryover } from '../../../actual-api.js';
-import { assertMonth, assertUuid } from '../../../utils/validators.js';
+import { setBudgetCarryoverArgsSchema, type SetBudgetCarryoverArgs } from './types.js';
 
 export const schema = {
   name: 'set-budget-carryover',
@@ -30,20 +30,15 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: SetBudgetCarryoverArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (args.enabled === undefined || typeof args.enabled !== 'boolean') {
-      return errorFromCatch('enabled is required and must be a boolean');
-    }
+    const parsedArgs = setBudgetCarryoverArgsSchema.parse(args);
 
-    const month = assertMonth(args.month, 'month');
-    const categoryId = assertUuid(args.categoryId, 'categoryId');
-
-    await setBudgetCarryover(month, categoryId, args.enabled as boolean);
+    await setBudgetCarryover(parsedArgs.month, parsedArgs.categoryId, parsedArgs.enabled);
 
     return successWithJson(
-      `Successfully ${args.enabled ? 'enabled' : 'disabled'} budget carryover for category ${categoryId} in month ${month}`
+      `Successfully ${parsedArgs.enabled ? 'enabled' : 'disabled'} budget carryover for category ${parsedArgs.categoryId} in month ${parsedArgs.month}`
     );
   } catch (err) {
     return errorFromCatch(err);
