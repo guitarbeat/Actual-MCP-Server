@@ -204,6 +204,12 @@ node build/index.js --sse --enable-write
 - Ensure `--sse` flag is used for Poke MCP
 - For Poke MCP, use `/sse` endpoint, not `/mcp`
 
+### Input Validation Errors
+
+- **Invalid IDs** – Copy identifiers directly from helper tools to avoid typos. Use [`get-grouped-categories`](../README.md#categories) for category and group UUIDs, [`get-accounts`](../README.md#transaction--account-management) for account IDs, and [`get-payees`](../README.md#payees) for payees.
+- **Wrong month format** – Budget tools expect `YYYY-MM` (e.g., `2024-06`). Convert full dates or natural language months before sending the request.
+- **Amount not a number** – Remove currency symbols/commas and ensure decimals use `.`. The server only accepts numeric `amount` values.
+
 ### Authentication Errors (401)
 
 - Verify `BEARER_TOKEN` environment variable is set
