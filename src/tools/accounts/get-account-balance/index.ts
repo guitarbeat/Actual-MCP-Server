@@ -2,7 +2,7 @@
 // GET ACCOUNT BALANCE TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, error, errorFromCatch } from '../../../utils/response.js';
 import { getAccountBalance } from '../../../actual-api.js';
 import { formatAmount } from '../../../utils.js';
 
@@ -30,7 +30,10 @@ export async function handler(
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.accountId || typeof args.accountId !== 'string') {
-      return errorFromCatch('accountId is required and must be a string');
+      return error(
+        'accountId is required and must be a string',
+        'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+      );
     }
 
     const date = args.date && typeof args.date === 'string' ? args.date : undefined;
@@ -43,6 +46,10 @@ export async function handler(
       formattedBalance: formatAmount(balance),
     });
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: `Failed to fetch balance for account ${String(args.accountId ?? '')}`.trim(),
+      suggestion:
+        'Confirm the account exists and that the Actual server can calculate balances for the provided date before retrying.',
+    });
   }
 }

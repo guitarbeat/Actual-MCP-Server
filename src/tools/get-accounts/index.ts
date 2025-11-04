@@ -39,6 +39,10 @@ export async function handler(): Promise<ReturnType<typeof successWithJson> | Re
 
     return successWithJson(structured);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: 'Failed to retrieve accounts from Actual.',
+      suggestion:
+        'Verify the Actual Budget server is reachable and that the service user has permission to list accounts.',
+    });
   }
 }

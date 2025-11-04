@@ -2,7 +2,7 @@
 // DELETE ACCOUNT TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, error, errorFromCatch } from '../../../utils/response.js';
 import { deleteAccount } from '../../../actual-api.js';
 
 export const schema = {
@@ -25,13 +25,20 @@ export async function handler(
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.accountId || typeof args.accountId !== 'string') {
-      return errorFromCatch('accountId is required and must be a string');
+      return error(
+        'accountId is required and must be a string',
+        'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+      );
     }
 
     await deleteAccount(args.accountId as string);
 
     return successWithJson('Successfully deleted account ' + args.accountId);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: `Failed to delete account ${String(args.accountId ?? '')}`.trim(),
+      suggestion:
+        'Ensure the account is not already removed and that you have deletion permissions in Actual before retrying.',
+    });
   }
 }
