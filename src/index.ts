@@ -441,37 +441,67 @@ async function main(): Promise<void> {
         // * Route the message to the correct transport
         // Ensure req and res are valid before passing to handlePostMessage
         if (!req || !res) {
-          res.status(500).json({
-            error: 'Invalid request or response',
-            message: 'Request or response object is undefined',
-          });
+          if (res && !res.headersSent) {
+            res.status(500).json({
+              error: 'Invalid request or response',
+              message: 'Request or response object is undefined',
+            });
+          }
           return;
         }
 
         // Ensure body is valid
         const messageBody = req.body || {};
         
+        // Validate that transport has the handlePostMessage method
+        if (!transport || typeof transport.handlePostMessage !== 'function') {
+          console.error('Transport does not have handlePostMessage method');
+          if (!res.headersSent) {
+            res.status(500).json({
+              error: 'Transport error',
+              message: 'Transport does not support message handling',
+            });
+          }
+          return;
+        }
+        
         try {
+          // Call handlePostMessage - the SDK will handle the response
+          // We don't need to check response.status as the SDK manages it internally
           await transport.handlePostMessage(req, res, messageBody);
         } catch (transportError) {
           // Handle errors from transport.handlePostMessage
+          // The SDK might throw errors that access undefined properties internally
           console.error('Error in transport.handlePostMessage:', transportError);
-          if (!res.headersSent) {
+          
+          // Only send error response if headers haven't been sent and response is valid
+          if (res && !res.headersSent && typeof res.status === 'function') {
             const errorMessage = transportError instanceof Error ? transportError.message : String(transportError);
-            res.status(500).json({
-              error: 'Transport error',
-              message: errorMessage,
-            });
+            try {
+              res.status(500).json({
+                error: 'Transport error',
+                message: errorMessage,
+              });
+            } catch (sendError) {
+              // If we can't send the error response, just log it
+              console.error('Failed to send error response:', sendError);
+            }
           }
-          throw transportError; // Re-throw to be caught by outer catch
+          // Don't re-throw - we've handled the error
         }
       } catch (error) {
         console.error('Error handling message:', error);
-        if (!res.headersSent) {
-          res.status(500).json({
-            error: 'Failed to process message',
-            message: error instanceof Error ? error.message : String(error),
-          });
+        // Defensively check that res exists and is valid before using it
+        if (res && typeof res.status === 'function' && !res.headersSent) {
+          try {
+            res.status(500).json({
+              error: 'Failed to process message',
+              message: error instanceof Error ? error.message : String(error),
+            });
+          } catch (sendError) {
+            // If we can't send the error response, just log it
+            console.error('Failed to send error response:', sendError);
+          }
         }
       }
     });

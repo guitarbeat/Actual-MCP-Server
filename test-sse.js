@@ -4,8 +4,11 @@
  * Tests the connection ID routing fix
  */
 
-import EventSource from 'eventsource';
-import fetch from 'node-fetch';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const EventSourceModule = require('eventsource');
+const EventSource = EventSourceModule.EventSource || EventSourceModule.default?.EventSource || EventSourceModule;
+const fetch = globalThis.fetch || (await import('node-fetch')).default;
 
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
 const BEARER_TOKEN = process.env.BEARER_TOKEN;
@@ -42,11 +45,12 @@ async function testSSEConnection() {
   
   return new Promise((resolve, reject) => {
     const url = `${SERVER_URL}/sse`;
-    const headers = {
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
-    };
-
-    const eventSource = new EventSource(url, { headers });
+    // EventSource from 'eventsource' package supports headers option
+    const eventSource = new EventSource(url, {
+      headers: {
+        'Authorization': `Bearer ${BEARER_TOKEN}`,
+      },
+    });
 
     eventSource.addEventListener('connection', (event) => {
       try {
@@ -66,9 +70,15 @@ async function testSSEConnection() {
       }
     });
 
-    eventSource.addEventListener('error', (error) => {
+    eventSource.addEventListener('error', (event) => {
       eventSource.close();
-      reject(new Error(`SSE connection error: ${error.message || 'Unknown error'}`));
+      // EventSource error event doesn't have status code in the event object
+      // Check readyState to determine connection status
+      if (eventSource.readyState === EventSource.CLOSED) {
+        reject(new Error('SSE connection closed - check authentication and server status'));
+      } else {
+        reject(new Error('SSE connection error occurred'));
+      }
     });
 
     // Timeout after 5 seconds
