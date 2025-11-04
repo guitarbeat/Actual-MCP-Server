@@ -66,33 +66,21 @@ const {
 // Factory function to create a new MCP server instance
 // This is needed because each SSE connection requires its own server instance
 // Based on the working implementation, creating a new server per connection avoids conflicts
-function createServer(): Server {
-  const server = new Server(
-    {
-      name: 'Actual Budget',
-      version: '1.2.0',
+// Initialize the MCP server
+const server = new Server(
+  {
+    name: 'Actual Budget',
+    version: '1.2.0',
+  },
+  {
+    capabilities: {
+      resources: {},
+      tools: {},
+      prompts: {},
+      logging: {},
     },
-    {
-      capabilities: {
-        resources: {},
-        tools: {},
-        prompts: {},
-        logging: {},
-      },
-    }
-  );
-  
-  // Setup handlers on the server instance
-  setupResources(server);
-  setupTools(server, enableWrite);
-  setupPrompts(server);
-  
-  return server;
-}
-
-// Global server instance for stdio mode (single connection)
-// For SSE mode, we create a new server per connection
-const globalServer = !useSse ? createServer() : null;
+  }
+);
 
 const resolvedPort = port ? parseInt(port, 10) : 3000;
 
@@ -210,18 +198,8 @@ async function main(): Promise<void> {
       next();
     });
     
-    // * JSON middleware - exclude SSE endpoint to prevent interference with response handling
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      if (req.path === '/sse') {
-        // Skip JSON parsing for SSE endpoint
-        next();
-      } else {
-        express.json()(req, res, next);
-      }
-    });
-    // * Map to store active SSE transports by connection ID
-    // Each SSE connection gets its own transport and server instance
-    const activeTransports = new Map<string, SSEServerTransport>();
+    app.use(express.json());
+    let transport: SSEServerTransport | null = null;
 
     // Log bearer auth status
     if (enableBearer) {
@@ -297,229 +275,19 @@ async function main(): Promise<void> {
     // The working version only uses /sse and /messages endpoints
     // If you need stateless HTTP transport, use /sse endpoint with SSE transport
 
-    app.get('/sse', bearerAuth, async (req: Request, res: Response) => {
-      // * Generate unique connection ID for this SSE session
-      const connectionId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      
-      // ! Check if headers have already been sent (should not happen, but safety check)
-      if (res.headersSent) {
-        console.error('Headers already sent before SSE transport setup - connection may be from a previous request');
-        // Don't return - try to continue, but log the issue
-      }
-
-      try {
-        // * Set connection ID in response header before transport connects
-        // This allows clients to read it from headers if needed
-        if (!res.headersSent) {
-          res.setHeader('X-MCP-Connection-ID', connectionId);
-        }
-        
-        // * Create a new Server instance for this SSE connection
-        // The MCP SDK requires a separate server instance per transport connection
-        const connectionServer = createServer();
-        
-        // * Create SSE transport for this connection
-        // The transport will set up SSE headers automatically when connected
-        // Do NOT register event handlers on res before this, as it might trigger header sending
-        const transport = new SSEServerTransport('/messages', res);
-        
-        // * Connect transport FIRST - this sets up SSE headers via transport.start()
-        // * Must be done immediately after creating transport, before any other response operations
-        await connectionServer.connect(transport).catch((error) => {
-          console.error(`Error connecting SSE transport (connectionId: ${connectionId}):`, error);
-          // * Clean up transport from map if it was added
-          activeTransports.delete(connectionId);
-          if (!res.headersSent) {
-            res.status(500).json({
-              error: 'Failed to establish SSE connection',
-              message: error instanceof Error ? error.message : String(error),
-            });
-          }
-          throw error;
-        });
-
-        // * Store transport in map for this connection (after successful connection)
-        // Store both transport and server instance
-        activeTransports.set(connectionId, transport);
-        
-        // * Handle connection close - cleanup this specific transport
-        // * Register this AFTER connection is established to avoid interfering with header setup
-        res.on('close', () => {
-          const storedTransport = activeTransports.get(connectionId);
-          if (storedTransport) {
-            try {
-              storedTransport.close();
-            } catch (e) {
-              // Ignore cleanup errors
-            }
-            activeTransports.delete(connectionId);
-          }
-        });
-
-        // * Send connection ID event to client - SSE events can be written after headers are sent
-        // * This is how SSE works: headers are sent first, then events are written to the stream
-        // * The client must include this ID in the X-MCP-Connection-ID header for subsequent POST requests
-        // * This allows routing messages to the correct transport when multiple clients are connected
-        res.write(`event: connection\n`);
-        res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
-
-        // * Optional log server integration (only in development with docker-compose)
-        const logServerUrl = process.env.LOG_SERVER_URL || 'http://log-server:4000/log';
-        const sendToLogServer = async (level: 'info' | 'error', message: string): Promise<void> => {
-          // ! Only attempt log server if explicitly configured
-          if (process.env.LOG_SERVER_URL || process.env.NODE_ENV === 'development') {
-            try {
-              // Use built-in fetch (Node.js 18+ has it globally)
-              // Create AbortController with timeout (compatible with Node 20+)
-              let signal: AbortSignal | undefined;
-              if (typeof AbortController !== 'undefined') {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 1000);
-                signal = controller.signal;
-                // Store timeout to clear if needed (though we don't need to clear it)
-              }
-
-              // Fire and forget - don't check response to avoid any potential errors
-              // The log server is optional and we don't need to verify the response
-              // Use globalThis.fetch which is available in Node 18+
-              if (typeof globalThis.fetch === 'function') {
-                globalThis.fetch(logServerUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ message: `[${level}] ${message}` }),
-                  signal,
-                }).catch(() => {
-                  // Silently ignore all errors - log server is optional
-                });
-              }
-            } catch (e) {
-              // * Silently fail - log server is optional
-              // Only log if explicitly configured
-              if (process.env.LOG_SERVER_URL) {
-                const errorMessage = e instanceof Error ? e.message : String(e);
-                process.stderr.write(`[log-server error] ${errorMessage}\n`);
-              }
-            }
-          }
-        };
-
-        // * Setup per-connection logging (don't override global console)
-        // Create a logging function that sends to this specific transport's client
-        const logToClient = (level: 'info' | 'error', message: string) => {
-          try {
-            connectionServer.sendLoggingMessage({ level, message });
-            sendToLogServer(level, message).catch(() => {
-              // Ignore log server errors
-            });
-          } catch (e) {
-            // Ignore logging errors
-          }
-        };
-
-        // * Connection established successfully
-        logToClient('info', `SSE connection established (ID: ${connectionId})`);
-      } catch (error) {
-        console.error('Failed to setup SSE connection:', error);
-        activeTransports.delete(connectionId);
-        if (!res.headersSent) {
-          res.status(500).json({
-            error: 'Failed to initialize SSE connection',
-            message: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
+    app.get('/sse', bearerAuth, (req: Request, res: Response) => {
+      transport = new SSEServerTransport('/messages', res);
+      server.connect(transport).then(() => {
+        console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+        console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+      });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
-      try {
-        // * Route message to the correct transport based on connection ID from header
-        // The connection ID is sent to the client when establishing the SSE connection at /sse
-        // The client should include this ID in the X-MCP-Connection-ID header for subsequent POST requests
-        const connectionId = req.headers['x-mcp-connection-id'] as string | undefined;
-        
-        if (!connectionId) {
-          res.status(400).json({
-            error: 'Missing connection ID',
-            message: 'SSE connection must be established first by connecting to /sse endpoint. X-MCP-Connection-ID header not found.',
-          });
-          return;
-        }
-
-        // * Look up the transport for this connection
-        const transport = activeTransports.get(connectionId);
-        
-        if (!transport) {
-          res.status(404).json({
-            error: 'Transport not found',
-            message: `No active SSE connection found for connection ID: ${connectionId}. The connection may have been closed.`,
-          });
-          return;
-        }
-
-        // * Route the message to the correct transport
-        // Ensure req and res are valid before passing to handlePostMessage
-        if (!req || !res) {
-          if (res && !res.headersSent) {
-            res.status(500).json({
-              error: 'Invalid request or response',
-              message: 'Request or response object is undefined',
-            });
-          }
-          return;
-        }
-
-        // Ensure body is valid
-        const messageBody = req.body || {};
-        
-        // Validate that transport has the handlePostMessage method
-        if (!transport || typeof transport.handlePostMessage !== 'function') {
-          console.error('Transport does not have handlePostMessage method');
-          if (!res.headersSent) {
-            res.status(500).json({
-              error: 'Transport error',
-              message: 'Transport does not support message handling',
-            });
-          }
-          return;
-        }
-        
-        try {
-          // Call handlePostMessage - the SDK will handle the response
-          // We don't need to check response.status as the SDK manages it internally
-          await transport.handlePostMessage(req, res, messageBody);
-        } catch (transportError) {
-          // Handle errors from transport.handlePostMessage
-          // The SDK might throw errors that access undefined properties internally
-          console.error('Error in transport.handlePostMessage:', transportError);
-          
-          // Only send error response if headers haven't been sent and response is valid
-          if (res && !res.headersSent && typeof res.status === 'function') {
-            const errorMessage = transportError instanceof Error ? transportError.message : String(transportError);
-            try {
-              res.status(500).json({
-                error: 'Transport error',
-                message: errorMessage,
-              });
-            } catch (sendError) {
-              // If we can't send the error response, just log it
-              console.error('Failed to send error response:', sendError);
-            }
-          }
-          // Don't re-throw - we've handled the error
-        }
-      } catch (error) {
-        console.error('Error handling message:', error);
-        // Defensively check that res exists and is valid before using it
-        if (res && typeof res.status === 'function' && !res.headersSent) {
-          try {
-            res.status(500).json({
-              error: 'Failed to process message',
-              message: error instanceof Error ? error.message : String(error),
-            });
-          } catch (sendError) {
-            // If we can't send the error response, just log it
-            console.error('Failed to send error response:', sendError);
-          }
-        }
+      if (transport) {
+        await transport.handlePostMessage(req, res, req.body);
+      } else {
+        res.status(500).json({ error: 'Transport not initialized' });
       }
     });
 
@@ -539,46 +307,27 @@ async function main(): Promise<void> {
       }
     });
   } else {
-    // Use the global server instance for stdio mode
-    if (!globalServer) {
-      throw new Error('Global server not initialized for stdio mode');
-    }
     const transport = new StdioServerTransport();
-    await globalServer.connect(transport);
+    await server.connect(transport);
     console.error('Actual Budget MCP Server (stdio) started');
   }
 }
 
-// Setup logging level handler for stdio mode
-if (!useSse && globalServer) {
-  globalServer.setRequestHandler(SetLevelRequestSchema, (request) => {
-    console.log(`--- Logging level: ${request.params.level}`);
-    return {};
-  });
-}
+setupResources(server);
+setupTools(server, enableWrite);
+setupPrompts(server);
 
 process.on('SIGINT', () => {
   console.error('SIGINT received, shutting down server');
-  if (globalServer) {
-    globalServer.close();
-  }
+  server.close();
   process.exit(0);
 });
 
 main()
   .then(() => {
-    if (!useSse && globalServer) {
-      // TODO: Setup proper logging level change. Messages are available in the notification of MCP Inspector
-      console.log = (message: string) =>
-        globalServer!.sendLoggingMessage({
-          level: 'info',
-          message,
-        });
-      console.error = (message: string) =>
-        globalServer!.sendLoggingMessage({
-          level: 'error',
-          message,
-        });
+    if (!useSse) {
+      console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+      console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
     }
   })
   .catch((error: unknown) => {
