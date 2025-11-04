@@ -75,7 +75,7 @@ describe('CreateTransactionDataFetcher', () => {
 
       const result = await fetcher.ensureCategoryExists('Food');
 
-      expect(result).toEqual({ categoryId: 'cat-1', created: false });
+      expect(result).toEqual({ categoryId: 'cat-1', created: false, warnings: [] });
       expect(mockApi.createCategory).not.toHaveBeenCalled();
     });
 
@@ -89,8 +89,22 @@ describe('CreateTransactionDataFetcher', () => {
 
       const result = await fetcher.ensureCategoryExists('New Category');
 
-      expect(result).toEqual({ categoryId: 'cat-3', created: true });
+      expect(result).toEqual({ categoryId: 'cat-3', created: true, warnings: [] });
       expect(mockApi.createCategory).toHaveBeenCalledWith({ name: 'New Category', group: 'group-1' });
+    });
+
+    it('should warn when no category groups are available', async () => {
+      mockApi.getCategories.mockResolvedValue([]);
+      mockApi.getCategoryGroups.mockResolvedValue([]);
+
+      const result = await fetcher.ensureCategoryExists('New Category');
+
+      expect(result).toEqual({
+        categoryId: undefined,
+        created: false,
+        warnings: ['No category groups are available from Actual; the transaction will remain uncategorized.'],
+      });
+      expect(mockApi.createCategory).not.toHaveBeenCalled();
     });
   });
 
@@ -224,6 +238,46 @@ describe('CreateTransactionDataFetcher', () => {
       expect(result.errors).toEqual(['Some import error occurred']);
       expect(result.wasAdded).toBe(false);
       expect(result.wasUpdated).toBe(false);
+    });
+
+    it('should propagate warnings when no category groups are available', async () => {
+      const input: CreateTransactionInput = {
+        accountId: 'account-1',
+        date: '2023-12-15',
+        amount: 5,
+        category: 'Uncategorized Expense',
+        cleared: true,
+      };
+
+      mockApi.getAccounts.mockResolvedValue([{ id: 'account-1', name: 'Checking', closed: false }]);
+      mockApi.getPayees.mockResolvedValue([]);
+      mockApi.getCategories.mockResolvedValue([]);
+      mockApi.getCategoryGroups.mockResolvedValue([]);
+      mockApi.importTransactions.mockResolvedValue({
+        added: ['txn-789'],
+        updated: [],
+        errors: undefined,
+      });
+
+      const result = await fetcher.createTransaction(input);
+
+      expect(result).toEqual({
+        transactionIds: ['txn-789'],
+        wasAdded: true,
+        wasUpdated: false,
+        errors: undefined,
+        payeeId: undefined,
+        categoryId: undefined,
+        createdPayee: false,
+        createdCategory: false,
+        warnings: ['No category groups are available from Actual; the transaction will remain uncategorized.'],
+      });
+
+      expect(mockApi.importTransactions).toHaveBeenCalledWith('account-1', [
+        expect.objectContaining({
+          category: null,
+        }),
+      ]);
     });
   });
 });

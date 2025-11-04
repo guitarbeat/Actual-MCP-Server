@@ -17,6 +17,17 @@ describe('CreateTransactionInputParser', () => {
       const result = parser.parse(input);
 
       expect(result).toEqual({
+        input: {
+          accountId: 'account-123',
+          date: '2023-12-15',
+          amount: 25.5,
+          payee: undefined,
+          category: undefined,
+          categoryGroup: undefined,
+          notes: undefined,
+          cleared: true, // default
+        },
+        warnings: [],
         accountId: '123e4567-e89b-12d3-a456-426614174000',
         date: '2023-12-15',
         amount: 2550,
@@ -42,6 +53,17 @@ describe('CreateTransactionInputParser', () => {
       const result = parser.parse(input);
 
       expect(result).toEqual({
+        input: {
+          accountId: 'account-123',
+          date: '2023-12-15',
+          amount: 25.5,
+          payee: 'Grocery Store',
+          category: 'Food',
+          categoryGroup: undefined,
+          notes: 'Weekly groceries',
+          cleared: false,
+        },
+        warnings: [],
         accountId: '123e4567-e89b-12d3-a456-426614174000',
         date: '2023-12-15',
         amount: 2550,
@@ -104,6 +126,8 @@ describe('CreateTransactionInputParser', () => {
       expect(() => parser.parse(input)).toThrow('accountId must be a valid UUID');
     });
 
+      const result = parser.parse(input);
+      expect(result.input.amount).toBe(-50.0);
     it('should throw error for non-integer amount', () => {
       const input = {
         accountId: '123e4567-e89b-12d3-a456-426614174000',
@@ -132,6 +156,22 @@ describe('CreateTransactionInputParser', () => {
       };
 
       const result = parser.parse(input);
+      expect(result.input.amount).toBe(0);
+    });
+
+    it('should include warning for unusually small cent amounts', () => {
+      const input = {
+        accountId: 'account-123',
+        date: '2023-12-15',
+        amount: 0.03,
+      };
+
+      const result = parser.parse(input);
+
+      expect(result.input.amount).toBe(0.03);
+      expect(result.warnings).toEqual([
+        'Amount $0.03 is unusually small; please confirm the cents value.',
+      ]);
       expect(result.amount).toBe(1250000);
     });
   });

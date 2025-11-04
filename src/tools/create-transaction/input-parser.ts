@@ -1,16 +1,18 @@
 // Parses and validates input arguments for create-transaction tool
 
+import { CreateTransactionInput, CreateTransactionParseResult } from './types.js';
 import { assertPositiveIntegerCents, assertUuid } from '../../utils/validators.js';
 import { CreateTransactionInput } from './types.js';
 
 export class CreateTransactionInputParser {
-  parse(args: unknown): CreateTransactionInput {
+  parse(args: unknown): CreateTransactionParseResult {
     if (!args || typeof args !== 'object') {
       throw new Error('Arguments must be an object');
     }
 
     const argsObj = args as Record<string, unknown>;
     const { accountId, date, amount, payee, category, categoryGroup, notes, cleared } = argsObj;
+    const warnings: string[] = [];
 
     // Validate required fields
     const validAccountId = assertUuid(accountId, 'accountId');
@@ -34,6 +36,8 @@ export class CreateTransactionInputParser {
       );
     }
 
+    const parsedInput: CreateTransactionInput = {
+      accountId,
     return {
       accountId: validAccountId,
       date,
@@ -43,6 +47,18 @@ export class CreateTransactionInputParser {
       categoryGroup: typeof categoryGroup === 'string' ? categoryGroup : undefined,
       notes: typeof notes === 'string' ? notes : undefined,
       cleared: typeof cleared === 'boolean' ? cleared : true, // Default to cleared
+    };
+
+    const amountInCents = Math.round(amount * 100);
+    if (amountInCents !== 0 && Math.abs(amountInCents) < 5) {
+      const displayAmount = `$${Math.abs(amount).toFixed(2)}`;
+      const formattedAmount = amount < 0 ? `-${displayAmount}` : displayAmount;
+      warnings.push(`Amount ${formattedAmount} is unusually small; please confirm the cents value.`);
+    }
+
+    return {
+      input: parsedInput,
+      warnings,
     };
   }
 }

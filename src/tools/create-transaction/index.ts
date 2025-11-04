@@ -17,13 +17,14 @@ export const schema = {
 export async function handler(args: CreateTransactionArgs): Promise<CallToolResult> {
   try {
     // Parse and validate input
-    const input = new CreateTransactionInputParser().parse(args);
+    const parser = new CreateTransactionInputParser();
+    const { input, warnings: parserWarnings } = parser.parse(args);
 
     // Create transaction and any necessary entities
     const result = await new CreateTransactionDataFetcher().createTransaction(input);
 
     // Generate formatted report
-    const markdown = new CreateTransactionReportGenerator().generate(input, result);
+    const markdown = new CreateTransactionReportGenerator().generate(input, result, parserWarnings);
 
     return success(markdown);
   } catch (err) {
