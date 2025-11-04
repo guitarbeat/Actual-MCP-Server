@@ -4,6 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { resetBudgetHold } from '../../../actual-api.js';
+import { resetBudgetHoldArgsSchema, type ResetBudgetHoldArgs } from './types.js';
 
 export const schema = {
   name: 'reset-budget-hold',
@@ -21,16 +22,14 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: ResetBudgetHoldArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (!args.month || typeof args.month !== 'string') {
-      return errorFromCatch('month is required and must be a string in YYYY-MM format');
-    }
+    const parsedArgs = resetBudgetHoldArgsSchema.parse(args);
 
-    await resetBudgetHold(args.month as string);
+    await resetBudgetHold(parsedArgs.month);
 
-    return successWithJson('Successfully reset budget hold for month ' + args.month);
+    return successWithJson('Successfully reset budget hold for month ' + parsedArgs.month);
   } catch (err) {
     return errorFromCatch(err);
   }

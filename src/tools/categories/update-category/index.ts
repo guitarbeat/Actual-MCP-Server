@@ -4,7 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { updateCategory } from '../../../actual-api.js';
-import { assertUuid } from '../../../utils/validators.js';
+import { updateCategoryArgsSchema, type UpdateCategoryArgs } from './types.js';
 
 export const schema = {
   name: 'update-category',
@@ -30,40 +30,22 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: UpdateCategoryArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const allowedKeys = ['id', 'name', 'groupId'];
-    const invalidKeys = Object.keys(args).filter((key) => !allowedKeys.includes(key));
-    if (invalidKeys.length > 0) {
-      const invalidList = invalidKeys.join(', ');
-      const allowedList = allowedKeys.join(', ');
-      return errorFromCatch(
-        [
-          `Invalid parameter(s): ${invalidList}.`,
-          `Allowed parameters are: ${allowedList}.`,
-          'Try calling update-category with only these parameters.',
-        ].join(' ')
-      );
+    const parsedArgs = updateCategoryArgsSchema.parse(args);
+
+    const data: Record<string, unknown> = {
+      name: parsedArgs.name,
+    };
+
+    if (parsedArgs.groupId) {
+      data.group_id = parsedArgs.groupId;
     }
 
-    if (!args.id || typeof args.id !== 'string') {
-      return errorFromCatch('id is required and must be a string');
-    }
+    await updateCategory(parsedArgs.id, data);
 
-    const id = assertUuid(args.id, 'id');
-
-    const data: Record<string, unknown> = {};
-    if (args.name) {
-      data.name = args.name;
-    }
-    if (args.groupId !== undefined) {
-      data.group_id = assertUuid(args.groupId, 'groupId');
-    }
-
-    await updateCategory(id, data);
-
-    return successWithJson('Successfully updated category ' + id);
+    return successWithJson('Successfully updated category ' + parsedArgs.id);
   } catch (err) {
     return errorFromCatch(err);
   }
