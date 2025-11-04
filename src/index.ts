@@ -409,6 +409,67 @@ async function main(): Promise<void> {
       console.error('Bearer authentication disabled - endpoints are public');
     }
 
+    // * Favicon route - simple SVG favicon
+    app.get('/favicon.ico', (req: Request, res: Response) => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#2563eb" rx="10"/>
+        <text x="50" y="65" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">$</text>
+      </svg>`;
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.send(svg);
+    });
+
+    // * Root route - basic server info
+    app.get('/', (req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Actual Budget MCP Server</title>
+            <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                background: #f5f5f5;
+              }
+              .container {
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              h1 { color: #2563eb; margin-top: 0; }
+              .endpoint { 
+                background: #f8f9fa; 
+                padding: 10px; 
+                margin: 10px 0; 
+                border-left: 3px solid #2563eb;
+                font-family: monospace;
+              }
+              .status { color: #10b981; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>💰 Actual Budget MCP Server</h1>
+              <p class="status">✓ Server is running</p>
+              <p>This is an MCP (Model Context Protocol) server for Actual Budget.</p>
+              <h2>Available Endpoints:</h2>
+              <div class="endpoint">GET /sse - SSE transport endpoint</div>
+              <div class="endpoint">POST /mcp - MCP HTTP endpoint</div>
+              <div class="endpoint">POST /messages - Messages endpoint</div>
+              ${enableBearer ? '<p><strong>🔒 Bearer authentication: ENABLED</strong></p>' : '<p><em>⚠️ Bearer authentication: DISABLED</em></p>'}
+            </div>
+          </body>
+        </html>
+      `);
+    });
+
     // Implementación HTTP streamable (stateless, MCP moderno)
     app.post('/mcp', bearerAuth, async (req: Request, res: Response) => {
       try {
