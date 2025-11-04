@@ -42,23 +42,7 @@ import { SetLevelRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 dotenv.config({ path: '.env' });
 
-// Initialize the MCP server
-const server = new Server(
-  {
-    name: 'Actual Budget',
-    version: '1.2.0',
-  },
-  {
-    capabilities: {
-      resources: {},
-      tools: {},
-      prompts: {},
-      logging: {},
-    },
-  }
-);
-
-// Argument parsing
+// Argument parsing (must happen before server creation)
 const {
   values: {
     sse: useSse,
@@ -79,6 +63,37 @@ const {
   },
   allowPositionals: true,
 });
+
+// Factory function to create a new MCP server instance
+// This is needed because each SSE connection requires its own server instance
+// Based on the working implementation, creating a new server per connection avoids conflicts
+function createServer(): Server {
+  const server = new Server(
+    {
+      name: 'Actual Budget',
+      version: '1.2.0',
+    },
+    {
+      capabilities: {
+        resources: {},
+        tools: {},
+        prompts: {},
+        logging: {},
+      },
+    }
+  );
+  
+  // Setup handlers on the server instance
+  setupResources(server);
+  setupTools(server, enableWrite);
+  setupPrompts(server);
+  
+  return server;
+}
+
+// Global server instance for stdio mode (single connection)
+// For SSE mode, we create a new server per connection
+const globalServer = !useSse ? createServer() : null;
 
 const resolvedPort = port ? parseInt(port, 10) : 3000;
 
@@ -409,7 +424,7 @@ async function main(): Promise<void> {
       }
     });
     // * Map to store active SSE transports by connection ID
-    // Each SSE connection gets its own transport instance
+    // Each SSE connection gets its own transport and server instance
     const activeTransports = new Map<string, SSEServerTransport>();
 
     // Log bearer auth status
@@ -494,7 +509,8 @@ async function main(): Promise<void> {
           return;
         }
 
-        // * Create new transport instance for each request (stateless HTTP transport)
+        // * Create new server and transport instance for each request (stateless HTTP transport)
+        const requestServer = createServer();
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined, // stateless
         });
@@ -507,7 +523,7 @@ async function main(): Promise<void> {
             // Ignore cleanup errors
           }
         });
-        await server.connect(transport);
+        await requestServer.connect(transport);
         await transport.handleRequest(req, res, req.body);
       } catch (error) {
         console.error('Error handling MCP request:', error);
@@ -541,6 +557,10 @@ async function main(): Promise<void> {
           res.setHeader('X-MCP-Connection-ID', connectionId);
         }
         
+        // * Create a new Server instance for this SSE connection
+        // The MCP SDK requires a separate server instance per transport connection
+        const connectionServer = createServer();
+        
         // * Create SSE transport for this connection
         // The transport will set up SSE headers automatically when connected
         // Do NOT register event handlers on res before this, as it might trigger header sending
@@ -548,10 +568,7 @@ async function main(): Promise<void> {
         
         // * Connect transport FIRST - this sets up SSE headers via transport.start()
         // * Must be done immediately after creating transport, before any other response operations
-        // * Note: server.connect() may support multiple transports, or may require
-        // * a single connection. If issues arise, we may need to create a new Server
-        // * instance per connection instead.
-        await server.connect(transport).catch((error) => {
+        await connectionServer.connect(transport).catch((error) => {
           console.error(`Error connecting SSE transport (connectionId: ${connectionId}):`, error);
           // * Clean up transport from map if it was added
           activeTransports.delete(connectionId);
@@ -565,6 +582,7 @@ async function main(): Promise<void> {
         });
 
         // * Store transport in map for this connection (after successful connection)
+        // Store both transport and server instance
         activeTransports.set(connectionId, transport);
         
         // * Handle connection close - cleanup this specific transport
@@ -632,7 +650,7 @@ async function main(): Promise<void> {
         // Create a logging function that sends to this specific transport's client
         const logToClient = (level: 'info' | 'error', message: string) => {
           try {
-            server.sendLoggingMessage({ level, message });
+            connectionServer.sendLoggingMessage({ level, message });
             sendToLogServer(level, message).catch(() => {
               // Ignore log server errors
             });
@@ -743,38 +761,43 @@ async function main(): Promise<void> {
       }
     });
   } else {
+    // Use the global server instance for stdio mode
+    if (!globalServer) {
+      throw new Error('Global server not initialized for stdio mode');
+    }
     const transport = new StdioServerTransport();
-    await server.connect(transport);
+    await globalServer.connect(transport);
     console.error('Actual Budget MCP Server (stdio) started');
   }
 }
 
-setupResources(server);
-setupTools(server, enableWrite);
-setupPrompts(server);
-
-server.setRequestHandler(SetLevelRequestSchema, (request) => {
-  console.log(`--- Logging level: ${request.params.level}`);
-  return {};
-});
+// Setup logging level handler for stdio mode
+if (!useSse && globalServer) {
+  globalServer.setRequestHandler(SetLevelRequestSchema, (request) => {
+    console.log(`--- Logging level: ${request.params.level}`);
+    return {};
+  });
+}
 
 process.on('SIGINT', () => {
   console.error('SIGINT received, shutting down server');
-  server.close();
+  if (globalServer) {
+    globalServer.close();
+  }
   process.exit(0);
 });
 
 main()
   .then(() => {
-    if (!useSse) {
+    if (!useSse && globalServer) {
       // TODO: Setup proper logging level change. Messages are available in the notification of MCP Inspector
       console.log = (message: string) =>
-        server.sendLoggingMessage({
+        globalServer!.sendLoggingMessage({
           level: 'info',
           message,
         });
       console.error = (message: string) =>
-        server.sendLoggingMessage({
+        globalServer!.sendLoggingMessage({
           level: 'error',
           message,
         });
