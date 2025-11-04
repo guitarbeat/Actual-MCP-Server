@@ -399,7 +399,15 @@ async function main(): Promise<void> {
 
   if (useSse) {
     const app = express();
-    app.use(express.json());
+    // * JSON middleware - exclude SSE endpoint to prevent interference with response handling
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.path === '/sse') {
+        // Skip JSON parsing for SSE endpoint
+        next();
+      } else {
+        express.json()(req, res, next);
+      }
+    });
     // * Map to store active SSE transports by connection ID
     // Each SSE connection gets its own transport instance
     const activeTransports = new Map<string, SSEServerTransport>();
@@ -524,6 +532,10 @@ async function main(): Promise<void> {
       }
 
       try {
+        // * Set connection ID in response header before transport connects
+        // This allows clients to read it from headers if needed
+        res.setHeader('X-MCP-Connection-ID', connectionId);
+        
         // * Create SSE transport for this connection
         // The transport will set up SSE headers automatically when connected
         // Do NOT register event handlers on res before this, as it might trigger header sending
@@ -562,15 +574,12 @@ async function main(): Promise<void> {
           }
         });
 
-        // * After transport is connected and headers are set, send connection ID to client
+        // * Send connection ID event to client - SSE events can be written after headers are sent
+        // * This is how SSE works: headers are sent first, then events are written to the stream
         // * The client must include this ID in the X-MCP-Connection-ID header for subsequent POST requests
         // * This allows routing messages to the correct transport when multiple clients are connected
-        if (!res.headersSent) {
-          res.write(`event: connection\n`);
-          res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
-        } else {
-          console.error('Headers sent before connection ID event - skipping');
-        }
+        res.write(`event: connection\n`);
+        res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
 
         // * Optional log server integration (only in development with docker-compose)
         const logServerUrl = process.env.LOG_SERVER_URL || 'http://log-server:4000/log';
