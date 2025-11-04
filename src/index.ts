@@ -193,6 +193,23 @@ async function main(): Promise<void> {
 
   if (useSse) {
     const app = express();
+    
+    // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-MCP-Connection-ID');
+      res.setHeader('Access-Control-Expose-Headers', 'X-MCP-Connection-ID');
+      
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+      }
+      
+      next();
+    });
+    
     // * JSON middleware - exclude SSE endpoint to prevent interference with response handling
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === '/sse') {
