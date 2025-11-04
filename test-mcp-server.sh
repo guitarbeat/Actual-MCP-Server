@@ -11,7 +11,12 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 SERVER_URL="${SERVER_URL:-http://localhost:3000}"
-BEARER_TOKEN="${BEARER_TOKEN:-9d7ed444f28745aa225d7ab219c00b1500414949121412002b2d34ad7f1bc97b}"
+BEARER_TOKEN="${BEARER_TOKEN:-}"
+if [ -z "$BEARER_TOKEN" ]; then
+    echo "Error: BEARER_TOKEN environment variable is required"
+    echo "Usage: BEARER_TOKEN=your-token $0"
+    exit 1
+fi
 
 echo "🧪 Testing MCP SSE Server"
 echo "Server URL: $SERVER_URL"
