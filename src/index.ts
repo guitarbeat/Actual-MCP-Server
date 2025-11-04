@@ -17,7 +17,22 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'node:util';
-import { initActualApi, shutdownActualApi, getBudgets } from './actual-api.js';
+import {
+  initActualApi,
+  shutdownActualApi,
+  getBudgets,
+  getAccounts,
+  getCategories,
+  getCategoryGroups,
+  getPayees,
+  getRules,
+  getTransactions,
+  getAccountBalance,
+  getBudgetMonths,
+  getBudgetMonth,
+  getSchedules,
+  getServerVersion,
+} from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
@@ -178,6 +193,158 @@ async function main(): Promise<void> {
           return {
             jsonrpc: '2.0',
             result: budgets,
+            id,
+          };
+        }
+
+        case 'actual.getAccounts': {
+          const accounts = await getAccounts();
+          return {
+            jsonrpc: '2.0',
+            result: accounts,
+            id,
+          };
+        }
+
+        case 'actual.getCategories': {
+          const categories = await getCategories();
+          return {
+            jsonrpc: '2.0',
+            result: categories,
+            id,
+          };
+        }
+
+        case 'actual.getCategoryGroups': {
+          const categoryGroups = await getCategoryGroups();
+          return {
+            jsonrpc: '2.0',
+            result: categoryGroups,
+            id,
+          };
+        }
+
+        case 'actual.getPayees': {
+          const payees = await getPayees();
+          return {
+            jsonrpc: '2.0',
+            result: payees,
+            id,
+          };
+        }
+
+        case 'actual.getRules': {
+          const rules = await getRules();
+          return {
+            jsonrpc: '2.0',
+            result: rules,
+            id,
+          };
+        }
+
+        case 'actual.getTransactions': {
+          const accountId = params.accountId;
+          const start = params.start;
+          const end = params.end;
+
+          if (typeof accountId !== 'string') {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: -32602,
+                message: 'Invalid params: accountId is required and must be a string',
+              },
+              id,
+            };
+          }
+
+          if (typeof start !== 'string' || typeof end !== 'string') {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: -32602,
+                message: 'Invalid params: start and end are required and must be strings',
+              },
+              id,
+            };
+          }
+
+          const transactions = await getTransactions(accountId, start, end);
+          return {
+            jsonrpc: '2.0',
+            result: transactions,
+            id,
+          };
+        }
+
+        case 'actual.getAccountBalance': {
+          const accountId = params.accountId;
+          const date = params.date;
+
+          if (typeof accountId !== 'string') {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: -32602,
+                message: 'Invalid params: accountId is required and must be a string',
+              },
+              id,
+            };
+          }
+
+          const balance = await getAccountBalance(accountId, typeof date === 'string' ? date : undefined);
+          return {
+            jsonrpc: '2.0',
+            result: balance,
+            id,
+          };
+        }
+
+        case 'actual.getBudgetMonths': {
+          const months = await getBudgetMonths();
+          return {
+            jsonrpc: '2.0',
+            result: months,
+            id,
+          };
+        }
+
+        case 'actual.getBudgetMonth': {
+          const month = params.month;
+
+          if (typeof month !== 'string') {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: -32602,
+                message: 'Invalid params: month is required and must be a string',
+              },
+              id,
+            };
+          }
+
+          const budgetMonth = await getBudgetMonth(month);
+          return {
+            jsonrpc: '2.0',
+            result: budgetMonth,
+            id,
+          };
+        }
+
+        case 'actual.getSchedules': {
+          const schedules = await getSchedules();
+          return {
+            jsonrpc: '2.0',
+            result: schedules,
+            id,
+          };
+        }
+
+        case 'actual.getServerVersion': {
+          const version = await getServerVersion();
+          return {
+            jsonrpc: '2.0',
+            result: version,
             id,
           };
         }
