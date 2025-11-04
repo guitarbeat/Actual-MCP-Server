@@ -38,6 +38,10 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 import { SetLevelRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 dotenv.config({ path: '.env' });
 
@@ -294,7 +298,26 @@ async function main(): Promise<void> {
       if (error) {
         console.error('Error:', error);
       } else {
+        // Get deployment info (git commit hash if available)
+        let deploymentInfo = 'unknown';
+        try {
+          const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+          deploymentInfo = commitHash;
+        } catch (e) {
+          // Git not available or not in a git repo - use package version
+          try {
+            const __filename = fileURLToPath(import.meta.url);
+            const __dirname = dirname(__filename);
+            const pkgPath = join(__dirname, '..', 'package.json');
+            const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+            deploymentInfo = `v${pkg.version}`;
+          } catch (e2) {
+            // Fallback to unknown
+          }
+        }
+        
         console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort} (0.0.0.0)`);
+        console.error(`Deployment: ${deploymentInfo}`);
         console.error(`Endpoints available:`);
         console.error(`  - SSE Endpoint: http://0.0.0.0:${resolvedPort}/sse`);
         console.error(`  - Messages Endpoint: http://0.0.0.0:${resolvedPort}/messages`);
