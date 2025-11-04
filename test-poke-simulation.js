@@ -89,7 +89,16 @@ async function testSSEConnection() {
         eventSource.addEventListener('error', (error) => {
             if (!connectionEventReceived) {
                 eventSource.close();
-                reject(new Error(`SSE connection error: ${error.message || 'Unknown error'}`));
+                // Check readyState to get more information about the error
+                let errorMsg = 'Unknown error';
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    errorMsg = 'SSE connection closed - check authentication and server status';
+                } else if (error && error.message) {
+                    errorMsg = `SSE connection error: ${error.message}`;
+                } else {
+                    errorMsg = 'SSE connection failed - check authentication and server URL';
+                }
+                reject(new Error(errorMsg));
             }
         });
 
