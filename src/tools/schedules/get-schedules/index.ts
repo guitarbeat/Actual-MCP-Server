@@ -18,6 +18,10 @@ export async function handler(
 
     return successWithJson(schedules);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: 'Failed to retrieve schedules from Actual.',
+      suggestion:
+        'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
+    });
   }
 }

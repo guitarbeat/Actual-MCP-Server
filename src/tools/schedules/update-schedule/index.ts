@@ -3,6 +3,7 @@
 // ----------------------------
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { missingStringArgument } from '../../../utils/tool-error-builders.js';
 import { updateSchedule } from '../../../actual-api.js';
 
 export const schema = {
@@ -57,7 +58,10 @@ export async function handler(
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.scheduleId || typeof args.scheduleId !== 'string') {
-      return errorFromCatch('scheduleId is required and must be a string');
+      return missingStringArgument(
+        'scheduleId',
+        'Use the get-schedules tool to list recurring schedules and retry with a valid scheduleId.',
+      );
     }
 
     const data: Record<string, unknown> = {};
@@ -91,6 +95,10 @@ export async function handler(
 
     return successWithJson('Successfully updated schedule ' + args.scheduleId);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: `Failed to update schedule ${String(args.scheduleId ?? '')}`.trim(),
+      suggestion:
+        'Confirm the schedule exists and that any referenced payees, accounts, or categories are valid before retrying.',
+    });
   }
 }

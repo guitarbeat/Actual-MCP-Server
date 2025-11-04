@@ -38,12 +38,25 @@ describe('update-schedule tool', () => {
   it('edge: scheduleId required', async () => {
     const res = await handler({});
     expect(res.isError).toBe(true);
+    const payload = JSON.parse((res.content?.[0] as any).text as string);
+    expect(payload).toEqual({
+      error: true,
+      message: 'scheduleId is required and must be a string',
+      suggestion: 'Use the get-schedules tool to list recurring schedules and retry with a valid scheduleId.',
+    });
   });
 
   it('failure: surfaces API error', async () => {
     mockApi.updateSchedule.mockRejectedValue(new Error('fail'));
     const res = await handler({ scheduleId: 'sch_x' });
     expect(res.isError).toBe(true);
+    const payload = JSON.parse((res.content?.[0] as any).text as string);
+    expect(payload).toEqual({
+      error: true,
+      message: 'fail',
+      suggestion:
+        'Confirm the schedule exists and that any referenced payees, accounts, or categories are valid before retrying.',
+    });
   });
 });
 

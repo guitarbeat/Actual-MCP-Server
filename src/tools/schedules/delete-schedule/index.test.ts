@@ -27,12 +27,25 @@ describe('delete-schedule tool', () => {
   it('edge: scheduleId required', async () => {
     const res = await handler({});
     expect(res.isError).toBe(true);
+    const payload = JSON.parse((res.content?.[0] as any).text as string);
+    expect(payload).toEqual({
+      error: true,
+      message: 'scheduleId is required and must be a string',
+      suggestion: 'Use the get-schedules tool to list recurring schedules and retry with a valid scheduleId.',
+    });
   });
 
   it('failure: surfaces API error', async () => {
     mockApi.deleteSchedule.mockRejectedValue(new Error('nope'));
     const res = await handler({ scheduleId: 'sch_bad' });
     expect(res.isError).toBe(true);
+    const payload = JSON.parse((res.content?.[0] as any).text as string);
+    expect(payload).toEqual({
+      error: true,
+      message: 'nope',
+      suggestion:
+        'Confirm the schedule still exists in Actual and that you have permission to delete it before retrying.',
+    });
   });
 });
 
