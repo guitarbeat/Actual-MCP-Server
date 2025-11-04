@@ -1,8 +1,7 @@
 ### 🔄 Project Awareness & Context
 
-- **Always read `PLANNING.md`** at the start of a new conversation to understand the project's architecture, goals, style, and constraints.
-- **Check `TASK.md`** before starting a new task. If the task isn’t listed, add it with a brief description and today's date.
-- **Use consistent naming conventions, file structure, and architecture patterns** as described in `PLANNING.md`.
+- **Review the main `README.md`** and `docs/` folder to understand the project's architecture, goals, style, and constraints.
+- **Use consistent naming conventions, file structure, and architecture patterns** based on existing codebase patterns.
 - **Follow the existing TypeScript project structure** and maintain consistency with established patterns.
 
 ### 🧱 Code Structure & Modularity
@@ -20,7 +19,6 @@
     - `report-generator.ts`: Output formatting.
     - `types.ts`: Tool-specific type definitions.
   - **Core Utilities** (`src/core/`): Shared functionality for data fetching, input handling, aggregation, and mapping.
-- **Use clear, consistent imports** (prefer relative imports within packages).
 - **Use clear, consistent imports** (prefer relative imports within packages).
 - **Use process.env** for environment variables.
 
@@ -53,8 +51,8 @@
 
 ### ✅ Task Completion
 
-- **Mark completed tasks in `TASK.md`** immediately after finishing them.
-- Add new sub-tasks or TODOs discovered during development to `TASK.md` under a “Discovered During Work” section.
+- **Document significant changes** in commit messages and pull request descriptions.
+- **Update relevant documentation** when adding new features or changing behavior.
 
 ### 📎 Style & Conventions
 
