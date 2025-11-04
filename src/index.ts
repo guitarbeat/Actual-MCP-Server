@@ -278,9 +278,14 @@ async function main(): Promise<void> {
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
       server.connect(transport).then(() => {
+        // Override console methods to send logs to MCP client
         console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
         console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+      }).catch((error) => {
+        console.error('Error connecting SSE transport:', error);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to establish SSE connection' });
+        }
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
@@ -313,6 +318,7 @@ async function main(): Promise<void> {
   }
 }
 
+// Setup handlers on the server instance BEFORE main() runs
 setupResources(server);
 setupTools(server, enableWrite);
 setupPrompts(server);
