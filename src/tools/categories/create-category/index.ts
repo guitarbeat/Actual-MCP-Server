@@ -4,6 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { createCategory } from '../../../actual-api.js';
+import { createCategoryArgsSchema, type CreateCategoryArgs } from './types.js';
 
 export const schema = {
   name: 'create-category',
@@ -25,16 +26,14 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: CreateCategoryArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (!args.name || typeof args.name !== 'string') {
-      return errorFromCatch('name is required and must be a string');
-    }
+    const parsedArgs = createCategoryArgsSchema.parse(args);
 
     const data: Record<string, unknown> = {
-      name: args.name,
-      group_id: args.groupId,
+      name: parsedArgs.name,
+      group_id: parsedArgs.groupId,
     };
 
     const id: string = await createCategory(data);
