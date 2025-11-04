@@ -1,26 +1,22 @@
-// ----------------------------
-// GET SCHEDULES TOOL
-// ----------------------------
+import { z } from 'zod';
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import { getSchedules } from '../../../actual-api.js';
+import { errorFromCatch } from '../../../utils/response';
+import { actualApi } from '../../../actual-api';
 
-export const schema = {
-  name: 'get-schedules',
-  description: 'Get all recurring schedules',
-  inputSchema: {
-    type: 'object',
-    properties: {},
-  },
-};
+export const schema = z.object({
+  tool: z.literal('get-schedules'),
+  args: z.object({}),
+});
 
-export async function handler(
-  _args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export type GetSchedules = z.infer<typeof schema>;
+
+export async function handler() {
   try {
-    const schedules = await getSchedules();
-
-    return successWithJson(schedules);
+    const schedules = await actualApi.getSchedules();
+    return {
+      type: 'string',
+      result: JSON.stringify(schedules, null, 2),
+    };
   } catch (err) {
     return errorFromCatch(err);
   }
