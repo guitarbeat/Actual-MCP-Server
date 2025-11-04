@@ -27,6 +27,13 @@ describe('get-schedules tool', () => {
     mockApi.getSchedules.mockRejectedValue(new Error('boom'));
     const res = await handler({});
     expect(res.isError).toBe(true);
+    const payload = JSON.parse((res.content?.[0] as any).text as string);
+    expect(payload).toEqual({
+      error: true,
+      message: 'boom',
+      suggestion:
+        'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
+    });
   });
 });
 

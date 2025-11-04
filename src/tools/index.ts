@@ -159,7 +159,10 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
 
       const tool = allTools.find((t) => (t as any).schema.name === name);
       if (!tool) {
-        return error(`Unknown tool ${name}`);
+        return error(
+          `Unknown tool ${name}`,
+          'Call list-tools to inspect supported tool names before retrying this request.',
+        );
       }
       // Execute the requested tool
       switch (name) {
@@ -195,7 +198,11 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       }
     } catch (err) {
       console.error(`Error executing tool ${request.params.name}:`, err);
-      return errorFromCatch(err);
+      return errorFromCatch(err, {
+        fallbackMessage: `Failed to execute tool ${request.params.name}`,
+        suggestion:
+          'Check the Actual Budget server logs and ensure the provided arguments match the tool schema before retrying.',
+      });
     } finally {
       await shutdownActualApi();
     }

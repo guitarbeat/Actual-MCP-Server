@@ -2,7 +2,7 @@
 // UPDATE ACCOUNT TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, error, errorFromCatch } from '../../../utils/response.js';
 import { updateAccount } from '../../../actual-api.js';
 
 export const schema = {
@@ -37,7 +37,10 @@ export async function handler(
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.accountId || typeof args.accountId !== 'string') {
-      return errorFromCatch('accountId is required and must be a string');
+      return error(
+        'accountId is required and must be a string',
+        'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+      );
     }
 
     const data: Record<string, unknown> = {};
@@ -55,6 +58,10 @@ export async function handler(
 
     return successWithJson('Successfully updated account ' + args.accountId);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: `Failed to update account ${String(args.accountId ?? '')}`.trim(),
+      suggestion:
+        'Confirm the account still exists and that any updated fields meet Actual Budget constraints before retrying.',
+    });
   }
 }

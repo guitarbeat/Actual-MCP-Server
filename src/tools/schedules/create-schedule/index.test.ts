@@ -48,6 +48,12 @@ describe('create-schedule tool', () => {
   it('edge: rejects missing required fields', async () => {
     const bad = await handler({ name: 'x' });
     expect(bad.isError).toBe(true);
+    const payload = JSON.parse((bad.content?.[0] as any).text as string);
+    expect(payload).toEqual({
+      error: true,
+      message: 'accountId is required and must be a string',
+      suggestion: 'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+    });
   });
 
   it('failure: surfaces API error', async () => {
@@ -60,8 +66,13 @@ describe('create-schedule tool', () => {
       rule: 'monthly',
     });
     expect(res.isError).toBe(true);
-    const text = (res.content?.[0] as any).text as string;
-    expect(text).toContain('API down');
+    const payload = JSON.parse((res.content?.[0] as any).text as string);
+    expect(payload).toEqual({
+      error: true,
+      message: 'API down',
+      suggestion:
+        'Verify the accountId, category, and payee references are valid and that the Actual server is reachable.',
+    });
   });
 });
 
