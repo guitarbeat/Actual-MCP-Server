@@ -4,6 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { updateCategory } from '../../../actual-api.js';
+import { updateCategoryArgsSchema, type UpdateCategoryArgs } from './types.js';
 
 export const schema = {
   name: 'update-category',
@@ -29,24 +30,22 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: UpdateCategoryArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (!args.id || typeof args.id !== 'string') {
-      return errorFromCatch('id is required and must be a string');
+    const parsedArgs = updateCategoryArgsSchema.parse(args);
+
+    const data: Record<string, unknown> = {
+      name: parsedArgs.name,
+    };
+
+    if (parsedArgs.groupId) {
+      data.group_id = parsedArgs.groupId;
     }
 
-    const data: Record<string, unknown> = {};
-    if (args.name) {
-      data.name = args.name;
-    }
-    if (args.groupId) {
-      data.group_id = args.groupId;
-    }
+    await updateCategory(parsedArgs.id, data);
 
-    await updateCategory(args.id, data);
-
-    return successWithJson('Successfully updated category ' + args.id);
+    return successWithJson('Successfully updated category ' + parsedArgs.id);
   } catch (err) {
     return errorFromCatch(err);
   }
