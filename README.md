@@ -92,68 +92,44 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 - **`financial-insights`** - Generate insights and recommendations based on your financial data
 - **`budget-review`** - Analyze your budget compliance and suggest adjustments
 
-## Installation
+## Quick Start - Deploy to Railway
+
+The easiest way to use this MCP server is to deploy it to Railway using Nixpacks.
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [Actual Budget](https://actualbudget.com/) installed and configured
+- A [Railway](https://railway.app/) account
+- [Actual Budget](https://actualbudget.com/) server URL and credentials
 - [Claude Desktop](https://claude.ai/download) or another MCP-compatible client
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (optional)
 
-### Remote access
+### Step 1: Deploy to Railway
 
-Pull the latest docker image:
+1. **Fork or connect your repository to Railway:**
+   - Go to [Railway](https://railway.app/)
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose this repository
 
-```
-docker pull sstefanov/actual-mcp:latest
-```
+2. **Railway will automatically:**
+   - Detect the Node.js project using Nixpacks
+   - Run `npm ci` to install dependencies
+   - Run `npm run build` to compile TypeScript
+   - Start the server with the command from `railway.json`
 
-### Local setup
+3. **Configure environment variables in Railway:**
+   - Go to your Railway project settings
+   - Add the following environment variables:
+     - `ACTUAL_SERVER_URL` - Your Actual Budget server URL (e.g., `https://your-actual-server.com`)
+     - `ACTUAL_PASSWORD` - Your Actual Budget server password
+     - `ACTUAL_BUDGET_SYNC_ID` - Your budget ID (optional, if you have multiple budgets)
+     - `ACTUAL_BUDGET_PASSWORD` - Password for end-to-end encrypted budgets (optional)
+     - `BEARER_TOKEN` - A secure random token for authentication (recommended for production)
 
-1. Clone the repository:
+4. **Get your Railway deployment URL:**
+   - Railway will provide a public URL (e.g., `https://your-app.railway.app`)
+   - Your MCP server will be available at `https://your-app.railway.app/mcp`
 
-```bash
-git clone https://github.com/sstefanov/actual-mcp.git
-cd actual-mcp
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Build the server:
-
-```bash
-npm run build
-```
-
-4. Build the local docker image (optional):
-
-```bash
-docker build -t <local-image-name> .
-```
-
-5. Configure environment variables (optional):
-
-```bash
-# Path to your Actual Budget data directory (default: ~/.actual)
-export ACTUAL_DATA_DIR="/path/to/your/actual/data"
-
-# If using a remote Actual server
-export ACTUAL_SERVER_URL="https://your-actual-server.com"
-export ACTUAL_PASSWORD="your-password"
-
-# Specific budget to use (optional)
-export ACTUAL_BUDGET_SYNC_ID="your-budget-id"
-
-# Password for end-to-end encrypted budgets (optional)
-export ACTUAL_BUDGET_PASSWORD="your-budget-password"
-```
-
-## Usage with Claude Desktop
+### Step 2: Connect Claude Desktop to Your Remote Server
 
 To use this server with Claude Desktop, add it to your Claude configuration:
 
@@ -169,75 +145,25 @@ On Windows:
 code %APPDATA%\Claude\claude_desktop_config.json
 ```
 
-Add the following to your configuration...
-
-### a. Using Node.js (npx version):
+Add the following configuration to connect to your Railway deployment:
 
 ```json
 {
   "mcpServers": {
     "actualBudget": {
-      "command": "node",
-      "args": ["-y", "actual-mcp", "--enable-write"],
-      "env": {
-        "ACTUAL_DATA_DIR": "path/to/your/data",
-        "ACTUAL_PASSWORD": "your-password",
-        "ACTUAL_SERVER_URL": "http://your-actual-server.com",
-        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id",
-        "ACTUAL_BUDGET_PASSWORD": "your-budget-password"
+      "url": "https://your-app.railway.app/mcp",
+      "headers": {
+        "Authorization": "Bearer your-bearer-token"
       }
     }
   }
 }
 
-### a. Using Node.js (local only):
+Replace:
+- `https://your-app.railway.app/mcp` with your Railway deployment URL + `/mcp`
+- `your-bearer-token` with the `BEARER_TOKEN` you set in Railway environment variables
 
-```json
-{
-  "mcpServers": {
-    "actualBudget": {
-      "command": "node",
-      "args": ["/path/to/your/clone/build/index.js", "--enable-write"],
-      "env": {
-        "ACTUAL_DATA_DIR": "path/to/your/data",
-        "ACTUAL_PASSWORD": "your-password",
-        "ACTUAL_SERVER_URL": "http://your-actual-server.com",
-        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id",
-        "ACTUAL_BUDGET_PASSWORD": "your-budget-password"
-      }
-    }
-  }
-}
-```
-
-### b. Using Docker (local or remote images):
-
-```json
-{
-  "mcpServers": {
-    "actualBudget": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-v",
-        "/path/to/your/data:/data",
-        "-e",
-        "ACTUAL_PASSWORD=your-password",
-        "-e",
-        "ACTUAL_SERVER_URL=https://your-actual-server.com",
-        "-e",
-        "ACTUAL_BUDGET_SYNC_ID=your-budget-id",
-        "-e",
-        "ACTUAL_BUDGET_PASSWORD=your-budget-password",
-        "sstefanov/actual-mcp:latest",
-        "--enable-write"
-      ]
-    }
-  }
-}
-```
+> **Note**: If you're using Claude Desktop, it may require HTTP/SSE transport support. Check your Claude Desktop version supports remote MCP servers. For Poke MCP and other modern MCP clients, use the configuration above.
 
 After saving the configuration, restart Claude Desktop.
 
@@ -247,37 +173,76 @@ After saving the configuration, restart Claude Desktop.
 
 > 💡 Use `--enable-write` to enable write-access tools.
 
-## Deployment
+## Usage with Poke MCP
 
-This MCP server can be deployed to various platforms. The build output in the `build/` directory is required for deployment.
+[Poke MCP](https://github.com/modelcontextprotocol/poke-mcp) is a modern MCP client that supports HTTP/SSE transport. 
 
-### Platform-Specific Notes
+### Quick Start
 
-- **Vercel/Netlify**: Configuration files (`vercel.json`, `netlify.toml`) are included. The platform will automatically run `npm run build` during deployment.
-- **Railway/Render**: Use the included `railway.json` or ensure the build command runs before starting the server.
-- **Docker**: The included `Dockerfile` handles building automatically.
+1. **Start the server in SSE mode:**
+
+```bash
+npm run build
+node build/index.js --sse --enable-write
+```
+
+2. **Connect Poke MCP to the server:**
+
+The server will be available at `http://localhost:3000/mcp` for Poke MCP connections.
+
+### Configuration
+
+For detailed Poke MCP setup instructions, see the [Poke MCP Guide](./docs/POKE_MCP.md).
+
+**Quick example:**
+
+```bash
+# Start server with SSE and bearer auth (recommended for production)
+export BEARER_TOKEN="your-secure-token"
+node build/index.js --sse --enable-write --enable-bearer
+
+# Connect Poke MCP to: http://localhost:3000/mcp
+# Use bearer token: your-secure-token
+```
+
+For local development without authentication:
+
+```bash
+node build/index.js --sse --enable-write
+```
+
+## Alternative Deployment Options
+
+### Other Platforms
+
+- **Render/Other Platforms**: Ensure the build command (`npm run build`) runs before starting the server. The start command should be `node build/index.js --sse --enable-write`.
 
 **Important**: Ensure your deployment platform runs `npm run build` before starting the server, as the `build/` directory is gitignored.
 
-## Running an SSE Server
+> **Note**: Docker images are available for alternative deployments, but Nixpacks is the recommended approach for Railway deployments.
 
-To expose the server over a port using Docker:
+## Local Development (Optional)
+
+For local development or testing only, you can run the server locally:
 
 ```bash
-docker run -i --rm \
-  -p 3000:3000 \
-  -v "/path/to/your/data:/data" \
-  -e ACTUAL_PASSWORD="your-password" \
-  -e ACTUAL_SERVER_URL="http://your-actual-server.com" \
-  -e ACTUAL_BUDGET_SYNC_ID="your-budget-id" \
-  -e ACTUAL_BUDGET_PASSWORD="your-budget-password" \
-  -e BEARER_TOKEN="your-bearer-token" \
-  sstefanov/actual-mcp:latest \
-  --sse --enable-write --enable-bearer
+# Set environment variables
+export ACTUAL_SERVER_URL="https://your-actual-server.com"
+export ACTUAL_PASSWORD="your-password"
+export ACTUAL_BUDGET_SYNC_ID="your-budget-id"
+export BEARER_TOKEN="your-bearer-token"  # Optional but recommended
+
+# Build and run
+npm run build
+node build/index.js --sse --enable-write --enable-bearer
 ```
 
-> ⚠️ Important: When using --enable-bearer, the BEARER_TOKEN environment variable must be set.  
+The server will be available at `http://localhost:3000/mcp` for MCP clients.
+
+> ⚠️ Important: When using `--enable-bearer`, the BEARER_TOKEN environment variable must be set.  
 > 🔒 This is highly recommended if you're exposing your server via a public URL.
+
+> **Note**: For production deployments, use Railway with Nixpacks (see Deployment section above). Docker images are available as an alternative option.
 
 ## Example Queries
 
