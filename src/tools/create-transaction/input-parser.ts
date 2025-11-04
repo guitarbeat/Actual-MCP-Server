@@ -2,7 +2,6 @@
 
 import { CreateTransactionInput, CreateTransactionParseResult } from './types.js';
 import { assertPositiveIntegerCents, assertUuid } from '../../utils/validators.js';
-import { CreateTransactionInput } from './types.js';
 
 export class CreateTransactionInputParser {
   parse(args: unknown): CreateTransactionParseResult {
@@ -37,8 +36,6 @@ export class CreateTransactionInputParser {
     }
 
     const parsedInput: CreateTransactionInput = {
-      accountId,
-    return {
       accountId: validAccountId,
       date,
       amount: validAmount,
@@ -49,10 +46,10 @@ export class CreateTransactionInputParser {
       cleared: typeof cleared === 'boolean' ? cleared : true, // Default to cleared
     };
 
-    const amountInCents = Math.round(amount * 100);
-    if (amountInCents !== 0 && Math.abs(amountInCents) < 5) {
-      const displayAmount = `$${Math.abs(amount).toFixed(2)}`;
-      const formattedAmount = amount < 0 ? `-${displayAmount}` : displayAmount;
+    // Check for unusually small amounts and add warning
+    if (validAmount !== 0 && Math.abs(validAmount) < 5) {
+      const displayAmount = (Math.abs(validAmount) / 100).toFixed(2);
+      const formattedAmount = validAmount < 0 ? `-$${displayAmount}` : `$${displayAmount}`;
       warnings.push(`Amount ${formattedAmount} is unusually small; please confirm the cents value.`);
     }
 

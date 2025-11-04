@@ -3,11 +3,7 @@ import { handler } from './index.js';
 import type { SetBudgetCarryoverArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  setBudgetCarryover: vi.fn<[
-    string,
-    string,
-    boolean
-  ], Promise<void>>(),
+  setBudgetCarryover: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', () => mockApi);
