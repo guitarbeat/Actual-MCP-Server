@@ -4,6 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { setBudgetAmount } from '../../../actual-api.js';
+import { setBudgetAmountArgsSchema, type SetBudgetAmountArgs } from './types.js';
 
 export const schema = {
   name: 'set-budget-amount',
@@ -29,23 +30,15 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: SetBudgetAmountArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (!args.month || typeof args.month !== 'string') {
-      return errorFromCatch('month is required and must be a string in YYYY-MM format');
-    }
-    if (!args.categoryId || typeof args.categoryId !== 'string') {
-      return errorFromCatch('categoryId is required and must be a string');
-    }
-    if (args.amount === undefined || typeof args.amount !== 'number') {
-      return errorFromCatch('amount is required and must be a number');
-    }
+    const parsedArgs = setBudgetAmountArgsSchema.parse(args);
 
-    await setBudgetAmount(args.month as string, args.categoryId as string, args.amount as number);
+    await setBudgetAmount(parsedArgs.month, parsedArgs.categoryId, parsedArgs.amount);
 
     return successWithJson(
-      `Successfully set budget amount of ${args.amount} for category ${args.categoryId} in month ${args.month}`
+      `Successfully set budget amount of ${parsedArgs.amount} for category ${parsedArgs.categoryId} in month ${parsedArgs.month}`
     );
   } catch (err) {
     return errorFromCatch(err);
