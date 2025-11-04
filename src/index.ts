@@ -594,17 +594,39 @@ async function main(): Promise<void> {
           // ! Only attempt log server if explicitly configured
           if (process.env.LOG_SERVER_URL || process.env.NODE_ENV === 'development') {
             try {
-              await fetch(logServerUrl, {
+              // Use built-in fetch (Node.js 18+ has it globally)
+              // Create AbortController with timeout
+              let signal: AbortSignal | undefined;
+              if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+                signal = AbortSignal.timeout(1000);
+              } else if (typeof AbortController !== 'undefined') {
+                // Fallback for older Node versions
+                const controller = new AbortController();
+                setTimeout(() => controller.abort(), 1000);
+                signal = controller.signal;
+              }
+
+              const response = await fetch(logServerUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: `[${level}] ${message}` }),
-                signal: AbortSignal.timeout(1000), // * 1 second timeout
+                signal,
               });
+
+              // Check if response exists and has status property before accessing
+              if (response && typeof response === 'object' && 'status' in response) {
+                // Optionally check response status (but don't throw)
+                if (!response.ok && process.env.LOG_SERVER_URL) {
+                  // Only log if explicitly configured
+                  process.stderr.write(`[log-server] Non-OK response: ${response.status}\n`);
+                }
+              }
             } catch (e) {
               // * Silently fail - log server is optional
               // Only log if explicitly configured
               if (process.env.LOG_SERVER_URL) {
-                process.stderr.write(`[log-server error] ${(e as Error).message}\n`);
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                process.stderr.write(`[log-server error] ${errorMessage}\n`);
               }
             }
           }
