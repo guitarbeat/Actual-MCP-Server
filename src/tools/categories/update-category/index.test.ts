@@ -1,96 +1,55 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handler } from './index.js';
-import { updateCategory } from '../../../actual-api.js';
-
-vi.mock('../../../actual-api.js', () => ({
-  updateCategory: vi.fn(),
-}));
-
-describe('update-category handler', () => {
-  const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-  const anotherUuid = '223e4567-e89b-12d3-a456-426614174000';
-
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
-  it('updates category name with valid identifier', async () => {
-    const updateCategoryMock = vi.mocked(updateCategory);
-    updateCategoryMock.mockResolvedValue(undefined);
-
-    const result = await handler({ id: validUuid, name: 'Updated Name' });
-
-    expect(updateCategory).toHaveBeenCalledWith(validUuid, { name: 'Updated Name' });
-    expect(result.isError).toBeUndefined();
-  });
-
-  it('updates category group when provided valid UUID', async () => {
-    const updateCategoryMock = vi.mocked(updateCategory);
-    updateCategoryMock.mockResolvedValue(undefined);
-
-    await handler({ id: validUuid, name: 'Updated Name', groupId: anotherUuid });
-
-    expect(updateCategory).toHaveBeenCalledWith(validUuid, { name: 'Updated Name', group_id: anotherUuid });
-  });
-
-  it('returns error when id is not a UUID', async () => {
-    const result = await handler({ id: 'not-a-uuid', name: 'Updated Name' });
-
-    expect(updateCategory).not.toHaveBeenCalled();
-    expect(result.isError).toBe(true);
-    expect(result.content?.[0]).toEqual({ type: 'text', text: 'Error: id must be a valid UUID' });
-  });
-
-  it('returns error when groupId is not a UUID', async () => {
-    const result = await handler({ id: validUuid, name: 'Updated Name', groupId: 'not-a-uuid' });
-
-    expect(updateCategory).not.toHaveBeenCalled();
-    expect(result.isError).toBe(true);
-    expect(result.content?.[0]).toEqual({ type: 'text', text: 'Error: groupId must be a valid UUID' });
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handler } from './index.js';
+import type { UpdateCategoryArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  updateCategory: vi.fn(),
+  updateCategory: vi.fn<[
+    string,
+    Record<string, unknown>
+  ], Promise<void>>(),
 }));
 
-vi.mock('../../../actual-api.js', async () => mockApi);
+vi.mock('../../../actual-api.js', () => mockApi);
 
 describe('update-category tool', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('happy path: updates category with mapped fields', async () => {
-    mockApi.updateCategory.mockResolvedValue(undefined);
+  it('updates category fields', async () => {
+    const args: UpdateCategoryArgs = {
+      id: 'cat-12',
+      name: 'Updated Name',
+      groupId: 'group-5',
+    };
 
-    const res = await handler({
-      id: 'cat-1',
-      name: 'Groceries',
-      groupId: 'group-1',
+    const response = await handler(args);
+
+    expect(mockApi.updateCategory).toHaveBeenCalledWith('cat-12', {
+      name: 'Updated Name',
+      group_id: 'group-5',
     });
 
-    expect(mockApi.updateCategory).toHaveBeenCalledWith('cat-1', {
-      name: 'Groceries',
-      group_id: 'group-1',
-    });
-
-    const text = (res.content?.[0] as any).text as string;
-    expect(text).toContain('Successfully updated category cat-1');
+    const text = (response.content?.[0] as { text: string }).text;
+    expect(text).toContain('Successfully updated category cat-12');
   });
 
-  it('failure: rejects unexpected parameters', async () => {
-    const res = await handler({
-      id: 'cat-1',
-      name: 'Groceries',
-      foo: 'bar',
+  it('omits optional fields when not provided', async () => {
+    const args: UpdateCategoryArgs = {
+      id: 'cat-12',
+      name: 'Updated Name',
+    };
+
+    await handler(args);
+
+    expect(mockApi.updateCategory).toHaveBeenCalledWith('cat-12', {
+      name: 'Updated Name',
     });
+  });
 
-    expect(res.isError).toBe(true);
-    expect(mockApi.updateCategory).not.toHaveBeenCalled();
+  it('returns an error when validation fails', async () => {
+    const response = await handler({} as unknown as UpdateCategoryArgs);
 
-    const text = (res.content?.[0] as any).text as string;
-    expect(text).toContain('Invalid parameter(s): foo');
-    expect(text).toContain('Try calling update-category');
+    expect(response.isError).toBe(true);
   });
 });

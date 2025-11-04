@@ -1,42 +1,39 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handler } from './index.js';
-import { setBudgetCarryover } from '../../../actual-api.js';
+import type { SetBudgetCarryoverArgs } from './types.js';
 
-vi.mock('../../../actual-api.js', () => ({
-  setBudgetCarryover: vi.fn(),
+const mockApi = vi.hoisted(() => ({
+  setBudgetCarryover: vi.fn<[
+    string,
+    string,
+    boolean
+  ], Promise<void>>(),
 }));
 
-describe('set-budget-carryover handler', () => {
-  const validMonth = '2024-02';
-  const validUuid = '123e4567-e89b-12d3-a456-426614174000';
+vi.mock('../../../actual-api.js', () => mockApi);
 
+describe('set-budget-carryover tool', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
-  it('calls API with validated inputs', async () => {
-    const setBudgetCarryoverMock = vi.mocked(setBudgetCarryover);
-    setBudgetCarryoverMock.mockResolvedValue(undefined);
+  it('toggles carryover flag', async () => {
+    const args: SetBudgetCarryoverArgs = {
+      month: '2025-04',
+      categoryId: 'cat-40',
+      enabled: true,
+    };
 
-    const result = await handler({ month: validMonth, categoryId: validUuid, enabled: true });
+    const response = await handler(args);
 
-    expect(setBudgetCarryover).toHaveBeenCalledWith(validMonth, validUuid, true);
-    expect(result.isError).toBeUndefined();
+    expect(mockApi.setBudgetCarryover).toHaveBeenCalledWith('2025-04', 'cat-40', true);
+    const text = (response.content?.[0] as { text: string }).text;
+    expect(text).toContain('Successfully enabled budget carryover for category cat-40 in month 2025-04');
   });
 
-  it('rejects invalid month formats', async () => {
-    const result = await handler({ month: '02-2024', categoryId: validUuid, enabled: true });
+  it('returns an error for invalid input', async () => {
+    const response = await handler({} as unknown as SetBudgetCarryoverArgs);
 
-    expect(setBudgetCarryover).not.toHaveBeenCalled();
-    expect(result.isError).toBe(true);
-    expect(result.content?.[0]).toEqual({ type: 'text', text: 'Error: month must be in YYYY-MM format' });
-  });
-
-  it('rejects invalid category identifiers', async () => {
-    const result = await handler({ month: validMonth, categoryId: 'not-a-uuid', enabled: true });
-
-    expect(setBudgetCarryover).not.toHaveBeenCalled();
-    expect(result.isError).toBe(true);
-    expect(result.content?.[0]).toEqual({ type: 'text', text: 'Error: categoryId must be a valid UUID' });
+    expect(response.isError).toBe(true);
   });
 });

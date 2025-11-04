@@ -4,6 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { holdBudgetForNextMonth } from '../../../actual-api.js';
+import { holdBudgetForNextMonthArgsSchema, type HoldBudgetForNextMonthArgs } from './types.js';
 
 export const schema = {
   name: 'hold-budget-for-next-month',
@@ -25,19 +26,16 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: HoldBudgetForNextMonthArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (!args.month || typeof args.month !== 'string') {
-      return errorFromCatch('month is required and must be a string in YYYY-MM format');
-    }
-    if (args.amount === undefined || typeof args.amount !== 'number') {
-      return errorFromCatch('amount is required and must be a number');
-    }
+    const parsedArgs = holdBudgetForNextMonthArgsSchema.parse(args);
 
-    await holdBudgetForNextMonth(args.month as string, args.amount as number);
+    await holdBudgetForNextMonth(parsedArgs.month, parsedArgs.amount);
 
-    return successWithJson(`Successfully held budget amount of ${args.amount} for next month in ${args.month}`);
+    return successWithJson(
+      `Successfully held budget amount of ${parsedArgs.amount} for next month in ${parsedArgs.month}`
+    );
   } catch (err) {
     return errorFromCatch(err);
   }

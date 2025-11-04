@@ -5,6 +5,7 @@
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { fetchAllCategoryGroups } from '../../../core/data/fetch-categories.js';
 import type { CategoryGroup } from '../../../core/types/domain.js';
+import { getGroupedCategoriesArgsSchema, type GetGroupedCategoriesArgs } from './types.js';
 
 export const schema = {
   name: 'get-grouped-categories',
@@ -17,8 +18,12 @@ export const schema = {
   },
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export async function handler(
+  args: GetGroupedCategoriesArgs | undefined = undefined
+): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
+    getGroupedCategoriesArgsSchema.parse(args ?? {});
+
     const categoryGroups: CategoryGroup[] = await fetchAllCategoryGroups();
 
     return successWithJson(categoryGroups);
