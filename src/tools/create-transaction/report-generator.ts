@@ -4,11 +4,33 @@ import { formatAmount } from '../../utils.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 
 export class CreateTransactionReportGenerator {
-  generate(input: CreateTransactionInput, result: EntityCreationResult): string {
+  generate(
+    input: CreateTransactionInput,
+    result: EntityCreationResult,
+    additionalWarnings: string[] = []
+  ): string {
     const { accountId, date, amount, payee, category, categoryGroup, notes, cleared } = input;
-    const { createdPayee, createdCategory, transactionIds = [], wasAdded, wasUpdated, errors } = result;
+    const {
+      createdPayee,
+      createdCategory,
+      transactionIds = [],
+      wasAdded,
+      wasUpdated,
+      errors,
+      warnings: resultWarnings = [],
+    } = result;
+
+    const warnings = [...resultWarnings, ...additionalWarnings];
 
     let report = `# Transaction ${wasUpdated ? 'Updated' : 'Created'} Successfully\n\n`;
+
+    if (warnings.length > 0) {
+      report += `## Warnings\n\n`;
+      warnings.forEach((warning) => {
+        report += `- ${warning}\n`;
+      });
+      report += `\n`;
+    }
 
     // Transaction details
     report += `## Transaction Details\n\n`;

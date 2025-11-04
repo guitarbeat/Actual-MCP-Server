@@ -11,6 +11,11 @@ export interface CreateTransactionInput {
   cleared?: boolean;
 }
 
+export interface CreateTransactionParseResult {
+  input: CreateTransactionInput;
+  warnings: string[];
+}
+
 export interface CreatedTransaction {
   id: string;
   accountId: string;
@@ -33,4 +38,5 @@ export interface EntityCreationResult {
   wasAdded: boolean;
   wasUpdated: boolean;
   errors?: string[];
+  warnings?: string[];
 }
