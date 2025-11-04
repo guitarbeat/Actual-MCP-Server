@@ -278,14 +278,8 @@ async function main(): Promise<void> {
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
       server.connect(transport).then(() => {
-        // Override console methods to send logs to MCP client
         console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
         console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
-      }).catch((error) => {
-        console.error('Error connecting SSE transport:', error);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Failed to establish SSE connection' });
-        }
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
