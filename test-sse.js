@@ -42,13 +42,13 @@ function test(name, fn) {
 
 async function testSSEConnection() {
   log('Testing SSE connection...');
-  
+
   return new Promise((resolve, reject) => {
     const url = `${SERVER_URL}/sse`;
     // EventSource from 'eventsource' package supports headers option
     const eventSource = new EventSource(url, {
       headers: {
-        'Authorization': `Bearer ${BEARER_TOKEN}`,
+        Authorization: `Bearer ${BEARER_TOKEN}`,
       },
     });
 
@@ -70,7 +70,7 @@ async function testSSEConnection() {
       }
     });
 
-    eventSource.addEventListener('error', (event) => {
+    eventSource.addEventListener('error', () => {
       eventSource.close();
       // EventSource error event doesn't have status code in the event object
       // Check readyState to determine connection status
@@ -100,7 +100,7 @@ async function testMessageRouting() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
+      Authorization: `Bearer ${BEARER_TOKEN}`,
       'X-MCP-Connection-ID': connectionId,
     },
     body: JSON.stringify({
@@ -140,7 +140,7 @@ async function testMessageRoutingWithoutID() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
+      Authorization: `Bearer ${BEARER_TOKEN}`,
       // No X-MCP-Connection-ID header
     },
     body: JSON.stringify({
@@ -167,7 +167,7 @@ async function testMessageRoutingWithInvalidID() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
+      Authorization: `Bearer ${BEARER_TOKEN}`,
       'X-MCP-Connection-ID': 'invalid-connection-id-12345',
     },
     body: JSON.stringify({
@@ -192,7 +192,7 @@ async function testRootEndpoint() {
 
   const response = await fetch(`${SERVER_URL}/`, {
     headers: {
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
+      Authorization: `Bearer ${BEARER_TOKEN}`,
     },
   });
 
@@ -252,10 +252,9 @@ try {
     log('EventSource not available. Install eventsource package: npm install eventsource', 'error');
     process.exit(1);
   }
-} catch (error) {
+} catch {
   log('EventSource not available. Install eventsource package: npm install eventsource', 'error');
   process.exit(1);
 }
 
 runTests();
-

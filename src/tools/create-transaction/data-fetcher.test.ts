@@ -154,20 +154,17 @@ describe('CreateTransactionDataFetcher', () => {
         createdCategory: true,
       });
 
-      expect(mockApi.importTransactions).toHaveBeenCalledWith(
-        'account-1',
-        [
-          expect.objectContaining({
-            date: '2023-12-15',
-            amount: 2550, // Amount in cents
-            payee: 'payee-new',
-            category: 'cat-new',
-            notes: 'Test transaction',
-            cleared: true,
-            imported_id: expect.stringContaining('manual-account-1-2023-12-15-2550-'),
-          }),
-        ]
-      );
+      expect(mockApi.importTransactions).toHaveBeenCalledWith('account-1', [
+        expect.objectContaining({
+          date: '2023-12-15',
+          amount: 2550, // Amount in cents
+          payee: 'payee-new',
+          category: 'cat-new',
+          notes: 'Test transaction',
+          cleared: true,
+          imported_id: expect.stringContaining('manual-account-1-2023-12-15-2550-'),
+        }),
+      ]);
     });
 
     it('should handle transaction update when duplicate detected', async () => {

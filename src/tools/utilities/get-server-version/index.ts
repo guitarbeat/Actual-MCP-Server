@@ -15,7 +15,7 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  _args: Record<string, unknown>
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     const version = await getServerVersion();
@@ -25,4 +25,3 @@ export async function handler(
     return errorFromCatch(err);
   }
 }
-

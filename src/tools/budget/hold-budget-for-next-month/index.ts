@@ -37,9 +37,7 @@ export async function handler(
 
     await holdBudgetForNextMonth(args.month as string, args.amount as number);
 
-    return successWithJson(
-      `Successfully held budget amount of ${args.amount} for next month in ${args.month}`
-    );
+    return successWithJson(`Successfully held budget amount of ${args.amount} for next month in ${args.month}`);
   } catch (err) {
     return errorFromCatch(err);
   }
