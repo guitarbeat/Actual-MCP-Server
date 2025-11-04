@@ -81,6 +81,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
+    console.error('[AUTH] ❌ Missing Authorization header');
     res.status(401).json({
       error: 'Authorization header required',
     });
@@ -88,6 +89,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   }
 
   if (!authHeader.startsWith('Bearer ')) {
+    console.error('[AUTH] ❌ Invalid Authorization format (must start with "Bearer ")');
     res.status(401).json({
       error: "Authorization header must start with 'Bearer '",
     });
@@ -98,7 +100,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   const expectedToken = process.env.BEARER_TOKEN;
 
   if (!expectedToken) {
-    console.error('BEARER_TOKEN environment variable not set');
+    console.error('[AUTH] ❌ BEARER_TOKEN environment variable not set');
     res.status(500).json({
       error: 'Server configuration error',
     });
@@ -106,11 +108,15 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   }
 
   if (token !== expectedToken) {
+    console.error('[AUTH] ❌ Invalid bearer token (token mismatch)');
+    console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
     res.status(401).json({
       error: 'Invalid bearer token',
     });
     return;
   }
+
+  console.error('[AUTH] ✅ Bearer token validated successfully');
 
   next();
 };
@@ -313,18 +319,25 @@ async function main(): Promise<void> {
     // If you need stateless HTTP transport, use /sse endpoint with SSE transport
 
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
+      console.error(`[SSE] Connection attempt from ${req.ip || req.socket.remoteAddress}`);
+      console.error(`[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], 'accept': req.headers.accept })}`);
+      
       transport = new SSEServerTransport('/messages', res);
       transportReady = false;
+      
+      console.error('[SSE] Creating transport...');
       server
         .connect(transport)
         .then(() => {
           transportReady = true;
+          console.error('[SSE] ✅ Transport connected successfully');
           console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
           console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
         })
         .catch((error) => {
           transportReady = false;
-          console.error('Error connecting SSE transport:', error);
+          console.error('[SSE] ❌ Error connecting SSE transport:', error);
+          console.error('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
           if (!res.headersSent) {
             res.status(500).json({ error: 'Failed to establish SSE connection' });
           }
@@ -332,6 +345,7 @@ async function main(): Promise<void> {
 
       // Clean up transport when connection closes
       res.on('close', () => {
+        console.error('[SSE] Connection closed');
         if (transport) {
           try {
             transport.close();
