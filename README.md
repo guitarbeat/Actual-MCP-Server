@@ -192,7 +192,7 @@ The server will be available at `http://localhost:3000/mcp` for Poke MCP connect
 
 ### Configuration
 
-For detailed Poke MCP setup instructions, see the [Poke MCP Guide](./docs/POKE_MCP.md).
+For detailed setup instructions for all MCP clients, see the [Setup Guide](./docs/SETUP.md).
 
 **Quick example:**
 
