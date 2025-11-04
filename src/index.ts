@@ -46,7 +46,7 @@ dotenv.config({ path: '.env' });
 const server = new Server(
   {
     name: 'Actual Budget',
-    version: '1.0.0',
+    version: '1.2.0',
   },
   {
     capabilities: {
@@ -498,6 +498,15 @@ async function main(): Promise<void> {
         console.error('Error:', error);
       } else {
         console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort} (0.0.0.0)`);
+        console.error(`Endpoints available:`);
+        console.error(`  - MCP Endpoint: http://0.0.0.0:${resolvedPort}/mcp`);
+        console.error(`  - SSE Endpoint: http://0.0.0.0:${resolvedPort}/sse`);
+        console.error(`  - Messages Endpoint: http://0.0.0.0:${resolvedPort}/messages`);
+        if (enableBearer) {
+          console.error(`  - Bearer authentication: ENABLED`);
+        } else {
+          console.error(`  - Bearer authentication: DISABLED (not recommended for production)`);
+        }
       }
     });
   } else {

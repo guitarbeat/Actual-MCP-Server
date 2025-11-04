@@ -4,7 +4,7 @@
 
 ## EXAMPLES:
 
-[Provide and explain examples that you have in the `examples/` folder]
+[Provide and explain examples, code snippets, or usage patterns]
 
 ## DOCUMENTATION:
 

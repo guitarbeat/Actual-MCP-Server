@@ -10,8 +10,6 @@ services:
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD}
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL}
       ACTUAL_BUDGET_SYNC_ID: ${ACTUAL_BUDGET_SYNC_ID}
-      # BEARER_TOKEN: ${BEARER_TOKEN}
-      FASTMCP_HOST: 0.0.0.0
     env_file:
       - .env
     volumes:
