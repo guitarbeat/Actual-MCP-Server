@@ -3,6 +3,10 @@
 // ----------------------------
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import {
+  missingNumberArgument,
+  missingStringArgument,
+} from '../../../utils/tool-error-builders.js';
 import { createSchedule } from '../../../actual-api.js';
 
 export const schema = {
@@ -53,19 +57,34 @@ export async function handler(
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.name || typeof args.name !== 'string') {
-      return errorFromCatch('name is required and must be a string');
+      return missingStringArgument(
+        'name',
+        'Provide the schedule name as plain text, such as "Rent" or "Gym Membership".',
+      );
     }
     if (!args.accountId || typeof args.accountId !== 'string') {
-      return errorFromCatch('accountId is required and must be a string');
+      return missingStringArgument(
+        'accountId',
+        'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+      );
     }
     if (args.amount === undefined || typeof args.amount !== 'number') {
-      return errorFromCatch('amount is required and must be a number');
+      return missingNumberArgument(
+        'amount',
+        'Provide the amount in milliunits (e.g., -124000 for -$1240.00) to match Actual Budget expectations.',
+      );
     }
     if (!args.nextDate || typeof args.nextDate !== 'string') {
-      return errorFromCatch('nextDate is required and must be a string');
+      return missingStringArgument(
+        'nextDate',
+        'Supply the next occurrence as an ISO date string like 2025-12-01.',
+      );
     }
     if (!args.rule || typeof args.rule !== 'string') {
-      return errorFromCatch('rule is required and must be a string');
+      return missingStringArgument(
+        'rule',
+        'Provide the recurrence rule identifier (e.g., "monthly" or "weekly"). Use get-schedules to review examples.',
+      );
     }
 
     const data: Record<string, unknown> = {
@@ -90,6 +109,10 @@ export async function handler(
 
     return successWithJson('Successfully created schedule ' + id);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: 'Failed to create the schedule in Actual.',
+      suggestion:
+        'Verify the accountId, category, and payee references are valid and that the Actual server is reachable.',
+    });
   }
 }
