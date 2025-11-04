@@ -3,9 +3,7 @@ import { handler } from './index.js';
 import type { CreateCategoryArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  createCategory: vi.fn<[
-    Record<string, unknown>
-  ], Promise<string>>(),
+  createCategory: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', () => mockApi);

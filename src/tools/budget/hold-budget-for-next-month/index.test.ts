@@ -3,10 +3,7 @@ import { handler } from './index.js';
 import type { HoldBudgetForNextMonthArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  holdBudgetForNextMonth: vi.fn<[
-    string,
-    number
-  ], Promise<void>>(),
+  holdBudgetForNextMonth: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', () => mockApi);

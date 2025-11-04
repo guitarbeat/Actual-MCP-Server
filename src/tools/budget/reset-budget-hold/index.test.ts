@@ -3,9 +3,7 @@ import { handler } from './index.js';
 import type { ResetBudgetHoldArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  resetBudgetHold: vi.fn<[
-    string
-  ], Promise<void>>(),
+  resetBudgetHold: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', () => mockApi);
