@@ -127,7 +127,7 @@ The easiest way to use this MCP server is to deploy it to Railway using Nixpacks
 
 4. **Get your Railway deployment URL:**
    - Railway will provide a public URL (e.g., `https://your-app.railway.app`)
-   - Your MCP server will be available at `https://your-app.railway.app/mcp`
+   - Your MCP server will be available at `https://your-app.railway.app/sse`
 
 ### Step 2: Connect Claude Desktop to Your Remote Server
 
@@ -151,7 +151,7 @@ Add the following configuration to connect to your Railway deployment:
 {
   "mcpServers": {
     "actualBudget": {
-      "url": "https://your-app.railway.app/mcp",
+      "url": "https://your-app.railway.app/sse",
       "headers": {
         "Authorization": "Bearer your-bearer-token"
       }
@@ -160,7 +160,7 @@ Add the following configuration to connect to your Railway deployment:
 }
 
 Replace:
-- `https://your-app.railway.app/mcp` with your Railway deployment URL + `/mcp`
+- `https://your-app.railway.app/sse` with your Railway deployment URL + `/sse`
 - `your-bearer-token` with the `BEARER_TOKEN` you set in Railway environment variables
 
 > **Note**: If you're using Claude Desktop, it may require HTTP/SSE transport support. Check your Claude Desktop version supports remote MCP servers. For Poke MCP and other modern MCP clients, use the configuration above.
@@ -188,7 +188,7 @@ node build/index.js --sse --enable-write
 
 2. **Connect Poke MCP to the server:**
 
-The server will be available at `http://localhost:3000/mcp` for Poke MCP connections.
+The server will be available at `http://localhost:3000/sse` for Poke MCP connections.
 
 ### Configuration
 
@@ -201,7 +201,7 @@ For detailed setup instructions for all MCP clients, see the [Setup Guide](./doc
 export BEARER_TOKEN="your-secure-token"
 node build/index.js --sse --enable-write --enable-bearer
 
-# Connect Poke MCP to: http://localhost:3000/mcp
+# Connect Poke MCP to: http://localhost:3000/sse
 # Use bearer token: your-secure-token
 ```
 
@@ -237,7 +237,7 @@ npm run build
 node build/index.js --sse --enable-write --enable-bearer
 ```
 
-The server will be available at `http://localhost:3000/mcp` for MCP clients.
+The server will be available at `http://localhost:3000/sse` for MCP clients.
 
 > ⚠️ Important: When using `--enable-bearer`, the BEARER_TOKEN environment variable must be set.  
 > 🔒 This is highly recommended if you're exposing your server via a public URL.
