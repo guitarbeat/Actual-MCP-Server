@@ -45,12 +45,8 @@ export async function handler(
 
     await mergePayees(args.targetPayeeId as string, sourceIds);
 
-    return successWithJson(
-      `Successfully merged payees ${sourceIds.join(', ')} into ${args.targetPayeeId}`
-    );
+    return successWithJson(`Successfully merged payees ${sourceIds.join(', ')} into ${args.targetPayeeId}`);
   } catch (err) {
     return errorFromCatch(err);
   }
 }
-
-

@@ -109,12 +109,14 @@ export class CreateTransactionDataFetcher {
   /**
    * Creates the transaction using importTransactions for better duplicate detection and rule execution
    */
-  async createTransaction(input: CreateTransactionInput): Promise<EntityCreationResult & { 
-    transactionIds: string[];
-    wasAdded: boolean;
-    wasUpdated: boolean;
-    errors?: string[];
-  }> {
+  async createTransaction(input: CreateTransactionInput): Promise<
+    EntityCreationResult & {
+      transactionIds: string[];
+      wasAdded: boolean;
+      wasUpdated: boolean;
+      errors?: string[];
+    }
+  > {
     // Validate account exists
     await this.validateAccount(input.accountId);
 

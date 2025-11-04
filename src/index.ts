@@ -16,28 +16,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'node:util';
-import {
-  initActualApi,
-  shutdownActualApi,
-  getBudgets,
-  getAccounts,
-  getCategories,
-  getCategoryGroups,
-  getPayees,
-  getRules,
-  getTransactions,
-  getAccountBalance,
-  getBudgetMonths,
-  getBudgetMonth,
-  getSchedules,
-  getServerVersion,
-  getPayeeRules,
-} from './actual-api.js';
+import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
-import { SetLevelRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -182,26 +165,25 @@ async function main(): Promise<void> {
     console.error('If your server requires authentication, initialization will fail.');
   }
 
-
   if (useSse) {
     const app = express();
-    
+
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
     app.use((req: Request, res: Response, next: NextFunction) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-MCP-Connection-ID');
       res.setHeader('Access-Control-Expose-Headers', 'X-MCP-Connection-ID');
-      
+
       // Handle preflight requests
       if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
       }
-      
+
       next();
     });
-    
+
     app.use(express.json());
     let transport: SSEServerTransport | null = null;
     let transportReady = false;
@@ -283,24 +265,27 @@ async function main(): Promise<void> {
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
       transportReady = false;
-      server.connect(transport).then(() => {
-        transportReady = true;
-        console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
-        console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
-      }).catch((error) => {
-        transportReady = false;
-        console.error('Error connecting SSE transport:', error);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Failed to establish SSE connection' });
-        }
-      });
-      
+      server
+        .connect(transport)
+        .then(() => {
+          transportReady = true;
+          console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+          console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+        })
+        .catch((error) => {
+          transportReady = false;
+          console.error('Error connecting SSE transport:', error);
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to establish SSE connection' });
+          }
+        });
+
       // Clean up transport when connection closes
       res.on('close', () => {
         if (transport) {
           try {
             transport.close();
-          } catch (e) {
+          } catch (_e) {
             // Ignore cleanup errors
           }
           transport = null;
@@ -312,9 +297,11 @@ async function main(): Promise<void> {
       if (transport && transportReady) {
         await transport.handlePostMessage(req, res, req.body);
       } else {
-        res.status(503).json({ 
-          error: 'Transport not ready', 
-          message: transport ? 'Transport is initializing, please wait' : 'Transport not initialized. Connect to /sse first.'
+        res.status(503).json({
+          error: 'Transport not ready',
+          message: transport
+            ? 'Transport is initializing, please wait'
+            : 'Transport not initialized. Connect to /sse first.',
         });
       }
     });
@@ -328,7 +315,7 @@ async function main(): Promise<void> {
         try {
           const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
           deploymentInfo = commitHash;
-        } catch (e) {
+        } catch (_e) {
           // Git not available or not in a git repo - use package version
           try {
             const __filename = fileURLToPath(import.meta.url);
@@ -336,11 +323,11 @@ async function main(): Promise<void> {
             const pkgPath = join(__dirname, '..', 'package.json');
             const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
             deploymentInfo = `v${pkg.version}`;
-          } catch (e2) {
+          } catch (_e2) {
             // Fallback to unknown
           }
         }
-        
+
         console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort} (0.0.0.0)`);
         console.error(`Deployment: ${deploymentInfo}`);
         console.error(`Endpoints available:`);

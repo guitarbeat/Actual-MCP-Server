@@ -30,12 +30,12 @@ function assert(condition, message) {
 
 async function testMessageRoutingWithoutID() {
   log('Test 1: Message routing without connection ID (should return 400)');
-  
+
   const response = await fetch(`${SERVER_URL}/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
+      Authorization: `Bearer ${BEARER_TOKEN}`,
       // Intentionally omitting X-MCP-Connection-ID header
     },
     body: JSON.stringify({
@@ -49,12 +49,16 @@ async function testMessageRoutingWithoutID() {
   const status = response.status;
   const body = await response.json().catch(() => ({}));
 
-  assert(status === 400 || status === 503, 
-    `Expected 400 or 503, got ${status}. ${status === 503 ? '(No active connections - acceptable)' : ''}`);
-  
+  assert(
+    status === 400 || status === 503,
+    `Expected 400 or 503, got ${status}. ${status === 503 ? '(No active connections - acceptable)' : ''}`
+  );
+
   if (status === 400) {
-    assert(body.error === 'Missing connection ID' || body.error === 'Missing connection ID', 
-      `Expected "Missing connection ID" error, got: ${body.error}`);
+    assert(
+      body.error === 'Missing connection ID' || body.error === 'Missing connection ID',
+      `Expected "Missing connection ID" error, got: ${body.error}`
+    );
   }
 
   testsPassed++;
@@ -63,12 +67,12 @@ async function testMessageRoutingWithoutID() {
 
 async function testMessageRoutingWithInvalidID() {
   log('Test 2: Message routing with invalid connection ID');
-  
+
   const response = await fetch(`${SERVER_URL}/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
+      Authorization: `Bearer ${BEARER_TOKEN}`,
       'X-MCP-Connection-ID': 'invalid-connection-id-12345',
     },
     body: JSON.stringify({
@@ -85,8 +89,7 @@ async function testMessageRoutingWithInvalidID() {
   // Accept both 404 (transport not found) and 503 (no active connections)
   // 503 is acceptable if the server hasn't been updated with the new routing logic yet
   if (status === 404) {
-    assert(body.error === 'Transport not found', 
-      `Expected "Transport not found" error, got: ${body.error}`);
+    assert(body.error === 'Transport not found', `Expected "Transport not found" error, got: ${body.error}`);
     testsPassed++;
     log(`PASS: Correctly rejected request with invalid connection ID (404)`, 'success');
   } else if (status === 503) {
@@ -102,15 +105,15 @@ async function testMessageRoutingWithInvalidID() {
 
 async function testRootEndpoint() {
   log('Test 3: Root endpoint accessibility');
-  
+
   const response = await fetch(`${SERVER_URL}/`, {
     headers: {
-      'Authorization': `Bearer ${BEARER_TOKEN}`,
+      Authorization: `Bearer ${BEARER_TOKEN}`,
     },
   });
 
   assert(response.ok, `Root endpoint returned ${response.status}`);
-  
+
   testsPassed++;
   log(`PASS: Root endpoint accessible`, 'success');
 }
@@ -153,4 +156,3 @@ async function runTests() {
 // Run tests
 const exitCode = await runTests();
 process.exit(exitCode);
-
