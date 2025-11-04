@@ -606,21 +606,16 @@ async function main(): Promise<void> {
                 signal = controller.signal;
               }
 
-              const response = await fetch(logServerUrl, {
+              // Fire and forget - don't check response to avoid any potential errors
+              // The log server is optional and we don't need to verify the response
+              fetch(logServerUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: `[${level}] ${message}` }),
                 signal,
+              }).catch(() => {
+                // Silently ignore all errors - log server is optional
               });
-
-              // Check if response exists and has status property before accessing
-              if (response && typeof response === 'object' && 'status' in response) {
-                // Optionally check response status (but don't throw)
-                if (!response.ok && process.env.LOG_SERVER_URL) {
-                  // Only log if explicitly configured
-                  process.stderr.write(`[log-server] Non-OK response: ${response.status}\n`);
-                }
-              }
             } catch (e) {
               // * Silently fail - log server is optional
               // Only log if explicitly configured
