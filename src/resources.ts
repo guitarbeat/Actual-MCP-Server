@@ -3,7 +3,11 @@
 // ----------------------------
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { ListResourcesRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import {
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  ListResourceTemplatesRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
 import api from '@actual-app/api';
 
 // Import types from types.ts
@@ -11,6 +15,30 @@ import { Account, Transaction } from './types.js';
 import { formatAmount, formatDate, getDateRange } from './utils.js';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
+
+export const RESOURCE_TEMPLATES = [
+  {
+    name: 'accounts-directory',
+    title: 'Account Directory',
+    uriTemplate: 'actual://accounts',
+    description: 'Lists all accounts with balance, status, and budget placement.',
+    mimeType: 'text/markdown',
+  },
+  {
+    name: 'account-overview',
+    title: 'Account Overview',
+    uriTemplate: 'actual://accounts/{accountId}',
+    description: 'Provides balance, status, and metadata for a specific account.',
+    mimeType: 'text/markdown',
+  },
+  {
+    name: 'account-transactions',
+    title: 'Account Transactions',
+    uriTemplate: 'actual://accounts/{accountId}/transactions',
+    description: 'Shows recent transactions for an account across the default reporting window.',
+    mimeType: 'text/markdown',
+  },
+];
 
 export const setupResources = (server: Server): void => {
   /**
@@ -20,13 +48,22 @@ export const setupResources = (server: Server): void => {
     try {
       await initActualApi();
       const accounts: Account[] = await fetchAllAccounts();
-      return {
-        resources: accounts.map((account) => ({
+      const resources = [
+        {
+          uri: 'actual://accounts',
+          name: 'Accounts Overview',
+          description: 'All accounts with balance summaries and status indicators.',
+          mimeType: 'text/markdown',
+        },
+        ...accounts.map((account) => ({
           uri: `actual://accounts/${account.id}`,
           name: account.name,
           description: `${account.name} (${account.type || 'Account'})${account.closed ? ' - CLOSED' : ''}`,
           mimeType: 'text/markdown',
         })),
+      ];
+      return {
+        resources,
       };
     } catch (error) {
       console.error('Error listing resources:', error);
@@ -34,6 +71,15 @@ export const setupResources = (server: Server): void => {
     } finally {
       await shutdownActualApi();
     }
+  });
+
+  /**
+   * Handler for listing available resource templates
+   */
+  server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
+    return {
+      resourceTemplates: RESOURCE_TEMPLATES,
+    };
   });
 
   /**
