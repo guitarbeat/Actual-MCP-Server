@@ -19,5 +19,5 @@ cd dev
 docker-compose up -d
 ```
 
-The server will be available at `http://localhost:3000/mcp`.
+The server will be available at `http://localhost:3000/sse`.
 

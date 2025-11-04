@@ -18,6 +18,9 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/build ./build
 
+# Note: Secrets (ACTUAL_PASSWORD, BEARER_TOKEN) should be passed at runtime
+# via environment variables or secrets management, not hardcoded in Dockerfile.
+# This follows Docker security best practices.
 ENV NODE_ENV=production
 
 RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
