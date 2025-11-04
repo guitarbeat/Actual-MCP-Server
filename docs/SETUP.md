@@ -68,7 +68,6 @@ docker run -d \
 ### Server Endpoints
 
 - `GET /sse` - SSE transport endpoint (use this for Poke MCP)
-- `POST /mcp` - Stateless HTTP transport endpoint
 - `POST /messages` - Messages endpoint (used by SSE transport)
 
 ### Server Arguments

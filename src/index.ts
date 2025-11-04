@@ -13,7 +13,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'node:util';
@@ -191,226 +190,6 @@ async function main(): Promise<void> {
     console.error('If your server requires authentication, initialization will fail.');
   }
 
-  /**
-   * Custom method handler for actual.* JSON-RPC methods
-   * Handles methods that aren't part of the standard MCP protocol
-   */
-  const handleCustomMethod = async (
-    method: string,
-    params: Record<string, unknown>,
-    id: number | string | null
-  ): Promise<{ jsonrpc: string; result?: unknown; error?: { code: number; message: string }; id: number | string | null }> => {
-    try {
-      await initActualApi();
-
-      switch (method) {
-        case 'actual.listBudgets': {
-          const budgets = await getBudgets();
-          return {
-            jsonrpc: '2.0',
-            result: budgets,
-            id,
-          };
-        }
-
-        case 'actual.getAccounts': {
-          const accounts = await getAccounts();
-          return {
-            jsonrpc: '2.0',
-            result: accounts,
-            id,
-          };
-        }
-
-        case 'actual.getCategories': {
-          const categories = await getCategories();
-          return {
-            jsonrpc: '2.0',
-            result: categories,
-            id,
-          };
-        }
-
-        case 'actual.getCategoryGroups': {
-          const categoryGroups = await getCategoryGroups();
-          return {
-            jsonrpc: '2.0',
-            result: categoryGroups,
-            id,
-          };
-        }
-
-        case 'actual.getPayees': {
-          const payees = await getPayees();
-          return {
-            jsonrpc: '2.0',
-            result: payees,
-            id,
-          };
-        }
-
-        case 'actual.getRules': {
-          const rules = await getRules();
-          return {
-            jsonrpc: '2.0',
-            result: rules,
-            id,
-          };
-        }
-
-        case 'actual.getTransactions': {
-          const accountId = params.accountId;
-          const start = params.start;
-          const end = params.end;
-
-          if (typeof accountId !== 'string') {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: -32602,
-                message: 'Invalid params: accountId is required and must be a string',
-              },
-              id,
-            };
-          }
-
-          if (typeof start !== 'string' || typeof end !== 'string') {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: -32602,
-                message: 'Invalid params: start and end are required and must be strings',
-              },
-              id,
-            };
-          }
-
-          const transactions = await getTransactions(accountId, start, end);
-          return {
-            jsonrpc: '2.0',
-            result: transactions,
-            id,
-          };
-        }
-
-        case 'actual.getAccountBalance': {
-          const accountId = params.accountId;
-          const date = params.date;
-
-          if (typeof accountId !== 'string') {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: -32602,
-                message: 'Invalid params: accountId is required and must be a string',
-              },
-              id,
-            };
-          }
-
-          const balance = await getAccountBalance(accountId, typeof date === 'string' ? date : undefined);
-          return {
-            jsonrpc: '2.0',
-            result: balance,
-            id,
-          };
-        }
-
-        case 'actual.getBudgetMonths': {
-          const months = await getBudgetMonths();
-          return {
-            jsonrpc: '2.0',
-            result: months,
-            id,
-          };
-        }
-
-        case 'actual.getBudgetMonth': {
-          const month = params.month;
-
-          if (typeof month !== 'string') {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: -32602,
-                message: 'Invalid params: month is required and must be a string',
-              },
-              id,
-            };
-          }
-
-          const budgetMonth = await getBudgetMonth(month);
-          return {
-            jsonrpc: '2.0',
-            result: budgetMonth,
-            id,
-          };
-        }
-
-        case 'actual.getSchedules': {
-          const schedules = await getSchedules();
-          return {
-            jsonrpc: '2.0',
-            result: schedules,
-            id,
-          };
-        }
-
-        case 'actual.getServerVersion': {
-          const version = await getServerVersion();
-          return {
-            jsonrpc: '2.0',
-            result: version,
-            id,
-          };
-        }
-
-        case 'actual.getPayeeRules': {
-          const payeeId = params.payeeId;
-
-          if (typeof payeeId !== 'string') {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: -32602,
-                message: 'Invalid params: payeeId is required and must be a string',
-              },
-              id,
-            };
-          }
-
-          const rules = await getPayeeRules(payeeId);
-          return {
-            jsonrpc: '2.0',
-            result: rules,
-            id,
-          };
-        }
-
-        default:
-          return {
-            jsonrpc: '2.0',
-            error: {
-              code: -32601,
-              message: `Method not found: ${method}`,
-            },
-            id,
-          };
-      }
-    } catch (error) {
-      console.error(`Error executing custom method ${method}:`, error);
-      return {
-        jsonrpc: '2.0',
-        error: {
-          code: -32603,
-          message: error instanceof Error ? error.message : String(error),
-        },
-        id,
-      };
-    } finally {
-      await shutdownActualApi();
-    }
-  };
 
   if (useSse) {
     const app = express();
@@ -489,7 +268,6 @@ async function main(): Promise<void> {
               <p>This is an MCP (Model Context Protocol) server for Actual Budget.</p>
               <h2>Available Endpoints:</h2>
               <div class="endpoint">GET /sse - SSE transport endpoint</div>
-              <div class="endpoint">POST /mcp - MCP HTTP endpoint</div>
               <div class="endpoint">POST /messages - Messages endpoint</div>
               ${enableBearer ? '<p><strong>🔒 Bearer authentication: ENABLED</strong></p>' : '<p><em>⚠️ Bearer authentication: DISABLED</em></p>'}
             </div>
@@ -498,47 +276,9 @@ async function main(): Promise<void> {
       `);
     });
 
-    // Implementación HTTP streamable (stateless, MCP moderno)
-    app.post('/mcp', bearerAuth, async (req: Request, res: Response) => {
-      try {
-        // Check if this is a custom actual.* method
-        const body = req.body;
-        if (body && typeof body === 'object' && body.method && typeof body.method === 'string' && body.method.startsWith('actual.')) {
-          const result = await handleCustomMethod(body.method, body.params || {}, body.id || null);
-          res.json(result);
-          return;
-        }
-
-        // * Create new server and transport instance for each request (stateless HTTP transport)
-        const requestServer = createServer();
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: undefined, // stateless
-        });
-        res.on('close', () => {
-          // ! Only close the transport, NOT the server instance
-          // The server instance must remain alive for other connections
-          try {
-            transport.close();
-          } catch (e) {
-            // Ignore cleanup errors
-          }
-        });
-        await requestServer.connect(transport);
-        await transport.handleRequest(req, res, req.body);
-      } catch (error) {
-        console.error('Error handling MCP request:', error);
-        if (!res.headersSent) {
-          res.status(500).json({
-            jsonrpc: '2.0',
-            error: {
-              code: -32603,
-              message: 'Internal server error',
-            },
-            id: null,
-          });
-        }
-      }
-    });
+    // Note: Removed /mcp endpoint to match working implementation
+    // The working version only uses /sse and /messages endpoints
+    // If you need stateless HTTP transport, use /sse endpoint with SSE transport
 
     app.get('/sse', bearerAuth, async (req: Request, res: Response) => {
       // * Generate unique connection ID for this SSE session
@@ -674,14 +414,6 @@ async function main(): Promise<void> {
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
       try {
-        // Check if this is a custom actual.* method
-        const body = req.body;
-        if (body && typeof body === 'object' && body.method && typeof body.method === 'string' && body.method.startsWith('actual.')) {
-          const result = await handleCustomMethod(body.method, body.params || {}, body.id || null);
-          res.json(result);
-          return;
-        }
-
         // * Route message to the correct transport based on connection ID from header
         // The connection ID is sent to the client when establishing the SSE connection at /sse
         // The client should include this ID in the X-MCP-Connection-ID header for subsequent POST requests
@@ -750,7 +482,6 @@ async function main(): Promise<void> {
       } else {
         console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort} (0.0.0.0)`);
         console.error(`Endpoints available:`);
-        console.error(`  - MCP Endpoint: http://0.0.0.0:${resolvedPort}/mcp`);
         console.error(`  - SSE Endpoint: http://0.0.0.0:${resolvedPort}/sse`);
         console.error(`  - Messages Endpoint: http://0.0.0.0:${resolvedPort}/messages`);
         if (enableBearer) {
