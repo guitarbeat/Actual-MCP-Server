@@ -3,9 +3,7 @@ import { handler } from './index.js';
 import type { DeleteCategoryArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  deleteCategory: vi.fn<[
-    string
-  ], Promise<void>>(),
+  deleteCategory: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', () => mockApi);

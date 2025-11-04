@@ -3,11 +3,7 @@ import { handler } from './index.js';
 import type { SetBudgetAmountArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  setBudgetAmount: vi.fn<[
-    string,
-    string,
-    number
-  ], Promise<void>>(),
+  setBudgetAmount: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', () => mockApi);

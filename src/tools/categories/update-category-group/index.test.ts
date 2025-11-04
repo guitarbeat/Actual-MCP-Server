@@ -3,10 +3,7 @@ import { handler } from './index.js';
 import type { UpdateCategoryGroupArgs } from './types.js';
 
 const mockApi = vi.hoisted(() => ({
-  updateCategoryGroup: vi.fn<[
-    string,
-    Record<string, unknown>
-  ], Promise<void>>(),
+  updateCategoryGroup: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', () => mockApi);

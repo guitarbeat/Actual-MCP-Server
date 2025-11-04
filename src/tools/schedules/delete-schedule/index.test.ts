@@ -6,7 +6,7 @@ vi.mock('../../../actual-api.js', () => ({
 }));
 
 const mockApi = vi.hoisted(() => ({
-  deleteSchedule: vi.fn<[], any>(),
+  deleteSchedule: vi.fn(),
 }));
 
 vi.mock('../../../actual-api.js', async () => mockApi);
