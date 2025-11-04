@@ -9,9 +9,9 @@ describe('CreateTransactionInputParser', () => {
   describe('parse - happy path', () => {
     it('should parse valid minimal input', () => {
       const input = {
-        accountId: 'account-123',
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
         date: '2023-12-15',
-        amount: 25.5,
+        amount: 2550,
       };
 
       const result = parser.parse(input);
@@ -28,14 +28,22 @@ describe('CreateTransactionInputParser', () => {
           cleared: true, // default
         },
         warnings: [],
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
+        date: '2023-12-15',
+        amount: 2550,
+        payee: undefined,
+        category: undefined,
+        categoryGroup: undefined,
+        notes: undefined,
+        cleared: true, // default
       });
     });
 
     it('should parse complete input with all fields', () => {
       const input = {
-        accountId: 'account-123',
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
         date: '2023-12-15',
-        amount: 25.5,
+        amount: 2550,
         payee: 'Grocery Store',
         category: 'Food',
         notes: 'Weekly groceries',
@@ -56,6 +64,14 @@ describe('CreateTransactionInputParser', () => {
           cleared: false,
         },
         warnings: [],
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
+        date: '2023-12-15',
+        amount: 2550,
+        payee: 'Grocery Store',
+        category: 'Food',
+        categoryGroup: undefined,
+        notes: 'Weekly groceries',
+        cleared: false,
       });
     });
   });
@@ -67,54 +83,76 @@ describe('CreateTransactionInputParser', () => {
     });
 
     it('should throw error for missing accountId', () => {
-      const input = { date: '2023-12-15', amount: 25.5 };
-      expect(() => parser.parse(input)).toThrow('accountId is required and must be a string');
+      const input = { date: '2023-12-15', amount: 2550 };
+      expect(() => parser.parse(input)).toThrow('accountId is required and must be a valid UUID');
     });
 
     it('should throw error for missing date', () => {
-      const input = { accountId: 'account-123', amount: 25.5 };
+      const input = { accountId: '123e4567-e89b-12d3-a456-426614174000', amount: 2550 };
       expect(() => parser.parse(input)).toThrow('date is required and must be a string (YYYY-MM-DD)');
     });
 
     it('should throw error for missing amount', () => {
-      const input = { accountId: 'account-123', date: '2023-12-15' };
-      expect(() => parser.parse(input)).toThrow('amount is required and must be a number');
+      const input = { accountId: '123e4567-e89b-12d3-a456-426614174000', date: '2023-12-15' };
+      expect(() => parser.parse(input)).toThrow('amount is required and must be a positive integer amount in cents');
     });
 
     it('should throw error for invalid date format', () => {
-      const input = { accountId: 'account-123', date: '12/15/2023', amount: 25.5 };
+      const input = {
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
+        date: '12/15/2023',
+        amount: 2550,
+      };
       expect(() => parser.parse(input)).toThrow('date must be in YYYY-MM-DD format');
     });
 
     it('should throw error when both category and categoryGroup are specified', () => {
       const input = {
-        accountId: 'account-123',
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
         date: '2023-12-15',
-        amount: 25.5,
+        amount: 2550,
         category: 'Food',
         categoryGroup: 'Expenses',
       };
       expect(() => parser.parse(input)).toThrow('Cannot specify both category and categoryGroup');
     });
-  });
 
-  describe('parse - edge cases', () => {
-    it('should handle negative amounts', () => {
+    it('should throw error for invalid accountId format', () => {
       const input = {
         accountId: 'account-123',
         date: '2023-12-15',
-        amount: -50.0,
+        amount: 2550,
       };
+      expect(() => parser.parse(input)).toThrow('accountId must be a valid UUID');
+    });
 
       const result = parser.parse(input);
       expect(result.input.amount).toBe(-50.0);
+    it('should throw error for non-integer amount', () => {
+      const input = {
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
+        date: '2023-12-15',
+        amount: 25.5,
+      };
+      expect(() => parser.parse(input)).toThrow('amount must be a positive integer amount in cents');
     });
 
-    it('should handle zero amounts', () => {
+    it('should throw error for negative amount', () => {
       const input = {
-        accountId: 'account-123',
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
         date: '2023-12-15',
-        amount: 0,
+        amount: -1000,
+      };
+      expect(() => parser.parse(input)).toThrow('amount must be a positive integer amount in cents');
+    });
+  });
+
+  describe('parse - edge cases', () => {
+    it('should allow large integer amounts', () => {
+      const input = {
+        accountId: '123e4567-e89b-12d3-a456-426614174000',
+        date: '2023-12-15',
+        amount: 1250000,
       };
 
       const result = parser.parse(input);
@@ -134,6 +172,7 @@ describe('CreateTransactionInputParser', () => {
       expect(result.warnings).toEqual([
         'Amount $0.03 is unusually small; please confirm the cents value.',
       ]);
+      expect(result.amount).toBe(1250000);
     });
   });
 });

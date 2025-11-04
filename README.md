@@ -37,6 +37,8 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 - **`update-category-group`** - Update a category group's name
 - **`delete-category-group`** - Delete a category group
 
+> **Tip:** Category tools validate that IDs resemble Actual Budget UUIDs before making API calls. Use [`get-grouped-categories`](#categories) to copy the correct `groupId`/`categoryId` values before creating or updating records.
+
 #### Payees
 
 - **`get-payees`** - Retrieve a list of all payees with their details
@@ -78,10 +80,148 @@ Examples:
 { "tool": "delete-schedule", "args": { "scheduleId": "sch_123" } }
 ```
 
+#### Budgeting
+
+- **`set-budget-amount`** - Set the budgeted amount for a category in a specific month
+- **`set-budget-carryover`** - Enable or disable carryover for a category in a month
+- **`hold-budget-for-next-month`** - Reserve funds for the next month
+- **`reset-budget-hold`** - Clear held funds for a month
+
+These tools enforce month (`YYYY-MM`), category UUID, and numeric amount validations so that downstream API calls never mutate the wrong budget period or category.
+
+##### `set-budget-amount`
+
+| Parameter   | Type    | Required | Validation & Notes |
+| ----------- | ------- | -------- | ------------------ |
+| `month`     | string  | ✅       | Must be `YYYY-MM`. The server rejects other formats with `month is required and must be a string in YYYY-MM format`. |
+| `categoryId`| string  | ✅       | Must be an Actual category UUID. Fetch valid IDs via [`get-grouped-categories`](#categories). |
+| `amount`    | number  | ✅       | Accepts positive/negative numeric values. Any non-number triggers `amount is required and must be a number`. |
+
+Example request:
+
+```json
+{
+  "tool": "set-budget-amount",
+  "args": {
+    "month": "2024-06",
+    "categoryId": "c3f83834-81d0-4c93-8d6f-10e3ac7e2a6e",
+    "amount": 250.5
+  }
+}
+```
+
+Success response:
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "\"Successfully set budget amount of 250.5 for category c3f83834-81d0-4c93-8d6f-10e3ac7e2a6e in month 2024-06\""
+    }
+  ]
+}
+```
+
+Example error (bad month format):
+
+```json
+{
+  "isError": true,
+  "content": [
+    {
+      "type": "text",
+      "text": "Error: month is required and must be a string in YYYY-MM format"
+    }
+  ]
+}
+```
+
+##### `set-budget-carryover`
+
+| Parameter   | Type    | Required | Validation & Notes |
+| ----------- | ------- | -------- | ------------------ |
+| `month`     | string  | ✅       | Must be `YYYY-MM`. |
+| `categoryId`| string  | ✅       | Must be a category UUID; use [`get-grouped-categories`](#categories) to confirm the value. |
+| `enabled`   | boolean | ✅       | Only accepts boolean literals (`true`/`false`). |
+
+Example success:
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "\"Successfully enabled budget carryover for category c3f83834-81d0-4c93-8d6f-10e3ac7e2a6e in month 2024-06\""
+    }
+  ]
+}
+```
+
+Example error (non-boolean `enabled`):
+
+```json
+{
+  "isError": true,
+  "content": [
+    {
+      "type": "text",
+      "text": "Error: enabled is required and must be a boolean"
+    }
+  ]
+}
+```
+
+##### `hold-budget-for-next-month`
+
+| Parameter | Type   | Required | Validation & Notes |
+| --------- | ------ | -------- | ------------------ |
+| `month`   | string | ✅       | `YYYY-MM` only. |
+| `amount`  | number | ✅       | Must be numeric (positive to reserve funds, negative to release). |
+
+Example error (amount typo):
+
+```json
+{
+  "isError": true,
+  "content": [
+    {
+      "type": "text",
+      "text": "Error: amount is required and must be a number"
+    }
+  ]
+}
+```
+
+##### `reset-budget-hold`
+
+| Parameter | Type   | Required | Validation & Notes |
+| --------- | ------ | -------- | ------------------ |
+| `month`   | string | ✅       | `YYYY-MM` only. |
+
+Example success:
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "\"Successfully reset budget hold for month 2024-06\""
+    }
+  ]
+}
+```
+
 ### Prompts
 
 - **`financial-insights`** - Generate insights and recommendations based on your financial data
 - **`budget-review`** - Analyze your budget compliance and suggest adjustments
+
+### Troubleshooting validation errors
+
+- **Invalid IDs** – Ensure `categoryId`, `groupId`, and other identifiers come from Actual Budget. Use helper tools like [`get-grouped-categories`](#categories), [`get-accounts`](#transaction--account-management), or [`get-payees`](#payees) to copy valid UUIDs.
+- **Incorrect month format** – All budget tools expect `YYYY-MM`. If you only know a full date, trim it down (e.g., `2024-06-15` → `2024-06`).
+- **Amount typos** – Amounts must be numbers. Remove currency symbols and ensure decimals use `.` (e.g., `250.5`). Negative numbers represent outflows where appropriate.
 
 ## Installation
 
