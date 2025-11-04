@@ -506,51 +506,118 @@ async function main(): Promise<void> {
       }
     });
 
-    app.get('/sse', bearerAuth, (req: Request, res: Response) => {
-      transport = new SSEServerTransport('/messages', res);
-      server.connect(transport).then(() => {
-        // Función para enviar logs al log-server
-        const sendToLogServer = async (level: 'info' | 'error', message: string): Promise<void> => {
-          try {
-            await fetch('http://log-server:4000/log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message: `[${level}] ${message}` }),
+    app.get('/sse', bearerAuth, async (req: Request, res: Response) => {
+      try {
+        // * Handle connection close - cleanup previous transport if exists
+        res.on('close', () => {
+          if (transport) {
+            try {
+              transport.close();
+            } catch (e) {
+              // Ignore cleanup errors
+            }
+            transport = null;
+          }
+        });
+
+        // * Create SSE transport and connect to server
+        transport = new SSEServerTransport('/messages', res);
+        
+        // * Handle connection errors
+        await server.connect(transport).catch((error) => {
+          console.error('Error connecting SSE transport:', error);
+          transport = null;
+          if (!res.headersSent) {
+            res.status(500).json({
+              error: 'Failed to establish SSE connection',
+              message: error instanceof Error ? error.message : String(error),
             });
-          } catch (e) {
-            // fallback local log
-            process.stderr.write(`[log-server error] ${(e as Error).message}\n`);
+          }
+          throw error;
+        });
+
+        // * Optional log server integration (only in development with docker-compose)
+        const logServerUrl = process.env.LOG_SERVER_URL || 'http://log-server:4000/log';
+        const sendToLogServer = async (level: 'info' | 'error', message: string): Promise<void> => {
+          // ! Only attempt log server if explicitly configured
+          if (process.env.LOG_SERVER_URL || process.env.NODE_ENV === 'development') {
+            try {
+              await fetch(logServerUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `[${level}] ${message}` }),
+                signal: AbortSignal.timeout(1000), // * 1 second timeout
+              });
+            } catch (e) {
+              // * Silently fail - log server is optional
+              // Only log if explicitly configured
+              if (process.env.LOG_SERVER_URL) {
+                process.stderr.write(`[log-server error] ${(e as Error).message}\n`);
+              }
+            }
           }
         };
 
-        // Redefinir console.log y console.error
+        // * Setup console logging to send to MCP client and optional log server
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
         console.log = (message: string) => {
           server.sendLoggingMessage({ level: 'info', message });
-          sendToLogServer('info', message);
+          sendToLogServer('info', message).catch(() => {
+            // Ignore log server errors
+          });
+          originalConsoleLog(message);
         };
 
         console.error = (message: string) => {
           server.sendLoggingMessage({ level: 'error', message });
-          sendToLogServer('error', message);
+          sendToLogServer('error', message).catch(() => {
+            // Ignore log server errors
+          });
+          originalConsoleError(message);
         };
 
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
-      });
+        // * Connection established successfully
+        console.error(`SSE connection established for client`);
+      } catch (error) {
+        console.error('Failed to setup SSE connection:', error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: 'Failed to initialize SSE connection',
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
-      // Check if this is a custom actual.* method
-      const body = req.body;
-      if (body && typeof body === 'object' && body.method && typeof body.method === 'string' && body.method.startsWith('actual.')) {
-        const result = await handleCustomMethod(body.method, body.params || {}, body.id || null);
-        res.json(result);
-        return;
-      }
+      try {
+        // Check if this is a custom actual.* method
+        const body = req.body;
+        if (body && typeof body === 'object' && body.method && typeof body.method === 'string' && body.method.startsWith('actual.')) {
+          const result = await handleCustomMethod(body.method, body.params || {}, body.id || null);
+          res.json(result);
+          return;
+        }
 
-      // Otherwise, pass to MCP transport
-      if (transport) {
+        // Otherwise, pass to MCP transport
+        if (!transport) {
+          res.status(503).json({
+            error: 'Transport not initialized',
+            message: 'SSE connection must be established first by connecting to /sse endpoint',
+          });
+          return;
+        }
+
         await transport.handlePostMessage(req, res, req.body);
-      } else {
-        res.status(500).json({ error: 'Transport not initialized' });
+      } catch (error) {
+        console.error('Error handling message:', error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: 'Failed to process message',
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
     });
 
