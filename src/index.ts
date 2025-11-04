@@ -595,27 +595,28 @@ async function main(): Promise<void> {
           if (process.env.LOG_SERVER_URL || process.env.NODE_ENV === 'development') {
             try {
               // Use built-in fetch (Node.js 18+ has it globally)
-              // Create AbortController with timeout
+              // Create AbortController with timeout (compatible with Node 20+)
               let signal: AbortSignal | undefined;
-              if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
-                signal = AbortSignal.timeout(1000);
-              } else if (typeof AbortController !== 'undefined') {
-                // Fallback for older Node versions
+              if (typeof AbortController !== 'undefined') {
                 const controller = new AbortController();
-                setTimeout(() => controller.abort(), 1000);
+                const timeout = setTimeout(() => controller.abort(), 1000);
                 signal = controller.signal;
+                // Store timeout to clear if needed (though we don't need to clear it)
               }
 
               // Fire and forget - don't check response to avoid any potential errors
               // The log server is optional and we don't need to verify the response
-              fetch(logServerUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `[${level}] ${message}` }),
-                signal,
-              }).catch(() => {
-                // Silently ignore all errors - log server is optional
-              });
+              // Use globalThis.fetch which is available in Node 18+
+              if (typeof globalThis.fetch === 'function') {
+                globalThis.fetch(logServerUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ message: `[${level}] ${message}` }),
+                  signal,
+                }).catch(() => {
+                  // Silently ignore all errors - log server is optional
+                });
+              }
             } catch (e) {
               // * Silently fail - log server is optional
               // Only log if explicitly configured
@@ -688,7 +689,32 @@ async function main(): Promise<void> {
         }
 
         // * Route the message to the correct transport
-        await transport.handlePostMessage(req, res, req.body);
+        // Ensure req and res are valid before passing to handlePostMessage
+        if (!req || !res) {
+          res.status(500).json({
+            error: 'Invalid request or response',
+            message: 'Request or response object is undefined',
+          });
+          return;
+        }
+
+        // Ensure body is valid
+        const messageBody = req.body || {};
+        
+        try {
+          await transport.handlePostMessage(req, res, messageBody);
+        } catch (transportError) {
+          // Handle errors from transport.handlePostMessage
+          console.error('Error in transport.handlePostMessage:', transportError);
+          if (!res.headersSent) {
+            const errorMessage = transportError instanceof Error ? transportError.message : String(transportError);
+            res.status(500).json({
+              error: 'Transport error',
+              message: errorMessage,
+            });
+          }
+          throw transportError; // Re-throw to be caught by outer catch
+        }
       } catch (error) {
         console.error('Error handling message:', error);
         if (!res.headersSent) {
