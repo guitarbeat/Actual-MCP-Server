@@ -51,6 +51,33 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 - **`update-rule`** - Update an existing transaction rule
 - **`delete-rule`** - Delete a transaction rule
 
+#### Schedules
+
+- **`get-schedules`** - List all recurring schedules
+- **`create-schedule`** - Create a new recurring schedule
+  - Required: `name`, `accountId`, `amount`, `nextDate` (YYYY-MM-DD), `rule` (e.g., monthly/weekly/biweekly)
+  - Optional: `payee`, `category`, `notes`
+- **`update-schedule`** - Update an existing schedule by `scheduleId`
+- **`delete-schedule`** - Delete a schedule by `scheduleId`
+
+Examples:
+
+```json
+{ "tool": "create-schedule", "args": { "name": "Rent", "accountId": "acc_123", "amount": -1240, "nextDate": "2025-12-01", "rule": "monthly", "payee": "Bilt", "category": "cat_housing" } }
+```
+
+```json
+{ "tool": "get-schedules", "args": {} }
+```
+
+```json
+{ "tool": "update-schedule", "args": { "scheduleId": "sch_123", "amount": -1250, "nextDate": "2026-01-01" } }
+```
+
+```json
+{ "tool": "delete-schedule", "args": { "scheduleId": "sch_123" } }
+```
+
 ### Prompts
 
 - **`financial-insights`** - Generate insights and recommendations based on your financial data
