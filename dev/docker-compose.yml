@@ -20,12 +20,12 @@ services:
   log-server:
     build:
       context: .
-      dockerfile: Dockerfile.logserver
+      dockerfile: dev/Dockerfile.logserver
     container_name: log-server
     ports:
       - '4000:4000'
     volumes:
-      - ./log-server.js:/app/log-server.js
+      - ./dev/log-server.js:/app/log-server.js
     working_dir: /app
     command: node log-server.js
     restart: unless-stopped
