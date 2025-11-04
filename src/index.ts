@@ -89,7 +89,6 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   }
 
   if (!authHeader.startsWith('Bearer ')) {
-    console.error('[AUTH] ❌ Invalid Authorization format (must start with "Bearer ")');
     res.status(401).json({
       error: "Authorization header must start with 'Bearer '",
     });
@@ -116,7 +115,6 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
-  console.error('[AUTH] ✅ Bearer token validated successfully');
 
   next();
 };
@@ -147,11 +145,6 @@ async function main(): Promise<void> {
 
   // Startup banner (skip for test modes)
   if (!testResources && !testCustom) {
-    console.error('='.repeat(60));
-    console.error('🚀 ACTUAL BUDGET MCP SERVER STARTING');
-    console.error(`📅 ${startupTime}`);
-    console.error(`🔖 Deployment ID: ${deploymentId}`);
-    console.error('='.repeat(60));
   }
 
   // If testing resources, verify connectivity and list accounts, then exit
@@ -201,17 +194,13 @@ async function main(): Promise<void> {
   // Initialize Actual Budget API at startup
   if (!testResources && !testCustom) {
     console.error('');
-    console.error('📋 PHASE 1: Initializing Actual Budget API...');
-    console.error('─'.repeat(60));
+    
     try {
       await initActualApi();
-      console.error('─'.repeat(60));
-      console.error('✅ PHASE 1 COMPLETE: Actual Budget API ready');
+      
       console.error('');
     } catch (error) {
-      console.error('─'.repeat(60));
-      console.error('❌ PHASE 1 FAILED: Actual Budget API initialization error');
-      console.error('─'.repeat(60));
+      
       console.error('✗ Failed to initialize Actual Budget API:', error);
       console.error('Server cannot start without Actual Budget connection');
       process.exit(1);
@@ -219,8 +208,7 @@ async function main(): Promise<void> {
   }
 
   if (useSse) {
-    console.error('📋 PHASE 2: Starting HTTP server...');
-    console.error('─'.repeat(60));
+    
 
     const app = express();
 
@@ -246,9 +234,7 @@ async function main(): Promise<void> {
 
     // Log bearer auth status
     if (enableBearer) {
-      console.error('Bearer authentication enabled for SSE endpoints');
     } else {
-      console.error('Bearer authentication disabled - endpoints are public');
     }
 
     // * Favicon route - simple SVG favicon
@@ -322,13 +308,15 @@ async function main(): Promise<void> {
       // Store original console methods before overriding
       const originalConsoleError = console.error;
       const originalConsoleLog = console.log;
-      
+
       console.error(`[SSE] Connection attempt from ${req.ip || req.socket.remoteAddress}`);
-      console.error(`[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], 'accept': req.headers.accept })}`);
-      
+      console.error(
+        `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
+      );
+
       transport = new SSEServerTransport('/messages', res);
       transportReady = false;
-      
+
       console.error('[SSE] Creating transport...');
       server
         .connect(transport)
@@ -405,21 +393,12 @@ async function main(): Promise<void> {
       if (error) {
         console.error('Error:', error);
       } else {
-        console.error('─'.repeat(60));
-        console.error('✅ PHASE 2 COMPLETE: Server ready');
-        console.error('='.repeat(60));
-        console.error(`🌐 Server listening on port ${resolvedPort} (0.0.0.0)`);
-        console.error(`📡 Endpoints:`);
-        console.error(`   GET  /      - Server status page`);
-        console.error(`   GET  /sse   - SSE transport endpoint`);
-        console.error(`   POST /messages - Messages endpoint`);
+        
+        
+        
         if (enableBearer) {
-          console.error(`🔒 Bearer authentication: ENABLED`);
         } else {
-          console.error(`⚠️  Bearer authentication: DISABLED`);
         }
-        console.error(`🔖 Deployment ID: ${deploymentId}`);
-        console.error('='.repeat(60));
       }
     });
   } else {
