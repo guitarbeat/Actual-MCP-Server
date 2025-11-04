@@ -29,6 +29,20 @@ export async function handler(
   args: Record<string, unknown>
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
+    const allowedKeys = ['name', 'groupId'];
+    const invalidKeys = Object.keys(args).filter((key) => !allowedKeys.includes(key));
+    if (invalidKeys.length > 0) {
+      const invalidList = invalidKeys.join(', ');
+      const allowedList = allowedKeys.join(', ');
+      return errorFromCatch(
+        [
+          `Invalid parameter(s): ${invalidList}.`,
+          `Allowed parameters are: ${allowedList}.`,
+          'Try calling create-category with only these parameters.',
+        ].join(' ')
+      );
+    }
+
     if (!args.name || typeof args.name !== 'string') {
       return errorFromCatch('name is required and must be a string');
     }
