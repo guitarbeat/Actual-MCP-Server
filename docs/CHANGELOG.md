@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.4.0](https://github.com/s-stefanov/actual-mcp/compare/v1.3.0...v1.4.0) (2025-10-18)
+
+
+### Features
+
+* Enhance transaction handling with enriched data and improved input parsing ([#39](https://github.com/s-stefanov/actual-mcp/issues/39)) ([74f1270](https://github.com/s-stefanov/actual-mcp/commit/74f12709ee9efef7840dec15bd1c1424cb09f5f2))
+* Fix monthly summary with transfers calculations ([#41](https://github.com/s-stefanov/actual-mcp/issues/41)) ([af59c41](https://github.com/s-stefanov/actual-mcp/commit/af59c41d43ea3e85b10e475becc3f62273e8ebd0))
+
+## [1.3.0](https://github.com/s-stefanov/actual-mcp/compare/v1.2.2...v1.3.0) (2025-10-09)
+
+
+### Features
+
+* Connect to actual budget server that has different encryption key ([#33](https://github.com/s-stefanov/actual-mcp/issues/33)) ([f828ad4](https://github.com/s-stefanov/actual-mcp/commit/f828ad4f56e73416ec82f5c55efd98bea315c196)), closes [#28](https://github.com/s-stefanov/actual-mcp/issues/28)
+* Return id in get-transactions ([#34](https://github.com/s-stefanov/actual-mcp/issues/34)) ([e15bb33](https://github.com/s-stefanov/actual-mcp/commit/e15bb33866106954a904f9ce1ebccf76983c95ea)), closes [#32](https://github.com/s-stefanov/actual-mcp/issues/32)
+* Update Actual to 25.10.0 ([#35](https://github.com/s-stefanov/actual-mcp/issues/35)) ([1bd89ea](https://github.com/s-stefanov/actual-mcp/commit/1bd89ea4dd3fb72e8641f8eff018f41b3d8db6a7))
+
+## [1.2.2](https://github.com/s-stefanov/actual-mcp/compare/v1.2.1...v1.2.2) (2025-10-08)
+
+
+### Bug Fixes
+
+* docker publish to proper username ([#29](https://github.com/s-stefanov/actual-mcp/issues/29)) ([fa15085](https://github.com/s-stefanov/actual-mcp/commit/fa150857d528c730b5f6ad20a33ede230e886635))
+
+## [1.2.1](https://github.com/s-stefanov/actual-mcp/compare/v1.2.0...v1.2.1) (2025-10-06)
+
+
+### Bug Fixes
+
+* use valid JSON Schema 2020-12 for rule value types ([#26](https://github.com/s-stefanov/actual-mcp/issues/26)) ([6ee4c7e](https://github.com/s-stefanov/actual-mcp/commit/6ee4c7e4c72e3b341a0acc261ffe231781acdbdf))
+
 ## [1.2.0](https://github.com/s-stefanov/actual-mcp/compare/v1.1.0...v1.2.0) (2025-09-05)
 
 
