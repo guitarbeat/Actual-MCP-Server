@@ -58,9 +58,10 @@ docker run -d \
   --sse --enable-write --enable-bearer
 ```
 
-Or use Docker Compose with the included `docker-compose.yml`:
+Or use Docker Compose with the included `dev/docker-compose.yml`:
 
 ```bash
+cd dev
 docker-compose up -d
 ```
 

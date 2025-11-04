@@ -5,8 +5,6 @@ coverage/
 .env
 data/**
 .DS_Store
-.vscode/launch.json
-.gemini/
 pnpm-lock.yaml
 
 **/*.local.*
