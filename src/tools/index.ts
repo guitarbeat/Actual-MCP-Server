@@ -157,7 +157,7 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       await initActualApi();
       const { name, arguments: args } = request.params;
 
-      const tool = allTools.find((t) => t.schema.name === name);
+      const tool = allTools.find((t) => (t as any).schema.name === name);
       if (!tool) {
         return error(`Unknown tool ${name}`);
       }

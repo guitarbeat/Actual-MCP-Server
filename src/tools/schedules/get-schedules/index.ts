@@ -1,22 +1,22 @@
-import { z } from 'zod';
+import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { getSchedules } from '../../../actual-api.js';
 
-import { errorFromCatch } from '../../../utils/response';
-import { actualApi } from '../../../actual-api';
+export const schema = {
+  name: 'get-schedules',
+  description: 'Get all recurring schedules',
+  inputSchema: {
+    type: 'object',
+    properties: {},
+  },
+};
 
-export const schema = z.object({
-  tool: z.literal('get-schedules'),
-  args: z.object({}),
-});
-
-export type GetSchedules = z.infer<typeof schema>;
-
-export async function handler() {
+export async function handler(
+  _args: Record<string, unknown>
+): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const schedules = await actualApi.getSchedules();
-    return {
-      type: 'string',
-      result: JSON.stringify(schedules, null, 2),
-    };
+    const schedules = await getSchedules();
+
+    return successWithJson(schedules);
   } catch (err) {
     return errorFromCatch(err);
   }
