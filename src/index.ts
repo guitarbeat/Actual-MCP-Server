@@ -17,7 +17,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'node:util';
-import { initActualApi, shutdownActualApi } from './actual-api.js';
+import { initActualApi, shutdownActualApi, getBudgets } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
@@ -160,6 +160,53 @@ async function main(): Promise<void> {
     console.error('If your server requires authentication, initialization will fail.');
   }
 
+  /**
+   * Custom method handler for actual.* JSON-RPC methods
+   * Handles methods that aren't part of the standard MCP protocol
+   */
+  const handleCustomMethod = async (
+    method: string,
+    params: Record<string, unknown>,
+    id: number | string | null
+  ): Promise<{ jsonrpc: string; result?: unknown; error?: { code: number; message: string }; id: number | string | null }> => {
+    try {
+      await initActualApi();
+
+      switch (method) {
+        case 'actual.listBudgets': {
+          const budgets = await getBudgets();
+          return {
+            jsonrpc: '2.0',
+            result: budgets,
+            id,
+          };
+        }
+
+        default:
+          return {
+            jsonrpc: '2.0',
+            error: {
+              code: -32601,
+              message: `Method not found: ${method}`,
+            },
+            id,
+          };
+      }
+    } catch (error) {
+      console.error(`Error executing custom method ${method}:`, error);
+      return {
+        jsonrpc: '2.0',
+        error: {
+          code: -32603,
+          message: error instanceof Error ? error.message : String(error),
+        },
+        id,
+      };
+    } finally {
+      await shutdownActualApi();
+    }
+  };
+
   if (useSse) {
     const app = express();
     app.use(express.json());
@@ -175,6 +222,14 @@ async function main(): Promise<void> {
     // Implementación HTTP streamable (stateless, MCP moderno)
     app.post('/mcp', bearerAuth, async (req: Request, res: Response) => {
       try {
+        // Check if this is a custom actual.* method
+        const body = req.body;
+        if (body && typeof body === 'object' && body.method && typeof body.method === 'string' && body.method.startsWith('actual.')) {
+          const result = await handleCustomMethod(body.method, body.params || {}, body.id || null);
+          res.json(result);
+          return;
+        }
+
         // Crear nueva instancia de transport y conectar el server en cada request
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined, // stateless
@@ -232,6 +287,15 @@ async function main(): Promise<void> {
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
+      // Check if this is a custom actual.* method
+      const body = req.body;
+      if (body && typeof body === 'object' && body.method && typeof body.method === 'string' && body.method.startsWith('actual.')) {
+        const result = await handleCustomMethod(body.method, body.params || {}, body.id || null);
+        res.json(result);
+        return;
+      }
+
+      // Otherwise, pass to MCP transport
       if (transport) {
         await transport.handlePostMessage(req, res, req.body);
       } else {
