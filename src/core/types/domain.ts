@@ -10,7 +10,7 @@ export interface Account {
 }
 
 export interface Transaction {
-  id?: string;
+  id: string;
   account: string;
   date: string;
   amount: number;
@@ -19,6 +19,7 @@ export interface Transaction {
   category?: string;
   category_name?: string;
   notes?: string;
+  transfer_id?: string;
 }
 
 export interface Category {

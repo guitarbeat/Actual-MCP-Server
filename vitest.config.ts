@@ -11,7 +11,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html'],
       include: ['src/core/**/*.ts', 'src/tools/**/*.ts'],
-      exclude: ['src/core/**/*.test.ts', 'src/core/types/domain.ts', 'src/tools/**/*.test.ts'],
+      exclude: ['src/core/**/*.test.ts', 'src/tools/**/*.test.ts', 'src/core/types/domain.ts'],
     },
     alias: {
       '^(\\.{1,2}/.*)\\.js$': '$1', // Handle .js imports in TypeScript

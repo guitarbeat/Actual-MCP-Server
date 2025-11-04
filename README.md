@@ -16,128 +16,114 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 
 ### Tools
 
-#### Account Management
-
-- **`get-accounts`** - Retrieve a list of all accounts with their current balance and ID
-- **`get-account-balance`** - Get the balance of an account as of a specific date
-- **`balance-history`** - View account balance changes over time with daily balances
-- **`create-account`** - Create a new account (requires `--enable-write`)
-- **`update-account`** - Update an existing account's name, type, or off-budget status (requires `--enable-write`)
-- **`close-account`** - Close an account (requires `--enable-write`)
-- **`reopen-account`** - Reopen a closed account (requires `--enable-write`)
-- **`delete-account`** - Delete an account (requires `--enable-write`)
-
-#### Transaction Management
+#### Transaction & Account Management
 
 - **`get-transactions`** - Retrieve and filter transactions by account, date, amount, category, or payee
-- **`create-transaction`** - Create new transactions with all fields, automatically creating payees and categories if needed (requires `--enable-write`)
-- **`update-transaction`** - Update an existing transaction with new category, payee, notes, or amount (requires `--enable-write`)
-
-#### Category Management
-
-- **`get-grouped-categories`** - Retrieve a list of all category groups with their categories
-- **`create-category`** - Create a new category within a category group (requires `--enable-write`)
-- **`update-category`** - Update an existing category's name or group (requires `--enable-write`)
-- **`delete-category`** - Delete a category (requires `--enable-write`)
-- **`create-category-group`** - Create a new category group (requires `--enable-write`)
-- **`update-category-group`** - Update a category group's name (requires `--enable-write`)
-- **`delete-category-group`** - Delete a category group (requires `--enable-write`)
-
-#### Payee Management
-
-- **`get-payees`** - Retrieve a list of all payees with their details
-- **`get-payee-rules`** - Get all rules associated with a specific payee
-- **`create-payee`** - Create a new payee (requires `--enable-write`)
-- **`update-payee`** - Update an existing payee's details (requires `--enable-write`)
-- **`delete-payee`** - Delete a payee (requires `--enable-write`)
-- **`merge-payees`** - Merge multiple payees into a target payee (requires `--enable-write`)
-
-#### Rule Management
-
-- **`get-rules`** - Retrieve a list of all transaction rules
-- **`create-rule`** - Create a new transaction rule with conditions and actions (requires `--enable-write`)
-- **`update-rule`** - Update an existing transaction rule (requires `--enable-write`)
-- **`delete-rule`** - Delete a transaction rule (requires `--enable-write`)
-
-#### Schedule Management
-
-- **`get-schedules`** - Get all recurring transaction schedules
-- **`create-schedule`** - Create a new recurring schedule for transactions (requires `--enable-write`)
-- **`update-schedule`** - Update an existing recurring schedule (requires `--enable-write`)
-- **`delete-schedule`** - Delete a recurring schedule (requires `--enable-write`)
-
-#### Budget Operations
-
-- **`get-budget-months`** - Get a list of all months that have budget data
-- **`get-budget-month`** - Get budget data for a specific month (category budgets and spending)
-- **`set-budget-amount`** - Set the budgeted amount for a category in a specific month (requires `--enable-write`)
-- **`set-budget-carryover`** - Enable or disable budget carryover for a category (requires `--enable-write`)
-- **`hold-budget-for-next-month`** - Hold or release budget funds for the next month (requires `--enable-write`)
-- **`reset-budget-hold`** - Reset the budget hold for a category (requires `--enable-write`)
-
-#### Budget File Management
-
-- **`get-budgets`** - Get a list of all available budgets
-- **`load-budget`** - Load a different budget by its ID (requires `--enable-write`)
-- **`download-budget`** - Download a budget from the server, with optional support for end-to-end encrypted budgets (requires `--enable-write`)
-- **`sync`** - Sync the current budget with the server (requires `--enable-write`)
-- **`run-bank-sync`** - Run bank sync for a specific account (requires `--enable-write`)
-- **`run-import`** - Run an import from a file (requires `--enable-write`)
+- **`get-accounts`** - Retrieve a list of all accounts with their current balance and ID
+- **`balance-history`** - View account balance changes over time
 
 #### Reporting & Analytics
 
-- **`spending-by-category`** - Generate spending breakdowns categorized by type with detailed transaction lists
-- **`monthly-summary`** - Get monthly income, expenses, and savings metrics with category breakdowns
+- **`spending-by-category`** - Generate spending breakdowns categorized by type
+- **`monthly-summary`** - Get monthly income, expenses, and savings metrics
 
-#### Utilities
+#### Categories
 
-- **`get-id-by-name`** - Get the ID of an account, category, payee, or category group by its name
-- **`run-query`** - Run an ActualQL query to retrieve custom data from the budget (advanced)
-- **`get-server-version`** - Get the version of the Actual Budget server
+- **`get-grouped-categories`** - Retrieve a list of all category groups with their categories
+- **`create-category`** - Create a new category within a category group
+- **`update-category`** - Update an existing category's name or group
+- **`delete-category`** - Delete a category
+- **`create-category-group`** - Create a new category group
+- **`update-category-group`** - Update a category group's name
+- **`delete-category-group`** - Delete a category group
+
+#### Payees
+
+- **`get-payees`** - Retrieve a list of all payees with their details
+- **`create-payee`** - Create a new payee
+- **`update-payee`** - Update an existing payee's details
+- **`delete-payee`** - Delete a payee
+
+#### Rules
+
+- **`get-rules`** - Retrieve a list of all transaction rules
+- **`create-rule`** - Create a new transaction rule with conditions and actions
+- **`update-rule`** - Update an existing transaction rule
+- **`delete-rule`** - Delete a transaction rule
 
 ### Prompts
 
 - **`financial-insights`** - Generate insights and recommendations based on your financial data
 - **`budget-review`** - Analyze your budget compliance and suggest adjustments
 
-## Quick Start - Deploy to Railway
-
-The easiest way to use this MCP server is to deploy it to Railway using Nixpacks.
+## Installation
 
 ### Prerequisites
 
-- A [Railway](https://railway.app/) account
-- [Actual Budget](https://actualbudget.com/) server URL and credentials
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [Actual Budget](https://actualbudget.com/) installed and configured
 - [Claude Desktop](https://claude.ai/download) or another MCP-compatible client
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (optional)
 
-### Step 1: Deploy to Railway
+### Remote access
 
-1. **Fork or connect your repository to Railway:**
-   - Go to [Railway](https://railway.app/)
-   - Click "New Project"
-   - Select "Deploy from GitHub repo"
-   - Choose this repository
+Pull the latest docker image:
 
-2. **Railway will automatically:**
-   - Detect the Node.js project using Nixpacks
-   - Run `npm ci` to install dependencies
-   - Run `npm run build` to compile TypeScript
-   - Start the server with the command from `railway.json`
+```
+docker pull sstefanov/actual-mcp:latest
+```
 
-3. **Configure environment variables in Railway:**
-   - Go to your Railway project settings
-   - Add the following environment variables:
-     - `ACTUAL_SERVER_URL` - Your Actual Budget server URL (e.g., `https://your-actual-server.com`)
-     - `ACTUAL_PASSWORD` - Your Actual Budget server password
-     - `ACTUAL_BUDGET_SYNC_ID` - Your budget ID (optional, if you have multiple budgets)
-     - `ACTUAL_BUDGET_PASSWORD` - Password for end-to-end encrypted budgets (optional)
-     - `BEARER_TOKEN` - A secure random token for authentication (recommended for production)
+### Local setup
 
-4. **Get your Railway deployment URL:**
-   - Railway will provide a public URL (e.g., `https://your-app.railway.app`)
-   - Your MCP server will be available at `https://your-app.railway.app/sse`
+1. Clone the repository:
 
-### Step 2: Connect Claude Desktop to Your Remote Server
+```bash
+git clone https://github.com/sstefanov/actual-mcp.git
+cd actual-mcp
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Build the server:
+
+```bash
+npm run build
+```
+
+4. Build the local docker image (optional):
+
+```bash
+docker build -t <local-image-name> .
+```
+
+5. Configure environment variables (optional):
+
+```bash
+# Path to your Actual Budget data directory (default: ~/.actual)
+export ACTUAL_DATA_DIR="/path/to/your/actual/data"
+
+# If using a remote Actual server
+export ACTUAL_SERVER_URL="https://your-actual-server.com"
+export ACTUAL_PASSWORD="your-password"
+
+# Specific budget to use (optional)
+export ACTUAL_BUDGET_SYNC_ID="your-budget-id"
+```
+
+Optional: separate encryption budget password
+
+If your Actual setup requires a different password to unlock the local/encrypted budget data than the server authentication password, you can set `ACTUAL_BUDGET_ENCRYPTION_PASSWORD` in addition to `ACTUAL_PASSWORD`.
+
+```bash
+# If server auth and encryption/unlock use different passwords
+export ACTUAL_BUDGET_ENCRYPTION_PASSWORD="your-encryption-password"
+```
+
+## Usage with Claude Desktop
 
 To use this server with Claude Desktop, add it to your Claude configuration:
 
@@ -153,104 +139,96 @@ On Windows:
 code %APPDATA%\Claude\claude_desktop_config.json
 ```
 
-Add the following configuration to connect to your Railway deployment:
+Add the following to your configuration...
+
+### a. Using Node.js (npx version):
 
 ```json
 {
   "mcpServers": {
     "actualBudget": {
-      "url": "https://your-app.railway.app/sse",
-      "headers": {
-        "Authorization": "Bearer your-bearer-token"
+      "command": "node",
+      "args": ["-y", "actual-mcp", "--enable-write"],
+      "env": {
+        "ACTUAL_DATA_DIR": "path/to/your/data",
+        "ACTUAL_PASSWORD": "your-password",
+        "ACTUAL_SERVER_URL": "http://your-actual-server.com",
+        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
       }
     }
   }
 }
 
-Replace:
-- `https://your-app.railway.app/sse` with your Railway deployment URL + `/sse`
-- `your-bearer-token` with the `BEARER_TOKEN` you set in Railway environment variables
+### a. Using Node.js (local only):
 
-> **Note**: If you're using Claude Desktop, it may require HTTP/SSE transport support. Check your Claude Desktop version supports remote MCP servers. For Poke MCP and other modern MCP clients, use the configuration above.
+```json
+{
+  "mcpServers": {
+    "actualBudget": {
+      "command": "node",
+      "args": ["/path/to/your/clone/build/index.js", "--enable-write"],
+      "env": {
+        "ACTUAL_DATA_DIR": "path/to/your/data",
+        "ACTUAL_PASSWORD": "your-password",
+        "ACTUAL_SERVER_URL": "http://your-actual-server.com",
+        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
+      }
+    }
+  }
+}
+```
+
+### b. Using Docker (local or remote images):
+
+```json
+{
+  "mcpServers": {
+    "actualBudget": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/path/to/your/data:/data",
+        "-e",
+        "ACTUAL_PASSWORD=your-password",
+        "-e",
+        "ACTUAL_SERVER_URL=https://your-actual-server.com",
+        "-e",
+        "ACTUAL_BUDGET_SYNC_ID=your-budget-id",
+        "sstefanov/actual-mcp:latest",
+        "--enable-write"
+      ]
+    }
+  }
+}
+```
 
 After saving the configuration, restart Claude Desktop.
 
 > 💡 `ACTUAL_DATA_DIR` is optional if you're using `ACTUAL_SERVER_URL`.
 
-> 💡 `ACTUAL_BUDGET_PASSWORD` is only required for end-to-end encrypted budgets.
-
 > 💡 Use `--enable-write` to enable write-access tools.
 
-## Usage with Poke MCP
+## Running an SSE Server
 
-[Poke MCP](https://github.com/modelcontextprotocol/poke-mcp) is a modern MCP client that supports HTTP/SSE transport. 
-
-### Quick Start
-
-1. **Start the server in SSE mode:**
+To expose the server over a port using Docker:
 
 ```bash
-npm run build
-node build/index.js --sse --enable-write
+docker run -i --rm \
+  -p 3000:3000 \
+  -v "/path/to/your/data:/data" \
+  -e ACTUAL_PASSWORD="your-password" \
+  -e ACTUAL_SERVER_URL="http://your-actual-server.com" \
+  -e ACTUAL_BUDGET_SYNC_ID="your-budget-id" \
+  -e BEARER_TOKEN="your-bearer-token" \
+  sstefanov/actual-mcp:latest \
+  --sse --enable-write --enable-bearer
 ```
 
-2. **Connect Poke MCP to the server:**
-
-The server will be available at `http://localhost:3000/sse` for Poke MCP connections.
-
-### Configuration
-
-For detailed setup instructions for all MCP clients, see the [Setup Guide](./docs/SETUP.md).
-
-**Quick example:**
-
-```bash
-# Start server with SSE and bearer auth (recommended for production)
-export BEARER_TOKEN="your-secure-token"
-node build/index.js --sse --enable-write --enable-bearer
-
-# Connect Poke MCP to: http://localhost:3000/sse
-# Use bearer token: your-secure-token
-```
-
-For local development without authentication:
-
-```bash
-node build/index.js --sse --enable-write
-```
-
-## Alternative Deployment Options
-
-### Other Platforms
-
-- **Render/Other Platforms**: Ensure the build command (`npm run build`) runs before starting the server. The start command should be `node build/index.js --sse --enable-write`.
-
-**Important**: Ensure your deployment platform runs `npm run build` before starting the server, as the `build/` directory is gitignored.
-
-> **Note**: Docker images are available for alternative deployments, but Nixpacks is the recommended approach for Railway deployments.
-
-## Local Development (Optional)
-
-For local development or testing only, you can run the server locally:
-
-```bash
-# Set environment variables
-export ACTUAL_SERVER_URL="https://your-actual-server.com"
-export ACTUAL_PASSWORD="your-password"
-export ACTUAL_BUDGET_SYNC_ID="your-budget-id"
-export BEARER_TOKEN="your-bearer-token"  # Optional but recommended
-
-# Build and run
-npm run build
-node build/index.js --sse --enable-write --enable-bearer
-```
-
-The server will be available at `http://localhost:3000/sse` for MCP clients.
-
-> ⚠️ Important: When using `--enable-bearer`, the BEARER_TOKEN environment variable must be set.  
+> ⚠️ Important: When using --enable-bearer, the BEARER_TOKEN environment variable must be set.  
 > 🔒 This is highly recommended if you're exposing your server via a public URL.
-
-> **Note**: For production deployments, use Railway with Nixpacks (see Deployment section above). Docker images are available as an alternative option.
 
 ## Example Queries
 
@@ -261,8 +239,6 @@ Once connected, you can ask Claude questions like:
 - "How much did I spend on groceries in January?"
 - "What's my savings rate over the past 3 months?"
 - "Analyze my budget and suggest areas to improve"
-- "Create a transaction for $25.50 at Grocery Store in my Checking account for Food category"
-- "Add a new expense of $100 for rent to my account"
 
 ## Development
 
