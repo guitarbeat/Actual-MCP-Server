@@ -17,14 +17,17 @@ describe('CreateTransactionInputParser', () => {
       const result = parser.parse(input);
 
       expect(result).toEqual({
-        accountId: 'account-123',
-        date: '2023-12-15',
-        amount: 25.5,
-        payee: undefined,
-        category: undefined,
-        categoryGroup: undefined,
-        notes: undefined,
-        cleared: true, // default
+        input: {
+          accountId: 'account-123',
+          date: '2023-12-15',
+          amount: 25.5,
+          payee: undefined,
+          category: undefined,
+          categoryGroup: undefined,
+          notes: undefined,
+          cleared: true, // default
+        },
+        warnings: [],
       });
     });
 
@@ -42,14 +45,17 @@ describe('CreateTransactionInputParser', () => {
       const result = parser.parse(input);
 
       expect(result).toEqual({
-        accountId: 'account-123',
-        date: '2023-12-15',
-        amount: 25.5,
-        payee: 'Grocery Store',
-        category: 'Food',
-        categoryGroup: undefined,
-        notes: 'Weekly groceries',
-        cleared: false,
+        input: {
+          accountId: 'account-123',
+          date: '2023-12-15',
+          amount: 25.5,
+          payee: 'Grocery Store',
+          category: 'Food',
+          categoryGroup: undefined,
+          notes: 'Weekly groceries',
+          cleared: false,
+        },
+        warnings: [],
       });
     });
   });
@@ -101,7 +107,7 @@ describe('CreateTransactionInputParser', () => {
       };
 
       const result = parser.parse(input);
-      expect(result.amount).toBe(-50.0);
+      expect(result.input.amount).toBe(-50.0);
     });
 
     it('should handle zero amounts', () => {
@@ -112,7 +118,22 @@ describe('CreateTransactionInputParser', () => {
       };
 
       const result = parser.parse(input);
-      expect(result.amount).toBe(0);
+      expect(result.input.amount).toBe(0);
+    });
+
+    it('should include warning for unusually small cent amounts', () => {
+      const input = {
+        accountId: 'account-123',
+        date: '2023-12-15',
+        amount: 0.03,
+      };
+
+      const result = parser.parse(input);
+
+      expect(result.input.amount).toBe(0.03);
+      expect(result.warnings).toEqual([
+        'Amount $0.03 is unusually small; please confirm the cents value.',
+      ]);
     });
   });
 });

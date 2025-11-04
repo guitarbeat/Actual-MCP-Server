@@ -169,5 +169,34 @@ describe('CreateTransactionReportGenerator', () => {
 
       expect(report).toContain('- **Amount**: -$50.00');
     });
+
+    it('should include warnings from both parser and data fetcher', () => {
+      const input: CreateTransactionInput = {
+        accountId: 'account-123',
+        date: '2023-12-15',
+        amount: 0.03,
+        cleared: true,
+      };
+
+      const result: EntityCreationResult = {
+        transactionIds: ['txn-7'],
+        createdPayee: false,
+        createdCategory: false,
+        wasAdded: true,
+        wasUpdated: false,
+        warnings: ['No category groups are available from Actual; the transaction will remain uncategorized.'],
+      };
+
+      const report = generator.generate(input, result, [
+        'Amount $0.03 is unusually small; please confirm the cents value.',
+      ]);
+
+      expect(report).toContain('## Warnings');
+      expect(report).toContain(
+        '- No category groups are available from Actual; the transaction will remain uncategorized.'
+      );
+      expect(report).toContain('- Amount $0.03 is unusually small; please confirm the cents value.');
+      expect(report).toMatch(/## Warnings[\s\S]*## Transaction Details/);
+    });
   });
 });
