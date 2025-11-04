@@ -26,4 +26,4 @@ ENV NODE_ENV=production
 RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 EXPOSE 3000
-ENTRYPOINT ["node", "build/index.js"]
+CMD ["node", "build/index.js", "--sse", "--enable-write", "--enable-bearer"]
