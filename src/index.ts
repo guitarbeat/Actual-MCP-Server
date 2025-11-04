@@ -519,17 +519,11 @@ async function main(): Promise<void> {
       
       try {
         // * Create SSE transport for this connection
-        // The transport will set up SSE headers automatically
+        // The transport will set up SSE headers automatically when connected
         const transport = new SSEServerTransport('/messages', res);
         
         // * Store transport in map for this connection
         activeTransports.set(connectionId, transport);
-        
-        // * Send connection ID to client in first SSE event
-        // The client must include this ID in the X-MCP-Connection-ID header for subsequent POST requests
-        // This allows routing messages to the correct transport when multiple clients are connected
-        res.write(`event: connection\n`);
-        res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
         
         // * Handle connection close - cleanup this specific transport
         res.on('close', () => {
@@ -544,7 +538,7 @@ async function main(): Promise<void> {
           }
         });
 
-        // * Handle connection errors
+        // * Connect transport first - this sets up SSE headers via transport.start()
         // * Note: server.connect() may support multiple transports, or may require
         // * a single connection. If issues arise, we may need to create a new Server
         // * instance per connection instead.
@@ -559,6 +553,12 @@ async function main(): Promise<void> {
           }
           throw error;
         });
+
+        // * After transport is connected and headers are set, send connection ID to client
+        // * The client must include this ID in the X-MCP-Connection-ID header for subsequent POST requests
+        // * This allows routing messages to the correct transport when multiple clients are connected
+        res.write(`event: connection\n`);
+        res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
 
         // * Optional log server integration (only in development with docker-compose)
         const logServerUrl = process.env.LOG_SERVER_URL || 'http://log-server:4000/log';
