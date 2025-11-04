@@ -4,6 +4,7 @@
 
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { updateCategory } from '../../../actual-api.js';
+import { assertUuid } from '../../../utils/validators.js';
 
 export const schema = {
   name: 'update-category',
@@ -50,17 +51,19 @@ export async function handler(
       return errorFromCatch('id is required and must be a string');
     }
 
+    const id = assertUuid(args.id, 'id');
+
     const data: Record<string, unknown> = {};
     if (args.name) {
       data.name = args.name;
     }
-    if (args.groupId) {
-      data.group_id = args.groupId;
+    if (args.groupId !== undefined) {
+      data.group_id = assertUuid(args.groupId, 'groupId');
     }
 
-    await updateCategory(args.id, data);
+    await updateCategory(id, data);
 
-    return successWithJson('Successfully updated category ' + args.id);
+    return successWithJson('Successfully updated category ' + id);
   } catch (err) {
     return errorFromCatch(err);
   }
