@@ -38,9 +38,11 @@ export class CreateTransactionDataFetcher {
   async ensureCategoryExists(
     categoryName?: string,
     categoryGroupName?: string
-  ): Promise<{ categoryId?: string; created: boolean }> {
+  ): Promise<{ categoryId?: string; created: boolean; warnings: string[] }> {
+    const warnings: string[] = [];
+
     if (!categoryName && !categoryGroupName) {
-      return { created: false };
+      return { created: false, warnings };
     }
 
     const categories = await getCategories();
@@ -50,7 +52,14 @@ export class CreateTransactionDataFetcher {
     if (categoryName) {
       const existingCategory = categories.find((c) => c.name.toLowerCase() === categoryName.toLowerCase());
       if (existingCategory) {
-        return { categoryId: existingCategory.id, created: false };
+        return { categoryId: existingCategory.id, created: false, warnings };
+      }
+
+      if (categoryGroups.length === 0) {
+        warnings.push(
+          'No category groups are available from Actual; the transaction will remain uncategorized.'
+        );
+        return { created: false, warnings };
       }
 
       // Si no existe, buscar grupo adecuado
@@ -60,16 +69,24 @@ export class CreateTransactionDataFetcher {
       }
 
       const categoryId = await createCategory({ name: categoryName, group: defaultGroup.id });
-      return { categoryId, created: true };
+      return { categoryId, created: true, warnings };
     }
 
     // Si se proporciona categoryGroupName, crear categoría con ese nombre en el grupo
     if (categoryGroupName) {
+      if (categoryGroups.length === 0) {
+        const message =
+          `Category group "${categoryGroupName}" cannot be created because there are no groups available in Actual;` +
+          ' the transaction will remain uncategorized.';
+        warnings.push(message);
+        return { created: false, warnings };
+      }
+
       const categoryId = await this.createCategoryInGroup(categoryGroupName, categoryGroups);
-      return { categoryId, created: true };
+      return { categoryId, created: true, warnings };
     }
 
-    return { created: false };
+    return { created: false, warnings };
   }
 
   private async createCategoryInGroup(
@@ -124,10 +141,12 @@ export class CreateTransactionDataFetcher {
     const { payeeId, created: createdPayee } = await this.ensurePayeeExists(input.payee);
 
     // Ensure category exists
-    const { categoryId, created: createdCategory } = await this.ensureCategoryExists(
+    const { categoryId, created: createdCategory, warnings: categoryWarnings } = await this.ensureCategoryExists(
       input.category,
       input.categoryGroup
     );
+
+    const warnings = [...categoryWarnings];
 
     // Convert amount to cents (Actual uses integer cents)
     const amountInCents = Math.round(input.amount * 100);
@@ -166,6 +185,7 @@ export class CreateTransactionDataFetcher {
       categoryId,
       createdPayee,
       createdCategory,
+      ...(warnings.length > 0 ? { warnings } : {}),
     };
   }
 }
