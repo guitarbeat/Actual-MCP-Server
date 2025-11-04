@@ -517,15 +517,39 @@ async function main(): Promise<void> {
       // * Generate unique connection ID for this SSE session
       const connectionId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
       
+      // ! Check if headers have already been sent (should not happen, but safety check)
+      if (res.headersSent) {
+        console.error('Headers already sent before SSE transport setup');
+        return;
+      }
+
       try {
         // * Create SSE transport for this connection
         // The transport will set up SSE headers automatically when connected
+        // Do NOT register event handlers on res before this, as it might trigger header sending
         const transport = new SSEServerTransport('/messages', res);
         
-        // * Store transport in map for this connection
+        // * Connect transport FIRST - this sets up SSE headers via transport.start()
+        // * Must be done immediately after creating transport, before any other response operations
+        // * Note: server.connect() may support multiple transports, or may require
+        // * a single connection. If issues arise, we may need to create a new Server
+        // * instance per connection instead.
+        await server.connect(transport).catch((error) => {
+          console.error('Error connecting SSE transport:', error);
+          if (!res.headersSent) {
+            res.status(500).json({
+              error: 'Failed to establish SSE connection',
+              message: error instanceof Error ? error.message : String(error),
+            });
+          }
+          throw error;
+        });
+
+        // * Store transport in map for this connection (after successful connection)
         activeTransports.set(connectionId, transport);
         
         // * Handle connection close - cleanup this specific transport
+        // * Register this AFTER connection is established to avoid interfering with header setup
         res.on('close', () => {
           const storedTransport = activeTransports.get(connectionId);
           if (storedTransport) {
@@ -538,27 +562,15 @@ async function main(): Promise<void> {
           }
         });
 
-        // * Connect transport first - this sets up SSE headers via transport.start()
-        // * Note: server.connect() may support multiple transports, or may require
-        // * a single connection. If issues arise, we may need to create a new Server
-        // * instance per connection instead.
-        await server.connect(transport).catch((error) => {
-          console.error('Error connecting SSE transport:', error);
-          activeTransports.delete(connectionId);
-          if (!res.headersSent) {
-            res.status(500).json({
-              error: 'Failed to establish SSE connection',
-              message: error instanceof Error ? error.message : String(error),
-            });
-          }
-          throw error;
-        });
-
         // * After transport is connected and headers are set, send connection ID to client
         // * The client must include this ID in the X-MCP-Connection-ID header for subsequent POST requests
         // * This allows routing messages to the correct transport when multiple clients are connected
-        res.write(`event: connection\n`);
-        res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
+        if (!res.headersSent) {
+          res.write(`event: connection\n`);
+          res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
+        } else {
+          console.error('Headers sent before connection ID event - skipping');
+        }
 
         // * Optional log server integration (only in development with docker-compose)
         const logServerUrl = process.env.LOG_SERVER_URL || 'http://log-server:4000/log';
