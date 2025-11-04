@@ -6,6 +6,9 @@
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "bin": {
     "actual-mcp": "build/index.js"
   },
