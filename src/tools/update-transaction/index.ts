@@ -3,6 +3,7 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { initActualApi } from '../../actual-api.js';
 import { success, errorFromCatch } from '../../utils/response.js';
+import { assertPositiveIntegerCents, assertUuid } from '../../utils/validators.js';
 import { UpdateTransactionArgsSchema, type UpdateTransactionArgs, ToolInput } from '../../types.js';
 
 export const schema = {
@@ -17,15 +18,17 @@ export async function handler(args: UpdateTransactionArgs): Promise<CallToolResu
 
     const { transactionId, categoryId, payeeId, notes, amount } = args;
 
+    const validTransactionId = assertUuid(transactionId, 'transactionId');
+
     // Build update object with only provided fields
     const updateData: Record<string, string | number | undefined> = {};
 
     if (categoryId !== undefined) {
-      updateData.category = categoryId;
+      updateData.category = assertUuid(categoryId, 'categoryId');
     }
 
     if (payeeId !== undefined) {
-      updateData.payee = payeeId;
+      updateData.payee = assertUuid(payeeId, 'payeeId');
     }
 
     if (notes !== undefined) {
@@ -33,13 +36,13 @@ export async function handler(args: UpdateTransactionArgs): Promise<CallToolResu
     }
 
     if (amount !== undefined) {
-      updateData.amount = amount;
+      updateData.amount = assertPositiveIntegerCents(amount, 'amount');
     }
 
     // Update the transaction using the Actual API
-    await api.updateTransaction(transactionId, updateData);
+    await api.updateTransaction(validTransactionId, updateData);
 
-    return success(`Successfully updated transaction ${transactionId}`);
+    return success(`Successfully updated transaction ${validTransactionId}`);
   } catch (error) {
     return errorFromCatch(error);
   }

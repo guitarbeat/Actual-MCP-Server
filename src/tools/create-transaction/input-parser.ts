@@ -1,5 +1,6 @@
 // Parses and validates input arguments for create-transaction tool
 
+import { assertPositiveIntegerCents, assertUuid } from '../../utils/validators.js';
 import { CreateTransactionInput } from './types.js';
 
 export class CreateTransactionInputParser {
@@ -12,17 +13,13 @@ export class CreateTransactionInputParser {
     const { accountId, date, amount, payee, category, categoryGroup, notes, cleared } = argsObj;
 
     // Validate required fields
-    if (!accountId || typeof accountId !== 'string') {
-      throw new Error('accountId is required and must be a string');
-    }
+    const validAccountId = assertUuid(accountId, 'accountId');
 
     if (!date || typeof date !== 'string') {
       throw new Error('date is required and must be a string (YYYY-MM-DD)');
     }
 
-    if (amount === undefined || typeof amount !== 'number') {
-      throw new Error('amount is required and must be a number');
-    }
+    const validAmount = assertPositiveIntegerCents(amount, 'amount');
 
     // Validate date format (basic check)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -38,9 +35,9 @@ export class CreateTransactionInputParser {
     }
 
     return {
-      accountId,
+      accountId: validAccountId,
       date,
-      amount,
+      amount: validAmount,
       payee: typeof payee === 'string' ? payee : undefined,
       category: typeof category === 'string' ? category : undefined,
       categoryGroup: typeof categoryGroup === 'string' ? categoryGroup : undefined,
