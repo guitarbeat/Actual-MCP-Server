@@ -8,7 +8,11 @@
 const fetch = globalThis.fetch || (await import('node-fetch')).default;
 
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
-const BEARER_TOKEN = process.env.BEARER_TOKEN || process.argv[2] || '9d7ed444f28745aa225d7ab219c00b1500414949121412002b2d34ad7f1bc97b';
+const BEARER_TOKEN = process.env.BEARER_TOKEN || process.argv[2];
+if (!BEARER_TOKEN) {
+  console.error('Error: BEARER_TOKEN environment variable or argument is required');
+  process.exit(1);
+}
 
 let testsPassed = 0;
 let testsFailed = 0;
