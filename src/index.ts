@@ -400,7 +400,9 @@ async function main(): Promise<void> {
   if (useSse) {
     const app = express();
     app.use(express.json());
-    let transport: SSEServerTransport | null = null;
+    // * Map to store active SSE transports by connection ID
+    // Each SSE connection gets its own transport instance
+    const activeTransports = new Map<string, SSEServerTransport>();
 
     // Log bearer auth status
     if (enableBearer) {
@@ -481,13 +483,18 @@ async function main(): Promise<void> {
           return;
         }
 
-        // Crear nueva instancia de transport y conectar el server en cada request
+        // * Create new transport instance for each request (stateless HTTP transport)
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined, // stateless
         });
         res.on('close', () => {
-          transport.close();
-          server.close();
+          // ! Only close the transport, NOT the server instance
+          // The server instance must remain alive for other connections
+          try {
+            transport.close();
+          } catch (e) {
+            // Ignore cleanup errors
+          }
         });
         await server.connect(transport);
         await transport.handleRequest(req, res, req.body);
@@ -507,26 +514,43 @@ async function main(): Promise<void> {
     });
 
     app.get('/sse', bearerAuth, async (req: Request, res: Response) => {
+      // * Generate unique connection ID for this SSE session
+      const connectionId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      
       try {
-        // * Handle connection close - cleanup previous transport if exists
+        // * Create SSE transport for this connection
+        // The transport will set up SSE headers automatically
+        const transport = new SSEServerTransport('/messages', res);
+        
+        // * Store transport in map for this connection
+        activeTransports.set(connectionId, transport);
+        
+        // * Send connection ID to client in first SSE event
+        // The client must include this ID in the X-MCP-Connection-ID header for subsequent POST requests
+        // This allows routing messages to the correct transport when multiple clients are connected
+        res.write(`event: connection\n`);
+        res.write(`data: ${JSON.stringify({ connectionId })}\n\n`);
+        
+        // * Handle connection close - cleanup this specific transport
         res.on('close', () => {
-          if (transport) {
+          const storedTransport = activeTransports.get(connectionId);
+          if (storedTransport) {
             try {
-              transport.close();
+              storedTransport.close();
             } catch (e) {
               // Ignore cleanup errors
             }
-            transport = null;
+            activeTransports.delete(connectionId);
           }
         });
 
-        // * Create SSE transport and connect to server
-        transport = new SSEServerTransport('/messages', res);
-        
         // * Handle connection errors
+        // * Note: server.connect() may support multiple transports, or may require
+        // * a single connection. If issues arise, we may need to create a new Server
+        // * instance per connection instead.
         await server.connect(transport).catch((error) => {
           console.error('Error connecting SSE transport:', error);
-          transport = null;
+          activeTransports.delete(connectionId);
           if (!res.headersSent) {
             res.status(500).json({
               error: 'Failed to establish SSE connection',
@@ -558,30 +582,24 @@ async function main(): Promise<void> {
           }
         };
 
-        // * Setup console logging to send to MCP client and optional log server
-        const originalConsoleLog = console.log;
-        const originalConsoleError = console.error;
-        
-        console.log = (message: string) => {
-          server.sendLoggingMessage({ level: 'info', message });
-          sendToLogServer('info', message).catch(() => {
-            // Ignore log server errors
-          });
-          originalConsoleLog(message);
-        };
-
-        console.error = (message: string) => {
-          server.sendLoggingMessage({ level: 'error', message });
-          sendToLogServer('error', message).catch(() => {
-            // Ignore log server errors
-          });
-          originalConsoleError(message);
+        // * Setup per-connection logging (don't override global console)
+        // Create a logging function that sends to this specific transport's client
+        const logToClient = (level: 'info' | 'error', message: string) => {
+          try {
+            server.sendLoggingMessage({ level, message });
+            sendToLogServer(level, message).catch(() => {
+              // Ignore log server errors
+            });
+          } catch (e) {
+            // Ignore logging errors
+          }
         };
 
         // * Connection established successfully
-        console.error(`SSE connection established for client`);
+        logToClient('info', `SSE connection established (ID: ${connectionId})`);
       } catch (error) {
         console.error('Failed to setup SSE connection:', error);
+        activeTransports.delete(connectionId);
         if (!res.headersSent) {
           res.status(500).json({
             error: 'Failed to initialize SSE connection',
@@ -600,15 +618,31 @@ async function main(): Promise<void> {
           return;
         }
 
-        // Otherwise, pass to MCP transport
-        if (!transport) {
-          res.status(503).json({
-            error: 'Transport not initialized',
-            message: 'SSE connection must be established first by connecting to /sse endpoint',
+        // * Route message to the correct transport based on connection ID from header
+        // The connection ID is sent to the client when establishing the SSE connection at /sse
+        // The client should include this ID in the X-MCP-Connection-ID header for subsequent POST requests
+        const connectionId = req.headers['x-mcp-connection-id'] as string | undefined;
+        
+        if (!connectionId) {
+          res.status(400).json({
+            error: 'Missing connection ID',
+            message: 'SSE connection must be established first by connecting to /sse endpoint. X-MCP-Connection-ID header not found.',
           });
           return;
         }
 
+        // * Look up the transport for this connection
+        const transport = activeTransports.get(connectionId);
+        
+        if (!transport) {
+          res.status(404).json({
+            error: 'Transport not found',
+            message: `No active SSE connection found for connection ID: ${connectionId}. The connection may have been closed.`,
+          });
+          return;
+        }
+
+        // * Route the message to the correct transport
         await transport.handlePostMessage(req, res, req.body);
       } catch (error) {
         console.error('Error handling message:', error);
