@@ -1,0 +1,14 @@
+name: actual-mcp
+version: 1.2.0
+description: Actual Budget MCP server exposing API functionality
+
+dockerfile: Dockerfile
+
+build:
+  context: .
+  dockerfile: Dockerfile
+
+deploy:
+  startCommand: node build/index.js --sse --enable-write --enable-bearer
+  port: 3000
+
