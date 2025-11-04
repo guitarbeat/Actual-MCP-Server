@@ -32,6 +32,7 @@ import {
   getBudgetMonth,
   getSchedules,
   getServerVersion,
+  getPayeeRules,
 } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
@@ -345,6 +346,28 @@ async function main(): Promise<void> {
           return {
             jsonrpc: '2.0',
             result: version,
+            id,
+          };
+        }
+
+        case 'actual.getPayeeRules': {
+          const payeeId = params.payeeId;
+
+          if (typeof payeeId !== 'string') {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: -32602,
+                message: 'Invalid params: payeeId is required and must be a string',
+              },
+              id,
+            };
+          }
+
+          const rules = await getPayeeRules(payeeId);
+          return {
+            jsonrpc: '2.0',
+            result: rules,
             id,
           };
         }
