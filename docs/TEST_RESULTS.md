@@ -5,7 +5,7 @@
 ### ✅ 1. Connection ID Routing Tests
 **Status:** All tests passed
 
-**Test Script:** `test-connection-id-routing.js`
+**Test Script:** `scripts/tests/test-connection-id-routing.js`
 
 **Results:**
 - ✅ Root endpoint accessible
@@ -16,7 +16,7 @@
 ```bash
 SERVER_URL="https://personal-actualbudget-mcp.imklj5.easypanel.host" \
 BEARER_TOKEN="your-token" \
-node test-connection-id-routing.js
+node scripts/tests/test-connection-id-routing.js
 ```
 
 ### ✅ 2. Actual Budget API Connection Test
@@ -51,34 +51,34 @@ node test-connection-id-routing.js
 
 ## Test Scripts Available
 
-### 1. `test-connection-id-routing.js`
+### 1. `scripts/tests/test-connection-id-routing.js`
 Tests the connection ID routing functionality for SSE endpoints.
 
 **Usage:**
 ```bash
 SERVER_URL="http://localhost:3000" \
 BEARER_TOKEN="your-token" \
-node test-connection-id-routing.js
+node scripts/tests/test-connection-id-routing.js
 ```
 
-### 2. `test-mcp-server.sh`
+### 2. `scripts/tests/test-mcp-server.sh`
 Bash script for basic endpoint testing.
 
 **Usage:**
 ```bash
 SERVER_URL="http://localhost:3000" \
 BEARER_TOKEN="your-token" \
-./test-mcp-server.sh
+./scripts/tests/test-mcp-server.sh
 ```
 
-### 3. `test-sse.js`
+### 3. `scripts/tests/test-sse.js`
 Full SSE connection test with EventSource (requires server to be running).
 
 **Usage:**
 ```bash
 SERVER_URL="http://localhost:3000" \
 BEARER_TOKEN="your-token" \
-node test-sse.js
+node scripts/tests/test-sse.js
 ```
 
 ## Fixes Verified
