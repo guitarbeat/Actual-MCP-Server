@@ -21,27 +21,14 @@ import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
-import { SetLevelRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 dotenv.config({ path: '.env' });
 
-// Initialize the MCP server
-const server = new Server(
-  {
-    name: 'Actual Budget',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      resources: {},
-      tools: {},
-      prompts: {},
-      logging: {},
-    },
-  }
-);
-
-// Argument parsing
+// Argument parsing (must happen before server creation)
 const {
   values: {
     sse: useSse,
@@ -63,7 +50,26 @@ const {
   allowPositionals: true,
 });
 
-const resolvedPort = port ? parseInt(port, 10) : 3000;
+// Factory function to create a new MCP server instance
+// This is needed because each SSE connection requires its own server instance
+// Based on the working implementation, creating a new server per connection avoids conflicts
+// Initialize the MCP server
+const server = new Server(
+  {
+    name: 'Actual Budget',
+    version: '1.2.0',
+  },
+  {
+    capabilities: {
+      resources: {},
+      tools: {},
+      prompts: {},
+      logging: {},
+    },
+  }
+);
+
+const resolvedPort = port ? parseInt(port, 10) : process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Bearer authentication middleware
 const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
@@ -75,6 +81,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
+    console.error('[AUTH] ❌ Missing Authorization header');
     res.status(401).json({
       error: 'Authorization header required',
     });
@@ -82,6 +89,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   }
 
   if (!authHeader.startsWith('Bearer ')) {
+    console.error('[AUTH] ❌ Invalid Authorization format (must start with "Bearer ")');
     res.status(401).json({
       error: "Authorization header must start with 'Bearer '",
     });
@@ -92,7 +100,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   const expectedToken = process.env.BEARER_TOKEN;
 
   if (!expectedToken) {
-    console.error('BEARER_TOKEN environment variable not set');
+    console.error('[AUTH] ❌ BEARER_TOKEN environment variable not set');
     res.status(500).json({
       error: 'Server configuration error',
     });
@@ -100,11 +108,15 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   }
 
   if (token !== expectedToken) {
+    console.error('[AUTH] ❌ Invalid bearer token (token mismatch)');
+    console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
     res.status(401).json({
       error: 'Invalid bearer token',
     });
     return;
   }
+
+  console.error('[AUTH] ✅ Bearer token validated successfully');
 
   next();
 };
@@ -115,6 +127,33 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 
 // Start the server
 async function main(): Promise<void> {
+  // Get deployment info for logging
+  const startupTime = new Date().toISOString();
+  let deploymentId = 'unknown';
+  try {
+    const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+    deploymentId = commitHash;
+  } catch {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      const pkgPath = join(__dirname, '..', 'package.json');
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+      deploymentId = `v${pkg.version}-${Date.now().toString(36)}`;
+    } catch {
+      // Fallback to unknown
+    }
+  }
+
+  // Startup banner (skip for test modes)
+  if (!testResources && !testCustom) {
+    console.error('='.repeat(60));
+    console.error('🚀 ACTUAL BUDGET MCP SERVER STARTING');
+    console.error(`📅 ${startupTime}`);
+    console.error(`🔖 Deployment ID: ${deploymentId}`);
+    console.error('='.repeat(60));
+  }
+
   // If testing resources, verify connectivity and list accounts, then exit
   if (testResources) {
     console.log('Testing resources...');
@@ -159,10 +198,51 @@ async function main(): Promise<void> {
     console.error('If your server requires authentication, initialization will fail.');
   }
 
+  // Initialize Actual Budget API at startup
+  if (!testResources && !testCustom) {
+    console.error('');
+    console.error('📋 PHASE 1: Initializing Actual Budget API...');
+    console.error('─'.repeat(60));
+    try {
+      await initActualApi();
+      console.error('─'.repeat(60));
+      console.error('✅ PHASE 1 COMPLETE: Actual Budget API ready');
+      console.error('');
+    } catch (error) {
+      console.error('─'.repeat(60));
+      console.error('❌ PHASE 1 FAILED: Actual Budget API initialization error');
+      console.error('─'.repeat(60));
+      console.error('✗ Failed to initialize Actual Budget API:', error);
+      console.error('Server cannot start without Actual Budget connection');
+      process.exit(1);
+    }
+  }
+
   if (useSse) {
+    console.error('📋 PHASE 2: Starting HTTP server...');
+    console.error('─'.repeat(60));
+
     const app = express();
+
+    // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-MCP-Connection-ID');
+      res.setHeader('Access-Control-Expose-Headers', 'X-MCP-Connection-ID');
+
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+      }
+
+      next();
+    });
+
     app.use(express.json());
     let transport: SSEServerTransport | null = null;
+    let transportReady = false;
 
     // Log bearer auth status
     if (enableBearer) {
@@ -171,34 +251,177 @@ async function main(): Promise<void> {
       console.error('Bearer authentication disabled - endpoints are public');
     }
 
-    // Placeholder for future HTTP transport (stateless)
-    app.post('/mcp', bearerAuth, async (req: Request, res: Response) => {
-      res.status(501).json({ error: 'HTTP transport not implemented yet' });
+    // * Favicon route - simple SVG favicon
+    app.get('/favicon.ico', (req: Request, res: Response) => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#2563eb" rx="10"/>
+        <text x="50" y="65" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">$</text>
+      </svg>`;
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.send(svg);
     });
 
+    // * Root route - basic server info
+    app.get('/', (req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Actual Budget MCP Server</title>
+            <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                background: #f5f5f5;
+              }
+              .container {
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              h1 { color: #2563eb; margin-top: 0; }
+              .endpoint { 
+                background: #f8f9fa; 
+                padding: 10px; 
+                margin: 10px 0; 
+                border-left: 3px solid #2563eb;
+                font-family: monospace;
+              }
+              .status { color: #10b981; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>💰 Actual Budget MCP Server</h1>
+              <p class="status">✓ Server is running</p>
+              <p>This is an MCP (Model Context Protocol) server for Actual Budget.</p>
+              <h2>Available Endpoints:</h2>
+              <div class="endpoint">GET /sse - SSE transport endpoint</div>
+              <div class="endpoint">POST /messages - Messages endpoint</div>
+              ${enableBearer ? '<p><strong>🔒 Bearer authentication: ENABLED</strong></p>' : '<p><em>⚠️ Bearer authentication: DISABLED</em></p>'}
+            </div>
+          </body>
+        </html>
+      `);
+    });
+
+    // Note: Removed /mcp endpoint to match working implementation
+    // The working version only uses /sse and /messages endpoints
+    // If you need stateless HTTP transport, use /sse endpoint with SSE transport
+
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
+      // Store original console methods before overriding
+      const originalConsoleError = console.error;
+      const originalConsoleLog = console.log;
+
+      console.error(`[SSE] Connection attempt from ${req.ip || req.socket.remoteAddress}`);
+      console.error(
+        `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
+      );
+
       transport = new SSEServerTransport('/messages', res);
-      server.connect(transport).then(() => {
-        console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+      transportReady = false;
 
-        console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+      console.error('[SSE] Creating transport...');
+      server
+        .connect(transport)
+        .then(() => {
+          transportReady = true;
+          originalConsoleError('[SSE] ✅ Transport connected successfully');
+          // Override console methods to send via MCP logging
+          // Only override if transport is still ready
+          console.log = (message: string) => {
+            if (transportReady && transport) {
+              try {
+                server.sendLoggingMessage({ level: 'info', message });
+              } catch {
+                // If connection closed, use original console
+                originalConsoleLog(message);
+              }
+            } else {
+              originalConsoleLog(message);
+            }
+          };
+          console.error = (message: string) => {
+            if (transportReady && transport) {
+              try {
+                server.sendLoggingMessage({ level: 'error', message });
+              } catch {
+                // If connection closed, use original console
+                originalConsoleError(message);
+              }
+            } else {
+              originalConsoleError(message);
+            }
+          };
+        })
+        .catch((error) => {
+          transportReady = false;
+          originalConsoleError('[SSE] ❌ Error connecting SSE transport:', error);
+          originalConsoleError('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to establish SSE connection' });
+          }
+        });
 
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+      // Clean up transport when connection closes
+      res.on('close', () => {
+        // Mark as not ready first, then restore console methods
+        transportReady = false;
+        console.error = originalConsoleError;
+        console.log = originalConsoleLog;
+        originalConsoleError('[SSE] Connection closed');
+        if (transport) {
+          try {
+            transport.close();
+          } catch (_e) {
+            // Ignore cleanup errors
+          }
+          transport = null;
+        }
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
-      if (transport) {
+      if (transport && transportReady) {
         await transport.handlePostMessage(req, res, req.body);
       } else {
-        res.status(500).json({ error: 'Transport not initialized' });
+        res.status(503).json({
+          error: 'Transport not ready',
+          message: transport
+            ? 'Transport is initializing, please wait'
+            : 'Transport not initialized. Connect to /sse first.',
+        });
       }
     });
 
-    app.listen(resolvedPort, (error) => {
+    app.listen(resolvedPort, '0.0.0.0', (error) => {
       if (error) {
         console.error('Error:', error);
       } else {
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+        console.error('─'.repeat(60));
+        console.error('✅ PHASE 2 COMPLETE: Server ready');
+        console.error('='.repeat(60));
+        console.error(`🌐 Server listening on port ${resolvedPort} (0.0.0.0)`);
+        console.error(`📡 Endpoints:`);
+        console.error(`   GET  /      - Server status page`);
+        console.error(`   GET  /sse   - SSE transport endpoint`);
+        console.error(`   POST /messages - Messages endpoint`);
+        if (enableBearer) {
+          console.error(`🔒 Bearer authentication: ENABLED`);
+        } else {
+          console.error(`⚠️  Bearer authentication: DISABLED`);
+        }
+        console.error(`🔖 Deployment ID: ${deploymentId}`);
+        console.error('='.repeat(60));
       }
     });
   } else {
@@ -208,14 +431,10 @@ async function main(): Promise<void> {
   }
 }
 
+// Setup handlers on the server instance BEFORE main() runs
 setupResources(server);
 setupTools(server, enableWrite);
 setupPrompts(server);
-
-server.setRequestHandler(SetLevelRequestSchema, (request) => {
-  console.log(`--- Logging level: ${request.params.level}`);
-  return {};
-});
 
 process.on('SIGINT', () => {
   console.error('SIGINT received, shutting down server');
@@ -226,17 +445,8 @@ process.on('SIGINT', () => {
 main()
   .then(() => {
     if (!useSse) {
-      // TODO: Setup proper logging level change. Messages are available in the notification of MCP Inspector
-      console.log = (message: string) =>
-        server.sendLoggingMessage({
-          level: 'info',
-          message,
-        });
-      console.error = (message: string) =>
-        server.sendLoggingMessage({
-          level: 'error',
-          message,
-        });
+      console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+      console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
     }
   })
   .catch((error: unknown) => {
