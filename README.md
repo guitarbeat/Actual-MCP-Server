@@ -16,39 +16,24 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 
 ### Tools
 
-#### Transaction & Account Management
+#### Account Management
 
-- **`get-transactions`** - Retrieve and filter transactions by account, date, amount, category, or payee
 - **`get-accounts`** - Retrieve a list of all accounts with their current balance and ID
 - **`get-account-balance`** - Get the balance of an account as of a specific date
-- **`balance-history`** - View account balance changes over time
-- **`create-transaction`** - Create new transactions with all fields, automatically creating payees and categories if needed
+- **`balance-history`** - View account balance changes over time with daily balances
 - **`create-account`** - Create a new account (requires `--enable-write`)
 - **`update-account`** - Update an existing account's name, type, or off-budget status (requires `--enable-write`)
 - **`close-account`** - Close an account (requires `--enable-write`)
 - **`reopen-account`** - Reopen a closed account (requires `--enable-write`)
 - **`delete-account`** - Delete an account (requires `--enable-write`)
 
-#### Budget Operations
+#### Transaction Management
 
-- **`set-budget-amount`** - Set the budgeted amount for a category in a specific month (requires `--enable-write`)
-- **`set-budget-carryover`** - Enable or disable budget carryover for a category (requires `--enable-write`)
-- **`hold-budget-for-next-month`** - Hold or release budget funds for the next month (requires `--enable-write`)
-- **`reset-budget-hold`** - Reset the budget hold for a category (requires `--enable-write`)
+- **`get-transactions`** - Retrieve and filter transactions by account, date, amount, category, or payee
+- **`create-transaction`** - Create new transactions with all fields, automatically creating payees and categories if needed (requires `--enable-write`)
+- **`update-transaction`** - Update an existing transaction with new category, payee, notes, or amount (requires `--enable-write`)
 
-#### Recurring Schedules
-
-- **`get-schedules`** - Get all recurring schedules
-- **`create-schedule`** - Create a new recurring schedule for transactions (requires `--enable-write`)
-- **`update-schedule`** - Update an existing recurring schedule (requires `--enable-write`)
-- **`delete-schedule`** - Delete a recurring schedule (requires `--enable-write`)
-
-#### Reporting & Analytics
-
-- **`spending-by-category`** - Generate spending breakdowns categorized by type
-- **`monthly-summary`** - Get monthly income, expenses, and savings metrics
-
-#### Categories
+#### Category Management
 
 - **`get-grouped-categories`** - Retrieve a list of all category groups with their categories
 - **`create-category`** - Create a new category within a category group (requires `--enable-write`)
@@ -58,7 +43,7 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 - **`update-category-group`** - Update a category group's name (requires `--enable-write`)
 - **`delete-category-group`** - Delete a category group (requires `--enable-write`)
 
-#### Payees
+#### Payee Management
 
 - **`get-payees`** - Retrieve a list of all payees with their details
 - **`get-payee-rules`** - Get all rules associated with a specific payee
@@ -67,25 +52,48 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 - **`delete-payee`** - Delete a payee (requires `--enable-write`)
 - **`merge-payees`** - Merge multiple payees into a target payee (requires `--enable-write`)
 
-#### Rules
+#### Rule Management
 
 - **`get-rules`** - Retrieve a list of all transaction rules
 - **`create-rule`** - Create a new transaction rule with conditions and actions (requires `--enable-write`)
 - **`update-rule`** - Update an existing transaction rule (requires `--enable-write`)
 - **`delete-rule`** - Delete a transaction rule (requires `--enable-write`)
 
+#### Schedule Management
+
+- **`get-schedules`** - Get all recurring transaction schedules
+- **`create-schedule`** - Create a new recurring schedule for transactions (requires `--enable-write`)
+- **`update-schedule`** - Update an existing recurring schedule (requires `--enable-write`)
+- **`delete-schedule`** - Delete a recurring schedule (requires `--enable-write`)
+
+#### Budget Operations
+
+- **`get-budget-months`** - Get a list of all months that have budget data
+- **`get-budget-month`** - Get budget data for a specific month (category budgets and spending)
+- **`set-budget-amount`** - Set the budgeted amount for a category in a specific month (requires `--enable-write`)
+- **`set-budget-carryover`** - Enable or disable budget carryover for a category (requires `--enable-write`)
+- **`hold-budget-for-next-month`** - Hold or release budget funds for the next month (requires `--enable-write`)
+- **`reset-budget-hold`** - Reset the budget hold for a category (requires `--enable-write`)
+
 #### Budget File Management
 
 - **`get-budgets`** - Get a list of all available budgets
-- **`load-budget`** - Load a budget by its ID (requires `--enable-write`)
+- **`load-budget`** - Load a different budget by its ID (requires `--enable-write`)
 - **`download-budget`** - Download a budget from the server, with optional support for end-to-end encrypted budgets (requires `--enable-write`)
-- **`sync`** - Sync the budget with the server (requires `--enable-write`)
-- **`run-bank-sync`** - Run bank sync for an account or all accounts (requires `--enable-write`)
+- **`sync`** - Sync the current budget with the server (requires `--enable-write`)
+- **`run-bank-sync`** - Run bank sync for a specific account (requires `--enable-write`)
 - **`run-import`** - Run an import from a file (requires `--enable-write`)
+
+#### Reporting & Analytics
+
+- **`spending-by-category`** - Generate spending breakdowns categorized by type with detailed transaction lists
+- **`monthly-summary`** - Get monthly income, expenses, and savings metrics with category breakdowns
 
 #### Utilities
 
 - **`get-id-by-name`** - Get the ID of an account, category, payee, or category group by its name
+- **`run-query`** - Run an ActualQL query to retrieve custom data from the budget (advanced)
+- **`get-server-version`** - Get the version of the Actual Budget server
 
 ### Prompts
 
