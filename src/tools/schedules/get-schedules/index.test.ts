@@ -31,10 +31,7 @@ describe('get-schedules tool', () => {
     expect(payload).toEqual({
       error: true,
       message: 'boom',
-      suggestion:
-        'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
+      suggestion: 'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
     });
   });
 });
-
-

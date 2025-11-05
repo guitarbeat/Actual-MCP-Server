@@ -6,10 +6,11 @@ import { CategoryMapper } from '../../core/mapping/category-mapper.js';
 import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.js';
 import { GroupAggregator } from '../../core/aggregation/group-by.js';
 import { SpendingByCategoryReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../utils/response.js';
+import { success, errorFromCatch } from '../../core/response/index.js';
 import type { SpendingByCategoryInput } from './input-parser.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { SpendingByCategoryArgsSchema, type SpendingByCategoryArgs, ToolInput, type Account } from '../../types.js';
+import { SpendingByCategoryArgsSchema, type SpendingByCategoryArgs, type Account } from '../../core/types/index.js';
+import type { ToolInput } from '../../types.js';
 
 export const schema = {
   name: 'spending-by-category',
@@ -49,6 +50,10 @@ export async function handler(args: SpendingByCategoryArgs): Promise<CallToolRes
     );
     return success(markdown);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      tool: 'spending-by-category',
+      operation: 'calculate_spending_breakdown',
+      args,
+    });
   }
 }

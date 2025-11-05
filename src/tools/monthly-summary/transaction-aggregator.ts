@@ -1,4 +1,4 @@
-import { Transaction, MonthData } from '../../types.js';
+import type { Transaction, MonthData } from '../../core/types/index.js';
 
 export class MonthlySummaryTransactionAggregator {
   aggregate(
@@ -15,7 +15,9 @@ export class MonthlySummaryTransactionAggregator {
         return;
       }
 
-      const date = new Date(transaction.date);
+      // Parse date as local date to avoid timezone issues with YYYY-MM-DD format
+      const [year, month, day] = transaction.date.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
       const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
       if (!monthlyData[yearMonth]) {

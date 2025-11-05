@@ -1,9 +1,2 @@
-import { z } from 'zod';
-
-export const createCategoryGroupArgsSchema = z
-  .object({
-    name: z.string(),
-  })
-  .strict();
-
-export type CreateCategoryGroupArgs = z.infer<typeof createCategoryGroupArgsSchema>;
+// Re-export from core for backward compatibility
+export type { CreateCategoryGroupArgs } from '../../../core/types/index.js';

@@ -19,13 +19,24 @@ export class BalanceHistoryDataFetcher {
 
     let transactions: Transaction[] = [];
     if (accountId && account) {
-      transactions = await fetchTransactionsForAccount(accountId, start, end);
-      account.balance = await api.getAccountBalance(accountId);
+      // # Reason: Fetch transactions and balance in parallel for single account
+      const [txs, balance] = await Promise.all([
+        fetchTransactionsForAccount(accountId, start, end),
+        api.getAccountBalance(accountId),
+      ]);
+      transactions = txs;
+      account.balance = balance;
     } else {
-      transactions = await fetchAllTransactions(accounts, start, end);
-      for (const a of accounts) {
-        a.balance = await api.getAccountBalance(a.id);
-      }
+      // # Reason: Fetch transactions and all account balances in parallel
+      const [txs, balances] = await Promise.all([
+        fetchAllTransactions(accounts, start, end),
+        Promise.all(accounts.map((a) => api.getAccountBalance(a.id))),
+      ]);
+      transactions = txs;
+      // # Reason: Assign balances to corresponding accounts
+      accounts.forEach((a, index) => {
+        a.balance = balances[index];
+      });
     }
 
     return { account, accounts, transactions };

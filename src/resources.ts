@@ -10,8 +10,8 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import api from '@actual-app/api';
 
-// Import types from types.ts
-import { Account, Transaction } from './types.js';
+// Import types from core/types
+import type { Account, Transaction } from './core/types/index.js';
 import { formatAmount, formatDate, getDateRange } from './utils.js';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';

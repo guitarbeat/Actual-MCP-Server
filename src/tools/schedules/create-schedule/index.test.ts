@@ -75,5 +75,3 @@ describe('create-schedule tool', () => {
     });
   });
 });
-
-

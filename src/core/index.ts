@@ -12,4 +12,4 @@ export * from './aggregation/sort-by.js';
 export * from './mapping/category-mapper.js';
 export * from './mapping/transaction-mapper.js';
 export * from './mapping/category-classifier.js';
-export * from './types/domain.js';
+export * from './types/index.js';

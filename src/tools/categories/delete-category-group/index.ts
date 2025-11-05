@@ -3,8 +3,8 @@
 // ----------------------------
 
 import { deleteCategoryGroup } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import { deleteCategoryGroupArgsSchema, type DeleteCategoryGroupArgs } from './types.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
+import { DeleteCategoryGroupArgsSchema, type DeleteCategoryGroupArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'delete-category-group',
@@ -25,7 +25,7 @@ export async function handler(
   args: DeleteCategoryGroupArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = deleteCategoryGroupArgsSchema.parse(args);
+    const parsedArgs = DeleteCategoryGroupArgsSchema.parse(args);
 
     await deleteCategoryGroup(parsedArgs.id);
 

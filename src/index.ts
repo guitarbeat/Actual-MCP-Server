@@ -21,10 +21,14 @@ import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
-import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import {
+  logPerformanceSummary,
+  startPeriodicCacheStatsLogging,
+  stopPeriodicCacheStatsLogging,
+  logCacheStats,
+} from './core/performance/performance-logger.js';
+import { cacheService } from './core/cache/cache-service.js';
+import { metricsTracker } from './core/performance/metrics-tracker.js';
 
 dotenv.config({ path: '.env' });
 
@@ -115,7 +119,6 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
-
   next();
 };
 
@@ -123,28 +126,14 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 // SERVER STARTUP
 // ----------------------------
 
+// Global variable to track periodic logging interval
+let cacheStatsInterval: NodeJS.Timeout | null = null;
+
 // Start the server
 async function main(): Promise<void> {
-  // Get deployment info for logging
-  const startupTime = new Date().toISOString();
-  let deploymentId = 'unknown';
-  try {
-    const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
-    deploymentId = commitHash;
-  } catch {
-    try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = dirname(__filename);
-      const pkgPath = join(__dirname, '..', 'package.json');
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-      deploymentId = `v${pkg.version}-${Date.now().toString(36)}`;
-    } catch {
-      // Fallback to unknown
-    }
-  }
-
   // Startup banner (skip for test modes)
   if (!testResources && !testCustom) {
+    // Reserved for future startup banner
   }
 
   // If testing resources, verify connectivity and list accounts, then exit
@@ -194,13 +183,39 @@ async function main(): Promise<void> {
   // Initialize Actual Budget API at startup
   if (!testResources && !testCustom) {
     console.error('');
-    
+
     try {
       await initActualApi();
-      
+
+      console.error('');
+
+      // Log performance configuration at startup
+      if (metricsTracker.isEnabled()) {
+        console.error('[PERF] Performance logging: ENABLED');
+        const threshold = process.env.PERFORMANCE_LOG_THRESHOLD_MS || '1000';
+        console.error(`[PERF] Slow operation threshold: ${threshold}ms`);
+      } else {
+        console.error('[PERF] Performance logging: DISABLED');
+      }
+
+      if (cacheService.isEnabled()) {
+        console.error('[CACHE] Cache: ENABLED');
+        const ttl = process.env.CACHE_TTL_SECONDS || '300';
+        const maxEntries = process.env.CACHE_MAX_ENTRIES || '1000';
+        console.error(`[CACHE] TTL: ${ttl}s, Max entries: ${maxEntries}`);
+
+        // Start periodic cache stats logging
+        cacheStatsInterval = startPeriodicCacheStatsLogging();
+        if (cacheStatsInterval) {
+          const interval = process.env.PERFORMANCE_CACHE_STATS_INTERVAL_MS || '300000';
+          console.error(`[CACHE] Periodic stats logging: every ${parseInt(interval, 10) / 1000}s`);
+        }
+      } else {
+        console.error('[CACHE] Cache: DISABLED');
+      }
+
       console.error('');
     } catch (error) {
-      
       console.error('✗ Failed to initialize Actual Budget API:', error);
       console.error('Server cannot start without Actual Budget connection');
       process.exit(1);
@@ -208,8 +223,6 @@ async function main(): Promise<void> {
   }
 
   if (useSse) {
-    
-
     const app = express();
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
@@ -231,11 +244,6 @@ async function main(): Promise<void> {
     app.use(express.json());
     let transport: SSEServerTransport | null = null;
     let transportReady = false;
-
-    // Log bearer auth status
-    if (enableBearer) {
-    } else {
-    }
 
     // * Favicon route - simple SVG favicon
     app.get('/favicon.ico', (req: Request, res: Response) => {
@@ -392,14 +400,8 @@ async function main(): Promise<void> {
     app.listen(resolvedPort, '0.0.0.0', (error) => {
       if (error) {
         console.error('Error:', error);
-      } else {
-        
-        
-        
-        if (enableBearer) {
-        } else {
-        }
       }
+      // Server started successfully
     });
   } else {
     const transport = new StdioServerTransport();
@@ -415,6 +417,21 @@ setupPrompts(server);
 
 process.on('SIGINT', () => {
   console.error('SIGINT received, shutting down server');
+
+  // Log final performance summary and cache stats
+  if (metricsTracker.isEnabled()) {
+    console.error('');
+    logPerformanceSummary();
+  }
+
+  if (cacheService.isEnabled()) {
+    console.error('');
+    logCacheStats();
+  }
+
+  // Stop periodic cache stats logging
+  stopPeriodicCacheStatsLogging(cacheStatsInterval);
+
   server.close();
   process.exit(0);
 });

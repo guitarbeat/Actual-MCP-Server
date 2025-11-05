@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { MonthlySummaryCalculator } from './summary-calculator.js';
-import type { MonthData } from '../../types.js';
+import type { MonthData } from '../../core/types/index.js';
 
 describe('MonthlySummaryCalculator', () => {
   it('computes averages with investments reducing traditional savings', () => {

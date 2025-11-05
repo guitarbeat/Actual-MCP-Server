@@ -2,11 +2,8 @@
 // CREATE SCHEDULE TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import {
-  missingNumberArgument,
-  missingStringArgument,
-} from '../../../utils/tool-error-builders.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
+import { missingNumberArgument, missingStringArgument } from '../../../core/response/index.js';
 import { createSchedule } from '../../../actual-api.js';
 
 export const schema = {
@@ -59,31 +56,28 @@ export async function handler(
     if (!args.name || typeof args.name !== 'string') {
       return missingStringArgument(
         'name',
-        'Provide the schedule name as plain text, such as "Rent" or "Gym Membership".',
+        'Provide the schedule name as plain text, such as "Rent" or "Gym Membership".'
       );
     }
     if (!args.accountId || typeof args.accountId !== 'string') {
       return missingStringArgument(
         'accountId',
-        'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+        'Use the get-accounts tool to list available accounts and retry with a valid accountId.'
       );
     }
     if (args.amount === undefined || typeof args.amount !== 'number') {
       return missingNumberArgument(
         'amount',
-        'Provide the amount in milliunits (e.g., -124000 for -$1240.00) to match Actual Budget expectations.',
+        'Provide the amount in milliunits (e.g., -124000 for -$1240.00) to match Actual Budget expectations.'
       );
     }
     if (!args.nextDate || typeof args.nextDate !== 'string') {
-      return missingStringArgument(
-        'nextDate',
-        'Supply the next occurrence as an ISO date string like 2025-12-01.',
-      );
+      return missingStringArgument('nextDate', 'Supply the next occurrence as an ISO date string like 2025-12-01.');
     }
     if (!args.rule || typeof args.rule !== 'string') {
       return missingStringArgument(
         'rule',
-        'Provide the recurrence rule identifier (e.g., "monthly" or "weekly"). Use get-schedules to review examples.',
+        'Provide the recurrence rule identifier (e.g., "monthly" or "weekly"). Use get-schedules to review examples.'
       );
     }
 

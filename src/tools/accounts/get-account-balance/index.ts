@@ -2,7 +2,7 @@
 // GET ACCOUNT BALANCE TOOL
 // ----------------------------
 
-import { successWithJson, error, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, error, errorFromCatch } from '../../../core/response/index.js';
 import { getAccountBalance } from '../../../actual-api.js';
 import { formatAmount } from '../../../utils.js';
 
@@ -32,7 +32,7 @@ export async function handler(
     if (!args.accountId || typeof args.accountId !== 'string') {
       return error(
         'accountId is required and must be a string',
-        'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+        'Use the get-accounts tool to list available accounts and retry with a valid accountId.'
       );
     }
 

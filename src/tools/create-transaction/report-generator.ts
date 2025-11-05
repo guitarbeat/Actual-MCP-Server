@@ -1,14 +1,10 @@
 // Generates formatted output for create-transaction tool
 
 import { formatAmount } from '../../utils.js';
-import type { CreateTransactionInput, EntityCreationResult } from './types.js';
+import type { CreateTransactionInput, EntityCreationResult } from '../../core/types/index.js';
 
 export class CreateTransactionReportGenerator {
-  generate(
-    input: CreateTransactionInput,
-    result: EntityCreationResult,
-    additionalWarnings: string[] = []
-  ): string {
+  generate(input: CreateTransactionInput, result: EntityCreationResult, additionalWarnings: string[] = []): string {
     const { accountId, date, amount, payee, category, categoryGroup, notes, cleared } = input;
     const {
       createdPayee,
