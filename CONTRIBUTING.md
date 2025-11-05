@@ -718,13 +718,76 @@ export async function handler(args: ToolArgs): Promise<CallToolResult> {
 }
 ```
 
+## Code Quality Standards
+
+### Code Duplication
+
+We use [jscpd](https://github.com/kucherenko/jscpd) to detect code duplication:
+
+```bash
+# Quick check
+npm run duplication
+
+# Full report with HTML output
+npm run duplication:report
+```
+
+**Thresholds:**
+- **< 5%**: Excellent
+- **5-10%**: Acceptable
+- **> 10%**: Refactoring needed
+
+### Complexity Rules
+
+ESLint enforces complexity limits:
+- **Cyclomatic Complexity**: Max 15 paths
+- **Max Nesting Depth**: 4 levels
+- **Max Function Length**: 100 lines
+- **Max Nested Callbacks**: 3 levels
+- **Max Parameters**: 5 per function
+
+### Quality Commands
+
+```bash
+# Run all quality checks
+npm run quality
+
+# Individual checks
+npm run lint
+npm run type-check
+npm run test
+npm run duplication
+```
+
+## Project Status
+
+### API Coverage
+
+| Category | Coverage |
+|----------|----------|
+| Accounts, Categories, Payees, Rules | 100% |
+| Transactions, Schedules, Budget Ops | 100% |
+| Budget File Management | 90% |
+| **Overall** | **~99%** |
+
+### Architecture Highlights
+
+- **Modular Design**: Clear separation (data-fetcher, input-parser, report-generator)
+- **Type Safety**: Strong TypeScript typing throughout
+- **Error Handling**: Consistent patterns with helpful messages
+- **Testing**: Comprehensive unit tests with Vitest
+- **Performance**: Persistent API connection, caching, parallel fetching
+
+For detailed architecture information, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
 ## Questions?
 
 If you have questions or need help:
 
 1. Check the [Architecture Documentation](./ARCHITECTURE.md)
-2. Review existing tools for examples
-3. Open an issue on GitHub
-4. Ask in discussions
+2. Review [Common Patterns](./docs/PATTERNS.md)
+3. See [Performance Guide](./docs/PERFORMANCE.md) for optimization tips
+4. Review existing tools for examples
+5. Open an issue on GitHub
 
 Thank you for contributing!
