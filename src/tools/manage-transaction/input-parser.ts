@@ -42,6 +42,10 @@ export class ManageTransactionInputParser {
     }
 
     if (operation === 'create') {
+      // Create requires transaction object
+      if (!transaction) {
+        throw new Error('transaction is required for create operation');
+      }
       // Create requires account and date
       if (!transaction.account) {
         throw new Error('transaction.account is required for create operation');
@@ -62,33 +66,36 @@ export class ManageTransactionInputParser {
       id,
     };
 
-    // Resolve account name to ID if provided
-    if (transaction.account) {
-      parsed.accountId = await nameResolver.resolveAccount(transaction.account);
-    }
+    // Only process transaction fields if transaction object exists
+    if (transaction) {
+      // Resolve account name to ID if provided
+      if (transaction.account) {
+        parsed.accountId = await nameResolver.resolveAccount(transaction.account);
+      }
 
-    // Resolve payee name to ID if provided
-    if (transaction.payee) {
-      parsed.payeeId = await nameResolver.resolvePayee(transaction.payee);
-    }
+      // Resolve payee name to ID if provided
+      if (transaction.payee) {
+        parsed.payeeId = await nameResolver.resolvePayee(transaction.payee);
+      }
 
-    // Resolve category name to ID if provided
-    if (transaction.category) {
-      parsed.categoryId = await nameResolver.resolveCategory(transaction.category);
-    }
+      // Resolve category name to ID if provided
+      if (transaction.category) {
+        parsed.categoryId = await nameResolver.resolveCategory(transaction.category);
+      }
 
-    // Copy other fields
-    if (transaction.date !== undefined) {
-      parsed.date = transaction.date;
-    }
-    if (transaction.amount !== undefined) {
-      parsed.amount = transaction.amount;
-    }
-    if (transaction.notes !== undefined) {
-      parsed.notes = transaction.notes;
-    }
-    if (transaction.cleared !== undefined) {
-      parsed.cleared = transaction.cleared;
+      // Copy other fields
+      if (transaction.date !== undefined) {
+        parsed.date = transaction.date;
+      }
+      if (transaction.amount !== undefined) {
+        parsed.amount = transaction.amount;
+      }
+      if (transaction.notes !== undefined) {
+        parsed.notes = transaction.notes;
+      }
+      if (transaction.cleared !== undefined) {
+        parsed.cleared = transaction.cleared;
+      }
     }
 
     return parsed;
