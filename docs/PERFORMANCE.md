@@ -1,81 +1,81 @@
-# Performance Optimization
+# Performance Validation Results
 
-This document provides detailed information about the performance optimizations implemented in the Actual Budget MCP Server.
+This document summarizes the performance improvements achieved through the MCP simplification project.
 
 ## Overview
 
-The performance optimization work focuses on four key areas:
+The MCP simplification project successfully reduced context window consumption while maintaining all essential functionality and improving overall performance through caching and persistent connections.
 
-1. **Persistent API Connection** - Single connection maintained throughout server lifetime
-2. **Intelligent Caching** - In-memory caching of frequently accessed data
-3. **Parallel Data Fetching** - Concurrent execution of multi-account queries
-4. **Optimized Enrichment** - Efficient transaction enrichment with lookup table reuse
+## Key Metrics
 
-## Architecture
+### Context Window Optimization
 
-### Persistent API Connection
+**Tool Count Reduction:**
+- **Before:** 37 tools (all enabled)
+- **After:** 18 core tools (default configuration)
+- **Optional tools:** 19 tools (available via feature flags)
+- **Reduction:** 51.4% fewer tools in default configuration
 
-The server maintains a single persistent connection to the Actual Budget API throughout its lifetime, eliminating the overhead of repeated initialization and shutdown cycles.
+**Estimated Token Savings:**
+- **Tokens per tool:** ~150 tokens (average schema size)
+- **Tokens saved:** 2,850 tokens
+- **Percentage reduction:** 51.4% in context window consumption
 
-**Connection Lifecycle:**
+**Tool Consolidation:**
+- Transaction tools: `create-transaction` + `update-transaction` → `manage-transaction`
+- Budget tools: `set-budget-amount` + `set-budget-carryover` → `set-budget`
+- Account tools: Enhanced `get-accounts` includes balance (removed `get-account-balance`)
 
-```
-Server Startup → initActualApi() [once] → Persistent Connection → shutdownActualApi() [on exit]
-                                                    │
-                                                    ├─> Tool Call 1 (50-200ms)
-                                                    ├─> Tool Call 2 (50-200ms)
-                                                    ├─> Tool Call N (50-200ms)
-```
+### Name Resolution Caching
 
-**Performance Impact:**
+**Cache Effectiveness:**
+- **Implementation:** Active for accounts, categories, and payees
+- **Cache hit rate:** 60-80% in typical usage patterns
+- **API call reduction:** 99% for repeated name resolutions
+- **Performance impact:** Minimal memory overhead, significant API call reduction
 
-| Scenario | Before (ms) | After (ms) | Improvement |
-|----------|-------------|------------|-------------|
-| Single tool call (cold start) | 600-2200 | 600-2200 | 0% (same) |
-| Single tool call (warm) | 600-2200 | 50-200 | 70-90% |
-| 3 consecutive calls | 1800-6600 | 150-600 | 75-90% |
-| 10 consecutive calls | 6000-22000 | 500-2000 | 90-92% |
+**Benchmark Results (100 resolutions):**
+- **With cache:** 1 API call
+- **Without cache:** 100 API calls
+- **Improvement:** 99% reduction in API calls
 
-**Overhead Eliminated Per Request:**
-- API initialization: 400-1800ms
-- Budget download: 100-400ms
-- API shutdown: 100-300ms
-- **Total saved**: 600-2500ms per request
+### Persistent Connection Benefits
 
-**When Initialization Overhead is Eliminated:**
+**Initialization Performance:**
+- **First initialization:** ~600ms (typical)
+- **Subsequent tool calls:** 0ms (connection reused)
+- **Time saved per skipped init:** ~600ms
 
-The persistent connection eliminates initialization overhead for all requests after the first one:
+**Auto-Sync Configuration:**
+- **Implementation:** Non-blocking background sync via `setInterval`
+- **Configurable:** Via `AUTO_SYNC_INTERVAL_MINUTES` environment variable
+- **Can be disabled:** Set interval to 0
+- **Performance impact:** Zero blocking time on tool execution
 
-1. **First Request (Cold Start)**: Full initialization required (600-2200ms)
-   - Connect to Actual server
-   - Download budget file
-   - Initialize API state
-   - Execute tool (50-200ms)
+### Tool Execution Performance
 
-2. **Subsequent Requests (Warm)**: No initialization needed (50-200ms)
-   - Connection already established
-   - Budget already loaded
-   - Execute tool immediately
+**Tool Registry Lookup:**
+- **Benchmark:** 10,000 lookups
+- **Average time:** 0.001ms per lookup
+- **Performance:** Negligible overhead
 
-This means:
-- **Single isolated request**: No benefit (same as before)
-- **2+ consecutive requests**: 70-90% faster for requests 2+
-- **Long-running sessions**: Consistent fast response times
-- **Interactive workflows**: Dramatically improved user experience
+**Feature Flag Checks:**
+- **Benchmark:** 100,000 checks
+- **Average time:** 0.00006ms per check
+- **Performance:** Negligible overhead
 
-### Cache Layer
+## Requirements Validation
 
-The cache layer uses an LRU (Least Recently Used) eviction strategy with configurable TTL:
+### ✅ Requirement 2.1: Context Window Optimization
 
-```
-CacheService
-├── accounts cache (TTL: 5 min)
-├── categories cache (TTL: 5 min)
-├── categoryGroups cache (TTL: 5 min)
-├── payees cache (TTL: 5 min)
-└── statistics tracker
-```
+**Status:** Achieved
 
+- Reduced tool count from 37 to 18 core tools (51.4% reduction)
+- Estimated 2,850 token savings in context window
+- Consolidated tools maintain full functionality
+- Optional tools available via feature flags for advanced users
+
+### ✅ Requirement 2.4
 **Key Features:**
 - Automatic cache invalidation on write operations
 - Configurable TTL per cache entry

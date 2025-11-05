@@ -5,7 +5,7 @@ import { getInitializationStats, resetInitializationStats } from './actual-api.j
 
 /**
  * Performance validation tests for MCP simplification improvements
- * 
+ *
  * This test suite validates:
  * 1. Context window token reduction from tool consolidation
  * 2. Name resolution caching effectiveness
@@ -23,7 +23,7 @@ describe('Performance Validation', () => {
       process.env.ENABLE_UTILITY_TOOLS = 'false';
 
       const coreTools = getAvailableTools(true);
-      
+
       // Restore environment
       process.env = originalEnv;
 
@@ -39,7 +39,7 @@ describe('Performance Validation', () => {
       process.env.ENABLE_UTILITY_TOOLS = 'true';
 
       const allTools = getAvailableTools(true);
-      
+
       process.env = originalEnv;
 
       // Should have all tools when features are enabled (32 after removing 5 deprecated tools)
@@ -48,19 +48,19 @@ describe('Performance Validation', () => {
 
     it('should calculate estimated token savings from tool reduction', () => {
       const originalEnv = { ...process.env };
-      
+
       // Get core tool count
       process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
       process.env.ENABLE_UTILITY_TOOLS = 'false';
       const coreTools = getAvailableTools(true);
-      
+
       // Get all tools count
       process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
       process.env.ENABLE_UTILITY_TOOLS = 'true';
       const allTools = getAvailableTools(true);
-      
+
       process.env = originalEnv;
 
       // Calculate token savings
@@ -83,11 +83,11 @@ describe('Performance Validation', () => {
 
     it('should have consolidated transaction tools', () => {
       const tools = getAvailableTools(true);
-      const toolNames = tools.map(t => t.schema.name);
+      const toolNames = tools.map((t) => t.schema.name);
 
       // Should have manage-transaction (consolidated tool)
       expect(toolNames).toContain('manage-transaction');
-      
+
       // Should NOT have deprecated transaction tools
       expect(toolNames).not.toContain('create-transaction');
       expect(toolNames).not.toContain('update-transaction');
@@ -95,11 +95,11 @@ describe('Performance Validation', () => {
 
     it('should have consolidated budget tools', () => {
       const tools = getAvailableTools(true);
-      const toolNames = tools.map(t => t.schema.name);
+      const toolNames = tools.map((t) => t.schema.name);
 
       // Should have set-budget (consolidated tool)
       expect(toolNames).toContain('set-budget');
-      
+
       // Should NOT have deprecated budget tools
       expect(toolNames).not.toContain('set-budget-amount');
       expect(toolNames).not.toContain('set-budget-carryover');
@@ -116,8 +116,7 @@ describe('Performance Validation', () => {
     it('should cache account name resolutions', async () => {
       // Mock the fetch function to track calls
       let fetchCallCount = 0;
-      const originalFetch = (await import('./core/data/fetch-accounts.js')).fetchAllAccounts;
-      
+
       vi.spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts').mockImplementation(async () => {
         fetchCallCount++;
         return [
@@ -145,7 +144,7 @@ describe('Performance Validation', () => {
       console.log(`\n💾 Cache Effectiveness:`);
       console.log(`   Resolutions: 4`);
       console.log(`   API calls: ${fetchCallCount}`);
-      console.log(`   Cache hit rate: ${((4 - fetchCallCount) / 4 * 100).toFixed(1)}%`);
+      console.log(`   Cache hit rate: ${(((4 - fetchCallCount) / 4) * 100).toFixed(1)}%`);
 
       // Verify cache effectiveness (50% hit rate in this test)
       expect(fetchCallCount).toBeLessThan(4);
@@ -153,7 +152,7 @@ describe('Performance Validation', () => {
 
     it('should pass through IDs without fetching', async () => {
       let fetchCallCount = 0;
-      
+
       vi.spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts').mockImplementation(async () => {
         fetchCallCount++;
         return [];
@@ -162,14 +161,14 @@ describe('Performance Validation', () => {
       // ID should pass through without fetch
       const id = 'account-abc-123-def-456';
       const result = await resolver.resolveAccount(id);
-      
+
       expect(result).toBe(id);
       expect(fetchCallCount).toBe(0); // No fetch needed
     });
 
     it('should cache category name resolutions', async () => {
       let fetchCallCount = 0;
-      
+
       vi.spyOn(await import('./core/data/fetch-categories.js'), 'fetchAllCategories').mockImplementation(async () => {
         fetchCallCount++;
         return [
@@ -189,7 +188,7 @@ describe('Performance Validation', () => {
 
     it('should cache payee name resolutions', async () => {
       let fetchCallCount = 0;
-      
+
       vi.spyOn(await import('./core/data/fetch-payees.js'), 'fetchAllPayees').mockImplementation(async () => {
         fetchCallCount++;
         return [
@@ -209,12 +208,10 @@ describe('Performance Validation', () => {
 
     it('should clear cache when requested', async () => {
       let fetchCallCount = 0;
-      
+
       vi.spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts').mockImplementation(async () => {
         fetchCallCount++;
-        return [
-          { id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false },
-        ];
+        return [{ id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false }];
       });
 
       // First resolution
@@ -231,17 +228,16 @@ describe('Performance Validation', () => {
 
     it('should measure cache performance improvement', async () => {
       const iterations = 100;
-      
+
       // Test with cache - should only fetch once
       const cachedResolver = new NameResolver();
       let cachedFetchCount = 0;
-      
-      const cachedMock = vi.spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts')
+
+      const cachedMock = vi
+        .spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts')
         .mockImplementation(async () => {
           cachedFetchCount++;
-          return [
-            { id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false },
-          ];
+          return [{ id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false }];
         });
 
       for (let i = 0; i < iterations; i++) {
@@ -253,13 +249,12 @@ describe('Performance Validation', () => {
       // Test without cache - should fetch every time
       const uncachedResolver = new NameResolver();
       let uncachedFetchCount = 0;
-      
-      const uncachedMock = vi.spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts')
+
+      const uncachedMock = vi
+        .spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts')
         .mockImplementation(async () => {
           uncachedFetchCount++;
-          return [
-            { id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false },
-          ];
+          return [{ id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false }];
         });
 
       for (let i = 0; i < iterations; i++) {
@@ -287,7 +282,7 @@ describe('Performance Validation', () => {
     it('should not block tool execution during auto-sync', () => {
       // Auto-sync runs in background via setInterval
       // This test verifies the configuration is non-blocking
-      
+
       const originalEnv = process.env.AUTO_SYNC_INTERVAL_MINUTES;
       process.env.AUTO_SYNC_INTERVAL_MINUTES = '5';
 
@@ -324,9 +319,9 @@ describe('Performance Validation', () => {
     it('should track initialization performance', () => {
       // Reset stats for clean measurement
       resetInitializationStats();
-      
+
       const stats = getInitializationStats();
-      
+
       // Stats should be available
       expect(stats).toBeDefined();
       expect(stats).toHaveProperty('initializationTime');
@@ -336,15 +331,15 @@ describe('Performance Validation', () => {
 
     it('should demonstrate persistent connection benefits', () => {
       resetInitializationStats();
-      
+
       // Simulate multiple tool calls (initialization would be skipped)
       const stats = getInitializationStats();
-      
+
       console.log(`\n🔌 Persistent Connection Benefits:`);
       console.log(`   Initialization time: ${stats.initializationTime || 'N/A'}ms`);
       console.log(`   Skipped initializations: ${stats.skipCount}`);
       console.log(`   Time saved: ${stats.timeSaved}ms`);
-      
+
       // If initialization has happened, verify stats are tracked
       if (stats.initializationTime !== null) {
         expect(stats.initializationTime).toBeGreaterThan(0);
@@ -359,7 +354,7 @@ describe('Performance Validation', () => {
       for (let i = 0; i < iterations; i++) {
         const tools = getAvailableTools(true);
         // Simulate finding a tool
-        tools.find(t => t.schema.name === 'get-transactions');
+        tools.find((t) => t.schema.name === 'get-transactions');
       }
 
       const duration = Date.now() - startTime;
@@ -375,7 +370,7 @@ describe('Performance Validation', () => {
 
     it('should have minimal overhead for feature flag checks', () => {
       const iterations = 100000;
-      
+
       // Measure feature flag check performance
       const startTime = Date.now();
       for (let i = 0; i < iterations; i++) {
@@ -402,18 +397,18 @@ describe('Performance Validation', () => {
   describe('Overall Performance Summary', () => {
     it('should generate performance validation report', () => {
       const originalEnv = { ...process.env };
-      
+
       // Get tool counts
       process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
       process.env.ENABLE_UTILITY_TOOLS = 'false';
       const coreTools = getAvailableTools(true);
-      
+
       process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
       process.env.ENABLE_UTILITY_TOOLS = 'true';
       const allTools = getAvailableTools(true);
-      
+
       process.env = originalEnv;
 
       // Calculate metrics
@@ -421,7 +416,7 @@ describe('Performance Validation', () => {
       const toolsRemoved = allTools.length - coreTools.length;
       const tokensSaved = toolsRemoved * TOKENS_PER_TOOL;
       const percentageReduction = (tokensSaved / (allTools.length * TOKENS_PER_TOOL)) * 100;
-      
+
       const stats = getInitializationStats();
 
       console.log(`\n${'='.repeat(60)}`);
@@ -432,36 +427,36 @@ describe('Performance Validation', () => {
       console.log(`   • Optional tools: ${toolsRemoved} (available via feature flags)`);
       console.log(`   • Total tools available: ${allTools.length}`);
       console.log(`   • Estimated token reduction: ${tokensSaved} tokens (${percentageReduction.toFixed(1)}%)`);
-      
+
       console.log(`\n✅ Name Resolution Caching:`);
       console.log(`   • Cache implementation: ✓ Active`);
       console.log(`   • Supports: Accounts, Categories, Payees`);
       console.log(`   • Expected cache hit rate: 60-80% in typical usage`);
       console.log(`   • API call reduction: 90%+ for repeated resolutions`);
-      
+
       console.log(`\n✅ Auto-Sync Configuration:`);
       console.log(`   • Background sync: ✓ Non-blocking`);
       console.log(`   • Configurable interval: ✓ Via AUTO_SYNC_INTERVAL_MINUTES`);
       console.log(`   • Can be disabled: ✓ Set interval to 0`);
-      
+
       console.log(`\n✅ Tool Execution Performance:`);
       console.log(`   • Persistent connection: ✓ Enabled`);
       console.log(`   • Initialization tracking: ✓ Active`);
       console.log(`   • Tool registry lookup: < 1ms average`);
       console.log(`   • Feature flag overhead: < 0.01ms per check`);
-      
+
       if (stats.initializationTime !== null) {
         console.log(`   • Initialization time: ${stats.initializationTime}ms`);
         console.log(`   • Skipped initializations: ${stats.skipCount}`);
         console.log(`   • Time saved: ${stats.timeSaved}ms`);
       }
-      
+
       console.log(`\n✅ Requirements Validation:`);
       console.log(`   • Requirement 2.1: Context window reduction ✓`);
       console.log(`   • Requirement 2.4: Name resolution caching ✓`);
       console.log(`   • Auto-sync performance: Non-blocking ✓`);
       console.log(`   • No execution time regression: Verified ✓`);
-      
+
       console.log(`\n${'='.repeat(60)}`);
       console.log(`🎉 All performance validations passed!`);
       console.log(`${'='.repeat(60)}\n`);
