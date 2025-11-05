@@ -4,9 +4,9 @@
  * Arguments for the manage-transaction tool
  */
 export interface ManageTransactionArgs {
-  operation: 'create' | 'update';
+  operation: 'create' | 'update' | 'delete';
   id?: string;
-  transaction: TransactionData;
+  transaction?: TransactionData;
 }
 
 /**
@@ -26,7 +26,7 @@ export interface TransactionData {
  * Parsed and validated transaction input
  */
 export interface ParsedTransactionInput {
-  operation: 'create' | 'update';
+  operation: 'create' | 'update' | 'delete';
   id?: string;
   accountId?: string;
   date?: string;
@@ -42,7 +42,13 @@ export interface ParsedTransactionInput {
  */
 export interface TransactionOperationResult {
   transactionId: string;
-  operation: 'create' | 'update';
+  operation: 'create' | 'update' | 'delete';
   createdPayee?: boolean;
   createdCategory?: boolean;
+  details?: {
+    date?: string;
+    amount?: number;
+    payee?: string;
+    account?: string;
+  };
 }

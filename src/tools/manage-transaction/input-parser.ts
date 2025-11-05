@@ -20,8 +20,20 @@ export class ManageTransactionInputParser {
     const { operation, id, transaction } = args;
 
     // Validate operation
-    if (!operation || !['create', 'update'].includes(operation)) {
-      throw new Error("operation must be 'create' or 'update'");
+    if (!operation || !['create', 'update', 'delete'].includes(operation)) {
+      throw new Error("operation must be 'create', 'update', or 'delete'");
+    }
+
+    // Handle delete operation
+    if (operation === 'delete') {
+      if (!id) {
+        throw new Error('id is required for delete operation');
+      }
+
+      return {
+        operation: 'delete',
+        id,
+      };
     }
 
     // Validate operation-specific requirements

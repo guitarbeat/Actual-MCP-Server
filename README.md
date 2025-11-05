@@ -28,9 +28,9 @@ The server provides **20 core tools** optimized for conversational budget manage
 #### Transaction Management (2 tools)
 
 - **`get-transactions`** - View and filter transactions by account, date range, category, or payee. Returns up to 1000 transactions.
-- **`manage-transaction`** - Create or update transactions with automatic name-to-ID resolution
+- **`manage-transaction`** - Create, update, or delete transactions with automatic name-to-ID resolution
 
-**Name Resolution Example:**
+**Create Transaction Example:**
 ```json
 {
   "tool": "manage-transaction",
@@ -47,10 +47,112 @@ The server provides **20 core tools** optimized for conversational budget manage
 }
 ```
 
+**Delete Transaction Example:**
+```json
+{
+  "tool": "manage-transaction",
+  "args": {
+    "operation": "delete",
+    "id": "transaction-id-here"
+  }
+}
+```
+
+> ⚠️ **Warning:** Transaction deletion is permanent and cannot be undone. Make sure you have the correct transaction ID before deleting.
+
 #### Account Management (2 tools)
 
 - **`get-accounts`** - List all accounts with balances included by default. Supports filtering by account ID/name and excluding closed accounts.
-- **`update-account`** - Modify account details (name, type, etc.)
+- **`manage-account`** - Complete account lifecycle management: create, update, delete, close, reopen, and query balance
+
+**Create Checking Account Example:**
+```json
+{
+  "tool": "manage-account",
+  "args": {
+    "operation": "create",
+    "account": {
+      "name": "My Checking",
+      "type": "checking"
+    }
+  }
+}
+```
+
+**Create Account with Initial Balance Example:**
+```json
+{
+  "tool": "manage-account",
+  "args": {
+    "operation": "create",
+    "account": {
+      "name": "Savings Account",
+      "type": "savings"
+    },
+    "initialBalance": 100000
+  }
+}
+```
+
+**Update Account Name Example:**
+```json
+{
+  "tool": "manage-account",
+  "args": {
+    "operation": "update",
+    "id": "account-id-here",
+    "account": {
+      "name": "Updated Account Name"
+    }
+  }
+}
+```
+
+**Close Account with Transfer Example:**
+```json
+{
+  "tool": "manage-account",
+  "args": {
+    "operation": "close",
+    "id": "account-id-here",
+    "transferAccountId": "destination-account-id",
+    "transferCategoryId": "category-id-for-transfer"
+  }
+}
+```
+
+**Query Account Balance Example:**
+```json
+{
+  "tool": "manage-account",
+  "args": {
+    "operation": "balance",
+    "id": "account-id-here"
+  }
+}
+```
+
+**Delete Account Example:**
+```json
+{
+  "tool": "manage-account",
+  "args": {
+    "operation": "delete",
+    "id": "account-id-here"
+  }
+}
+```
+
+> ⚠️ **Warning:** Account deletion is permanent and cannot be undone. Accounts with existing transactions cannot be deleted - use the close operation instead.
+
+**Account Types:**
+- `checking` - Standard checking account
+- `savings` - Savings account
+- `credit` - Credit card account
+- `investment` - Investment account
+- `mortgage` - Mortgage account
+- `debt` - Other debt account
+- `other` - Other account type
 
 #### Categories & Budget (2 tools)
 
@@ -186,6 +288,14 @@ Advanced users can enable additional tools via environment variables:
 - **Name not found** – If a name isn't recognized, the error message will suggest available options (e.g., "Account 'Chequing' not found. Available accounts: Checking, Savings, Credit Card").
 - **Incorrect month format** – All budget tools expect `YYYY-MM`. If you only know a full date, trim it down (e.g., `2024-06-15` → `2024-06`).
 - **Amount typos** – Amounts must be numbers. Remove currency symbols and ensure decimals use `.` (e.g., `250.5`). Negative numbers represent outflows where appropriate.
+
+#### Account Management Errors
+
+- **Cannot close account with balance** – If an account has a non-zero balance, you must provide a `transferAccountId` to transfer the balance to another account. Optionally provide `transferCategoryId` to categorize the transfer.
+- **Cannot delete account with transactions** – Accounts that have existing transactions cannot be deleted. Use the `close` operation instead to mark the account as closed while preserving transaction history.
+- **Invalid account type** – Account type must be one of: `checking`, `savings`, `credit`, `investment`, `mortgage`, `debt`, or `other`. Check the spelling and use lowercase.
+- **Duplicate account name** – Account names must be unique. Choose a different name or update the existing account instead.
+- **Account not found** – Verify the account ID is correct. Use `get-accounts` to list all available accounts and their IDs.
 
 ## Installation
 
