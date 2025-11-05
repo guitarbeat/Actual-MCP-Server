@@ -99,7 +99,18 @@ export const schema = {
     '- Accepts names or IDs for account, payee, and category fields\n' +
     '- Use get-transactions to find transaction IDs before update/delete\n' +
     '- Use get-accounts to find account names/IDs\n' +
-    '- Delete operations are permanent and cannot be undone',
+    '- Delete operations are permanent and cannot be undone\n\n' +
+    'TYPICAL WORKFLOW:\n' +
+    '1. CREATE: Use get-accounts to find account, then create transaction\n' +
+    '2. UPDATE: Use get-transactions to find transaction ID, then update specific fields\n' +
+    '3. DELETE: Use get-transactions to find transaction ID, then delete (with caution)\n' +
+    '4. VERIFY: Use get-transactions to confirm changes were applied\n\n' +
+    'SEE ALSO:\n' +
+    '- get-accounts: Find account IDs/names before creating transactions\n' +
+    '- get-transactions: Find transaction IDs before updating or deleting\n' +
+    '- get-grouped-categories: Find category IDs/names for categorizing transactions\n' +
+    '- get-payees: Find payee IDs/names for transaction payees\n' +
+    '- spending-by-category: Analyze spending after creating/updating transactions',
   inputSchema: zodToJsonSchema(ManageTransactionArgsSchema) as ToolInput,
 };
 

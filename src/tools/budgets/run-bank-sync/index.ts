@@ -7,7 +7,32 @@ import { runBankSync } from '../../../actual-api.js';
 
 export const schema = {
   name: 'run-bank-sync',
-  description: 'Run bank sync for an account',
+  description:
+    'Trigger bank synchronization to import new transactions from connected bank accounts. Requires bank sync to be configured in Actual Budget.\n\n' +
+    'OPTIONAL PARAMETERS:\n' +
+    '- accountId: Specific account ID to sync (omit to sync all connected accounts)\n\n' +
+    'EXAMPLES:\n' +
+    '- Sync all accounts: {} or no arguments\n' +
+    '- Sync specific account: {"accountId": "abc123-def456"}\n\n' +
+    'COMMON USE CASES:\n' +
+    '- Importing latest transactions from bank\n' +
+    '- Refreshing account balances\n' +
+    '- Updating transactions after bank activity\n\n' +
+    'NOTES:\n' +
+    '- Requires bank sync to be configured in Actual Budget settings\n' +
+    '- Only works for accounts with active bank connections\n' +
+    '- May take several seconds to complete depending on transaction volume\n' +
+    '- Use get-accounts to find account IDs if syncing specific account\n' +
+    '- New transactions will appear after sync completes\n\n' +
+    'TYPICAL WORKFLOW:\n' +
+    '1. Use run-bank-sync to import latest transactions\n' +
+    '2. Use get-transactions to view newly imported transactions\n' +
+    '3. Use manage-transaction to categorize or update imported transactions\n\n' +
+    'SEE ALSO:\n' +
+    '- get-accounts: Find account IDs for specific account sync\n' +
+    '- get-transactions: View transactions after sync\n' +
+    '- manage-transaction: Update imported transactions\n' +
+    '- run-import: Import transactions from file instead of bank sync',
   inputSchema: {
     type: 'object',
     properties: {

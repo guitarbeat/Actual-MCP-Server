@@ -132,7 +132,7 @@ This implementation plan breaks down the tool discoverability improvements into 
   - run-query
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [-] 9. Test high priority tools with MCP client
+- [x] 9. Test high priority tools with MCP client
   - Test get-transactions with various filters
   - Test get-accounts workflow (get ID, then use in other tools)
   - Test set-budget with different parameter combinations
@@ -144,7 +144,7 @@ This implementation plan breaks down the tool discoverability improvements into 
 
 ## Phase 3: Medium Priority Analysis Tools (Priority 🟢)
 
-- [ ] 10. Update monthly-summary tool
+- [x] 10. Update monthly-summary tool
   - Add description of optional parameters
   - Add description of returned data structure
   - Add examples for different month ranges
@@ -152,7 +152,7 @@ This implementation plan breaks down the tool discoverability improvements into 
   - Update input schema descriptions
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 7.1, 7.3, 7.4, 7.5_
 
-- [ ] 11. Update spending-by-category tool
+- [x] 11. Update spending-by-category tool
   - Add description of filter options
   - Add description of returned breakdown structure
   - Add examples for different scenarios
@@ -160,21 +160,21 @@ This implementation plan breaks down the tool discoverability improvements into 
   - Update input schema descriptions
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 12. Add workflow hints and cross-references
+- [x] 12. Add workflow hints and cross-references
   - Add "See also" references between related tools
   - Document typical workflow order
   - Add prerequisite tool references
   - Add workflow examples in tool descriptions
   - _Requirements: 4.2, 4.3, 4.4, 8.3_
 
-- [ ] 13. Add error prevention guidance
+- [x] 13. Add error prevention guidance
   - Add warnings for destructive operations
   - Add format requirement warnings
   - Add workflow dependency notes
   - Add "NOTES" sections with tips and caveats
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 14. Test analysis tools and workflows
+- [x] 14. Test analysis tools and workflows
   - Test monthly-summary with different parameters
   - Test spending-by-category with filters
   - Test complete workflows (e.g., get accounts → get transactions → analyze)
@@ -186,40 +186,40 @@ This implementation plan breaks down the tool discoverability improvements into 
 
 ## Phase 4: Low Priority Simple Tools & Documentation (Priority 🔵)
 
-- [ ] 15. Update simple getter tool descriptions
+- [x] 15. Update simple getter tool descriptions
   - Add basic examples to all getter tools
   - Document returned data structures
   - Add workflow role notes
   - Maintain consistency with complex tools
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [ ] 15.1 Update get-grouped-categories
+- [x] 15.1 Update get-grouped-categories
   - Add example
   - Document returned structure
   - _Requirements: 10.1, 10.2_
 
-- [ ] 15.2 Update get-payees
+- [x] 15.2 Update get-payees
   - Add example
   - Document returned structure
   - _Requirements: 10.1, 10.2_
 
-- [ ] 15.3 Update get-rules
+- [x] 15.3 Update get-rules
   - Add example
   - Document returned structure
   - Note about amount format (cents)
   - _Requirements: 10.1, 10.2_
 
-- [ ] 15.4 Update get-schedules
+- [x] 15.4 Update get-schedules
   - Add example
   - Document returned structure
   - _Requirements: 10.1, 10.2_
 
-- [ ] 15.5 Update budget getter tools
+- [x] 15.5 Update budget getter tools
   - get-budget-months
   - get-budget-month
   - _Requirements: 10.1, 10.2_
 
-- [ ] 15.6 Update utility tools
+- [x] 15.6 Update utility tools
   - merge-payees
   - get-payee-rules
   - run-bank-sync
@@ -227,21 +227,21 @@ This implementation plan breaks down the tool discoverability improvements into 
   - run-query
   - _Requirements: 10.1, 10.2_
 
-- [ ] 16. Create tool usage guide documentation
+- [x] 16. Create tool usage guide documentation
   - Create comprehensive workflow examples
   - Document common patterns
   - Add troubleshooting guide
   - Create quick reference guide
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 17. Create description template documentation
+- [x] 17. Create description template documentation
   - Document the standard template
   - Create examples for each tool type
   - Add to developer documentation
   - Create PR checklist for new tools
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 12.1, 12.2, 12.3, 12.4, 12.5_
 
-- [ ] 18. Final testing and validation
+- [x] 18. Final testing and validation
   - Test all updated tools with MCP client
   - Measure success metrics (retry rate, success rate)
   - Gather user feedback
@@ -253,28 +253,28 @@ This implementation plan breaks down the tool discoverability improvements into 
 
 ## Quality Assurance Tasks
 
-- [ ] 19. Verify description formatting
+- [x] 19. Verify description formatting
   - All descriptions follow template structure
   - All sections use consistent formatting
   - All examples are valid JSON
   - All newlines are properly escaped
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 20. Verify input schema completeness
+- [x] 20. Verify input schema completeness
   - All properties have descriptions
   - All descriptions include format/constraints
   - All required fields are documented
   - All default values are documented
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 21. Verify example accuracy
+- [x] 21. Verify example accuracy
   - All examples are syntactically valid JSON
   - All examples match the input schema
   - All examples demonstrate realistic use cases
   - All examples include required fields
   - _Requirements: 1.5, 2.1, 2.2, 2.3_
 
-- [ ] 22. Run automated tests
+- [x] 22. Run automated tests
   - Verify all tool schemas are valid
   - Verify all descriptions are non-empty
   - Verify all input schemas have property descriptions

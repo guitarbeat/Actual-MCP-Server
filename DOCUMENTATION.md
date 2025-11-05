@@ -83,6 +83,16 @@ This document describes the consolidated documentation structure for the Actual 
 - Optimization techniques
 - Benchmarking
 
+### docs/TOOL-USAGE-GUIDE.md
+**Purpose**: Comprehensive tool usage guide for AI agents and developers  
+**Contents**:
+- Quick reference for all tools
+- Common workflows (transaction management, budgeting, analysis)
+- Tool categories and when to use each
+- Common patterns (name resolution, prerequisite chains, filters)
+- Troubleshooting guide (errors, performance, data issues)
+- Best practices for tool usage
+
 ## Documentation Consolidation
 
 ### Removed Files
@@ -100,17 +110,19 @@ The following files were removed and their content consolidated:
 
 ### Benefits of Consolidation
 
-- ✅ Reduced from 13 documentation files to 7
+- ✅ Reduced from 13 documentation files to 8
 - ✅ Eliminated duplicate information
 - ✅ Clearer organization and navigation
 - ✅ Easier to maintain and update
 - ✅ Better user experience
+- ✅ Comprehensive tool usage guide for AI agents
 
 ## Quick Navigation
 
 **For Users:**
 - Getting started → README.md
 - Tool reference → README.md
+- Tool usage guide → docs/TOOL-USAGE-GUIDE.md
 - Migration from old tools → docs/MIGRATION-GUIDE.md
 
 **For Developers:**
@@ -121,6 +133,7 @@ The following files were removed and their content consolidated:
 
 **For AI Agents:**
 - Development rules → AGENTS.md
+- Tool usage workflows → docs/TOOL-USAGE-GUIDE.md
 - Code patterns → docs/PATTERNS.md
 - Architecture → ARCHITECTURE.md
 
@@ -134,9 +147,10 @@ When updating documentation:
 4. **New patterns** → Update docs/PATTERNS.md
 5. **Performance features** → Update docs/PERFORMANCE.md
 6. **Tool consolidation** → Update docs/MIGRATION-GUIDE.md
+7. **Tool workflows** → Update docs/TOOL-USAGE-GUIDE.md
 
 ---
 
 **Last Updated**: November 2024  
-**Documentation Files**: 7 (down from 13)  
+**Documentation Files**: 8 (down from 13)  
 **Status**: Consolidated ✅
