@@ -33,6 +33,7 @@
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
     "quality": "npm run lint && npm run format:check && npm run type-check",
+    "prepare": "husky",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
@@ -54,7 +55,9 @@
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "jiti": "^2.4.2",
+    "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
     "tsx": "^4.19.4",
     "typescript": "^5.3.3",
@@ -69,6 +72,15 @@
     "printWidth": 120,
     "tabWidth": 2,
     "useTabs": false
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "publishConfig": {
     "access": "public"

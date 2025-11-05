@@ -2,9 +2,9 @@
 // UPDATE CATEGORY TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { updateCategory } from '../../../actual-api.js';
-import { updateCategoryArgsSchema, type UpdateCategoryArgs } from './types.js';
+import { UpdateCategoryArgsSchema, type UpdateCategoryArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'update-category',
@@ -33,7 +33,7 @@ export async function handler(
   args: UpdateCategoryArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = updateCategoryArgsSchema.parse(args);
+    const parsedArgs = UpdateCategoryArgsSchema.parse(args);
 
     const data: Record<string, unknown> = {
       name: parsedArgs.name,

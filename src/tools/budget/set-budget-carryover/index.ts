@@ -2,9 +2,9 @@
 // SET BUDGET CARRYOVER TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { setBudgetCarryover } from '../../../actual-api.js';
-import { setBudgetCarryoverArgsSchema, type SetBudgetCarryoverArgs } from './types.js';
+import { SetBudgetCarryoverArgsSchema, type SetBudgetCarryoverArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'set-budget-carryover',
@@ -33,7 +33,7 @@ export async function handler(
   args: SetBudgetCarryoverArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = setBudgetCarryoverArgsSchema.parse(args);
+    const parsedArgs = SetBudgetCarryoverArgsSchema.parse(args);
 
     await setBudgetCarryover(parsedArgs.month, parsedArgs.categoryId, parsedArgs.enabled);
 

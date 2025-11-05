@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { CreateTransactionReportGenerator } from './report-generator.js';
-import type { CreateTransactionInput, EntityCreationResult } from './types.js';
+import type { CreateTransactionInput, EntityCreationResult } from '../../core/types/index.js';
 
 describe('CreateTransactionReportGenerator', () => {
   const generator = new CreateTransactionReportGenerator();

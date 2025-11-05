@@ -4,9 +4,10 @@ import { BalanceHistoryInputParser } from './input-parser.js';
 import { BalanceHistoryDataFetcher } from './data-fetcher.js';
 import { BalanceHistoryCalculator } from './balance-calculator.js';
 import { BalanceHistoryReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../utils/response.js';
+import { success, errorFromCatch } from '../../core/response/index.js';
 import { formatDate } from '../../utils.js';
-import { BalanceHistoryArgsSchema, type BalanceHistoryArgs, ToolInput } from '../../types.js';
+import { BalanceHistoryArgsSchema, type BalanceHistoryArgs } from '../../core/types/index.js';
+import type { ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const schema = {
@@ -37,6 +38,10 @@ export async function handler(args: BalanceHistoryArgs): Promise<CallToolResult>
     const markdown = new BalanceHistoryReportGenerator().generate(account, { start, end }, sortedMonths);
     return success(markdown);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      tool: 'balance-history',
+      operation: 'calculate_balance_history',
+      args,
+    });
   }
 }

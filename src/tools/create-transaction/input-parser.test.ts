@@ -151,9 +151,7 @@ describe('CreateTransactionInputParser', () => {
       const result = parser.parse(input);
 
       expect(result.input.amount).toBe(3);
-      expect(result.warnings).toEqual([
-        'Amount $0.03 is unusually small; please confirm the cents value.',
-      ]);
+      expect(result.warnings).toEqual(['Amount $0.03 is unusually small; please confirm the cents value.']);
     });
   });
 });

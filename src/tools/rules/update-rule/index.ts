@@ -2,7 +2,7 @@
 // UPDATE RULE TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { updateRule } from '../../../actual-api.js';
 import { RuleInputSchema } from '../input-schema.js';
 

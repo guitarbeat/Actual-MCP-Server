@@ -2,9 +2,9 @@
 // UPDATE CATEGORY GROUP TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { updateCategoryGroup } from '../../../actual-api.js';
-import { updateCategoryGroupArgsSchema, type UpdateCategoryGroupArgs } from './types.js';
+import { UpdateCategoryGroupArgsSchema, type UpdateCategoryGroupArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'update-category-group',
@@ -29,7 +29,7 @@ export async function handler(
   args: UpdateCategoryGroupArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = updateCategoryGroupArgsSchema.parse(args);
+    const parsedArgs = UpdateCategoryGroupArgsSchema.parse(args);
 
     await updateCategoryGroup(parsedArgs.id, { name: parsedArgs.name });
 

@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CreateTransactionDataFetcher } from './data-fetcher.js';
-import type { CreateTransactionInput } from './types.js';
+import type { CreateTransactionInput } from '../../core/types/index.js';
 
 // Mock the actual-api module
 vi.mock('../../actual-api.js', () => ({

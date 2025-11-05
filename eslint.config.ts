@@ -7,7 +7,7 @@ import globals from 'globals';
 export default tseslint.config(
   // Global ignores
   {
-    ignores: ['node_modules', 'dist', 'build', 'coverage', '**/*.d.ts', 'eslint.config.*'],
+    ignores: ['node_modules', 'dist', 'build', 'coverage', '**/*.d.ts', 'eslint.config.*', 'scripts'],
   },
 
   // Base configurations
@@ -60,6 +60,13 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-inferrable-types': 'error',
+
+      // Code complexity rules
+      complexity: ['warn', { max: 15 }],
+      'max-depth': ['warn', { max: 4 }],
+      'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true }],
+      'max-nested-callbacks': ['warn', { max: 3 }],
+      'max-params': ['warn', { max: 5 }],
 
       // Prettier integration
       'prettier/prettier': 'error',

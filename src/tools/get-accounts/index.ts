@@ -1,18 +1,12 @@
-// ----------------------------
-// GET ACCOUNTS TOOL
-// ----------------------------
+// Orchestrator for get-accounts tool
 
-import { successWithJson, errorFromCatch } from '../../utils/response.js';
-import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
-import type { Account } from '../../core/types/domain.js';
-import { getAccountBalance } from '@actual-app/api';
-import { formatAmount } from '../../utils.js';
-import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { successWithJson, errorFromCatch } from '../../core/response/index.js';
+import { GetAccountsArgsSchema } from '../../core/types/index.js';
 import { type ToolInput } from '../../types.js';
-
-// Define an empty schema with zod
-const GetAccountsArgsSchema = z.object({});
+import { GetAccountsInputParser } from './input-parser.js';
+import { GetAccountsDataFetcher } from './data-fetcher.js';
+import { GetAccountsReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'get-accounts',
@@ -22,20 +16,15 @@ export const schema = {
 
 export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const accounts: Account[] = await fetchAllAccounts();
+    // Parse input (no-op for this tool, but included for consistency)
+    const parser = new GetAccountsInputParser();
+    parser.parse();
 
-    for (const account of accounts) {
-      account.balance = await getAccountBalance(account.id);
-    }
+    // Fetch accounts with balances
+    const accounts = await new GetAccountsDataFetcher().fetchAccounts();
 
-    const structured = accounts.map((account) => ({
-      id: account.id,
-      name: account.name,
-      type: account.type || 'Account',
-      balance: formatAmount(account.balance),
-      closed: account.closed,
-      offBudget: account.offbudget,
-    }));
+    // Generate formatted report
+    const structured = new GetAccountsReportGenerator().generate(accounts);
 
     return successWithJson(structured);
   } catch (err) {
