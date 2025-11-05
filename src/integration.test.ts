@@ -220,45 +220,15 @@ describe('Integration Tests - MCP Simplification', () => {
     });
   });
 
-  describe('Utility Tools Feature Flag', () => {
-    it('should exclude utility tools when flag is disabled', () => {
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
 
-      const tools = getAvailableTools(true);
-
-      // Core tools should be present
-      expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
-
-      // run-query should not be present
-      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(false);
-      
-      // Should have exactly 21 core tools
-      expect(tools.length).toBe(21);
-    });
-
-    it('should include utility tools when flag is enabled', () => {
-      process.env.ENABLE_UTILITY_TOOLS = 'true';
-
-      const tools = getAvailableTools(true);
-
-      // run-query should be present
-      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(true);
-      
-      // Should have 22 tools (21 core + 1 utility)
-      expect(tools.length).toBe(22);
-    });
-  });
 
   describe('Production-Ready Tool Set', () => {
-    it('should have 21 core tools by default', async () => {
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
-
+    it('should have 22 core tools by default', async () => {
       const tools = getAvailableTools(true);
       const toolNames = tools.map((t) => t.schema.name);
 
-      // Should have exactly 21 core tools
-      expect(tools.length).toBe(21);
+      // Should have exactly 22 core tools
+      expect(tools.length).toBe(22);
 
       // New consolidated tools should be available
       expect(toolNames).toContain('manage-transaction');
@@ -330,6 +300,9 @@ describe('Integration Tests - MCP Simplification', () => {
 
       // Core schedules
       expect(toolNames).toContain('get-schedules');
+
+      // Query tool
+      expect(toolNames).toContain('run-query');
     });
   });
 
@@ -360,10 +333,12 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
 
-      // 5. Verify optional tools are not available
+      // 5. Verify removed tools are not available
       expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(false);
+      
+      // run-query is now core, so it should be available
+      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(true);
 
       // 6. Shutdown
       await actualApi.shutdownActualApi();

@@ -64,7 +64,7 @@ export interface ToolDefinition {
 /**
  * Tool category for feature flag filtering
  */
-type ToolCategory = 'core' | 'utility';
+type ToolCategory = 'core';
 
 /**
  * Extended tool definition with category for feature flag filtering
@@ -124,8 +124,8 @@ const toolRegistry: CategorizedToolDefinition[] = [
   // Payee rules (now core)
   { schema: getPayeeRules.schema, handler: getPayeeRules.handler, requiresWrite: false, category: 'core' },
 
-  // Utility tools (optional - power users only)
-  { schema: runQuery.schema, handler: runQuery.handler, requiresWrite: false, category: 'utility' },
+  // Query tool (now core)
+  { schema: runQuery.schema, handler: runQuery.handler, requiresWrite: false, category: 'core' },
 ];
 
 /**
@@ -134,25 +134,15 @@ const toolRegistry: CategorizedToolDefinition[] = [
  * @returns Array of tool definitions available for the current permission level and enabled features
  */
 export function getAvailableTools(enableWrite: boolean): ToolDefinition[] {
-  // Check feature flags from environment variables
-  const enableUtilityTools = process.env.ENABLE_UTILITY_TOOLS === 'true';
-
-  // Filter tools based on write permission and feature flags
+  // Filter tools based on write permission only
   return toolRegistry.filter((tool) => {
     // Filter by write permission
     if (tool.requiresWrite && !enableWrite) {
       return false;
     }
 
-    // Filter by category based on feature flags
-    switch (tool.category) {
-      case 'core':
-        return true;
-      case 'utility':
-        return enableUtilityTools;
-      default:
-        return false;
-    }
+    // All tools are core now
+    return true;
   });
 }
 
@@ -201,17 +191,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
         return error(
           `Tool '${name}' requires write permission`,
           'Start the server with the --enable-write flag to enable write operations.'
-        );
-      }
-
-      // Check if tool is disabled by feature flags
-      const enableUtilityTools = process.env.ENABLE_UTILITY_TOOLS === 'true';
-
-      if (tool.category === 'utility' && !enableUtilityTools) {
-        success = false;
-        return error(
-          `Tool '${name}' is not enabled`,
-          'Set ENABLE_UTILITY_TOOLS=true in your environment to enable utility tools (run-query).'
         );
       }
 
