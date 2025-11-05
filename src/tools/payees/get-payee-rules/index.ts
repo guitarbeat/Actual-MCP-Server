@@ -13,7 +13,8 @@ export const schema = {
     properties: {
       payeeId: {
         type: 'string',
-        description: 'ID of the payee',
+        description:
+          'ID of the payee to retrieve rules for. Must be a valid payee UUID. Use get-payees to find payee IDs. Returns all auto-categorization rules that apply to this payee.',
       },
     },
     required: ['payeeId'],

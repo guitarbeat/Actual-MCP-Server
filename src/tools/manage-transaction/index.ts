@@ -12,30 +12,94 @@ import type { ManageTransactionArgs } from './types.js';
 
 // Zod schema for manage-transaction arguments
 const ManageTransactionArgsSchema = z.object({
-  operation: z.enum(['create', 'update', 'delete']),
-  id: z.string().optional(),
+  operation: z
+    .enum(['create', 'update', 'delete'])
+    .describe(
+      'Operation to perform. Create adds a new transaction, update modifies an existing one, delete permanently removes a transaction.'
+    ),
+  id: z
+    .string()
+    .optional()
+    .describe(
+      'Transaction ID (required for update and delete operations). Must be a valid UUID. Use get-transactions to find transaction IDs.'
+    ),
   transaction: z
     .object({
-      account: z.string().optional(),
-      date: z.string().optional(),
-      amount: z.number().optional(),
-      payee: z.string().optional(),
-      category: z.string().optional(),
-      notes: z.string().optional(),
-      cleared: z.boolean().optional(),
+      account: z
+        .string()
+        .optional()
+        .describe(
+          'Account name or ID (required for create). Accepts either the account name (e.g., "Checking") or account ID.'
+        ),
+      date: z
+        .string()
+        .optional()
+        .describe('Transaction date in YYYY-MM-DD format (required for create). Example: "2024-01-15"'),
+      amount: z
+        .number()
+        .optional()
+        .describe(
+          'Transaction amount in cents (required for create). Negative for expenses, positive for income. Example: -5000 = -$50.00'
+        ),
+      payee: z
+        .string()
+        .optional()
+        .describe('Payee name or ID (optional). Accepts either the payee name (e.g., "Grocery Store") or payee ID.'),
+      category: z
+        .string()
+        .optional()
+        .describe(
+          'Category name or ID (optional). Accepts either the category name (e.g., "Groceries") or category ID.'
+        ),
+      notes: z
+        .string()
+        .optional()
+        .describe('Transaction notes or memo (optional). Free-form text field for additional details.'),
+      cleared: z
+        .boolean()
+        .optional()
+        .describe('Whether the transaction is cleared/reconciled (optional). Defaults to false if not specified.'),
     })
-    .optional(),
+    .optional()
+    .describe(
+      'Transaction data object (required for create and update operations). Contains the transaction fields to set or modify.'
+    ),
 });
 
 export const schema = {
   name: 'manage-transaction',
   description:
-    'Create, update, or delete transactions. Accepts account, payee, and category names or IDs. ' +
-    'For create: account and date are required. ' +
-    'For update: id is required. ' +
-    'For delete: only id is required. ' +
-    'WARNING: Delete is permanent and cannot be undone. ' +
-    'Example delete: {"operation": "delete", "id": "abc123-def456-ghi789"}',
+    'Create, update, or delete transactions in Actual Budget. Supports name or ID resolution for accounts, payees, and categories.\n\n' +
+    'OPERATIONS:\n\n' +
+    '• CREATE: Add a new transaction\n' +
+    '  Required: operation="create", transaction.account, transaction.date, transaction.amount\n' +
+    '  Optional: transaction.payee, transaction.category, transaction.notes, transaction.cleared\n' +
+    '  Example: {"operation": "create", "transaction": {"account": "Checking", "date": "2024-01-15", "amount": -5000, "payee": "Grocery Store", "category": "Groceries", "notes": "Weekly shopping"}}\n\n' +
+    '• UPDATE: Modify an existing transaction\n' +
+    '  Required: operation="update", id\n' +
+    '  Optional: Any transaction fields to update\n' +
+    '  Example: {"operation": "update", "id": "abc123-def456-ghi789", "transaction": {"amount": -5500, "notes": "Updated amount"}}\n\n' +
+    '• DELETE: Permanently remove a transaction\n' +
+    '  Required: operation="delete", id\n' +
+    '  WARNING: Cannot be undone!\n' +
+    '  Example: {"operation": "delete", "id": "abc123-def456-ghi789"}\n\n' +
+    'AMOUNT FORMAT:\n' +
+    '- Amounts are in cents (integer values)\n' +
+    '- Negative values = expenses/outflows (e.g., -5000 = -$50.00)\n' +
+    '- Positive values = income/inflows (e.g., 5000 = $50.00)\n' +
+    '- Examples: -2550 = -$25.50, 100000 = $1,000.00\n\n' +
+    'COMMON USE CASES:\n' +
+    '- Recording a purchase: operation=create with account, date, amount (negative), payee, category\n' +
+    '- Adding income: operation=create with account, date, amount (positive), payee, category\n' +
+    '- Fixing a typo: operation=update with id and corrected fields (e.g., amount, notes, category)\n' +
+    '- Recategorizing: operation=update with id and new category\n' +
+    '- Removing duplicate: operation=delete with id (use with caution!)\n\n' +
+    'NOTES:\n' +
+    '- Date format must be YYYY-MM-DD (e.g., "2024-01-15")\n' +
+    '- Accepts names or IDs for account, payee, and category fields\n' +
+    '- Use get-transactions to find transaction IDs before update/delete\n' +
+    '- Use get-accounts to find account names/IDs\n' +
+    '- Delete operations are permanent and cannot be undone',
   inputSchema: zodToJsonSchema(ManageTransactionArgsSchema) as ToolInput,
 };
 

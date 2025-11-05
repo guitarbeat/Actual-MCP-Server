@@ -11,25 +11,51 @@ import { SetBudgetArgsSchema, type SetBudgetArgs } from './types.js';
 export const schema = {
   name: 'set-budget',
   description:
-    'Set budget amount and/or carryover for a category in a specific month. Accepts category name or ID. At least one of amount or carryover must be provided.',
+    'Set budget amount and/or carryover for a category in a specific month. Accepts category name or ID.\n\n' +
+    'REQUIRED PARAMETERS:\n' +
+    '- month: Month in YYYY-MM format (e.g., "2024-01" for January 2024)\n' +
+    '- category: Category name or ID (use get-grouped-categories to find IDs)\n' +
+    '- At least one of amount or carryover must be provided\n\n' +
+    'OPTIONAL PARAMETERS:\n' +
+    '- amount: Budget amount in cents (e.g., 50000 = $500.00)\n' +
+    '- carryover: Enable (true) or disable (false) budget carryover to next month\n\n' +
+    'EXAMPLES:\n' +
+    '- Set amount only: {"month": "2024-01", "category": "Groceries", "amount": 50000}\n' +
+    '- Set carryover only: {"month": "2024-01", "category": "Groceries", "carryover": true}\n' +
+    '- Set both: {"month": "2024-01", "category": "Groceries", "amount": 50000, "carryover": true}\n' +
+    '- Using category ID: {"month": "2024-01", "category": "abc123-def456", "amount": 30000}\n\n' +
+    'COMMON USE CASES:\n' +
+    '- Setting monthly budget: Specify amount for a category in a specific month\n' +
+    '- Enabling rollover: Set carryover=true to roll unused budget to next month\n' +
+    '- Adjusting budget mid-month: Update amount for current month\n' +
+    '- Disabling rollover: Set carryover=false to prevent budget from carrying over\n\n' +
+    'NOTES:\n' +
+    '- Amounts are in cents (multiply dollars by 100)\n' +
+    '- Month format must be YYYY-MM (e.g., "2024-01", not "01/2024" or "January 2024")\n' +
+    '- Category names are case-sensitive but flexible (partial matches work)\n' +
+    '- You can set amount, carryover, or both in a single call',
   inputSchema: {
     type: 'object',
     properties: {
       month: {
         type: 'string',
-        description: 'Month in YYYY-MM format',
+        description:
+          'Month in YYYY-MM format (e.g., "2024-01" for January 2024, "2024-12" for December 2024). Must be a valid month.',
       },
       category: {
         type: 'string',
-        description: 'Category name or ID',
+        description:
+          'Category name or ID. Accepts partial name matches (case-sensitive). Use get-grouped-categories tool to find exact category names or IDs.',
       },
       amount: {
         type: 'number',
-        description: 'Budget amount to set (in cents). Optional if carryover is provided.',
+        description:
+          'Budget amount in cents (e.g., 50000 = $500.00, 12500 = $125.00). Must be a positive integer. Optional if carryover is provided.',
       },
       carryover: {
         type: 'boolean',
-        description: 'Enable or disable budget carryover. Optional if amount is provided.',
+        description:
+          'Enable (true) or disable (false) budget carryover. When enabled, unused budget rolls over to the next month. Optional if amount is provided.',
       },
     },
     required: ['month', 'category'],

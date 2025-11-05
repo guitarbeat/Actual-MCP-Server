@@ -13,7 +13,8 @@ export const schema = {
     properties: {
       accountId: {
         type: 'string',
-        description: 'ID of the account to sync. If not provided, syncs all accounts.',
+        description:
+          'ID of the account to sync. Must be a valid account UUID. If not provided, syncs all accounts that have bank sync enabled. Use get-accounts to find account IDs.',
       },
     },
   },

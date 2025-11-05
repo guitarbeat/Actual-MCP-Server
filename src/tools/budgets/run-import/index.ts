@@ -13,11 +13,13 @@ export const schema = {
     properties: {
       filePath: {
         type: 'string',
-        description: 'Path to the file to import',
+        description:
+          'Path to the file to import. Must be an absolute or relative path to a valid transaction file on the server filesystem.',
       },
       importType: {
         type: 'string',
-        description: 'Type of import (e.g., "csv", "ofx", "qif")',
+        description:
+          'Type of import format (e.g., "csv", "ofx", "qif"). Optional - if not provided, Actual will attempt to auto-detect the file format.',
       },
     },
     required: ['filePath'],

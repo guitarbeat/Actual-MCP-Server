@@ -14,11 +14,13 @@ export const schema = {
     properties: {
       month: {
         type: 'string',
-        description: 'Month in YYYY-MM format',
+        description:
+          'Month in YYYY-MM format (e.g., "2024-01" for January 2024). This is the month from which to hold the budget amount.',
       },
       amount: {
         type: 'number',
-        description: 'Amount to hold for the next month',
+        description:
+          'Amount to hold for the next month in cents (e.g., 50000 = $500.00). This amount will be carried over to the following month.',
       },
     },
     required: ['month', 'amount'],
