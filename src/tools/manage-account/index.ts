@@ -111,7 +111,18 @@ export const schema = {
     '- Use get-accounts tool to find account IDs before update, delete, close, reopen, or balance operations\n' +
     '- Amounts are in cents (e.g., 100000 = $1,000.00)\n' +
     '- Delete operation is permanent and cannot be undone - use close instead to preserve history\n' +
-    '- When closing an account with a non-zero balance, you must specify transferAccountId',
+    '- When closing an account with a non-zero balance, you must specify transferAccountId\n\n' +
+    'TYPICAL WORKFLOW:\n' +
+    '1. CREATE: Create account, then use manage-transaction to add initial transactions\n' +
+    '2. UPDATE/CLOSE/REOPEN: Use get-accounts to find account ID, then perform operation\n' +
+    '3. BALANCE: Use get-accounts to find account ID, then query balance for specific date\n' +
+    '4. VERIFY: Use get-accounts to confirm account changes\n\n' +
+    'SEE ALSO:\n' +
+    '- get-accounts: Find account IDs and view current account status\n' +
+    '- manage-transaction: Create transactions for newly created accounts\n' +
+    '- get-transactions: View transactions for an account\n' +
+    '- balance-history: View balance trends over time for an account\n' +
+    '- get-grouped-categories: Find category IDs for transfer transactions when closing',
   inputSchema: zodToJsonSchema(ManageAccountArgsSchema) as ToolInput,
 };
 

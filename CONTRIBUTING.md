@@ -296,7 +296,7 @@ src/tools/[tool-name]/
 
 ## Adding a New Tool
 
-Follow these steps to add a new tool:
+Follow these steps to add a new tool. For detailed guidance on writing tool descriptions, see the [Tool Description Template](./docs/TOOL-DESCRIPTION-TEMPLATE.md).
 
 ### 1. Create Tool Directory
 
@@ -306,6 +306,8 @@ mkdir -p src/tools/my-new-tool
 
 ### 2. Create Schema and Handler (`index.ts`)
 
+**IMPORTANT**: Follow the [Tool Description Template](./docs/TOOL-DESCRIPTION-TEMPLATE.md) for writing comprehensive tool descriptions that maximize AI agent discoverability.
+
 ```typescript
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -313,17 +315,33 @@ import { z } from 'zod';
 import { successWithContent, errorFromCatch } from '../../core/response/index.js';
 import type { ToolInput } from '../../types.js';
 
-// Define Zod schema
+// Define Zod schema with detailed descriptions
 const MyToolArgsSchema = z.object({
-  accountId: z.string().describe('The account ID'),
-  startDate: z.string().optional().describe('Start date (YYYY-MM-DD)'),
+  accountId: z.string().describe('Account name or ID. Use get-accounts to find account IDs.'),
+  startDate: z.string().optional().describe('Start date in YYYY-MM-DD format (e.g., "2024-01-01"). Defaults to 30 days ago if not specified.'),
 });
 
 type MyToolArgs = z.infer<typeof MyToolArgsSchema>;
 
 export const schema = {
   name: 'my-new-tool',
-  description: 'Description of what this tool does',
+  description:
+    'Brief one-line summary of what this tool does.\n\n' +
+    
+    'REQUIRED PARAMETERS:\n' +
+    '- accountId: Account name or ID\n\n' +
+    
+    'OPTIONAL PARAMETERS:\n' +
+    '- startDate: Start date (YYYY-MM-DD, defaults to 30 days ago)\n\n' +
+    
+    'EXAMPLES:\n' +
+    '- Basic usage: {"accountId": "Checking"}\n' +
+    '- With date: {"accountId": "Checking", "startDate": "2024-01-01"}\n\n' +
+    
+    'COMMON USE CASES:\n' +
+    '- Use case 1: Description\n' +
+    '- Use case 2: Description\n' +
+    '- Use case 3: Description',
   inputSchema: zodToJsonSchema(MyToolArgsSchema) as ToolInput,
 };
 
@@ -458,7 +476,53 @@ describe('my-new-tool', () => {
 
 ### 8. Update Documentation
 
-Add tool to README.md under the appropriate section.
+- Add tool to README.md under the appropriate section
+- Update TOOL-USAGE-GUIDE.md if the tool is significant
+- Ensure description follows [Tool Description Template](./docs/TOOL-DESCRIPTION-TEMPLATE.md)
+
+### 9. Complete PR Checklist
+
+Before submitting your PR, complete the [New Tool PR Checklist](./docs/NEW-TOOL-PR-CHECKLIST.md) to ensure:
+- Description quality meets standards
+- Input schema has comprehensive descriptions
+- All tests pass
+- Documentation is updated
+- Code follows project conventions
+
+## Tool Description Quality
+
+### Why Tool Descriptions Matter
+
+AI agents using MCP tools remotely (via Claude Desktop, Cline, etc.) rely entirely on tool descriptions and input schemas to understand when and how to use each tool. Poor descriptions lead to:
+- ❌ Agents choosing wrong tools
+- ❌ Failed tool calls due to incorrect parameters
+- ❌ Multiple retry attempts
+- ❌ Users having to manually guide agents
+
+### Description Standards
+
+All tool descriptions must follow the [Tool Description Template](./docs/TOOL-DESCRIPTION-TEMPLATE.md) which includes:
+
+1. **One-line summary**: Clear, concise description of what the tool does
+2. **Operations/Parameters section**: Document all operations and parameters
+3. **Examples section**: 2-4 realistic JSON examples
+4. **Common use cases**: 3-5 typical scenarios
+5. **Notes section**: Warnings, tips, and format requirements (if applicable)
+
+### Input Schema Requirements
+
+Every property in the input schema must have a description that includes:
+- What the parameter is
+- Format requirements (YYYY-MM-DD, cents, etc.)
+- Constraints (min/max, allowed values)
+- Examples of valid values
+- References to related tools when IDs are needed
+
+### Resources
+
+- **Template Guide**: [docs/TOOL-DESCRIPTION-TEMPLATE.md](./docs/TOOL-DESCRIPTION-TEMPLATE.md)
+- **PR Checklist**: [docs/NEW-TOOL-PR-CHECKLIST.md](./docs/NEW-TOOL-PR-CHECKLIST.md)
+- **Tool Usage Guide**: [docs/TOOL-USAGE-GUIDE.md](./docs/TOOL-USAGE-GUIDE.md)
 
 ## Testing Guidelines
 

@@ -45,7 +45,13 @@ export const schema = {
     '- Balances are always included in the response (no need to request separately)\n' +
     '- Closed accounts are excluded by default to reduce clutter\n' +
     '- Credit card accounts typically show negative balances (representing debt)\n' +
-    '- Off-budget accounts (like tracking accounts) are included but flagged separately',
+    '- Off-budget accounts (like tracking accounts) are included but flagged separately\n\n' +
+    'SEE ALSO:\n' +
+    '- manage-transaction: Use account IDs from this tool to create/update transactions\n' +
+    '- get-transactions: Use account IDs to query transactions for specific accounts\n' +
+    '- manage-account: Use account IDs to update, close, or reopen accounts\n' +
+    '- balance-history: Use account IDs to view balance trends over time\n' +
+    '- spending-by-category: Use account IDs to analyze spending for specific accounts',
   inputSchema: zodToJsonSchema(GetAccountsArgsSchema) as ToolInput,
 };
 
