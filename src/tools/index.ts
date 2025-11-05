@@ -19,39 +19,29 @@ import * as spendingByCategory from './spending-by-category/index.js';
 import * as manageTransaction from './manage-transaction/index.js';
 
 // Account management tools
-import * as createAccount from './accounts/create-account/index.js';
 import * as updateAccount from './accounts/update-account/index.js';
-import * as closeAccount from './accounts/close-account/index.js';
-import * as reopenAccount from './accounts/reopen-account/index.js';
-import * as deleteAccount from './accounts/delete-account/index.js';
 
 // Budget operation tools
 import * as setBudget from './set-budget/index.js';
 import * as holdBudgetForNextMonth from './budget/hold-budget-for-next-month/index.js';
 import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
+import * as getBudgetMonths from './budgets/get-budget-months/index.js';
+import * as getBudgetMonth from './budgets/get-budget-month/index.js';
+import * as runBankSync from './budgets/run-bank-sync/index.js';
+import * as runImport from './budgets/run-import/index.js';
 
 // Schedule management tools
 import * as getSchedules from './schedules/get-schedules/index.js';
 
-// Payee consolidation tools
+// Payee tools
 import * as mergePayees from './payees/merge-payees/index.js';
 import * as getPayeeRules from './payees/get-payee-rules/index.js';
 
-// Budget file management tools
-import * as getBudgets from './budgets/get-budgets/index.js';
-import * as getBudgetMonths from './budgets/get-budget-months/index.js';
-import * as getBudgetMonth from './budgets/get-budget-month/index.js';
-import * as loadBudget from './budgets/load-budget/index.js';
-import * as downloadBudget from './budgets/download-budget/index.js';
-import * as sync from './budgets/sync/index.js';
-import * as runBankSync from './budgets/run-bank-sync/index.js';
-import * as runImport from './budgets/run-import/index.js';
-
-// Utility tools
-import * as getIdByName from './utilities/get-id-by-name/index.js';
-import * as runQuery from './utilities/run-query/index.js';
-import * as getServerVersion from './utilities/get-server-version/index.js';
+// Entity management
 import * as manageEntity from './manage-entity/index.js';
+
+// Utility tools (optional)
+import * as runQuery from './utilities/run-query/index.js';
 
 /**
  * Tool definition interface for registry-based tool management
@@ -74,7 +64,7 @@ export interface ToolDefinition {
 /**
  * Tool category for feature flag filtering
  */
-type ToolCategory = 'core' | 'budget-management' | 'advanced-account-ops' | 'utility';
+type ToolCategory = 'core' | 'utility';
 
 /**
  * Extended tool definition with category for feature flag filtering
@@ -120,67 +110,22 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: runImport.schema, handler: runImport.handler, requiresWrite: true, category: 'core' },
   { schema: manageEntity.schema, handler: manageEntity.handler, requiresWrite: true, category: 'core' },
 
-  // Budget management tools (optional)
-  { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false, category: 'budget-management' },
-  {
-    schema: getBudgetMonths.schema,
-    handler: getBudgetMonths.handler,
-    requiresWrite: false,
-    category: 'budget-management',
-  },
-  {
-    schema: getBudgetMonth.schema,
-    handler: getBudgetMonth.handler,
-    requiresWrite: false,
-    category: 'budget-management',
-  },
-  { schema: loadBudget.schema, handler: loadBudget.handler, requiresWrite: true, category: 'budget-management' },
-  {
-    schema: downloadBudget.schema,
-    handler: downloadBudget.handler,
-    requiresWrite: true,
-    category: 'budget-management',
-  },
-  { schema: sync.schema, handler: sync.handler, requiresWrite: true, category: 'budget-management' },
+  // Budget tools (now core)
+  { schema: getBudgetMonths.schema, handler: getBudgetMonths.handler, requiresWrite: false, category: 'core' },
+  { schema: getBudgetMonth.schema, handler: getBudgetMonth.handler, requiresWrite: false, category: 'core' },
   {
     schema: holdBudgetForNextMonth.schema,
     handler: holdBudgetForNextMonth.handler,
     requiresWrite: true,
-    category: 'budget-management',
+    category: 'core',
   },
-  {
-    schema: resetBudgetHold.schema,
-    handler: resetBudgetHold.handler,
-    requiresWrite: true,
-    category: 'budget-management',
-  },
+  { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true, category: 'core' },
 
-  // Advanced account operations (optional)
-  {
-    schema: createAccount.schema,
-    handler: createAccount.handler,
-    requiresWrite: true,
-    category: 'advanced-account-ops',
-  },
-  { schema: closeAccount.schema, handler: closeAccount.handler, requiresWrite: true, category: 'advanced-account-ops' },
-  {
-    schema: reopenAccount.schema,
-    handler: reopenAccount.handler,
-    requiresWrite: true,
-    category: 'advanced-account-ops',
-  },
-  {
-    schema: deleteAccount.schema,
-    handler: deleteAccount.handler,
-    requiresWrite: true,
-    category: 'advanced-account-ops',
-  },
+  // Payee rules (now core)
+  { schema: getPayeeRules.schema, handler: getPayeeRules.handler, requiresWrite: false, category: 'core' },
 
-  // Utility tools (optional)
-  { schema: getPayeeRules.schema, handler: getPayeeRules.handler, requiresWrite: false, category: 'utility' },
-  { schema: getIdByName.schema, handler: getIdByName.handler, requiresWrite: false, category: 'utility' },
+  // Utility tools (optional - power users only)
   { schema: runQuery.schema, handler: runQuery.handler, requiresWrite: false, category: 'utility' },
-  { schema: getServerVersion.schema, handler: getServerVersion.handler, requiresWrite: false, category: 'utility' },
 ];
 
 /**
@@ -190,8 +135,6 @@ const toolRegistry: CategorizedToolDefinition[] = [
  */
 export function getAvailableTools(enableWrite: boolean): ToolDefinition[] {
   // Check feature flags from environment variables
-  const enableBudgetManagement = process.env.ENABLE_BUDGET_MANAGEMENT === 'true';
-  const enableAdvancedAccountOps = process.env.ENABLE_ADVANCED_ACCOUNT_OPS === 'true';
   const enableUtilityTools = process.env.ENABLE_UTILITY_TOOLS === 'true';
 
   // Filter tools based on write permission and feature flags
@@ -205,10 +148,6 @@ export function getAvailableTools(enableWrite: boolean): ToolDefinition[] {
     switch (tool.category) {
       case 'core':
         return true;
-      case 'budget-management':
-        return enableBudgetManagement;
-      case 'advanced-account-ops':
-        return enableAdvancedAccountOps;
       case 'utility':
         return enableUtilityTools;
       default:
@@ -266,31 +205,13 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       }
 
       // Check if tool is disabled by feature flags
-      const enableBudgetManagement = process.env.ENABLE_BUDGET_MANAGEMENT === 'true';
-      const enableAdvancedAccountOps = process.env.ENABLE_ADVANCED_ACCOUNT_OPS === 'true';
       const enableUtilityTools = process.env.ENABLE_UTILITY_TOOLS === 'true';
-
-      if (tool.category === 'budget-management' && !enableBudgetManagement) {
-        success = false;
-        return error(
-          `Tool '${name}' is not enabled`,
-          'Set ENABLE_BUDGET_MANAGEMENT=true in your environment to enable budget file management tools.'
-        );
-      }
-
-      if (tool.category === 'advanced-account-ops' && !enableAdvancedAccountOps) {
-        success = false;
-        return error(
-          `Tool '${name}' is not enabled`,
-          'Set ENABLE_ADVANCED_ACCOUNT_OPS=true in your environment to enable advanced account operations.'
-        );
-      }
 
       if (tool.category === 'utility' && !enableUtilityTools) {
         success = false;
         return error(
           `Tool '${name}' is not enabled`,
-          'Set ENABLE_UTILITY_TOOLS=true in your environment to enable utility tools.'
+          'Set ENABLE_UTILITY_TOOLS=true in your environment to enable utility tools (run-query).'
         );
       }
 
