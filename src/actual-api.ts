@@ -31,11 +31,28 @@ let initialized = false;
 let initializing = false;
 let initializationError: Error | null = null;
 
+// Performance tracking for initialization
+let initializationTime: number | null = null;
+let initializationSkipCount = 0;
+
+// Auto-sync state
+let autoSyncInterval: NodeJS.Timeout | null = null;
+
 /**
  * Initialize the Actual Budget API
  */
 export async function initActualApi(): Promise<void> {
-  if (initialized) return;
+  if (initialized) {
+    // Log when initialization is skipped due to existing connection
+    initializationSkipCount++;
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      const timeSaved = initializationTime || 600; // Use actual time or estimate
+      console.error(
+        `[PERF] ⚡ Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`
+      );
+    }
+    return;
+  }
   if (initializing) {
     // Wait for initialization to complete if already in progress
     while (initializing) {
@@ -46,6 +63,7 @@ export async function initActualApi(): Promise<void> {
   }
 
   initializing = true;
+  const startTime = Date.now();
 
   initializationError = null;
   try {
@@ -80,7 +98,26 @@ export async function initActualApi(): Promise<void> {
       await api.downloadBudget(budgetId);
     }
 
+    // Find the budget name for logging
+    const loadedBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId);
+    const budgetName = loadedBudget?.name || budgetId;
+
     initialized = true;
+
+    // Track initialization time for performance logging
+    initializationTime = Date.now() - startTime;
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(`[PERF] 🔌 API initialized in ${initializationTime}ms`);
+    }
+
+    // Log successful budget load
+    console.error(`✓ Budget loaded: ${budgetName}`);
+    if (process.env.ACTUAL_BUDGET_SYNC_ID) {
+      console.error(`  Using ACTUAL_BUDGET_SYNC_ID: ${budgetId}`);
+    }
+
+    // Setup auto-sync if configured
+    setupAutoSync();
   } catch (error) {
     console.error('Failed to initialize Actual Budget API:', error);
     initializationError = error instanceof Error ? error : new Error(String(error));
@@ -91,12 +128,85 @@ export async function initActualApi(): Promise<void> {
 }
 
 /**
+ * Setup automatic budget sync on an interval
+ */
+function setupAutoSync(): void {
+  // Clear any existing interval
+  if (autoSyncInterval) {
+    clearInterval(autoSyncInterval);
+    autoSyncInterval = null;
+  }
+
+  // Check if auto-sync is configured
+  const intervalMinutes = process.env.AUTO_SYNC_INTERVAL_MINUTES;
+  if (!intervalMinutes) {
+    return;
+  }
+
+  const minutes = parseInt(intervalMinutes, 10);
+
+  // Support disabling with interval=0
+  if (isNaN(minutes) || minutes <= 0) {
+    return;
+  }
+
+  // Convert minutes to milliseconds
+  const intervalMs = minutes * 60 * 1000;
+
+  // Setup interval for background sync
+  autoSyncInterval = setInterval(async () => {
+    try {
+      if (typeof api.sync === 'function') {
+        await api.sync();
+        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+          console.error(`[AUTO-SYNC] ✓ Budget synced successfully`);
+        }
+      }
+    } catch (error) {
+      console.error('[AUTO-SYNC] Failed to sync budget:', error);
+    }
+  }, intervalMs);
+
+  console.error(`✓ Auto-sync enabled: every ${minutes} minute${minutes !== 1 ? 's' : ''}`);
+}
+
+/**
  * Shutdown the Actual Budget API
  */
 export async function shutdownActualApi(): Promise<void> {
   if (!initialized) return;
+
+  // Clean up auto-sync interval
+  if (autoSyncInterval) {
+    clearInterval(autoSyncInterval);
+    autoSyncInterval = null;
+  }
+
   await api.shutdown();
   initialized = false;
+}
+
+/**
+ * Get initialization performance statistics
+ */
+export function getInitializationStats(): {
+  initializationTime: number | null;
+  skipCount: number;
+  timeSaved: number;
+} {
+  const timeSaved = initializationTime ? initializationTime * initializationSkipCount : 0;
+  return {
+    initializationTime,
+    skipCount: initializationSkipCount,
+    timeSaved,
+  };
+}
+
+/**
+ * Reset initialization statistics (useful for testing)
+ */
+export function resetInitializationStats(): void {
+  initializationSkipCount = 0;
 }
 
 // ----------------------------

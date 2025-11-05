@@ -16,7 +16,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'node:util';
-import { initActualApi, shutdownActualApi } from './actual-api.js';
+import { initActualApi, shutdownActualApi, getInitializationStats } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
@@ -26,6 +26,7 @@ import {
   startPeriodicCacheStatsLogging,
   stopPeriodicCacheStatsLogging,
   logCacheStats,
+  logInitializationStats,
 } from './core/performance/performance-logger.js';
 import { cacheService } from './core/cache/cache-service.js';
 import { metricsTracker } from './core/performance/metrics-tracker.js';
@@ -415,25 +416,62 @@ setupResources(server);
 setupTools(server, enableWrite);
 setupPrompts(server);
 
+/**
+ * Graceful shutdown handler
+ * Cleans up resources and exits the process
+ */
+async function gracefulShutdown(signal: string): Promise<void> {
+  console.error(`${signal} received, shutting down server`);
+
+  // Set up force exit timeout (5 seconds)
+  const forceExitTimeout = setTimeout(() => {
+    console.error('⚠️  Shutdown timeout exceeded (5s), forcing exit');
+    process.exit(1);
+  }, 5000);
+
+  try {
+    // Log final performance summary and cache stats
+    if (metricsTracker.isEnabled()) {
+      console.error('');
+      logPerformanceSummary();
+
+      // Log initialization statistics showing persistent connection benefits
+      console.error('');
+      const initStats = getInitializationStats();
+      logInitializationStats(initStats);
+    }
+
+    if (cacheService.isEnabled()) {
+      console.error('');
+      logCacheStats();
+    }
+
+    // Stop periodic cache stats logging
+    stopPeriodicCacheStatsLogging(cacheStatsInterval);
+
+    // Shutdown Actual Budget API connection
+    await shutdownActualApi();
+
+    // Close MCP server
+    server.close();
+
+    // Clear the force exit timeout since we completed successfully
+    clearTimeout(forceExitTimeout);
+
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    clearTimeout(forceExitTimeout);
+    process.exit(1);
+  }
+}
+
 process.on('SIGINT', () => {
-  console.error('SIGINT received, shutting down server');
+  void gracefulShutdown('SIGINT');
+});
 
-  // Log final performance summary and cache stats
-  if (metricsTracker.isEnabled()) {
-    console.error('');
-    logPerformanceSummary();
-  }
-
-  if (cacheService.isEnabled()) {
-    console.error('');
-    logCacheStats();
-  }
-
-  // Stop periodic cache stats logging
-  stopPeriodicCacheStatsLogging(cacheStatsInterval);
-
-  server.close();
-  process.exit(0);
+process.on('SIGTERM', () => {
+  void gracefulShutdown('SIGTERM');
 });
 
 main()
