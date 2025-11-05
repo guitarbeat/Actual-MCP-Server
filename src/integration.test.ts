@@ -220,9 +220,9 @@ describe('Integration Tests - MCP Simplification', () => {
     });
   });
 
-  describe('Feature Flags Enable/Disable', () => {
-    it('should exclude budget management tools when flag is disabled', () => {
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
+  describe('Utility Tools Feature Flag', () => {
+    it('should exclude utility tools when flag is disabled', () => {
+      process.env.ENABLE_UTILITY_TOOLS = 'false';
 
       const tools = getAvailableTools(true);
 
@@ -230,58 +230,11 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
 
-      // Budget management tools should not be present
-      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'load-budget')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'download-budget')).toBe(false);
-    });
-
-    it('should include budget management tools when flag is enabled', () => {
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
-
-      const tools = getAvailableTools(true);
-
-      // Budget management tools should be present
-      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'load-budget')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'download-budget')).toBe(true);
-    });
-
-    it('should exclude advanced account operations when flag is disabled', () => {
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
-
-      const tools = getAvailableTools(true);
-
-      // Core account tools should be present
-      expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'update-account')).toBe(true);
-
-      // Advanced account ops should not be present
-      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'close-account')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'delete-account')).toBe(false);
-    });
-
-    it('should include advanced account operations when flag is enabled', () => {
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
-
-      const tools = getAvailableTools(true);
-
-      // Advanced account ops should be present
-      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'close-account')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'delete-account')).toBe(true);
-    });
-
-    it('should exclude utility tools when flag is disabled', () => {
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
-
-      const tools = getAvailableTools(true);
-
-      // Utility tools should not be present
-      expect(tools.some((t) => t.schema.name === 'get-id-by-name')).toBe(false);
+      // run-query should not be present
       expect(tools.some((t) => t.schema.name === 'run-query')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'get-server-version')).toBe(false);
+      
+      // Should have exactly 21 core tools
+      expect(tools.length).toBe(21);
     });
 
     it('should include utility tools when flag is enabled', () => {
@@ -289,52 +242,42 @@ describe('Integration Tests - MCP Simplification', () => {
 
       const tools = getAvailableTools(true);
 
-      // Utility tools should be present
-      expect(tools.some((t) => t.schema.name === 'get-id-by-name')).toBe(true);
+      // run-query should be present
       expect(tools.some((t) => t.schema.name === 'run-query')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'get-server-version')).toBe(true);
-    });
-
-    it('should work with multiple feature flags enabled simultaneously', () => {
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
-
-      const tools = getAvailableTools(true);
-
-      // Core tools should be present
-      expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
-
-      // Budget management tools should be present
-      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
-
-      // Advanced account ops should be present
-      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(true);
-
-      // Utility tools should not be present
-      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(false);
+      
+      // Should have 22 tools (21 core + 1 utility)
+      expect(tools.length).toBe(22);
     });
   });
 
   describe('Production-Ready Tool Set', () => {
-    it('should only include production tools in core set', async () => {
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
+    it('should have 21 core tools by default', async () => {
       process.env.ENABLE_UTILITY_TOOLS = 'false';
 
       const tools = getAvailableTools(true);
       const toolNames = tools.map((t) => t.schema.name);
 
+      // Should have exactly 21 core tools
+      expect(tools.length).toBe(21);
+
       // New consolidated tools should be available
       expect(toolNames).toContain('manage-transaction');
       expect(toolNames).toContain('set-budget');
 
-      // Deprecated tools should NOT be in core
+      // Removed tools should NOT be present
       expect(toolNames).not.toContain('create-transaction');
       expect(toolNames).not.toContain('update-transaction');
       expect(toolNames).not.toContain('set-budget-amount');
       expect(toolNames).not.toContain('set-budget-carryover');
       expect(toolNames).not.toContain('get-account-balance');
+      expect(toolNames).not.toContain('create-account');
+      expect(toolNames).not.toContain('close-account');
+      expect(toolNames).not.toContain('delete-account');
+      expect(toolNames).not.toContain('get-budgets');
+      expect(toolNames).not.toContain('load-budget');
+      expect(toolNames).not.toContain('sync');
+      expect(toolNames).not.toContain('get-id-by-name');
+      expect(toolNames).not.toContain('get-server-version');
     });
 
     it('should have clean tool descriptions without deprecation notices', async () => {
@@ -348,8 +291,6 @@ describe('Integration Tests - MCP Simplification', () => {
     });
 
     it('should verify all core tools are production-ready', async () => {
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
       process.env.ENABLE_UTILITY_TOOLS = 'false';
 
       const tools = getAvailableTools(true);
@@ -366,11 +307,16 @@ describe('Integration Tests - MCP Simplification', () => {
       // Core category & budget tools
       expect(toolNames).toContain('get-grouped-categories');
       expect(toolNames).toContain('set-budget');
+      expect(toolNames).toContain('get-budget-months');
+      expect(toolNames).toContain('get-budget-month');
+      expect(toolNames).toContain('hold-budget-for-next-month');
+      expect(toolNames).toContain('reset-budget-hold');
 
       // Core entity management
       expect(toolNames).toContain('manage-entity');
       expect(toolNames).toContain('get-payees');
       expect(toolNames).toContain('get-rules');
+      expect(toolNames).toContain('get-payee-rules');
 
       // Core insights
       expect(toolNames).toContain('spending-by-category');

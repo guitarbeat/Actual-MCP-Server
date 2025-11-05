@@ -18,8 +18,6 @@ describe('Performance Validation', () => {
     it('should have reduced tool count from 37 to 20 core tools', () => {
       // Disable all optional features to get core tool count
       const originalEnv = { ...process.env };
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
       process.env.ENABLE_UTILITY_TOOLS = 'false';
 
       const coreTools = getAvailableTools(true);
@@ -27,58 +25,54 @@ describe('Performance Validation', () => {
       // Restore environment
       process.env = originalEnv;
 
-      // Core tools should be 16 after removing deprecated tools
-      // 1 transaction (manage-transaction) + 2 account + 2 category/budget + 3 entity + 3 insights + 3 advanced + 1 schedule + 1 manage-entity
-      expect(coreTools.length).toBe(16);
+      // Core tools should be 21 after optimization
+      expect(coreTools.length).toBe(21);
     });
 
-    it('should expose all 37+ tools when all features are enabled', () => {
+    it('should have 22 tools when utility tools are enabled', () => {
       const originalEnv = { ...process.env };
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
       process.env.ENABLE_UTILITY_TOOLS = 'true';
 
       const allTools = getAvailableTools(true);
 
       process.env = originalEnv;
 
-      // Should have all tools when features are enabled (32 after removing 5 deprecated tools)
-      expect(allTools.length).toBe(32);
+      // Should have 22 tools (21 core + 1 utility)
+      expect(allTools.length).toBe(22);
     });
 
-    it('should calculate estimated token savings from tool reduction', () => {
+    it('should calculate token savings from original 37 tools', () => {
       const originalEnv = { ...process.env };
 
       // Get core tool count
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
       process.env.ENABLE_UTILITY_TOOLS = 'false';
       const coreTools = getAvailableTools(true);
 
       // Get all tools count
-      process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
-      process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
       process.env.ENABLE_UTILITY_TOOLS = 'true';
       const allTools = getAvailableTools(true);
 
       process.env = originalEnv;
 
-      // Calculate token savings
+      // Calculate token savings from original 37 tools
       const TOKENS_PER_TOOL = 150; // Estimated average tokens per tool schema
-      const toolsRemoved = allTools.length - coreTools.length;
+      const originalToolCount = 37;
+      const currentToolCount = coreTools.length; // 20 core tools
+      const toolsRemoved = originalToolCount - currentToolCount;
       const tokensSaved = toolsRemoved * TOKENS_PER_TOOL;
-      const percentageReduction = (tokensSaved / (allTools.length * TOKENS_PER_TOOL)) * 100;
+      const percentageReduction = (tokensSaved / (originalToolCount * TOKENS_PER_TOOL)) * 100;
 
       console.log(`\n📊 Context Window Optimization:`);
-      console.log(`   Core tools: ${coreTools.length}`);
-      console.log(`   All tools: ${allTools.length}`);
+      console.log(`   Original tools: ${originalToolCount}`);
+      console.log(`   Current core tools: ${coreTools.length}`);
+      console.log(`   Tools with utility: ${allTools.length}`);
       console.log(`   Tools removed: ${toolsRemoved}`);
       console.log(`   Estimated tokens saved: ${tokensSaved}`);
       console.log(`   Percentage reduction: ${percentageReduction.toFixed(1)}%`);
 
       // Verify we achieved significant reduction
-      expect(toolsRemoved).toBeGreaterThanOrEqual(10);
-      expect(percentageReduction).toBeGreaterThanOrEqual(25); // At least 25% reduction
+      expect(toolsRemoved).toBeGreaterThanOrEqual(15);
+      expect(percentageReduction).toBeGreaterThanOrEqual(40); // At least 40% reduction
     });
 
     it('should have consolidated transaction tools', () => {
@@ -462,8 +456,13 @@ describe('Performance Validation', () => {
       console.log(`${'='.repeat(60)}\n`);
 
       // Final assertions
-      expect(coreTools.length).toBeLessThan(allTools.length);
-      expect(percentageReduction).toBeGreaterThanOrEqual(25);
+      expect(coreTools.length).toBe(21);
+      expect(allTools.length).toBe(22);
+      
+      // Calculate actual reduction from original 37 tools
+      const originalToolCount = 37;
+      const actualReduction = ((originalToolCount - coreTools.length) / originalToolCount) * 100;
+      expect(actualReduction).toBeGreaterThanOrEqual(40); // At least 40% reduction
     });
   });
 });
