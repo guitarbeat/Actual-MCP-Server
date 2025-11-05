@@ -60,21 +60,68 @@ export const GetTransactionsArgsSchema = z.object({
 });
 
 export const SpendingByCategoryArgsSchema = z.object({
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  accountId: z.string().optional(),
-  includeIncome: z.boolean().optional(),
+  startDate: z
+    .string()
+    .optional()
+    .describe(
+      'Start date for spending analysis in YYYY-MM-DD format (e.g., "2024-01-01"). If omitted, defaults to 30 days before endDate or today. Use this to define the beginning of your analysis period.'
+    ),
+  endDate: z
+    .string()
+    .optional()
+    .describe(
+      'End date for spending analysis in YYYY-MM-DD format (e.g., "2024-01-31"). If omitted, defaults to today. Use this to define the end of your analysis period.'
+    ),
+  accountId: z
+    .string()
+    .optional()
+    .describe(
+      'Account name or ID to filter spending analysis to a specific account. Accepts both human-readable names (e.g., "Checking") or UUIDs. If omitted, analyzes spending across all on-budget accounts. Use get-accounts tool to find available account IDs.'
+    ),
+  includeIncome: z
+    .boolean()
+    .optional()
+    .describe(
+      'Whether to include income categories in the breakdown. Default is false (expenses only). Set to true to see both income and expense categories grouped separately. Useful for analyzing both sides of your budget.'
+    ),
 });
 
 export const MonthlySummaryArgsSchema = z.object({
-  months: z.number().optional().default(3),
-  accountId: z.string().optional(),
+  months: z
+    .number()
+    .optional()
+    .default(3)
+    .describe(
+      'Number of months to include in the summary, counting backwards from today (e.g., 3 = last 3 months, 12 = last year). Default is 3 months. Common values: 1 (current month), 3 (quarterly), 6 (semi-annual), 12 (annual).'
+    ),
+  accountId: z
+    .string()
+    .optional()
+    .describe(
+      'Account name or ID to filter the summary to a specific account. Accepts both human-readable names (e.g., "Checking") or UUIDs. If omitted, includes all accounts in the summary. Use get-accounts tool to find available account IDs.'
+    ),
 });
 
 export const BalanceHistoryArgsSchema = z.object({
-  accountId: z.string(),
-  includeOffBudget: z.boolean().optional().default(false),
-  months: z.number().optional().default(3),
+  accountId: z
+    .string()
+    .describe(
+      'Account name or ID to retrieve balance history for. Use get-accounts tool to find available account IDs. Accepts both human-readable names (e.g., "Checking") or UUIDs.'
+    ),
+  includeOffBudget: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'Whether to include off-budget accounts in balance calculations. Default is false (only on-budget accounts). Set to true to include accounts marked as off-budget (e.g., investment accounts, loans).'
+    ),
+  months: z
+    .number()
+    .optional()
+    .default(3)
+    .describe(
+      'Number of months of balance history to retrieve, counting backwards from today (e.g., 3 = last 3 months, 12 = last year). Default is 3 months. Common values: 3 (quarterly), 6 (semi-annual), 12 (annual).'
+    ),
 });
 
 export const FinancialInsightsArgsSchema = z.object({

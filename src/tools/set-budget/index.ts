@@ -33,7 +33,18 @@ export const schema = {
     '- Amounts are in cents (multiply dollars by 100)\n' +
     '- Month format must be YYYY-MM (e.g., "2024-01", not "01/2024" or "January 2024")\n' +
     '- Category names are case-sensitive but flexible (partial matches work)\n' +
-    '- You can set amount, carryover, or both in a single call',
+    '- You can set amount, carryover, or both in a single call\n\n' +
+    'TYPICAL WORKFLOW:\n' +
+    '1. Use get-grouped-categories to find category names or IDs\n' +
+    '2. Use set-budget to set budget amounts for categories\n' +
+    '3. Use spending-by-category to track actual spending vs budget\n' +
+    '4. Use monthly-summary to see overall budget performance\n\n' +
+    'SEE ALSO:\n' +
+    '- get-grouped-categories: Find category IDs and names before setting budgets\n' +
+    '- spending-by-category: Compare actual spending to budgeted amounts\n' +
+    '- monthly-summary: View overall financial performance including budgeted categories\n' +
+    '- hold-budget-for-next-month: Hold entire budget for next month\n' +
+    '- reset-budget-hold: Reset budget hold for a category',
   inputSchema: {
     type: 'object',
     properties: {

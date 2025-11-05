@@ -48,7 +48,19 @@ export const schema = {
     '- Text filters (categoryName, payeeName) support partial matching for flexibility\n' +
     '- If no date range is specified, defaults to last 30 days\n' +
     '- Use get-accounts first if you need to find the correct account ID\n' +
-    '- Filters are applied cumulatively (AND logic) - all specified filters must match',
+    '- Filters are applied cumulatively (AND logic) - all specified filters must match\n\n' +
+    'TYPICAL WORKFLOW:\n' +
+    '1. Use get-accounts to find the account ID or name\n' +
+    '2. Use get-transactions to retrieve transactions with desired filters\n' +
+    '3. Use manage-transaction to update or delete specific transactions if needed\n' +
+    '4. Use spending-by-category or monthly-summary for deeper analysis\n\n' +
+    'SEE ALSO:\n' +
+    '- get-accounts: Find account IDs before querying transactions\n' +
+    '- manage-transaction: Create, update, or delete transactions found by this tool\n' +
+    '- spending-by-category: Analyze spending patterns from transactions\n' +
+    '- monthly-summary: Get high-level financial summary including transaction data\n' +
+    '- get-grouped-categories: Find category names for categoryName filter\n' +
+    '- get-payees: Find payee names for payeeName filter',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 

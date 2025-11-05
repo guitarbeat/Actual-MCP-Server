@@ -119,7 +119,7 @@ describe('Tool Registry', () => {
 
       expect(manageTxTool).toBeDefined();
       expect(manageTxTool?.schema.description).toContain('delete');
-      expect(manageTxTool?.schema.description).toContain('WARNING: Delete is permanent');
+      expect(manageTxTool?.schema.description).toContain('WARNING: Cannot be undone!');
 
       // Check that the schema includes delete in the operation enum
       const inputSchema = manageTxTool?.schema.inputSchema as any;
