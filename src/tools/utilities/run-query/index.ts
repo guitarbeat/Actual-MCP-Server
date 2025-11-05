@@ -13,7 +13,8 @@ export const schema = {
     properties: {
       query: {
         type: 'string',
-        description: 'ActualQL query string to execute',
+        description:
+          'ActualQL query string to execute. ActualQL is Actual Budget\'s query language for retrieving data from the database. Example: "SELECT * FROM transactions WHERE amount > 5000" (amounts in cents).',
       },
     },
     required: ['query'],

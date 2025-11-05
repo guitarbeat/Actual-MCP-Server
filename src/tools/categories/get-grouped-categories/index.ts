@@ -12,7 +12,8 @@ export const schema = {
   description: 'Retrieve a list of all category groups with their id, name, type and category list.',
   inputSchema: {
     type: 'object',
-    description: 'This tool does not accept any arguments.',
+    description:
+      'This tool does not accept any arguments. Returns all category groups with nested categories, including group IDs needed for creating new categories.',
     properties: {},
     additionalProperties: false,
   },

@@ -13,14 +13,16 @@ export const schema = {
     properties: {
       targetPayeeId: {
         type: 'string',
-        description: 'ID of the payee to merge into (target)',
+        description:
+          'ID of the payee to merge into (target). This payee will remain and inherit all transactions from source payees. Must be a valid payee UUID.',
       },
       sourcePayeeIds: {
         type: 'array',
         items: {
           type: 'string',
         },
-        description: 'Array of payee IDs to merge from (sources)',
+        description:
+          'Array of payee IDs to merge from (sources). These payees will be deleted and their transactions reassigned to the target payee. Each must be a valid payee UUID. Use get-payees to find payee IDs.',
       },
     },
     required: ['targetPayeeId', 'sourcePayeeIds'],

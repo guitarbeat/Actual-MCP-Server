@@ -12,7 +12,8 @@ export const schema = {
   description: 'Retrieve a list of all rules. PS amount comes in cents: positive for deposit, negative for payment',
   inputSchema: {
     type: 'object',
-    description: 'This tool does not accept any arguments.',
+    description:
+      'This tool does not accept any arguments. Returns all auto-categorization rules with their conditions and actions. Note: amounts in rules are in cents (e.g., 5000 = $50.00), positive for deposits, negative for payments.',
     properties: {},
     additionalProperties: false,
   },

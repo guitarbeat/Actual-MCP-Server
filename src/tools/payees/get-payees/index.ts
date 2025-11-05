@@ -11,7 +11,8 @@ export const schema = {
   description: 'Retrieve a list of all payees with their id, name, categoryId and transferAccountId.',
   inputSchema: {
     type: 'object',
-    description: 'This tool does not accept any arguments.',
+    description:
+      'This tool does not accept any arguments. Returns all payees including their IDs, names, and associated transfer accounts. Use this to find payee IDs before creating transactions or rules.',
     properties: {},
     additionalProperties: false,
   },
