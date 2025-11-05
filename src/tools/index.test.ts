@@ -15,13 +15,11 @@ describe('Tool Registry', () => {
   });
 
   describe('Core tools', () => {
-    it('should include all 21 core tools by default', () => {
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
-
+    it('should include all 22 core tools by default', () => {
       const tools = getAvailableTools(true);
 
-      // Should have exactly 21 core tools
-      expect(tools.length).toBe(21);
+      // Should have exactly 22 core tools
+      expect(tools.length).toBe(22);
 
       // Core read tools
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
@@ -53,6 +51,9 @@ describe('Tool Registry', () => {
 
       // Payee rules (now core)
       expect(tools.some((t) => t.schema.name === 'get-payee-rules')).toBe(true);
+
+      // Query tool (now core)
+      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(true);
     });
 
     it('should not include removed tools', () => {
@@ -76,27 +77,7 @@ describe('Tool Registry', () => {
     });
   });
 
-  describe('Utility tools (optional)', () => {
-    it('should exclude utility tools when flag is disabled', () => {
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
 
-      const tools = getAvailableTools(true);
-
-      // run-query should not be present
-      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(false);
-      expect(tools.length).toBe(21); // Only core tools
-    });
-
-    it('should include utility tools when flag is enabled', () => {
-      process.env.ENABLE_UTILITY_TOOLS = 'true';
-
-      const tools = getAvailableTools(true);
-
-      // run-query should be present
-      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(true);
-      expect(tools.length).toBe(22); // Core + 1 utility tool
-    });
-  });
 
   describe('Write permission filtering', () => {
     it('should exclude write tools when write is disabled', () => {

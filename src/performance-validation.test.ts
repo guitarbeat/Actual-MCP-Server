@@ -15,44 +15,15 @@ import { getInitializationStats, resetInitializationStats } from './actual-api.j
 
 describe('Performance Validation', () => {
   describe('Context Window Token Reduction', () => {
-    it('should have reduced tool count from 37 to 20 core tools', () => {
-      // Disable all optional features to get core tool count
-      const originalEnv = { ...process.env };
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
-
+    it('should have 22 core tools (no optional tools)', () => {
       const coreTools = getAvailableTools(true);
 
-      // Restore environment
-      process.env = originalEnv;
-
-      // Core tools should be 21 after optimization
-      expect(coreTools.length).toBe(21);
-    });
-
-    it('should have 22 tools when utility tools are enabled', () => {
-      const originalEnv = { ...process.env };
-      process.env.ENABLE_UTILITY_TOOLS = 'true';
-
-      const allTools = getAvailableTools(true);
-
-      process.env = originalEnv;
-
-      // Should have 22 tools (21 core + 1 utility)
-      expect(allTools.length).toBe(22);
+      // All 22 tools are core now (no optional tools)
+      expect(coreTools.length).toBe(22);
     });
 
     it('should calculate token savings from original 37 tools', () => {
-      const originalEnv = { ...process.env };
-
-      // Get core tool count
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
       const coreTools = getAvailableTools(true);
-
-      // Get all tools count
-      process.env.ENABLE_UTILITY_TOOLS = 'true';
-      const allTools = getAvailableTools(true);
-
-      process.env = originalEnv;
 
       // Calculate token savings from original 37 tools
       const TOKENS_PER_TOOL = 150; // Estimated average tokens per tool schema
@@ -64,8 +35,7 @@ describe('Performance Validation', () => {
 
       console.log(`\n📊 Context Window Optimization:`);
       console.log(`   Original tools: ${originalToolCount}`);
-      console.log(`   Current core tools: ${coreTools.length}`);
-      console.log(`   Tools with utility: ${allTools.length}`);
+      console.log(`   Current tools: ${coreTools.length}`);
       console.log(`   Tools removed: ${toolsRemoved}`);
       console.log(`   Estimated tokens saved: ${tokensSaved}`);
       console.log(`   Percentage reduction: ${percentageReduction.toFixed(1)}%`);
@@ -456,8 +426,7 @@ describe('Performance Validation', () => {
       console.log(`${'='.repeat(60)}\n`);
 
       // Final assertions
-      expect(coreTools.length).toBe(21);
-      expect(allTools.length).toBe(22);
+      expect(coreTools.length).toBe(22);
       
       // Calculate actual reduction from original 37 tools
       const originalToolCount = 37;
