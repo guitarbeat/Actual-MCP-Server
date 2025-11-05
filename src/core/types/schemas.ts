@@ -149,7 +149,12 @@ export const GetGroupedCategoriesArgsSchema = z.object({}).strict();
 // Account Tool Schemas
 // ----------------------------
 
-export const GetAccountsArgsSchema = z.object({});
+export const GetAccountsArgsSchema = z
+  .object({
+    accountId: z.string().optional(),
+    includeClosed: z.boolean().optional(),
+  })
+  .strict();
 
 // ----------------------------
 // Schedule Tool Schemas

@@ -1,21 +1,26 @@
 /**
  * Input parser for get-accounts tool
- * This tool has no input arguments, but we include this for consistency
+ * Handles optional filtering parameters
  */
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+import type { GetAccountsArgs } from '../../core/types/index.js';
+
 export interface ParsedGetAccountsInput {
-  // No input arguments for this tool
+  accountId?: string;
+  includeClosed: boolean;
 }
 
 export class GetAccountsInputParser {
   /**
    * Parse and validate get accounts arguments
-   * This tool has no arguments, so this is a no-op for consistency
    *
-   * @returns Empty parsed input
+   * @param args - Raw input arguments
+   * @returns Parsed input with defaults applied
    */
-  parse(): ParsedGetAccountsInput {
-    return {};
+  parse(args: GetAccountsArgs = {}): ParsedGetAccountsInput {
+    return {
+      accountId: args.accountId,
+      includeClosed: args.includeClosed ?? false,
+    };
   }
 }

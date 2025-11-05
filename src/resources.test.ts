@@ -5,14 +5,13 @@ import { ListResourcesRequestSchema, ListResourceTemplatesRequestSchema } from '
 
 vi.mock('./actual-api.js', () => ({
   initActualApi: vi.fn(),
-  shutdownActualApi: vi.fn(),
 }));
 
 vi.mock('./core/data/fetch-accounts.js', () => ({
   fetchAllAccounts: vi.fn(),
 }));
 
-const { initActualApi, shutdownActualApi } = await import('./actual-api.js');
+const { initActualApi } = await import('./actual-api.js');
 const { fetchAllAccounts } = await import('./core/data/fetch-accounts.js');
 
 type RequestHandler = (request: unknown, extra?: unknown) => Promise<unknown>;
@@ -72,7 +71,6 @@ describe('setupResources', () => {
 
     expect(initActualApi).toHaveBeenCalledTimes(1);
     expect(fetchAllAccounts).toHaveBeenCalledTimes(1);
-    expect(shutdownActualApi).toHaveBeenCalledTimes(1);
 
     expect(result.resources.length).toBe(2);
     expect(result.resources[0].uri).toBe('actual://accounts');

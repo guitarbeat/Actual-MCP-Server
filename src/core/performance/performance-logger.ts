@@ -111,6 +111,45 @@ export function logPerformanceSummary(): void {
 }
 
 /**
+ * Log initialization performance statistics.
+ *
+ * @param stats - Initialization statistics from actual-api
+ */
+export function logInitializationStats(stats: {
+  initializationTime: number | null;
+  skipCount: number;
+  timeSaved: number;
+}): void {
+  const config = getConfig();
+
+  if (!config.enabled) {
+    return;
+  }
+
+  console.error('[PERF] ───────────────────────────────────────────────────────');
+  console.error('[PERF] Persistent Connection Benefits');
+  console.error('[PERF] ───────────────────────────────────────────────────────');
+
+  if (stats.initializationTime !== null) {
+    console.error(`[PERF] Initial connection time: ${stats.initializationTime}ms`);
+  }
+
+  if (stats.skipCount > 0) {
+    console.error(`[PERF] Initialization skipped: ${stats.skipCount} times`);
+    console.error(`[PERF] Total time saved: ~${stats.timeSaved}ms (~${(stats.timeSaved / 1000).toFixed(2)}s)`);
+
+    if (stats.initializationTime) {
+      const avgSavingsPerSkip = stats.timeSaved / stats.skipCount;
+      console.error(`[PERF] Average savings per skip: ~${avgSavingsPerSkip.toFixed(0)}ms`);
+    }
+  } else {
+    console.error('[PERF] No initialization skips recorded (single request or first run)');
+  }
+
+  console.error('[PERF] ───────────────────────────────────────────────────────');
+}
+
+/**
  * Start periodic cache statistics logging.
  *
  * @returns Interval ID for stopping the periodic logging

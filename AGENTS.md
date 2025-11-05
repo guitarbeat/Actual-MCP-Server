@@ -1,6 +1,7 @@
 ### 🔄 Project Awareness & Context
 
 - **Follow the existing TypeScript project structure** and maintain consistency with established patterns.
+When I ask you to write code, I only want you to write the code. Do not create any documentation, readmes, or tests unless I explicitly ask you to
 
 ### 🧱 Code Structure & Modularity
 
