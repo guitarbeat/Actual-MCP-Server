@@ -3,8 +3,8 @@
 // ----------------------------
 
 import { deleteCategory } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import { deleteCategoryArgsSchema, type DeleteCategoryArgs } from './types.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
+import { DeleteCategoryArgsSchema, type DeleteCategoryArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'delete-category',
@@ -25,7 +25,7 @@ export async function handler(
   args: DeleteCategoryArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = deleteCategoryArgsSchema.parse(args);
+    const parsedArgs = DeleteCategoryArgsSchema.parse(args);
 
     await deleteCategory(parsedArgs.id);
 

@@ -2,7 +2,7 @@
 // GET SERVER VERSION TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { getServerVersion } from '../../../actual-api.js';
 
 export const schema = {

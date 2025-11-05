@@ -2,10 +2,10 @@
 // GET GROUPED CATEGORY TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { fetchAllCategoryGroups } from '../../../core/data/fetch-categories.js';
 import type { CategoryGroup } from '../../../core/types/domain.js';
-import { getGroupedCategoriesArgsSchema, type GetGroupedCategoriesArgs } from './types.js';
+import { GetGroupedCategoriesArgsSchema, type GetGroupedCategoriesArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'get-grouped-categories',
@@ -22,7 +22,7 @@ export async function handler(
   args: GetGroupedCategoriesArgs | undefined = undefined
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    getGroupedCategoriesArgsSchema.parse(args ?? {});
+    GetGroupedCategoriesArgsSchema.parse(args ?? {});
 
     const categoryGroups: CategoryGroup[] = await fetchAllCategoryGroups();
 

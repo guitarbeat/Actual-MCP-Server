@@ -9,7 +9,7 @@ import {
   createCategory,
   importTransactions,
 } from '../../actual-api.js';
-import type { CreateTransactionInput, EntityCreationResult } from './types.js';
+import type { CreateTransactionInput, EntityCreationResult } from '../../core/types/index.js';
 
 export class CreateTransactionDataFetcher {
   /**
@@ -56,9 +56,7 @@ export class CreateTransactionDataFetcher {
       }
 
       if (categoryGroups.length === 0) {
-        warnings.push(
-          'No category groups are available from Actual; the transaction will remain uncategorized.'
-        );
+        warnings.push('No category groups are available from Actual; the transaction will remain uncategorized.');
         return { created: false, warnings };
       }
 
@@ -141,10 +139,11 @@ export class CreateTransactionDataFetcher {
     const { payeeId, created: createdPayee } = await this.ensurePayeeExists(input.payee);
 
     // Ensure category exists
-    const { categoryId, created: createdCategory, warnings: categoryWarnings } = await this.ensureCategoryExists(
-      input.category,
-      input.categoryGroup
-    );
+    const {
+      categoryId,
+      created: createdCategory,
+      warnings: categoryWarnings,
+    } = await this.ensureCategoryExists(input.category, input.categoryGroup);
 
     const warnings = [...categoryWarnings];
 

@@ -2,7 +2,7 @@
 // CREATE ACCOUNT TOOL
 // ----------------------------
 
-import { successWithJson, error, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, error, errorFromCatch } from '../../../core/response/index.js';
 import { createAccount } from '../../../actual-api.js';
 
 export const schema = {
@@ -43,7 +43,7 @@ export async function handler(
     if (!args.name || typeof args.name !== 'string') {
       return error(
         'name is required and must be a string',
-        'Provide the desired account name as plain text, for example "Travel Savings".',
+        'Provide the desired account name as plain text, for example "Travel Savings".'
       );
     }
 
@@ -67,8 +67,7 @@ export async function handler(
   } catch (err) {
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to create the account in Actual.',
-      suggestion:
-        'Ensure the account name is unique and that the Actual Budget server is online before retrying.',
+      suggestion: 'Ensure the account name is unique and that the Actual Budget server is online before retrying.',
     });
   }
 }

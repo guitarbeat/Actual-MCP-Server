@@ -4,20 +4,9 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi, shutdownActualApi } from '../actual-api.js';
-import {
-  GetTransactionsArgs,
-  SpendingByCategoryArgs,
-  MonthlySummaryArgs,
-  BalanceHistoryArgs,
-  CreateTransactionArgs,
-} from '../types.js';
-import { handler as getTransactionsHandler } from './get-transactions/index.js';
-import { handler as spendingByCategoryHandler } from './spending-by-category/index.js';
-import { handler as monthlySummaryHandler } from './monthly-summary/index.js';
-import { handler as balanceHistoryHandler } from './balance-history/index.js';
-import { handler as createTransactionHandler } from './create-transaction/index.js';
-import { error, errorFromCatch } from '../utils/response.js';
-import { handler as getAccountsHandler } from './get-accounts/index.js';
+import { error, errorFromCatch, MCPResponse } from '../core/response/index.js';
+import { logToolExecution } from '../core/performance/performance-logger.js';
+import { metricsTracker } from '../core/performance/metrics-tracker.js';
 
 import * as balanceHistory from './balance-history/index.js';
 import * as createCategoryGroup from './categories/create-category-group/index.js';
@@ -81,71 +70,106 @@ import * as getIdByName from './utilities/get-id-by-name/index.js';
 import * as runQuery from './utilities/run-query/index.js';
 import * as getServerVersion from './utilities/get-server-version/index.js';
 
-const readTools = [
-  getTransactions,
-  spendingByCategory,
-  monthlySummary,
-  balanceHistory,
-  getAccounts,
-  getAccountBalance,
-  getGroupedCategories,
-  getPayees,
-  getPayeeRules,
-  getRules,
-  getSchedules,
-  getBudgets,
-  getBudgetMonths,
-  getBudgetMonth,
-  getIdByName,
-  runQuery,
-  getServerVersion,
+/**
+ * Tool definition interface for registry-based tool management
+ */
+export interface ToolDefinition {
+  schema: {
+    name: string;
+    description?: string;
+    inputSchema: {
+      type: string;
+      properties?: Record<string, unknown>;
+      required?: string[];
+      [key: string]: unknown;
+    };
+  };
+  handler: (args: any) => Promise<MCPResponse>;
+  requiresWrite: boolean;
+}
+
+/**
+ * Centralized tool registry with metadata
+ * All tools are registered here with their schema, handler, and permission requirements
+ */
+const toolRegistry: ToolDefinition[] = [
+  // Read-only tools
+  { schema: getTransactions.schema, handler: getTransactions.handler, requiresWrite: false },
+  { schema: spendingByCategory.schema, handler: spendingByCategory.handler, requiresWrite: false },
+  { schema: monthlySummary.schema, handler: monthlySummary.handler, requiresWrite: false },
+  { schema: balanceHistory.schema, handler: balanceHistory.handler, requiresWrite: false },
+  { schema: getAccounts.schema, handler: getAccounts.handler, requiresWrite: false },
+  { schema: getAccountBalance.schema, handler: getAccountBalance.handler, requiresWrite: false },
+  { schema: getGroupedCategories.schema, handler: getGroupedCategories.handler, requiresWrite: false },
+  { schema: getPayees.schema, handler: getPayees.handler, requiresWrite: false },
+  { schema: getPayeeRules.schema, handler: getPayeeRules.handler, requiresWrite: false },
+  { schema: getRules.schema, handler: getRules.handler, requiresWrite: false },
+  { schema: getSchedules.schema, handler: getSchedules.handler, requiresWrite: false },
+  { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false },
+  { schema: getBudgetMonths.schema, handler: getBudgetMonths.handler, requiresWrite: false },
+  { schema: getBudgetMonth.schema, handler: getBudgetMonth.handler, requiresWrite: false },
+  { schema: getIdByName.schema, handler: getIdByName.handler, requiresWrite: false },
+  { schema: runQuery.schema, handler: runQuery.handler, requiresWrite: false },
+  { schema: getServerVersion.schema, handler: getServerVersion.handler, requiresWrite: false },
+
+  // Write tools
+  { schema: createCategory.schema, handler: createCategory.handler, requiresWrite: true },
+  { schema: updateCategory.schema, handler: updateCategory.handler, requiresWrite: true },
+  { schema: deleteCategory.schema, handler: deleteCategory.handler, requiresWrite: true },
+  { schema: createCategoryGroup.schema, handler: createCategoryGroup.handler, requiresWrite: true },
+  { schema: updateCategoryGroup.schema, handler: updateCategoryGroup.handler, requiresWrite: true },
+  { schema: deleteCategoryGroup.schema, handler: deleteCategoryGroup.handler, requiresWrite: true },
+  { schema: createPayee.schema, handler: createPayee.handler, requiresWrite: true },
+  { schema: updatePayee.schema, handler: updatePayee.handler, requiresWrite: true },
+  { schema: deletePayee.schema, handler: deletePayee.handler, requiresWrite: true },
+  { schema: mergePayees.schema, handler: mergePayees.handler, requiresWrite: true },
+  { schema: createRule.schema, handler: createRule.handler, requiresWrite: true },
+  { schema: updateRule.schema, handler: updateRule.handler, requiresWrite: true },
+  { schema: deleteRule.schema, handler: deleteRule.handler, requiresWrite: true },
+  { schema: updateTransaction.schema, handler: updateTransaction.handler, requiresWrite: true },
+  { schema: createTransaction.schema, handler: createTransaction.handler, requiresWrite: true },
+  { schema: createAccount.schema, handler: createAccount.handler, requiresWrite: true },
+  { schema: updateAccount.schema, handler: updateAccount.handler, requiresWrite: true },
+  { schema: closeAccount.schema, handler: closeAccount.handler, requiresWrite: true },
+  { schema: reopenAccount.schema, handler: reopenAccount.handler, requiresWrite: true },
+  { schema: deleteAccount.schema, handler: deleteAccount.handler, requiresWrite: true },
+  { schema: setBudgetAmount.schema, handler: setBudgetAmount.handler, requiresWrite: true },
+  { schema: setBudgetCarryover.schema, handler: setBudgetCarryover.handler, requiresWrite: true },
+  { schema: holdBudgetForNextMonth.schema, handler: holdBudgetForNextMonth.handler, requiresWrite: true },
+  { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true },
+  { schema: createSchedule.schema, handler: createSchedule.handler, requiresWrite: true },
+  { schema: updateSchedule.schema, handler: updateSchedule.handler, requiresWrite: true },
+  { schema: deleteSchedule.schema, handler: deleteSchedule.handler, requiresWrite: true },
+  { schema: loadBudget.schema, handler: loadBudget.handler, requiresWrite: true },
+  { schema: downloadBudget.schema, handler: downloadBudget.handler, requiresWrite: true },
+  { schema: sync.schema, handler: sync.handler, requiresWrite: true },
+  { schema: runBankSync.schema, handler: runBankSync.handler, requiresWrite: true },
+  { schema: runImport.schema, handler: runImport.handler, requiresWrite: true },
 ];
 
-const writeTools = [
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  createCategoryGroup,
-  updateCategoryGroup,
-  deleteCategoryGroup,
-  createPayee,
-  updatePayee,
-  deletePayee,
-  mergePayees,
-  createRule,
-  updateRule,
-  deleteRule,
-  updateTransaction,
-  createTransaction,
-  createAccount,
-  updateAccount,
-  closeAccount,
-  reopenAccount,
-  deleteAccount,
-  setBudgetAmount,
-  setBudgetCarryover,
-  holdBudgetForNextMonth,
-  resetBudgetHold,
-  createSchedule,
-  updateSchedule,
-  deleteSchedule,
-  loadBudget,
-  downloadBudget,
-  sync,
-  runBankSync,
-  runImport,
-];
+/**
+ * Get available tools based on write permission
+ * @param enableWrite - Whether write operations are enabled
+ * @returns Array of tool definitions available for the current permission level
+ */
+function getAvailableTools(enableWrite: boolean): ToolDefinition[] {
+  return enableWrite ? toolRegistry : toolRegistry.filter((tool) => !tool.requiresWrite);
+}
 
+/**
+ * Setup MCP tool handlers on the server
+ * @param server - The MCP server instance
+ * @param enableWrite - Whether write operations are enabled
+ */
 export const setupTools = (server: Server, enableWrite: boolean): void => {
-  // Selecting available tools based on permissions
-  const allTools = enableWrite ? [...readTools, ...writeTools] : readTools;
+  const availableTools = getAvailableTools(enableWrite);
 
   /**
    * Handler for listing available tools
    */
   server.setRequestHandler(ListToolsRequestSchema, () => {
     return {
-      tools: allTools.map((tool) => tool.schema),
+      tools: availableTools.map((tool) => tool.schema),
     };
   });
 
@@ -153,57 +177,51 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
    * Handler for calling tools
    */
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const startTime = Date.now();
+    let success = true;
+
     try {
       await initActualApi();
       const { name, arguments: args } = request.params;
 
-      const tool = allTools.find((t) => (t as any).schema.name === name);
+      // Find tool in registry
+      const tool = toolRegistry.find((t) => t.schema.name === name);
+
       if (!tool) {
+        success = false;
         return error(
-          `Unknown tool ${name}`,
-          'Call list-tools to inspect supported tool names before retrying this request.',
+          `Unknown tool '${name}'`,
+          'Call list-tools to inspect supported tool names before retrying this request.'
         );
       }
-      // Execute the requested tool
-      switch (name) {
-        case 'get-transactions': {
-          // TODO: Validate against schema
-          return getTransactionsHandler(args as unknown as GetTransactionsArgs);
-        }
 
-        case 'spending-by-category': {
-          return spendingByCategoryHandler(args as unknown as SpendingByCategoryArgs);
-        }
-
-        case 'monthly-summary': {
-          return monthlySummaryHandler(args as unknown as MonthlySummaryArgs);
-        }
-
-        case 'balance-history': {
-          return balanceHistoryHandler(args as unknown as BalanceHistoryArgs);
-        }
-
-        case 'get-accounts': {
-          return getAccountsHandler();
-        }
-
-        case 'create-transaction': {
-          return createTransactionHandler(args as unknown as CreateTransactionArgs);
-        }
-
-        default:
-          // For all other tools, use the handler from the tool module
-          // @ts-expect-error: Argument type is handled by schema validation
-          return tool.handler(args);
+      // Check write permission
+      if (tool.requiresWrite && !enableWrite) {
+        success = false;
+        return error(
+          `Tool '${name}' requires write permission`,
+          'Start the server with the --enable-write flag to enable write operations.'
+        );
       }
+
+      // Execute tool handler
+      const result = await tool.handler(args);
+      return result;
     } catch (err) {
-      console.error(`Error executing tool ${request.params.name}:`, err);
+      success = false;
       return errorFromCatch(err, {
         fallbackMessage: `Failed to execute tool ${request.params.name}`,
         suggestion:
           'Check the Actual Budget server logs and ensure the provided arguments match the tool schema before retrying.',
+        tool: request.params.name,
+        operation: 'tool_execution',
+        args: request.params.arguments,
       });
     } finally {
+      const duration = Date.now() - startTime;
+      metricsTracker.record(request.params.name, duration, success);
+      logToolExecution(request.params.name, duration, success);
+
       await shutdownActualApi();
     }
   });

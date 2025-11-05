@@ -1,4 +1,4 @@
-import type { MonthData } from '../../types.js';
+import type { MonthData } from '../../core/types/index.js';
 
 export class MonthlySummaryCalculator {
   calculateAverages(sortedMonths: MonthData[]): {

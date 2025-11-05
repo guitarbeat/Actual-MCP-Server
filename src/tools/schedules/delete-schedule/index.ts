@@ -2,8 +2,8 @@
 // DELETE SCHEDULE TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import { missingStringArgument } from '../../../utils/tool-error-builders.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
+import { missingStringArgument } from '../../../core/response/index.js';
 import { deleteSchedule } from '../../../actual-api.js';
 
 export const schema = {
@@ -28,7 +28,7 @@ export async function handler(
     if (!args.scheduleId || typeof args.scheduleId !== 'string') {
       return missingStringArgument(
         'scheduleId',
-        'Use the get-schedules tool to list recurring schedules and retry with a valid scheduleId.',
+        'Use the get-schedules tool to list recurring schedules and retry with a valid scheduleId.'
       );
     }
 

@@ -1,6 +1,6 @@
 // Parses and validates input arguments for balance-history tool
 
-import { BalanceHistoryArgs } from '../../types.js';
+import type { BalanceHistoryArgs } from '../../core/types/index.js';
 
 export interface BalanceHistoryInput {
   accountId: string;

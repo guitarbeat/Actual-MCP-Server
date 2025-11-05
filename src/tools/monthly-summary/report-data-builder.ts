@@ -1,5 +1,4 @@
-import type { MonthData, Account } from '../../types.js';
-import type { MonthlySummaryReportData } from './types.js';
+import type { MonthData, Account, MonthlySummaryReportData } from '../../core/types/index.js';
 
 export class MonthlySummaryReportDataBuilder {
   build(

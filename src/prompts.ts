@@ -1,6 +1,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { GetPromptRequestSchema, ListPromptsRequestSchema, GetPromptResult } from '@modelcontextprotocol/sdk/types.js';
-import { FinancialInsightsArgs, BudgetReviewArgs } from './types.js';
+import type { FinancialInsightsArgs, BudgetReviewArgs } from './core/types/index.js';
 import { getDateRange } from './utils.js';
 
 export const promptsSchema = [

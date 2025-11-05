@@ -63,3 +63,9 @@ export interface Payee {
   name: string;
   transfer_acct?: string;
 }
+
+export interface BudgetFile {
+  id?: string;
+  cloudFileId?: string;
+  name: string;
+}

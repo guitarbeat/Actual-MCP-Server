@@ -2,7 +2,7 @@
 // CREATE RULE TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { createRule } from '../../../actual-api.js';
 import { RuleInputSchema } from '../input-schema.js';
 import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';

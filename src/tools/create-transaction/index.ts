@@ -4,8 +4,9 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { CreateTransactionInputParser } from './input-parser.js';
 import { CreateTransactionDataFetcher } from './data-fetcher.js';
 import { CreateTransactionReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../utils/response.js';
-import { CreateTransactionArgsSchema, type CreateTransactionArgs, ToolInput } from '../../types.js';
+import { success, errorFromCatch } from '../../core/response/index.js';
+import { CreateTransactionArgsSchema, type CreateTransactionArgs } from '../../core/types/index.js';
+import type { ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const schema = {
@@ -28,6 +29,10 @@ export async function handler(args: CreateTransactionArgs): Promise<CallToolResu
 
     return success(markdown);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      tool: 'create-transaction',
+      operation: 'create_new_transaction',
+      args,
+    });
   }
 }

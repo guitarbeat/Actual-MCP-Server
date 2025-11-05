@@ -2,9 +2,9 @@
 // CREATE CATEGORY GROUP TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { createCategoryGroup } from '../../../actual-api.js';
-import { createCategoryGroupArgsSchema, type CreateCategoryGroupArgs } from './types.js';
+import { CreateCategoryGroupArgsSchema, type CreateCategoryGroupArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'create-category-group',
@@ -25,7 +25,7 @@ export async function handler(
   args: CreateCategoryGroupArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = createCategoryGroupArgsSchema.parse(args);
+    const parsedArgs = CreateCategoryGroupArgsSchema.parse(args);
 
     const id: string = await createCategoryGroup({
       name: parsedArgs.name,

@@ -2,7 +2,7 @@ import api from '@actual-app/api';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { BudgetFile } from './types.js';
+import type { BudgetFile } from './core/types/index.js';
 import {
   APIAccountEntity,
   APICategoryEntity,
@@ -10,6 +10,7 @@ import {
   APIPayeeEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
+import { cacheService } from './core/cache/cache-service.js';
 
 type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
@@ -73,14 +74,10 @@ export async function initActualApi(): Promise<void> {
     // Use specified budget or the first one
     const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
     const budgetPassword: string | undefined = process.env.ACTUAL_BUDGET_PASSWORD;
-    try {
-      if (budgetPassword) {
-        await api.downloadBudget(budgetId, { password: budgetPassword });
-      } else {
-        await api.downloadBudget(budgetId);
-      }
-    } catch (budgetError) {
-      throw budgetError;
+    if (budgetPassword) {
+      await api.downloadBudget(budgetId, { password: budgetPassword });
+    } else {
+      await api.downloadBudget(budgetId);
     }
 
     initialized = true;
@@ -171,7 +168,9 @@ export async function getAccountBalance(accountId: string, date?: string): Promi
  */
 export async function createPayee(args: Record<string, unknown>): Promise<string> {
   await initActualApi();
-  return api.createPayee(args);
+  const result = await api.createPayee(args);
+  cacheService.invalidate('payees:all');
+  return result;
 }
 
 /**
@@ -179,7 +178,9 @@ export async function createPayee(args: Record<string, unknown>): Promise<string
  */
 export async function updatePayee(id: string, args: Record<string, unknown>): Promise<unknown> {
   await initActualApi();
-  return api.updatePayee(id, args);
+  const result = await api.updatePayee(id, args);
+  cacheService.invalidate('payees:all');
+  return result;
 }
 
 /**
@@ -187,7 +188,9 @@ export async function updatePayee(id: string, args: Record<string, unknown>): Pr
  */
 export async function deletePayee(id: string): Promise<unknown> {
   await initActualApi();
-  return api.deletePayee(id);
+  const result = await api.deletePayee(id);
+  cacheService.invalidate('payees:all');
+  return result;
 }
 
 /**
@@ -219,7 +222,9 @@ export async function deleteRule(id: string): Promise<boolean> {
  */
 export async function createCategory(args: Record<string, unknown>): Promise<string> {
   await initActualApi();
-  return api.createCategory(args);
+  const result = await api.createCategory(args);
+  cacheService.invalidate('categories:all');
+  return result;
 }
 
 /**
@@ -227,7 +232,9 @@ export async function createCategory(args: Record<string, unknown>): Promise<str
  */
 export async function updateCategory(id: string, args: Record<string, unknown>): Promise<unknown> {
   await initActualApi();
-  return api.updateCategory(id, args);
+  const result = await api.updateCategory(id, args);
+  cacheService.invalidate('categories:all');
+  return result;
 }
 
 /**
@@ -235,7 +242,9 @@ export async function updateCategory(id: string, args: Record<string, unknown>):
  */
 export async function deleteCategory(id: string): Promise<{ error?: string }> {
   await initActualApi();
-  return api.deleteCategory(id);
+  const result = await api.deleteCategory(id);
+  cacheService.invalidate('categories:all');
+  return result;
 }
 
 /**
@@ -243,7 +252,9 @@ export async function deleteCategory(id: string): Promise<{ error?: string }> {
  */
 export async function createCategoryGroup(args: Record<string, unknown>): Promise<string> {
   await initActualApi();
-  return api.createCategoryGroup(args);
+  const result = await api.createCategoryGroup(args);
+  cacheService.invalidate('categoryGroups:all');
+  return result;
 }
 
 /**
@@ -251,7 +262,9 @@ export async function createCategoryGroup(args: Record<string, unknown>): Promis
  */
 export async function updateCategoryGroup(id: string, args: Record<string, unknown>): Promise<unknown> {
   await initActualApi();
-  return api.updateCategoryGroup(id, args);
+  const result = await api.updateCategoryGroup(id, args);
+  cacheService.invalidate('categoryGroups:all');
+  return result;
 }
 
 /**
@@ -259,7 +272,9 @@ export async function updateCategoryGroup(id: string, args: Record<string, unkno
  */
 export async function deleteCategoryGroup(id: string): Promise<unknown> {
   await initActualApi();
-  return api.deleteCategoryGroup(id);
+  const result = await api.deleteCategoryGroup(id);
+  cacheService.invalidate('categoryGroups:all');
+  return result;
 }
 
 /**
@@ -322,7 +337,9 @@ export async function importTransactions(
  */
 export async function createAccount(args: Record<string, unknown>): Promise<string> {
   await initActualApi();
-  return api.createAccount(args);
+  const result = await api.createAccount(args);
+  cacheService.invalidate('accounts:all');
+  return result;
 }
 
 /**
@@ -330,7 +347,9 @@ export async function createAccount(args: Record<string, unknown>): Promise<stri
  */
 export async function updateAccount(id: string, args: Record<string, unknown>): Promise<unknown> {
   await initActualApi();
-  return api.updateAccount(id, args);
+  const result = await api.updateAccount(id, args);
+  cacheService.invalidate('accounts:all');
+  return result;
 }
 
 /**
@@ -338,7 +357,9 @@ export async function updateAccount(id: string, args: Record<string, unknown>): 
  */
 export async function closeAccount(id: string): Promise<unknown> {
   await initActualApi();
-  return api.closeAccount(id);
+  const result = await api.closeAccount(id);
+  cacheService.invalidate('accounts:all');
+  return result;
 }
 
 /**
@@ -346,7 +367,9 @@ export async function closeAccount(id: string): Promise<unknown> {
  */
 export async function reopenAccount(id: string): Promise<unknown> {
   await initActualApi();
-  return api.reopenAccount(id);
+  const result = await api.reopenAccount(id);
+  cacheService.invalidate('accounts:all');
+  return result;
 }
 
 /**
@@ -354,7 +377,9 @@ export async function reopenAccount(id: string): Promise<unknown> {
  */
 export async function deleteAccount(id: string): Promise<unknown> {
   await initActualApi();
-  return api.deleteAccount(id);
+  const result = await api.deleteAccount(id);
+  cacheService.invalidate('accounts:all');
+  return result;
 }
 
 /**
@@ -454,7 +479,9 @@ export async function getSchedules(): Promise<unknown[]> {
  */
 export async function mergePayees(targetId: string, sourceIds: string[]): Promise<unknown> {
   await initActualApi();
-  return api.mergePayees(targetId, sourceIds);
+  const result = await api.mergePayees(targetId, sourceIds);
+  cacheService.invalidate('payees:all');
+  return result;
 }
 
 /**

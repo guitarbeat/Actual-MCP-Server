@@ -1,5 +1,5 @@
 // Calculates balance history per month for balance-history tool
-import type { Account, Transaction } from '../../types.js';
+import type { Account, Transaction } from '../../core/types/index.js';
 
 export interface MonthBalance {
   account?: string;

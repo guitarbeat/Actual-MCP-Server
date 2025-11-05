@@ -1,9 +1,2 @@
-import { z } from 'zod';
-
-export const resetBudgetHoldArgsSchema = z
-  .object({
-    month: z.string(),
-  })
-  .strict();
-
-export type ResetBudgetHoldArgs = z.infer<typeof resetBudgetHoldArgsSchema>;
+// Re-export from core for backward compatibility
+export type { ResetBudgetHoldArgs } from '../../../core/types/index.js';

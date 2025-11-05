@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handler } from './index.js';
-import type { CategoryGroup } from '../../../core/types/domain.js';
 
 const mockData = vi.hoisted(() => ({
   fetchAllCategoryGroups: vi.fn(),

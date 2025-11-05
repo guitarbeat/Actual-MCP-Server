@@ -2,7 +2,7 @@
 // RUN BANK SYNC TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { runBankSync } from '../../../actual-api.js';
 
 export const schema = {

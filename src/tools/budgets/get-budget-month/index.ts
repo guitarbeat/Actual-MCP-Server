@@ -2,7 +2,7 @@
 // GET BUDGET MONTH TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { getBudgetMonth } from '../../../actual-api.js';
 
 export const schema = {

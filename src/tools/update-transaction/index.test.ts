@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import api from '@actual-app/api';
+import { TextContent } from '@modelcontextprotocol/sdk/types.js';
 import { handler } from './index.js';
 import { initActualApi } from '../../actual-api.js';
 
@@ -24,7 +25,7 @@ describe('update-transaction handler', () => {
 
   it('updates transaction with validated inputs', async () => {
     const updateTransactionMock = vi.mocked(api.updateTransaction);
-    updateTransactionMock.mockResolvedValue(undefined);
+    updateTransactionMock.mockResolvedValue([] as any);
     const initMock = vi.mocked(initActualApi);
     initMock.mockResolvedValue(undefined);
 
@@ -51,7 +52,10 @@ describe('update-transaction handler', () => {
 
     expect(api.updateTransaction).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    expect(result.content?.[0]).toEqual({ type: 'text', text: 'Error: transactionId must be a valid UUID' });
+    const textContent = result.content?.[0] as TextContent;
+    const errorContent = JSON.parse(textContent.text);
+    expect(errorContent.error).toBe(true);
+    expect(errorContent.message).toContain('transactionId must be a valid UUID');
   });
 
   it('rejects invalid amount', async () => {
@@ -59,7 +63,10 @@ describe('update-transaction handler', () => {
 
     expect(api.updateTransaction).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    expect(result.content?.[0]).toEqual({ type: 'text', text: 'Error: amount must be a positive integer amount in cents' });
+    const textContent = result.content?.[0] as TextContent;
+    const errorContent = JSON.parse(textContent.text);
+    expect(errorContent.error).toBe(true);
+    expect(errorContent.message).toContain('amount must be a positive integer amount in cents');
   });
 
   it('rejects invalid optional identifiers', async () => {
@@ -70,6 +77,9 @@ describe('update-transaction handler', () => {
 
     expect(api.updateTransaction).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    expect(result.content?.[0]).toEqual({ type: 'text', text: 'Error: categoryId must be a valid UUID' });
+    const textContent = result.content?.[0] as TextContent;
+    const errorContent = JSON.parse(textContent.text);
+    expect(errorContent.error).toBe(true);
+    expect(errorContent.message).toContain('categoryId must be a valid UUID');
   });
 });

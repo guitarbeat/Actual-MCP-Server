@@ -397,6 +397,192 @@ docker run -i --rm \
 > ⚠️ Important: When using --enable-bearer, the BEARER_TOKEN environment variable must be set.  
 > 🔒 This is highly recommended if you're exposing your server via a public URL.
 
+## Performance Optimization
+
+The Actual Budget MCP Server includes built-in performance optimizations to ensure fast response times, especially when working with large datasets and multiple accounts.
+
+### Key Features
+
+- **Intelligent Caching** - Frequently accessed data (accounts, categories, payees) is cached in memory with automatic invalidation
+- **Parallel Data Fetching** - Transaction queries across multiple accounts execute concurrently
+- **Optimized Enrichment** - Lookup tables are reused across transactions to minimize API calls
+- **Performance Monitoring** - Built-in metrics tracking to identify bottlenecks
+
+### Configuration
+
+Performance features can be configured via environment variables:
+
+```bash
+# Cache Configuration
+CACHE_ENABLED=true                      # Enable/disable caching (default: true)
+CACHE_TTL_SECONDS=300                   # Cache TTL in seconds (default: 300 = 5 minutes)
+CACHE_MAX_ENTRIES=1000                  # Maximum cache entries (default: 1000)
+
+# Performance Monitoring
+PERFORMANCE_LOGGING_ENABLED=true        # Enable performance logging (default: true)
+PERFORMANCE_LOG_THRESHOLD_MS=1000       # Log operations slower than this (default: 1000ms)
+PERFORMANCE_CACHE_STATS_INTERVAL_MS=300000  # Cache stats logging interval (default: 5 minutes)
+```
+
+### Cache TTL Recommendations
+
+Different data types have different update frequencies. The default TTL of 5 minutes works well for most use cases, but you can tune it based on your needs:
+
+- **Accounts** (5 minutes) - Account structure rarely changes
+- **Categories** (5 minutes) - Category structure rarely changes
+- **Category Groups** (5 minutes) - Groups rarely change
+- **Payees** (5 minutes) - Payees change occasionally
+- **Transactions** (not cached) - Transactions change frequently and are not cached
+
+### Performance Targets
+
+The optimization provides significant improvements for common operations:
+
+- **Multi-Account Queries**: 50% reduction in execution time when fetching transactions from 5+ accounts
+- **Cache Hit Rate**: >80% for accounts, categories, and payees under normal usage
+- **Transaction Enrichment**: <100ms for 1000+ transactions (after lookup tables are loaded)
+- **Memory Usage**: <50MB for cache with 1000 entries
+- **Cache Overhead**: <5ms per cache operation
+
+### Troubleshooting Performance Issues
+
+#### Cache Not Working
+
+If you suspect caching isn't working:
+
+1. Check that `CACHE_ENABLED=true` in your environment
+2. Enable performance logging with `PERFORMANCE_LOGGING_ENABLED=true`
+3. Look for cache statistics in the logs (logged every 5 minutes by default)
+4. Verify cache hit rate is >0% for repeated queries
+
+#### Slow Query Performance
+
+If queries are slower than expected:
+
+1. Check if caching is enabled (`CACHE_ENABLED=true`)
+2. Review performance logs to identify bottlenecks
+3. For multi-account queries, ensure parallel fetching is working (check logs for concurrent operations)
+4. Consider increasing `CACHE_TTL_SECONDS` if your data doesn't change frequently
+
+#### High Memory Usage
+
+If the server is using too much memory:
+
+1. Reduce `CACHE_MAX_ENTRIES` to limit cache size
+2. Reduce `CACHE_TTL_SECONDS` to expire entries more quickly
+3. Disable caching entirely with `CACHE_ENABLED=false` if memory is constrained
+
+#### Debugging Cache Behavior
+
+To debug cache-related issues:
+
+1. Enable performance logging: `PERFORMANCE_LOGGING_ENABLED=true`
+2. Set a low threshold to see all operations: `PERFORMANCE_LOG_THRESHOLD_MS=0`
+3. Watch for cache hit/miss patterns in the logs
+4. Temporarily disable cache (`CACHE_ENABLED=false`) to compare behavior
+
+#### Cache Invalidation Issues
+
+If you're seeing stale data:
+
+1. Verify that write operations (create, update, delete) are invalidating the cache
+2. Check that `CACHE_TTL_SECONDS` isn't set too high
+3. Manually clear cache by restarting the server
+4. Review logs for cache invalidation events
+
+### Disabling Performance Features
+
+For debugging or comparison purposes, you can disable performance features:
+
+```bash
+# Disable all caching
+CACHE_ENABLED=false
+
+# Disable performance logging
+PERFORMANCE_LOGGING_ENABLED=false
+```
+
+When caching is disabled, the server functions identically to the pre-optimization version, making it useful for troubleshooting or verifying that optimizations aren't causing issues.
+
+### Running Performance Benchmarks
+
+To measure the performance improvements and verify that optimization targets are met, run the benchmark script:
+
+```bash
+npm run benchmark
+```
+
+The benchmark script will:
+
+1. **Test multi-account queries** - Measures performance with and without caching
+2. **Verify cache hit rate** - Ensures cache effectiveness meets the >80% target
+3. **Test enrichment performance** - Validates that transaction enrichment is under 100ms for 1000+ transactions
+4. **Calculate improvement** - Reports the percentage improvement from optimizations
+
+Example output:
+
+```
+🚀 Starting Performance Benchmarks
+
+Configuration:
+  - Target reduction: 50%
+  - Cache hit rate target: 80%
+  - Enrichment target: <100ms for 1000+ transactions
+  - Iterations: 3
+
+📊 Benchmark 1: Multi-account queries (cache disabled)
+  ✓ Multi-account query (no cache): 2450.32ms
+    - accounts: 5
+    - iterations: 3
+    - dateRange: 2024-08-04 to 2024-11-04
+
+📊 Benchmark 2: Multi-account queries (cache enabled)
+  ✓ Multi-account query (with cache): 1180.15ms
+    - iterations: 3
+    - dateRange: 2024-08-04 to 2024-11-04
+
+📈 Performance Improvement Analysis
+  ✓ Performance improvement: 0ms
+    - noCacheDuration: 2450.32ms
+    - withCacheDuration: 1180.15ms
+    - improvement: 51.85%
+    - target: 50%
+    - passed: YES
+
+📊 Benchmark 3: Cache hit rate
+  ✓ Cache hit rate: 0ms
+    - hitRate: 90.00%
+    - target: 80%
+    - hits: 27
+    - misses: 3
+    - passed: YES
+
+📊 Benchmark 4: Transaction enrichment
+  ✓ Transaction enrichment: 45.23ms
+    - transactionCount: 1523
+    - totalDuration: 45.23ms
+    - perTransaction: 0.030ms
+    - target: <100ms for 1000+ transactions
+    - passed: YES
+
+============================================================
+📊 BENCHMARK SUMMARY
+============================================================
+Total Tests: 4
+Passed: 4 ✓
+Failed: 0 ✗
+
+Cache Statistics:
+  Hits: 27
+  Misses: 3
+  Hit Rate: 90.00%
+
+============================================================
+✅ All benchmarks passed!
+```
+
+The benchmark requires a configured Actual Budget connection (via environment variables or local data). If any benchmark fails to meet its target, the script will exit with a non-zero status code.
+
 ## Example Queries
 
 Once connected, you can ask Claude questions like:
@@ -414,6 +600,43 @@ For development with auto-rebuild:
 ```bash
 npm run watch
 ```
+
+### Code Quality
+
+The project maintains high code quality standards with automated checks:
+
+```bash
+# Run all quality checks
+npm run quality              # Lint + format + type-check
+
+# Code duplication detection
+npm run duplication          # Quick check
+npm run duplication:report   # Full HTML report
+
+# Complexity analysis
+npm run lint                 # Includes complexity checks
+
+# Run all metrics
+npm run metrics              # Duplication + lint
+```
+
+Pre-commit hooks automatically run quality checks on staged files. See [docs/CODE_QUALITY.md](./docs/CODE_QUALITY.md) for detailed information about code quality metrics and standards.
+
+### Performance Monitoring
+
+The project includes comprehensive performance monitoring tools:
+
+```bash
+# Run optimization benchmarks
+npm run benchmark            # Cache and parallel fetching benchmarks
+
+# Run refactoring performance tests
+npm run perf:monitor         # Test all tools for performance
+npm run perf:baseline        # Save performance baseline
+npm run perf:compare         # Compare with baseline
+```
+
+Performance monitoring ensures no regressions during refactoring and tracks optimization improvements. See [docs/PERFORMANCE.md](./docs/PERFORMANCE.md) for detailed performance documentation.
 
 ### Testing the connection to Actual
 
@@ -433,10 +656,41 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ## Project Structure
 
-- `index.ts` - Main server implementation
-- `types.ts` - Type definitions for API responses and parameters
-- `prompts.ts` - Prompt templates for LLM interactions
-- `utils.ts` - Helper functions for date formatting and more
+The project follows a modular architecture with clear separation of concerns:
+
+```
+src/
+├── core/                          # Shared core functionality
+│   ├── aggregation/              # Data aggregation utilities
+│   ├── api/                      # API wrapper and cache invalidation
+│   ├── cache/                    # Caching service
+│   ├── data/                     # Data fetchers (accounts, categories, etc.)
+│   ├── formatting/               # Date and amount formatting
+│   ├── input/                    # Input validation and parsing
+│   ├── mapping/                  # Entity mappers (categories, transactions)
+│   ├── performance/              # Performance tracking and logging
+│   ├── response/                 # Response and error builders
+│   └── types/                    # Domain types and schemas
+│
+├── tools/                        # MCP tools (each follows consistent structure)
+│   ├── [tool-name]/
+│   │   ├── index.ts             # Schema + handler export
+│   │   ├── input-parser.ts      # Argument validation
+│   │   ├── data-fetcher.ts      # Data retrieval
+│   │   ├── report-generator.ts  # Response formatting
+│   │   └── types.ts             # Tool-specific types
+│   └── index.ts                 # Tool registration
+│
+├── actual-api.ts                # Actual Budget API wrapper
+├── index.ts                     # Server entry point
+├── prompts.ts                   # MCP prompts
+├── resources.ts                 # MCP resources
+└── types.ts                     # Top-level type exports
+```
+
+For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+For development guidelines and coding standards, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 

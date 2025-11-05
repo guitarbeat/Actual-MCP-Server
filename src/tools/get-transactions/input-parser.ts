@@ -1,6 +1,6 @@
 // Parses and validates input arguments for get-transactions tool
 
-import { GetTransactionsArgs } from '../../types.js';
+import type { GetTransactionsArgs } from '../../core/types/index.js';
 
 export class GetTransactionsInputParser {
   parse(args: unknown): GetTransactionsArgs {

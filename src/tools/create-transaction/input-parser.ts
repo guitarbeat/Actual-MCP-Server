@@ -1,6 +1,6 @@
 // Parses and validates input arguments for create-transaction tool
 
-import { CreateTransactionInput, CreateTransactionParseResult } from './types.js';
+import type { CreateTransactionInput, CreateTransactionParseResult } from '../../core/types/index.js';
 import { assertPositiveIntegerCents, assertUuid } from '../../utils/validators.js';
 
 export class CreateTransactionInputParser {

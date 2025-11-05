@@ -2,11 +2,12 @@
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { GetTransactionsInputParser } from './input-parser.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
-import { GetTransactionsMapper } from './transaction-mapper.js';
+import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
 import { GetTransactionsReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../utils/response.js';
+import { success, errorFromCatch } from '../../core/response/index.js';
 import { getDateRange } from '../../utils.js';
-import { GetTransactionsArgsSchema, type GetTransactionsArgs, type ToolInput } from '../../types.js';
+import { GetTransactionsArgsSchema, type GetTransactionsArgs } from '../../core/types/index.js';
+import type { ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const schema = {
@@ -44,7 +45,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     }
 
     // Map transactions for output
-    const mapped = new GetTransactionsMapper().map(filtered);
+    const mapped = new TransactionMapper().map(filtered);
 
     // Build filter description
     const filterDescription = [
@@ -65,6 +66,10 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     );
     return success(markdown);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      tool: 'get-transactions',
+      operation: 'fetch_and_filter_transactions',
+      args,
+    });
   }
 }

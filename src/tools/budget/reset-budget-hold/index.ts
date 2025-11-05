@@ -2,9 +2,9 @@
 // RESET BUDGET HOLD TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { resetBudgetHold } from '../../../actual-api.js';
-import { resetBudgetHoldArgsSchema, type ResetBudgetHoldArgs } from './types.js';
+import { ResetBudgetHoldArgsSchema, type ResetBudgetHoldArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'reset-budget-hold',
@@ -25,7 +25,7 @@ export async function handler(
   args: ResetBudgetHoldArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = resetBudgetHoldArgsSchema.parse(args);
+    const parsedArgs = ResetBudgetHoldArgsSchema.parse(args);
 
     await resetBudgetHold(parsedArgs.month);
 

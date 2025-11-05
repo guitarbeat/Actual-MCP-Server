@@ -1,5 +1,5 @@
 // Generates the markdown report for spending-by-category tool
-import type { GroupSpending } from './types.js';
+import type { GroupSpending } from '../../core/types/index.js';
 import { formatAmount } from '../../utils.js';
 
 export class SpendingByCategoryReportGenerator {

@@ -2,9 +2,9 @@
 // CREATE CATEGORY TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { createCategory } from '../../../actual-api.js';
-import { createCategoryArgsSchema, type CreateCategoryArgs } from './types.js';
+import { CreateCategoryArgsSchema, type CreateCategoryArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'create-category',
@@ -29,7 +29,7 @@ export async function handler(
   args: CreateCategoryArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = createCategoryArgsSchema.parse(args);
+    const parsedArgs = CreateCategoryArgsSchema.parse(args);
 
     const data: Record<string, unknown> = {
       name: parsedArgs.name,

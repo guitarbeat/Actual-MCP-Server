@@ -2,7 +2,7 @@
 // GET RULES TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 // import type { Rule } from '../../../types.js';
 import { fetchAllRules } from '../../../core/data/fetch-rules.js';
 import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';

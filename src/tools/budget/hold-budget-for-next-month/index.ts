@@ -2,9 +2,9 @@
 // HOLD BUDGET FOR NEXT MONTH TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { holdBudgetForNextMonth } from '../../../actual-api.js';
-import { holdBudgetForNextMonthArgsSchema, type HoldBudgetForNextMonthArgs } from './types.js';
+import { HoldBudgetForNextMonthArgsSchema, type HoldBudgetForNextMonthArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'hold-budget-for-next-month',
@@ -29,7 +29,7 @@ export async function handler(
   args: HoldBudgetForNextMonthArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = holdBudgetForNextMonthArgsSchema.parse(args);
+    const parsedArgs = HoldBudgetForNextMonthArgsSchema.parse(args);
 
     await holdBudgetForNextMonth(parsedArgs.month, parsedArgs.amount);
 

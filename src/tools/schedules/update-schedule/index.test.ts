@@ -25,12 +25,15 @@ describe('update-schedule tool', () => {
       amount: -150,
       notes: 'adjusted',
     });
-    expect(mockApi.updateSchedule).toHaveBeenCalledWith('sch_1', expect.objectContaining({
-      account: 'acc_9',
-      next_date: '2026-01-01',
-      amount: -150,
-      notes: 'adjusted',
-    }));
+    expect(mockApi.updateSchedule).toHaveBeenCalledWith(
+      'sch_1',
+      expect.objectContaining({
+        account: 'acc_9',
+        next_date: '2026-01-01',
+        amount: -150,
+        notes: 'adjusted',
+      })
+    );
     const text = (res.content?.[0] as any).text as string;
     expect(text).toContain('Successfully updated schedule sch_1');
   });
@@ -59,5 +62,3 @@ describe('update-schedule tool', () => {
     });
   });
 });
-
-

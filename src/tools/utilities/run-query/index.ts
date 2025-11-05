@@ -2,7 +2,7 @@
 // RUN QUERY TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { runQuery } from '../../../actual-api.js';
 
 export const schema = {

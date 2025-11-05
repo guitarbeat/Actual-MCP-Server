@@ -3,7 +3,7 @@
 // ----------------------------
 
 import { deletePayee } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 
 export const schema = {
   name: 'delete-payee',

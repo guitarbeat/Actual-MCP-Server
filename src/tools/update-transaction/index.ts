@@ -1,10 +1,13 @@
-import api from '@actual-app/api';
+// Orchestrator for update-transaction tool
+
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { initActualApi } from '../../actual-api.js';
-import { success, errorFromCatch } from '../../utils/response.js';
-import { assertPositiveIntegerCents, assertUuid } from '../../utils/validators.js';
-import { UpdateTransactionArgsSchema, type UpdateTransactionArgs, ToolInput } from '../../types.js';
+import { success, errorFromCatch } from '../../core/response/index.js';
+import { UpdateTransactionArgsSchema, type UpdateTransactionArgs } from '../../core/types/index.js';
+import type { ToolInput } from '../../types.js';
+import { UpdateTransactionInputParser } from './input-parser.js';
+import { UpdateTransactionDataFetcher } from './data-fetcher.js';
+import { UpdateTransactionReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'update-transaction',
@@ -14,35 +17,17 @@ export const schema = {
 
 export async function handler(args: UpdateTransactionArgs): Promise<CallToolResult> {
   try {
-    await initActualApi();
+    // Parse and validate input
+    const parser = new UpdateTransactionInputParser();
+    const input = parser.parse(args);
 
-    const { transactionId, categoryId, payeeId, notes, amount } = args;
+    // Update the transaction
+    const transactionId = await new UpdateTransactionDataFetcher().updateTransaction(input);
 
-    const validTransactionId = assertUuid(transactionId, 'transactionId');
+    // Generate formatted report
+    const message = new UpdateTransactionReportGenerator().generate(input, transactionId);
 
-    // Build update object with only provided fields
-    const updateData: Record<string, string | number | undefined> = {};
-
-    if (categoryId !== undefined) {
-      updateData.category = assertUuid(categoryId, 'categoryId');
-    }
-
-    if (payeeId !== undefined) {
-      updateData.payee = assertUuid(payeeId, 'payeeId');
-    }
-
-    if (notes !== undefined) {
-      updateData.notes = notes;
-    }
-
-    if (amount !== undefined) {
-      updateData.amount = assertPositiveIntegerCents(amount, 'amount');
-    }
-
-    // Update the transaction using the Actual API
-    await api.updateTransaction(validTransactionId, updateData);
-
-    return success(`Successfully updated transaction ${validTransactionId}`);
+    return success(message);
   } catch (error) {
     return errorFromCatch(error);
   }

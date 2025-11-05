@@ -2,7 +2,7 @@
 // GET PAYEES TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { fetchAllPayees } from '../../../core/data/fetch-payees.js';
 import type { Payee } from '../../../types.js';
 

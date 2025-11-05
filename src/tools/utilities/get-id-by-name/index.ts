@@ -2,7 +2,7 @@
 // GET ID BY NAME TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { getIDByName } from '../../../actual-api.js';
 
 export const schema = {

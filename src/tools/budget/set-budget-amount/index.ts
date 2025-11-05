@@ -2,9 +2,9 @@
 // SET BUDGET AMOUNT TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { setBudgetAmount } from '../../../actual-api.js';
-import { setBudgetAmountArgsSchema, type SetBudgetAmountArgs } from './types.js';
+import { SetBudgetAmountArgsSchema, type SetBudgetAmountArgs } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'set-budget-amount',
@@ -33,7 +33,7 @@ export async function handler(
   args: SetBudgetAmountArgs
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const parsedArgs = setBudgetAmountArgsSchema.parse(args);
+    const parsedArgs = SetBudgetAmountArgsSchema.parse(args);
 
     await setBudgetAmount(parsedArgs.month, parsedArgs.categoryId, parsedArgs.amount);
 

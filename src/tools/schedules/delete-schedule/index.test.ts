@@ -48,5 +48,3 @@ describe('delete-schedule tool', () => {
     });
   });
 });
-
-

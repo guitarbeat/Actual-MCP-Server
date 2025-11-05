@@ -1,4 +1,4 @@
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { getSchedules } from '../../../actual-api.js';
 
 export const schema = {
@@ -20,8 +20,7 @@ export async function handler(
   } catch (err) {
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to retrieve schedules from Actual.',
-      suggestion:
-        'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
+      suggestion: 'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
     });
   }
 }
