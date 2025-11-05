@@ -12,23 +12,30 @@ import type { ManageTransactionArgs } from './types.js';
 
 // Zod schema for manage-transaction arguments
 const ManageTransactionArgsSchema = z.object({
-  operation: z.enum(['create', 'update']),
+  operation: z.enum(['create', 'update', 'delete']),
   id: z.string().optional(),
-  transaction: z.object({
-    account: z.string().optional(),
-    date: z.string().optional(),
-    amount: z.number().optional(),
-    payee: z.string().optional(),
-    category: z.string().optional(),
-    notes: z.string().optional(),
-    cleared: z.boolean().optional(),
-  }),
+  transaction: z
+    .object({
+      account: z.string().optional(),
+      date: z.string().optional(),
+      amount: z.number().optional(),
+      payee: z.string().optional(),
+      category: z.string().optional(),
+      notes: z.string().optional(),
+      cleared: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export const schema = {
   name: 'manage-transaction',
   description:
-    'Create or update transactions. Accepts account, payee, and category names or IDs. For create: account and date are required. For update: id is required.',
+    'Create, update, or delete transactions. Accepts account, payee, and category names or IDs. ' +
+    'For create: account and date are required. ' +
+    'For update: id is required. ' +
+    'For delete: only id is required. ' +
+    'WARNING: Delete is permanent and cannot be undone. ' +
+    'Example delete: {"operation": "delete", "id": "abc123-def456-ghi789"}',
   inputSchema: zodToJsonSchema(ManageTransactionArgsSchema) as ToolInput,
 };
 

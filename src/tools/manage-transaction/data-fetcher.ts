@@ -1,7 +1,6 @@
 // Data fetcher for manage-transaction tool
 
-import actualApi from '@actual-app/api';
-import { importTransactions, initActualApi } from '../../actual-api.js';
+import { importTransactions, updateTransaction, deleteTransaction } from '../../actual-api.js';
 import type { ParsedTransactionInput, TransactionOperationResult } from './types.js';
 
 /**
@@ -10,7 +9,7 @@ import type { ParsedTransactionInput, TransactionOperationResult } from './types
  */
 export class ManageTransactionDataFetcher {
   /**
-   * Execute transaction operation (create or update).
+   * Execute transaction operation (create, update, or delete).
    *
    * @param input - Parsed transaction input with resolved IDs
    * @returns Result of the operation including transaction ID
@@ -19,8 +18,10 @@ export class ManageTransactionDataFetcher {
   async execute(input: ParsedTransactionInput): Promise<TransactionOperationResult> {
     if (input.operation === 'create') {
       return this.createTransaction(input);
-    } else {
+    } else if (input.operation === 'update') {
       return this.updateTransaction(input);
+    } else {
+      return this.deleteTransaction(input);
     }
   }
 
@@ -73,8 +74,6 @@ export class ManageTransactionDataFetcher {
       throw new Error('id is required for update operation');
     }
 
-    await initActualApi();
-
     // Build update object with only provided fields
     const updates: Record<string, unknown> = {};
 
@@ -100,12 +99,33 @@ export class ManageTransactionDataFetcher {
       updates.cleared = input.cleared;
     }
 
-    // Update transaction via API
-    await actualApi.updateTransaction(input.id, updates);
+    // Update transaction via API wrapper
+    await updateTransaction(input.id, updates);
 
     return {
       transactionId: input.id,
       operation: 'update',
+    };
+  }
+
+  /**
+   * Delete an existing transaction.
+   *
+   * @param input - Parsed transaction input with ID
+   * @returns Result with deleted transaction ID and operation type
+   * @throws Error if ID is missing or deletion fails
+   */
+  private async deleteTransaction(input: ParsedTransactionInput): Promise<TransactionOperationResult> {
+    if (!input.id) {
+      throw new Error('id is required for delete operation');
+    }
+
+    // Delete transaction via API wrapper
+    await deleteTransaction(input.id);
+
+    return {
+      transactionId: input.id,
+      operation: 'delete',
     };
   }
 }

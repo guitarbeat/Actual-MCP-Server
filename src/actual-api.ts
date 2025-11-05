@@ -443,6 +443,31 @@ export async function importTransactions(
 }
 
 /**
+ * Update a transaction (ensures API is initialized)
+ *
+ * @param id - Transaction ID to update
+ * @param updates - Fields to update
+ * @returns Promise that resolves when update is complete
+ */
+export async function updateTransaction(id: string, updates: Record<string, unknown>): Promise<void> {
+  await initActualApi();
+  await api.updateTransaction(id, updates);
+  cacheService.invalidate('transactions');
+}
+
+/**
+ * Delete a transaction (ensures API is initialized)
+ *
+ * @param id - Transaction ID to delete
+ * @returns Promise that resolves when deletion is complete
+ */
+export async function deleteTransaction(id: string): Promise<void> {
+  await initActualApi();
+  await api.deleteTransaction({ id });
+  cacheService.invalidate('transactions');
+}
+
+/**
  * Create a new account (ensures API is initialized)
  */
 export async function createAccount(args: Record<string, unknown>): Promise<string> {

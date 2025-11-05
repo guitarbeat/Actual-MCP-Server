@@ -9,6 +9,7 @@ vi.mock('@actual-app/api', () => ({
     getBudgets: vi.fn(),
     shutdown: vi.fn(),
     sync: vi.fn(),
+    deleteTransaction: vi.fn(),
   },
 }));
 
@@ -22,6 +23,14 @@ vi.mock('fs', () => ({
 
 import api from '@actual-app/api';
 import fs from 'fs';
+import { cacheService } from './core/cache/cache-service.js';
+
+// Mock cache service
+vi.mock('./core/cache/cache-service.js', () => ({
+  cacheService: {
+    invalidate: vi.fn(),
+  },
+}));
 
 describe('Auto-load functionality', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -303,6 +312,90 @@ describe('Auto-load functionality', () => {
 
       // Sync should not be called after shutdown
       expect(api.sync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateTransaction', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
+      ]);
+      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+    });
+
+    it('should call API initialization before update', async () => {
+      const mockUpdateTransaction = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(api).updateTransaction = mockUpdateTransaction;
+
+      await actualApi.updateTransaction('txn-123', { amount: 5000 });
+
+      expect(api.init).toHaveBeenCalled();
+    });
+
+    it('should call api.updateTransaction with correct parameters', async () => {
+      const mockUpdateTransaction = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(api).updateTransaction = mockUpdateTransaction;
+
+      const updates = { amount: 5000, notes: 'Updated note' };
+      await actualApi.updateTransaction('txn-123', updates);
+
+      expect(mockUpdateTransaction).toHaveBeenCalledWith('txn-123', updates);
+    });
+
+    it('should invalidate transaction cache after update', async () => {
+      const mockUpdateTransaction = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(api).updateTransaction = mockUpdateTransaction;
+
+      await actualApi.updateTransaction('txn-123', { amount: 5000 });
+
+      expect(cacheService.invalidate).toHaveBeenCalledWith('transactions');
+    });
+
+    it('should handle update errors', async () => {
+      const mockUpdateTransaction = vi.fn().mockRejectedValue(new Error('Transaction not found'));
+      vi.mocked(api).updateTransaction = mockUpdateTransaction;
+
+      await expect(actualApi.updateTransaction('invalid-id', { amount: 5000 })).rejects.toThrow(
+        'Transaction not found'
+      );
+    });
+  });
+
+  describe('deleteTransaction', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
+      ]);
+      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+      vi.mocked(api.deleteTransaction).mockResolvedValue(undefined);
+    });
+
+    it('should call API initialization before deletion', async () => {
+      await actualApi.deleteTransaction('txn-123');
+
+      expect(api.init).toHaveBeenCalled();
+    });
+
+    it('should call api.deleteTransaction with correct parameters', async () => {
+      await actualApi.deleteTransaction('txn-123');
+
+      expect(api.deleteTransaction).toHaveBeenCalledWith({ id: 'txn-123' });
+    });
+
+    it('should invalidate transaction cache after deletion', async () => {
+      await actualApi.deleteTransaction('txn-123');
+
+      expect(cacheService.invalidate).toHaveBeenCalledWith('transactions');
+    });
+
+    it('should handle deletion errors', async () => {
+      vi.mocked(api.deleteTransaction).mockRejectedValue(new Error('Transaction not found'));
+
+      await expect(actualApi.deleteTransaction('invalid-id')).rejects.toThrow('Transaction not found');
     });
   });
 });

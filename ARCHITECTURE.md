@@ -499,7 +499,7 @@ To reduce cognitive load on LLMs and improve maintainability, the server impleme
 
 **Consolidated Tools:**
 - `manage-entity` - Handles all entity CRUD operations (5 entity types × 3 operations)
-- `manage-transaction` - Handles transaction create/update operations
+- `manage-transaction` - Handles transaction create/update/delete operations
 - `set-budget` - Handles budget amount and carryover operations
 
 **Optional Tools (disabled by default, can be re-enabled):**
@@ -513,7 +513,7 @@ To reduce cognitive load on LLMs and improve maintainability, the server impleme
 The server implements three consolidated tools that reduce cognitive load and improve maintainability:
 
 1. **`manage-entity`** - CRUD operations for categories, category groups, payees, rules, and schedules
-2. **`manage-transaction`** - Create and update transactions with name resolution
+2. **`manage-transaction`** - Create, update, and delete transactions with name resolution
 3. **`set-budget`** - Set budget amount and/or carryover in a single call
 
 ### `manage-entity` (Consolidated Tool)
@@ -711,7 +711,7 @@ Tool consolidation is appropriate when:
 
 ### `manage-transaction` (Consolidated Tool)
 
-The `manage-transaction` tool consolidates transaction creation and updating into a single tool with automatic name resolution.
+The `manage-transaction` tool consolidates transaction creation, updating, and deletion into a single tool with automatic name resolution.
 
 ```
 src/tools/manage-transaction/
@@ -723,10 +723,11 @@ src/tools/manage-transaction/
 ```
 
 **Key Features:**
-- Unified interface for create and update operations
+- Unified interface for create, update, and delete operations
 - Automatic name-to-ID resolution for accounts, categories, and payees
-- Operation-specific validation (e.g., `id` required for update)
+- Operation-specific validation (e.g., `id` required for update and delete)
 - Consistent error messages
+- Automatic cache invalidation after mutations
 
 **Example Usage:**
 ```typescript
@@ -751,12 +752,19 @@ src/tools/manage-transaction/
     "notes": "Updated amount"
   }
 }
+
+// Delete transaction
+{
+  "operation": "delete",
+  "id": "transaction-id"
+}
 ```
 
 **Benefits:**
-- Reduces tool count from 2 to 1
+- Reduces tool count (consolidated CRUD operations)
 - More intuitive with name resolution
-- Consistent interface for both operations
+- Consistent interface for all operations
+- Automatic cache invalidation ensures data consistency
 - Helpful error messages with suggestions
 
 ### `set-budget` (Consolidated Tool)
@@ -877,7 +885,7 @@ const coreTools: ToolDefinition[] = [
   
   // Accounts (2)
   { schema: getAccounts.schema, handler: getAccounts.handler, requiresWrite: false },
-  { schema: updateAccount.schema, handler: updateAccount.handler, requiresWrite: true },
+  { schema: manageAccount.schema, handler: manageAccount.handler, requiresWrite: true },
   
   // Categories & Budget (2)
   { schema: getGroupedCategories.schema, handler: getGroupedCategories.handler, requiresWrite: false },

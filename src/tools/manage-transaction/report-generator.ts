@@ -17,8 +17,10 @@ export class ManageTransactionReportGenerator {
   generate(input: ParsedTransactionInput, result: TransactionOperationResult): string {
     if (result.operation === 'create') {
       return this.generateCreateReport(input, result);
-    } else {
+    } else if (result.operation === 'update') {
       return this.generateUpdateReport(input, result);
+    } else {
+      return this.formatDeleteMessage(result);
     }
   }
 
@@ -99,6 +101,46 @@ export class ManageTransactionReportGenerator {
     }
 
     return parts.join('\n');
+  }
+
+  /**
+   * Format delete confirmation message.
+   * Includes transaction details if available.
+   *
+   * @param result - Operation result
+   * @returns Formatted deletion message
+   */
+  private formatDeleteMessage(result: TransactionOperationResult): string {
+    let message = `✓ Deleted transaction ${result.transactionId}`;
+
+    if (result.details) {
+      const parts: string[] = [];
+
+      if (result.details.date) {
+        parts.push(`Date: ${result.details.date}`);
+      }
+      if (result.details.amount !== undefined) {
+        const dollars = result.details.amount / 100;
+        const sign = dollars < 0 ? '-' : '';
+        const abs = Math.abs(dollars);
+        const formatted = `${sign}$${abs.toFixed(2)}`;
+        parts.push(`Amount: ${formatted}`);
+      }
+      if (result.details.payee) {
+        parts.push(`Payee: ${result.details.payee}`);
+      }
+      if (result.details.account) {
+        parts.push(`Account: ${result.details.account}`);
+      }
+
+      if (parts.length > 0) {
+        message += '\n\nDeleted transaction details:\n' + parts.map((p) => `• ${p}`).join('\n');
+      }
+    }
+
+    message += '\n\n⚠️  This operation cannot be undone.';
+
+    return message;
   }
 
   /**

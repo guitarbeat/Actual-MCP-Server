@@ -9,9 +9,7 @@ vi.mock('@actual-app/api', () => ({
   default: {
     init: vi.fn().mockResolvedValue(undefined),
     downloadBudget: vi.fn().mockResolvedValue(undefined),
-    getBudgets: vi.fn().mockResolvedValue([
-      { id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' },
-    ]),
+    getBudgets: vi.fn().mockResolvedValue([{ id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' }]),
     shutdown: vi.fn().mockResolvedValue(undefined),
     sync: vi.fn().mockResolvedValue(undefined),
     getAccounts: vi.fn().mockResolvedValue([
@@ -114,7 +112,7 @@ describe('Integration Tests - MCP Simplification', () => {
 
       // Verify new consolidated tools are registered
       const tools = getAvailableTools(true);
-      
+
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
@@ -131,12 +129,12 @@ describe('Integration Tests - MCP Simplification', () => {
 
       // Simulate multiple tool calls
       const tools = getAvailableTools(false);
-      
+
       // Verify read-only tools are available
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-grouped-categories')).toBe(true);
-      
+
       // Verify write tools are not available in read-only mode
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
     });
@@ -200,7 +198,7 @@ describe('Integration Tests - MCP Simplification', () => {
 
       // Verify tools that use name resolution are registered
       const tools = getAvailableTools(true);
-      
+
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
     });
@@ -210,17 +208,15 @@ describe('Integration Tests - MCP Simplification', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
 
       await actualApi.initActualApi();
-      
+
       const api = await import('@actual-app/api');
-      
+
       // Verify API methods for name resolution are called
       expect(api.default.getAccounts).toBeDefined();
       expect(api.default.getCategories).toBeDefined();
       expect(api.default.getPayees).toBeDefined();
     });
   });
-
-
 
   describe('Production-Ready Tool Set', () => {
     it('should have 22 core tools by default', async () => {
@@ -272,7 +268,7 @@ describe('Integration Tests - MCP Simplification', () => {
 
       // Core account tools
       expect(toolNames).toContain('get-accounts');
-      expect(toolNames).toContain('update-account');
+      expect(toolNames).toContain('manage-account');
 
       // Core category & budget tools
       expect(toolNames).toContain('get-grouped-categories');
@@ -336,7 +332,7 @@ describe('Integration Tests - MCP Simplification', () => {
       // 5. Verify removed tools are not available
       expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
-      
+
       // run-query is now core, so it should be available
       expect(tools.some((t) => t.schema.name === 'run-query')).toBe(true);
 

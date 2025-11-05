@@ -36,7 +36,7 @@ describe('Tool Registry', () => {
 
       // Core write tools
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'update-account')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'manage-account')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'merge-payees')).toBe(true);
@@ -77,8 +77,6 @@ describe('Tool Registry', () => {
     });
   });
 
-
-
   describe('Write permission filtering', () => {
     it('should exclude write tools when write is disabled', () => {
       process.env.ENABLE_UTILITY_TOOLS = 'false';
@@ -96,6 +94,36 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'hold-budget-for-next-month')).toBe(false);
+    });
+  });
+
+  describe('manage-transaction tool permissions', () => {
+    it('should mark manage-transaction as requiresWrite: true', () => {
+      const tools = getAvailableTools(true);
+      const manageTxTool = tools.find((t) => t.schema.name === 'manage-transaction');
+
+      expect(manageTxTool).toBeDefined();
+      expect(manageTxTool?.requiresWrite).toBe(true);
+    });
+
+    it('should exclude manage-transaction when write is disabled', () => {
+      const tools = getAvailableTools(false);
+      const manageTxTool = tools.find((t) => t.schema.name === 'manage-transaction');
+
+      expect(manageTxTool).toBeUndefined();
+    });
+
+    it('should include delete operation in manage-transaction schema', () => {
+      const tools = getAvailableTools(true);
+      const manageTxTool = tools.find((t) => t.schema.name === 'manage-transaction');
+
+      expect(manageTxTool).toBeDefined();
+      expect(manageTxTool?.schema.description).toContain('delete');
+      expect(manageTxTool?.schema.description).toContain('WARNING: Delete is permanent');
+
+      // Check that the schema includes delete in the operation enum
+      const inputSchema = manageTxTool?.schema.inputSchema as any;
+      expect(inputSchema.properties.operation.enum).toContain('delete');
     });
   });
 });
