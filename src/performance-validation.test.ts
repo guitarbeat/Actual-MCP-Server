@@ -427,7 +427,7 @@ describe('Performance Validation', () => {
 
       // Final assertions
       expect(coreTools.length).toBe(22);
-      
+
       // Calculate actual reduction from original 37 tools
       const originalToolCount = 37;
       const actualReduction = ((originalToolCount - coreTools.length) / originalToolCount) * 100;

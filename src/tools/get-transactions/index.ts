@@ -12,7 +12,43 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const schema = {
   name: 'get-transactions',
-  description: 'Get transactions for an account with optional filtering',
+  description:
+    'Retrieve transactions from Actual Budget with flexible filtering options. Supports date ranges, amount filters, and text-based filtering by category or payee name.\n\n' +
+    'REQUIRED PARAMETERS:\n' +
+    '- accountId: Account name or ID (use get-accounts to find account IDs)\n\n' +
+    'OPTIONAL FILTERS:\n' +
+    '- startDate: Start date in YYYY-MM-DD format (defaults to 30 days ago if not specified)\n' +
+    '- endDate: End date in YYYY-MM-DD format (defaults to today if not specified)\n' +
+    '- minAmount: Minimum transaction amount in dollars (e.g., 50.00 for $50)\n' +
+    '- maxAmount: Maximum transaction amount in dollars (e.g., 100.00 for $100)\n' +
+    '- categoryName: Filter by category name (partial match, case-insensitive)\n' +
+    '- payeeName: Filter by payee name (partial match, case-insensitive)\n' +
+    '- limit: Maximum number of transactions to return\n\n' +
+    'EXAMPLES:\n' +
+    '- Recent transactions for an account:\n' +
+    '  {"accountId": "Checking", "startDate": "2024-01-01", "endDate": "2024-01-31"}\n' +
+    '- Large expenses over $100:\n' +
+    '  {"accountId": "Credit Card", "minAmount": 100}\n' +
+    '- Transactions from a specific merchant:\n' +
+    '  {"accountId": "Checking", "payeeName": "Amazon"}\n' +
+    '- Grocery spending in a date range:\n' +
+    '  {"accountId": "Checking", "categoryName": "Groceries", "startDate": "2024-01-01", "endDate": "2024-01-31"}\n' +
+    '- Combined filters (category + amount range + limit):\n' +
+    '  {"accountId": "Checking", "categoryName": "Dining", "minAmount": 20, "maxAmount": 100, "limit": 10}\n' +
+    '- All transactions from last 30 days (default):\n' +
+    '  {"accountId": "Checking"}\n\n' +
+    'COMMON USE CASES:\n' +
+    '- Reviewing recent spending: Specify accountId and date range to see transactions in a period\n' +
+    '- Finding large transactions: Use minAmount filter to identify significant expenses or income\n' +
+    '- Tracking specific merchant: Use payeeName filter to see all transactions with a particular vendor\n' +
+    '- Category analysis: Use categoryName filter to analyze spending in a specific category\n' +
+    '- Expense auditing: Combine multiple filters to narrow down specific transaction types\n\n' +
+    'NOTES:\n' +
+    '- Amounts in filters are in dollars (e.g., 50.00), but returned amounts are in cents\n' +
+    '- Text filters (categoryName, payeeName) support partial matching for flexibility\n' +
+    '- If no date range is specified, defaults to last 30 days\n' +
+    '- Use get-accounts first if you need to find the correct account ID\n' +
+    '- Filters are applied cumulatively (AND logic) - all specified filters must match',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 

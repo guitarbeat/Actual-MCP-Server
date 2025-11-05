@@ -13,7 +13,8 @@ export const schema = {
     properties: {
       month: {
         type: 'string',
-        description: 'Month in YYYY-MM format',
+        description:
+          'Month in YYYY-MM format (e.g., "2024-01" for January 2024). Returns budget data including category budgets, spending, and balances for the specified month.',
       },
     },
     required: ['month'],

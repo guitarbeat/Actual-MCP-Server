@@ -14,7 +14,8 @@ export const schema = {
     properties: {
       month: {
         type: 'string',
-        description: 'Month in YYYY-MM format',
+        description:
+          'Month in YYYY-MM format (e.g., "2024-01" for January 2024). This will clear any budget hold that was set for this month.',
       },
     },
     required: ['month'],

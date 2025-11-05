@@ -6,6 +6,8 @@ export const schema = {
   description: 'Get all recurring schedules',
   inputSchema: {
     type: 'object',
+    description:
+      'This tool does not accept any arguments. Returns all recurring transaction schedules including their frequency, amount, account, and next occurrence date.',
     properties: {},
   },
 };

@@ -10,14 +10,53 @@ import { z } from 'zod';
 // ----------------------------
 
 export const GetTransactionsArgsSchema = z.object({
-  accountId: z.string(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  minAmount: z.number().optional(),
-  maxAmount: z.number().optional(),
-  categoryName: z.string().optional(),
-  payeeName: z.string().optional(),
-  limit: z.number().optional(),
+  accountId: z
+    .string()
+    .describe(
+      'Account name or ID to retrieve transactions from. Use get-accounts tool to find available account IDs. Accepts both human-readable names (e.g., "Checking") or UUIDs.'
+    ),
+  startDate: z
+    .string()
+    .optional()
+    .describe(
+      'Start date for transaction range in YYYY-MM-DD format (e.g., "2024-01-01"). If omitted, defaults to 30 days before endDate or today.'
+    ),
+  endDate: z
+    .string()
+    .optional()
+    .describe(
+      'End date for transaction range in YYYY-MM-DD format (e.g., "2024-01-31"). If omitted, defaults to today.'
+    ),
+  minAmount: z
+    .number()
+    .optional()
+    .describe(
+      'Minimum transaction amount in dollars (e.g., 50.00 for $50). Filters transactions to only include amounts greater than or equal to this value. Negative values represent expenses, positive values represent income.'
+    ),
+  maxAmount: z
+    .number()
+    .optional()
+    .describe(
+      'Maximum transaction amount in dollars (e.g., 100.00 for $100). Filters transactions to only include amounts less than or equal to this value. Negative values represent expenses, positive values represent income.'
+    ),
+  categoryName: z
+    .string()
+    .optional()
+    .describe(
+      'Filter by category name using partial, case-insensitive matching (e.g., "groc" matches "Groceries"). Useful for finding all transactions in a specific spending category.'
+    ),
+  payeeName: z
+    .string()
+    .optional()
+    .describe(
+      'Filter by payee name using partial, case-insensitive matching (e.g., "amazon" matches "Amazon.com"). Useful for tracking spending with specific merchants or vendors.'
+    ),
+  limit: z
+    .number()
+    .optional()
+    .describe(
+      'Maximum number of transactions to return. Useful for limiting results when you only need a sample or the most recent transactions. Applied after all other filters.'
+    ),
 });
 
 export const SpendingByCategoryArgsSchema = z.object({
@@ -151,8 +190,18 @@ export const GetGroupedCategoriesArgsSchema = z.object({}).strict();
 
 export const GetAccountsArgsSchema = z
   .object({
-    accountId: z.string().optional(),
-    includeClosed: z.boolean().optional(),
+    accountId: z
+      .string()
+      .optional()
+      .describe(
+        'Account name or ID to filter results. Supports partial, case-insensitive matching (e.g., "check" matches "Checking Account"). Accepts both human-readable names or UUIDs. If omitted, returns all accounts.'
+      ),
+    includeClosed: z
+      .boolean()
+      .optional()
+      .describe(
+        'Whether to include closed accounts in the results. Default is false (only open accounts). Set to true to see all accounts including those that have been closed.'
+      ),
   })
   .strict();
 
