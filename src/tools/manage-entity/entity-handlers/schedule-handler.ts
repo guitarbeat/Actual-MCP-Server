@@ -9,6 +9,8 @@ import type { ScheduleData } from '../types.js';
 import { ScheduleDataSchema } from '../types.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 
+const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
+
 /**
  * Handler for schedule entity operations
  * Implements create, update, and delete operations for schedules
@@ -23,8 +25,12 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
     // Validate data
     const validated = ScheduleDataSchema.parse(data);
 
-    const scheduleId = await createSchedule(validated);
-    return scheduleId;
+    try {
+      const scheduleId = await createSchedule(validated);
+      return scheduleId;
+    } catch (error) {
+      this.handleScheduleApiError('create', error);
+    }
   }
 
   /**
@@ -36,7 +42,11 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
     // Validate data
     const validated = ScheduleDataSchema.parse(data);
 
-    await updateSchedule(id, validated);
+    try {
+      await updateSchedule(id, validated);
+    } catch (error) {
+      this.handleScheduleApiError('update', error);
+    }
   }
 
   /**
@@ -44,7 +54,11 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
    * @param id - The schedule ID
    */
   async delete(id: string): Promise<void> {
-    await deleteSchedule(id);
+    try {
+      await deleteSchedule(id);
+    } catch (error) {
+      this.handleScheduleApiError('delete', error);
+    }
   }
 
   /**
@@ -63,6 +77,14 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
   }
 
   invalidateCache(): void {
-    // Schedules are not cached, but we implement this for consistency
+    cacheService.invalidate('schedules:all');
+  }
+
+  private handleScheduleApiError(operation: Operation, error: unknown): never {
+    if (error instanceof Error && error.message.includes(API_UNAVAILABLE_ERROR_FRAGMENT)) {
+      throw EntityErrorBuilder.unsupportedFeature('schedule', operation);
+    }
+
+    throw error;
   }
 }

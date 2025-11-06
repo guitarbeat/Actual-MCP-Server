@@ -13,4 +13,5 @@ export type {
   NotFoundErrorOptions,
   ApiErrorOptions,
   PermissionErrorOptions,
+  UnsupportedFeatureOptions,
 } from '../types/responses.js';

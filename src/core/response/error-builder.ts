@@ -4,7 +4,13 @@
 
 import { MCPResponse } from './types.js';
 import { error } from './response-builder.js';
-import type { ValidationErrorOptions, NotFoundErrorOptions, ApiErrorOptions, PermissionErrorOptions } from './types.js';
+import type {
+  ValidationErrorOptions,
+  NotFoundErrorOptions,
+  ApiErrorOptions,
+  PermissionErrorOptions,
+  UnsupportedFeatureOptions,
+} from './types.js';
 
 /**
  * Create a validation error response with clear, actionable guidance
@@ -140,6 +146,21 @@ export function permissionError(toolName: string, options: PermissionErrorOption
     'Start the server with the --enable-write flag to enable write operations. ' +
     'Example: node build/index.js --enable-write (or set ENABLE_WRITE=true environment variable)';
   const suggestion = options.suggestion ?? defaultSuggestion;
+
+  return error(message, suggestion);
+}
+
+/**
+ * Create an error response when the Actual server lacks a required feature
+ * @param feature - Human readable feature description (e.g., 'Creating schedules')
+ * @param options - Additional options for the unsupported feature error
+ * @returns An error response indicating the feature is unavailable
+ */
+export function unsupportedFeatureError(feature: string, options: UnsupportedFeatureOptions = {}): MCPResponse {
+  const message = `${feature} is not supported by this Actual Budget server.`;
+  const suggestion =
+    options.suggestion ??
+    'Update your Actual Budget server to a version that exposes this capability or manage it directly in the Actual app.';
 
   return error(message, suggestion);
 }

@@ -13,6 +13,7 @@ export {
   notFoundError,
   apiError,
   permissionError,
+  unsupportedFeatureError,
   missingStringArgument,
   missingNumberArgument,
   missingBooleanArgument,
