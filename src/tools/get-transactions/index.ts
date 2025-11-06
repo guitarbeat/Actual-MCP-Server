@@ -7,6 +7,7 @@ import { GetTransactionsReportGenerator } from './report-generator.js';
 import { success, errorFromCatch } from '../../core/response/index.js';
 import { getDateRange } from '../../utils.js';
 import { GetTransactionsArgsSchema, type GetTransactionsArgs } from '../../core/types/index.js';
+import { nameResolver } from '../../core/utils/name-resolver.js';
 import type { ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -17,7 +18,7 @@ export const schema = {
     'REQUIRED PARAMETERS:\n' +
     '- accountId: Account name or ID (use get-accounts to find account IDs)\n\n' +
     'OPTIONAL FILTERS:\n' +
-    '- startDate: Start date in YYYY-MM-DD format (defaults to 30 days ago if not specified)\n' +
+    '- startDate: Start date in YYYY-MM-DD format (defaults to 3 months ago if not specified)\n' +
     '- endDate: End date in YYYY-MM-DD format (defaults to today if not specified)\n' +
     '- minAmount: Minimum transaction amount in dollars (e.g., 50.00 for $50)\n' +
     '- maxAmount: Maximum transaction amount in dollars (e.g., 100.00 for $100)\n' +
@@ -35,7 +36,7 @@ export const schema = {
     '  {"accountId": "Checking", "categoryName": "Groceries", "startDate": "2024-01-01", "endDate": "2024-01-31"}\n' +
     '- Combined filters (category + amount range + limit):\n' +
     '  {"accountId": "Checking", "categoryName": "Dining", "minAmount": 20, "maxAmount": 100, "limit": 10}\n' +
-    '- All transactions from last 30 days (default):\n' +
+    '- All transactions from last 3 months (default):\n' +
     '  {"accountId": "Checking"}\n\n' +
     'COMMON USE CASES:\n' +
     '- Reviewing recent spending: Specify accountId and date range to see transactions in a period\n' +
@@ -46,7 +47,7 @@ export const schema = {
     'NOTES:\n' +
     '- Amounts in filters are in dollars (e.g., 50.00), but returned amounts are in cents\n' +
     '- Text filters (categoryName, payeeName) support partial matching for flexibility\n' +
-    '- If no date range is specified, defaults to last 30 days\n' +
+    '- If no date range is specified, defaults to the last 3 months\n' +
     '- Use get-accounts first if you need to find the correct account ID\n' +
     '- Filters are applied cumulatively (AND logic) - all specified filters must match\n\n' +
     'TYPICAL WORKFLOW:\n' +
@@ -70,8 +71,12 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit } = input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
+    const resolvedAccountId = await nameResolver.resolveAccount(accountId);
+
     // Fetch transactions
-    const transactions = await new GetTransactionsDataFetcher().fetch(accountId, start, end);
+    const transactions = await new GetTransactionsDataFetcher().fetch(resolvedAccountId, start, end, {
+      accountIdIsResolved: true,
+    });
     let filtered = [...transactions];
 
     if (minAmount !== undefined) {
@@ -96,22 +101,31 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     const mapped = new TransactionMapper().map(filtered);
 
     // Build filter description
-    const filterDescription = [
-      startDate || endDate ? `Date range: ${startDate} to ${endDate}` : null,
-      minAmount !== undefined ? `Min amount: $${minAmount.toFixed(2)}` : null,
-      maxAmount !== undefined ? `Max amount: $${maxAmount.toFixed(2)}` : null,
-      categoryName ? `Category: ${categoryName}` : null,
-      payeeName ? `Payee: ${payeeName}` : null,
-    ]
-      .filter(Boolean)
-      .join(', ');
+    const appliedFilters: string[] = [];
+    if (minAmount !== undefined) {
+      appliedFilters.push(`Minimum amount: $${minAmount.toFixed(2)}`);
+    }
+    if (maxAmount !== undefined) {
+      appliedFilters.push(`Maximum amount: $${maxAmount.toFixed(2)}`);
+    }
+    if (categoryName) {
+      appliedFilters.push(`Category contains: "${categoryName}"`);
+    }
+    if (payeeName) {
+      appliedFilters.push(`Payee contains: "${payeeName}"`);
+    }
+    if (limit !== undefined) {
+      appliedFilters.push(`Result limit: ${limit}`);
+    }
 
-    const markdown = new GetTransactionsReportGenerator().generate(
-      mapped,
-      filterDescription,
-      filtered.length,
-      transactions.length
-    );
+    const markdown = new GetTransactionsReportGenerator().generate(mapped, {
+      accountReference: accountId,
+      resolvedAccountId,
+      dateRange: { start, end },
+      appliedFilters,
+      filteredCount: filtered.length,
+      totalFetched: transactions.length,
+    });
     return success(markdown);
   } catch (err) {
     return errorFromCatch(err, {
