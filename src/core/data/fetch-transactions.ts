@@ -4,6 +4,7 @@ import { fetchAllCategories } from './fetch-categories.js';
 import { GroupAggregator } from '../aggregation/group-by.js';
 import type { Account, Transaction, Payee, Category } from '../types/domain.js';
 import { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
+import { nameResolver } from '../utils/name-resolver.js';
 
 const groupAggregator = new GroupAggregator();
 
@@ -116,11 +117,17 @@ export async function enrichTransactionsBatch(
   return _enrichTransactions(transactions, actualLookups);
 }
 
+interface FetchTransactionsOptions {
+  accountIdIsResolved?: boolean;
+}
+
 export async function fetchTransactionsForAccount(
-  accountId: string,
+  accountIdOrName: string,
   start: string,
-  end: string
+  end: string,
+  options: FetchTransactionsOptions = {}
 ): Promise<Transaction[]> {
+  const accountId = options.accountIdIsResolved ? accountIdOrName : await nameResolver.resolveAccount(accountIdOrName);
   const transactions = await getTransactions(accountId, start, end);
   return _enrichTransactions(transactions);
 }
