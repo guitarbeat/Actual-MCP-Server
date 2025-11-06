@@ -81,7 +81,9 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
   }
 
   private handleScheduleApiError(operation: Operation, error: unknown): never {
-    if (error instanceof Error && error.message.includes(API_UNAVAILABLE_ERROR_FRAGMENT)) {
+    const message = error instanceof Error ? error.message : typeof error === 'string' ? error : undefined;
+
+    if (message?.includes(API_UNAVAILABLE_ERROR_FRAGMENT)) {
       throw EntityErrorBuilder.unsupportedFeature('schedule', operation);
     }
 
