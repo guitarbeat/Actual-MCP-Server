@@ -10,6 +10,7 @@ vi.mock('@actual-app/api', () => ({
     shutdown: vi.fn(),
     sync: vi.fn(),
     deleteTransaction: vi.fn(),
+    importTransactions: vi.fn(),
   },
 }));
 
@@ -396,6 +397,57 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.deleteTransaction).mockRejectedValue(new Error('Transaction not found'));
 
       await expect(actualApi.deleteTransaction('invalid-id')).rejects.toThrow('Transaction not found');
+    });
+  });
+
+  describe('importTransactions', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
+      ]);
+      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+      vi.mocked(cacheService.invalidate).mockClear();
+      vi.mocked(api.importTransactions).mockResolvedValue({ added: ['txn-1'], updated: [] });
+    });
+
+    it('should import transactions and invalidate caches', async () => {
+      const result = await actualApi.importTransactions('account-123', [
+        {
+          date: '2024-01-10',
+          amount: -1234,
+          notes: 'Test',
+        },
+      ]);
+
+      expect(api.importTransactions).toHaveBeenCalledWith('account-123', [
+        expect.objectContaining({
+          account: 'account-123',
+          amount: -1234,
+          date: '2024-01-10',
+        }),
+      ]);
+      expect(cacheService.invalidate).toHaveBeenCalledWith('transactions');
+      expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
+      expect(result).toEqual({ added: ['txn-1'], updated: [] });
+    });
+
+    it('should throw when API reports errors', async () => {
+      vi.mocked(api.importTransactions).mockResolvedValue({
+        added: [],
+        updated: [],
+        errors: ['duplicate transaction'],
+      });
+
+      await expect(
+        actualApi.importTransactions('account-123', [
+          {
+            date: '2024-01-10',
+            amount: -1234,
+          },
+        ])
+      ).rejects.toThrow('importTransactions reported errors: duplicate transaction');
     });
   });
 });
