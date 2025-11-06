@@ -76,3 +76,10 @@ export interface PermissionErrorOptions {
   reason?: string;
   suggestion?: string;
 }
+
+/**
+ * Options for unsupported feature errors
+ */
+export interface UnsupportedFeatureOptions {
+  suggestion?: string;
+}

@@ -1,5 +1,7 @@
-import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
+import { successWithJson, errorFromCatch, unsupportedFeatureError } from '../../../core/response/index.js';
 import { getSchedules } from '../../../actual-api.js';
+
+const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
 
 export const schema = {
   name: 'get-schedules',
@@ -51,6 +53,13 @@ export async function handler(
 
     return successWithJson(schedules);
   } catch (err) {
+    if (err instanceof Error && err.message.includes(API_UNAVAILABLE_ERROR_FRAGMENT)) {
+      return unsupportedFeatureError('Reading recurring schedules', {
+        suggestion:
+          'Upgrade your Actual Budget server to a version that exposes schedule APIs or manage schedules directly in the Actual app.',
+      });
+    }
+
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to retrieve schedules from Actual.',
       suggestion: 'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
