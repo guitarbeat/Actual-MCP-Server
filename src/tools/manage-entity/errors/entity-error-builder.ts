@@ -3,7 +3,12 @@
 // ----------------------------
 
 import { MCPResponse } from '../../../core/response/types.js';
-import { notFoundError, validationError, apiError } from '../../../core/response/error-builder.js';
+import {
+  notFoundError,
+  validationError,
+  apiError,
+  unsupportedFeatureError,
+} from '../../../core/response/error-builder.js';
 import type { Operation } from '../entity-handlers/base-handler.js';
 
 /**
@@ -63,6 +68,26 @@ export class EntityErrorBuilder {
   }
 
   /**
+   * Create an unsupported feature error for the given entity type and operation
+   * @param entityType - The entity type (e.g., 'schedule')
+   * @param operation - Optional operation that triggered the unsupported error
+   * @returns An unsupported feature error response with upgrade guidance
+   */
+  static unsupportedFeature(entityType: EntityType, operation?: Operation): MCPResponse {
+    const entityName = this.formatEntityName(entityType);
+    const featureDescription = operation
+      ? `${this.formatOperation(operation)} ${entityName.toLowerCase()}`
+      : `${entityName} operations`;
+
+    const suggestion =
+      entityType === 'schedule'
+        ? 'Upgrade your Actual Budget server to a version that exposes schedule APIs or manage schedules directly in the Actual app.'
+        : 'Upgrade your Actual Budget server to a version that exposes this capability or manage it directly in the Actual app.';
+
+    return unsupportedFeatureError(featureDescription, { suggestion });
+  }
+
+  /**
    * Create an error for missing required operation parameters
    * @param operation - The operation being performed
    * @param missingParam - The missing parameter name
@@ -110,5 +135,21 @@ export class EntityErrorBuilder {
     };
 
     return toolMap[entityType];
+  }
+
+  /**
+   * Format operation name for display (capitalize and append -ing)
+   * @param operation - The operation
+   * @returns Formatted operation name
+   */
+  private static formatOperation(operation: Operation): string {
+    switch (operation) {
+      case 'create':
+        return 'Creating';
+      case 'update':
+        return 'Updating';
+      case 'delete':
+        return 'Deleting';
+    }
   }
 }
