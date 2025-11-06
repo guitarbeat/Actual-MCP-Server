@@ -19,7 +19,7 @@ export const GetTransactionsArgsSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Start date for transaction range in YYYY-MM-DD format (e.g., "2024-01-01"). If omitted, defaults to 30 days before endDate or today.'
+      'Start date for transaction range in YYYY-MM-DD format (e.g., "2024-01-01"). If omitted, defaults to 3 months before endDate or today.'
     ),
   endDate: z
     .string()
