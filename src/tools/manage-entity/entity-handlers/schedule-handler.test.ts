@@ -54,6 +54,30 @@ describe('ScheduleHandler', () => {
 
       spy.mockRestore();
     });
+
+    it('should surface unsupported feature error when API rejects with a string message', async () => {
+      const data = {
+        name: 'Test Schedule',
+        accountId: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
+        amount: 1000,
+        nextDate: '2025-12-01',
+        rule: 'every month',
+      };
+      const unsupportedResponse = {
+        isError: true,
+        content: [{ type: 'text', text: 'unsupported' }],
+      } as ReturnType<typeof EntityErrorBuilder.unsupportedFeature>;
+
+      vi.mocked(actualApi.createSchedule).mockRejectedValue(
+        'createSchedule method is not available in this version of the API'
+      );
+      const spy = vi.spyOn(EntityErrorBuilder, 'unsupportedFeature').mockReturnValue(unsupportedResponse);
+
+      await expect(scheduleHandler.create(data)).rejects.toBe(unsupportedResponse);
+      expect(spy).toHaveBeenCalledWith('schedule', 'create');
+
+      spy.mockRestore();
+    });
   });
 
   describe('update', () => {
