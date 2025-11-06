@@ -54,11 +54,13 @@ describe('ManageTransactionDataFetcher', () => {
   });
 
   describe('create operation', () => {
-    it('should create transaction successfully', async () => {
+    it('should create transaction successfully with uncleared default', async () => {
       vi.mocked(importTransactions).mockResolvedValue({
         added: ['new-txn-id'],
         updated: [],
       });
+
+      const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(1234567890);
 
       const result = await fetcher.execute({
         operation: 'create',
@@ -67,11 +69,35 @@ describe('ManageTransactionDataFetcher', () => {
         amount: -4599,
       });
 
-      expect(importTransactions).toHaveBeenCalled();
+      expect(importTransactions).toHaveBeenCalledWith('account-123', [
+        expect.objectContaining({
+          cleared: false,
+          imported_id: 'manual-account-123-2024-01-15--4599-1234567890',
+        }),
+      ]);
       expect(result).toEqual({
         transactionId: 'new-txn-id',
         operation: 'create',
       });
+
+      nowSpy.mockRestore();
+    });
+
+    it('should surface errors returned from importTransactions', async () => {
+      vi.mocked(importTransactions).mockResolvedValue({
+        added: [],
+        updated: [],
+        errors: ['duplicate transaction detected'],
+      });
+
+      await expect(
+        fetcher.execute({
+          operation: 'create',
+          accountId: 'account-123',
+          date: '2024-01-15',
+          amount: -4599,
+        })
+      ).rejects.toThrow('Failed to create transaction: duplicate transaction detected');
     });
 
     it('should throw error when accountId is missing for create', async () => {

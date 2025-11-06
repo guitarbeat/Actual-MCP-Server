@@ -439,7 +439,16 @@ export async function importTransactions(
       category: subtransaction.category ?? undefined,
     })),
   }));
-  return api.importTransactions(accountId, transactionsWithAccount);
+  const result = await api.importTransactions(accountId, transactionsWithAccount);
+
+  if (result.errors && result.errors.length > 0) {
+    throw new Error(`importTransactions reported errors: ${result.errors.join('; ')}`);
+  }
+
+  cacheService.invalidate('transactions');
+  cacheService.invalidate('accounts:all');
+
+  return result;
 }
 
 /**

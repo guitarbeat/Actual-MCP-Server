@@ -43,12 +43,16 @@ export class ManageTransactionDataFetcher {
       payee: input.payeeId || null,
       category: input.categoryId || null,
       notes: input.notes || '',
-      cleared: input.cleared ?? true,
+      cleared: input.cleared ?? false,
       imported_id: `manual-${input.accountId}-${input.date}-${input.amount ?? 0}-${Date.now()}`,
     };
 
     // Import the transaction (this will run rules, detect duplicates, etc.)
     const importResult = await importTransactions(input.accountId, [transaction]);
+
+    if (importResult.errors?.length) {
+      throw new Error(`Failed to create transaction: ${importResult.errors.join('; ')}`);
+    }
 
     // Get the transaction ID from the result
     const transactionId = importResult.added[0] || importResult.updated[0];
