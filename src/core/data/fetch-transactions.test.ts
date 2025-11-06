@@ -13,6 +13,12 @@ vi.mock('./fetch-categories.js', () => ({
   fetchAllCategories: vi.fn(),
 }));
 
+vi.mock('../utils/name-resolver.js', () => ({
+  nameResolver: {
+    resolveAccount: vi.fn(),
+  },
+}));
+
 import {
   fetchTransactionsForAccount,
   fetchAllOnBudgetTransactions,
@@ -23,10 +29,12 @@ import {
 import { getTransactions } from '../../actual-api.js';
 import { fetchAllPayees } from './fetch-payees.js';
 import { fetchAllCategories } from './fetch-categories.js';
+import { nameResolver } from '../utils/name-resolver.js';
 
 describe('fetchTransactionsForAccount', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(nameResolver.resolveAccount).mockImplementation(async (value: string) => value);
   });
 
   it('should return transactions for specific account with populated names', async () => {
@@ -58,6 +66,8 @@ describe('fetchTransactionsForAccount', () => {
       { id: 'c2', name: 'Fuel', group_id: 'g2' },
     ]);
 
+    vi.mocked(nameResolver.resolveAccount).mockResolvedValue('resolved-acc1');
+
     const result = await fetchTransactionsForAccount('acc1', '2023-01-01', '2023-01-31');
 
     expect(result).toEqual([
@@ -72,7 +82,8 @@ describe('fetchTransactionsForAccount', () => {
         category_name: 'Fuel',
       },
     ]);
-    expect(getTransactions).toHaveBeenCalledWith('acc1', '2023-01-01', '2023-01-31');
+    expect(nameResolver.resolveAccount).toHaveBeenCalledWith('acc1');
+    expect(getTransactions).toHaveBeenCalledWith('resolved-acc1', '2023-01-01', '2023-01-31');
     expect(fetchAllPayees).toHaveBeenCalledTimes(1);
     expect(fetchAllCategories).toHaveBeenCalledTimes(1);
   });
@@ -118,6 +129,16 @@ describe('fetchTransactionsForAccount', () => {
     expect(getTransactions).toHaveBeenCalledWith('acc1', '2023-01-01', '2023-01-31');
     expect(fetchAllPayees).not.toHaveBeenCalled();
     expect(fetchAllCategories).not.toHaveBeenCalled();
+  });
+
+  it('resolves account names before fetching transactions', async () => {
+    vi.mocked(nameResolver.resolveAccount).mockResolvedValue('acc-from-name');
+    vi.mocked(getTransactions).mockResolvedValue([]);
+
+    await fetchTransactionsForAccount('Checking', '2023-01-01', '2023-01-31');
+
+    expect(nameResolver.resolveAccount).toHaveBeenCalledWith('Checking');
+    expect(getTransactions).toHaveBeenCalledWith('acc-from-name', '2023-01-01', '2023-01-31');
   });
 });
 

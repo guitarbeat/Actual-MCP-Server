@@ -3,6 +3,7 @@ import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { fetchAllCategories, fetchAllCategoryGroups } from '../../core/data/fetch-categories.js';
 import { fetchTransactionsForAccount, fetchAllOnBudgetTransactions } from '../../core/data/fetch-transactions.js';
 import type { Account, Category, CategoryGroup, Transaction } from '../../core/types/domain.js';
+import { resolveAccountSelection } from '../../core/utils/account-selector.js';
 
 export class SpendingByCategoryDataFetcher {
   /**
@@ -24,8 +25,10 @@ export class SpendingByCategoryDataFetcher {
     const categoryGroups = await fetchAllCategoryGroups();
 
     let transactions: Transaction[] = [];
-    if (accountId) {
-      transactions = await fetchTransactionsForAccount(accountId, start, end);
+    const { accountId: resolvedAccountId } = await resolveAccountSelection(accounts, accountId);
+
+    if (resolvedAccountId) {
+      transactions = await fetchTransactionsForAccount(resolvedAccountId, start, end, { accountIdIsResolved: true });
     } else {
       transactions = await fetchAllOnBudgetTransactions(accounts, start, end);
     }

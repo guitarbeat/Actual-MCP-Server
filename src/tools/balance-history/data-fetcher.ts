@@ -3,10 +3,11 @@ import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { fetchAllTransactions, fetchTransactionsForAccount } from '../../core/data/fetch-transactions.js';
 import type { Account, Transaction } from '../../core/types/domain.js';
 import api from '@actual-app/api';
+import { resolveAccountSelection } from '../../core/utils/account-selector.js';
 
 export class BalanceHistoryDataFetcher {
   async fetchAll(
-    accountId: string | undefined,
+    accountReference: string | undefined,
     start: string,
     end: string
   ): Promise<{
@@ -15,17 +16,19 @@ export class BalanceHistoryDataFetcher {
     transactions: Transaction[];
   }> {
     const accounts = await fetchAllAccounts();
-    const account = accounts.find((a) => a.id === accountId);
+    const { accountId, account } = await resolveAccountSelection(accounts, accountReference);
 
     let transactions: Transaction[] = [];
     if (accountId && account) {
       // # Reason: Fetch transactions and balance in parallel for single account
       const [txs, balance] = await Promise.all([
-        fetchTransactionsForAccount(accountId, start, end),
+        fetchTransactionsForAccount(accountId, start, end, { accountIdIsResolved: true }),
         api.getAccountBalance(accountId),
       ]);
       transactions = txs;
       account.balance = balance;
+    } else if (accountId) {
+      transactions = await fetchTransactionsForAccount(accountId, start, end, { accountIdIsResolved: true });
     } else {
       // # Reason: Fetch transactions and all account balances in parallel
       const [txs, balances] = await Promise.all([
