@@ -25,8 +25,51 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
     // Validate data
     const validated = ScheduleDataSchema.parse(data);
 
+    // Ensure date field is present (required)
+    if (!validated.date) {
+      throw new Error('date field is required for schedule creation');
+    }
+
+    // Transform data for API: map accountId to account, remove invalid fields
+    const apiData: Record<string, unknown> = {
+      date: validated.date,
+    };
+
+    // Map accountId to account if provided
+    if (validated.accountId) {
+      apiData.account = validated.accountId;
+    } else if (validated.account !== undefined) {
+      apiData.account = validated.account;
+    }
+
+    // Add optional fields
+    if (validated.name !== undefined) {
+      apiData.name = validated.name;
+    }
+    if (validated.amount !== undefined) {
+      apiData.amount = validated.amount;
+    }
+    if (validated.amountOp !== undefined) {
+      apiData.amountOp = validated.amountOp;
+    }
+    if (validated.payee !== undefined) {
+      apiData.payee = validated.payee;
+    }
+    if (validated.category !== undefined) {
+      apiData.category = validated.category;
+    }
+    if (validated.notes !== undefined) {
+      apiData.notes = validated.notes;
+    }
+    if (validated.posts_transaction !== undefined) {
+      apiData.posts_transaction = validated.posts_transaction;
+    }
+
+    // Explicitly exclude fields that should not be sent
+    // (rule, next_date, completed are auto-managed by API)
+
     try {
-      const scheduleId = await createSchedule(validated);
+      const scheduleId = await createSchedule(apiData);
       return scheduleId;
     } catch (error) {
       this.handleScheduleApiError('create', error);
@@ -42,8 +85,47 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
     // Validate data
     const validated = ScheduleDataSchema.parse(data);
 
+    // Transform data for API: map accountId to account, remove invalid fields
+    const apiData: Record<string, unknown> = {};
+
+    // Map accountId to account if provided
+    if (validated.accountId !== undefined) {
+      apiData.account = validated.accountId;
+    } else if (validated.account !== undefined) {
+      apiData.account = validated.account;
+    }
+
+    // Add optional fields (only include if provided)
+    if (validated.name !== undefined) {
+      apiData.name = validated.name;
+    }
+    if (validated.date !== undefined) {
+      apiData.date = validated.date;
+    }
+    if (validated.amount !== undefined) {
+      apiData.amount = validated.amount;
+    }
+    if (validated.amountOp !== undefined) {
+      apiData.amountOp = validated.amountOp;
+    }
+    if (validated.payee !== undefined) {
+      apiData.payee = validated.payee;
+    }
+    if (validated.category !== undefined) {
+      apiData.category = validated.category;
+    }
+    if (validated.notes !== undefined) {
+      apiData.notes = validated.notes;
+    }
+    if (validated.posts_transaction !== undefined) {
+      apiData.posts_transaction = validated.posts_transaction;
+    }
+
+    // Explicitly exclude fields that should not be sent
+    // (rule, next_date, completed are auto-managed by API)
+
     try {
-      await updateSchedule(id, validated);
+      await updateSchedule(id, apiData);
     } catch (error) {
       this.handleScheduleApiError('update', error);
     }

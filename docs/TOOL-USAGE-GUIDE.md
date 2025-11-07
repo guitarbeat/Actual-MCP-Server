@@ -503,31 +503,39 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 
 ### 6. Data Import and Sync Workflow
 
-#### Importing Transactions from File
+#### Bank Sync
 
-**Goal**: Import transactions from CSV, OFX, or QIF file
+**Goal**: Sync transactions from connected bank account
 
 **Steps**:
-1. Ensure file is on server filesystem
+1. Ensure bank sync is configured
 2. Get account ID: `get-accounts`
-3. Import: `run-import` with file path and account
-4. Verify: `get-transactions` to check imported data
+3. Run sync: `import-transactions` with source="bank"
+4. Verify: `get-transactions` to check new data
 
 **Example**:
 ```json
 // Step 1: Get account
 {"tool": "get-accounts"}
 
-// Step 2: Import
+// Step 2: Sync all accounts
 {
-  "tool": "run-import",
+  "tool": "import-transactions",
   "args": {
-    "accountId": "account-id-here",
-    "filePath": "/path/to/transactions.csv"
+    "source": "bank"
   }
 }
 
-// Step 3: Verify recent imports
+// Step 3: Sync specific account
+{
+  "tool": "import-transactions",
+  "args": {
+    "source": "bank",
+    "accountId": "account-id-here"
+  }
+}
+
+// Step 4: Verify recent imports
 {
   "tool": "get-transactions",
   "args": {
@@ -538,29 +546,7 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 }
 ```
 
-#### Bank Sync
-
-**Goal**: Sync transactions from connected bank account
-
-**Steps**:
-1. Ensure bank sync is configured
-2. Get account ID: `get-accounts`
-3. Run sync: `run-bank-sync`
-4. Verify: `get-transactions` to check new data
-
-**Example**:
-```json
-// Step 1: Get account
-{"tool": "get-accounts"}
-
-// Step 2: Sync
-{
-  "tool": "run-bank-sync",
-  "args": {
-    "accountId": "account-id-here"
-  }
-}
-```
+**Note**: To import transactions from CSV/OFX/QIF files, use the Actual Budget UI. The API does not support importing files into existing budgets (the `runImport` API method creates new budget files, not for importing into existing ones).
 
 ### 7. Payee Management Workflow
 

@@ -87,7 +87,7 @@ describe('ManageTransactionDataFetcher', () => {
       vi.mocked(importTransactions).mockResolvedValue({
         added: [],
         updated: [],
-        errors: ['duplicate transaction detected'],
+        errors: [{ message: 'duplicate transaction detected' }],
       });
 
       await expect(

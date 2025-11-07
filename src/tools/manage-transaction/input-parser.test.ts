@@ -61,11 +61,9 @@ describe('ManageTransactionInputParser', () => {
 
       const result = await parser.parse({
         operation: 'create',
-        transaction: {
-          account: 'Checking',
-          date: '2024-01-15',
-          amount: -4599,
-        },
+        account: 'Checking',
+        date: '2024-01-15',
+        amount: -4599,
       });
 
       expect(result).toEqual({
@@ -82,22 +80,18 @@ describe('ManageTransactionInputParser', () => {
       await expect(
         parser.parse({
           operation: 'create',
-          transaction: {
-            date: '2024-01-15',
-          },
+          date: '2024-01-15',
         })
-      ).rejects.toThrow('transaction.account is required for create operation');
+      ).rejects.toThrow('account is required for create operation');
     });
 
     it('should throw error when date is missing for create', async () => {
       await expect(
         parser.parse({
           operation: 'create',
-          transaction: {
-            account: 'Checking',
-          },
+          account: 'Checking',
         })
-      ).rejects.toThrow('transaction.date is required for create operation');
+      ).rejects.toThrow('date is required for create operation');
     });
   });
 
@@ -108,10 +102,8 @@ describe('ManageTransactionInputParser', () => {
       const result = await parser.parse({
         operation: 'update',
         id: 'txn-789',
-        transaction: {
-          payee: 'Amazon',
-          amount: -5000,
-        },
+        payee: 'Amazon',
+        amount: -5000,
       });
 
       expect(result).toEqual({
@@ -127,9 +119,7 @@ describe('ManageTransactionInputParser', () => {
       await expect(
         parser.parse({
           operation: 'update',
-          transaction: {
-            amount: -5000,
-          },
+          amount: -5000,
         })
       ).rejects.toThrow('id is required for update operation');
     });

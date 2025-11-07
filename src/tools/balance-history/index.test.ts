@@ -67,7 +67,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should execute successfully and return markdown report', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       const result = await handler(args);
 
@@ -79,7 +79,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should use cached data fetchers', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       await handler(args);
 
@@ -87,7 +87,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should handle account-specific queries', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       const result = await handler(args);
 
@@ -96,7 +96,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should fetch balances in parallel for multiple accounts', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       await handler(args);
 
@@ -114,7 +114,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should execute successfully without cache', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       const result = await handler(args);
 
@@ -123,7 +123,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should call API directly when cache is disabled', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       await handler(args);
 
@@ -140,7 +140,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should maintain consistent response structure', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 6, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 6, includeOffBudget: false };
 
       const result = await handler(args);
 
@@ -152,7 +152,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should include balance history in report', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       const result = await handler(args);
       const text = result.content[0].text;
@@ -162,7 +162,7 @@ describe('balance-history tool integration', () => {
     });
 
     it('should handle single account balance history', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'acc1', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       const result = await handler(args);
       const text = result.content[0].text;

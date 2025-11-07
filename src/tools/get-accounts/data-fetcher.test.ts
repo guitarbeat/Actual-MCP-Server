@@ -90,6 +90,129 @@ describe('GetAccountsDataFetcher', () => {
     expect(nameResolver.resolveAccount).toHaveBeenCalledWith('Checking');
   });
 
+  it('should support partial name matching', async () => {
+    const mockAccounts = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: '🏦 Chase Checking',
+        type: 'checking',
+        closed: false,
+        offbudget: false,
+        balance: 0,
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: '💰 Chase Savings',
+        type: 'savings',
+        closed: false,
+        offbudget: false,
+        balance: 0,
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440002',
+        name: 'Wells Fargo',
+        type: 'checking',
+        closed: false,
+        offbudget: false,
+        balance: 0,
+      },
+    ];
+
+    vi.mocked(fetchAllAccounts).mockResolvedValue(mockAccounts);
+    vi.mocked(nameResolver.resolveAccount).mockRejectedValue(new Error('Account not found'));
+    vi.mocked(getAccountBalance).mockResolvedValue(10000);
+
+    const result = await fetcher.fetchAccounts({
+      accountId: 'Chase',
+      includeClosed: false,
+    });
+
+    expect(result).toHaveLength(2);
+    expect(result[0].name).toBe('🏦 Chase Checking');
+    expect(result[1].name).toBe('💰 Chase Savings');
+  });
+
+  it('should prefer exact match over partial match', async () => {
+    const mockAccounts = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Chase Checking',
+        type: 'checking',
+        closed: false,
+        offbudget: false,
+        balance: 0,
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'Chase Savings',
+        type: 'savings',
+        closed: false,
+        offbudget: false,
+        balance: 0,
+      },
+    ];
+
+    vi.mocked(fetchAllAccounts).mockResolvedValue(mockAccounts);
+    vi.mocked(nameResolver.resolveAccount).mockResolvedValue('550e8400-e29b-41d4-a716-446655440000');
+    vi.mocked(getAccountBalance).mockResolvedValue(10000);
+
+    const result = await fetcher.fetchAccounts({
+      accountId: 'Chase Checking',
+      includeClosed: false,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Chase Checking');
+  });
+
+  it('should handle ID-like strings with exact match', async () => {
+    const mockAccounts = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Checking',
+        type: 'checking',
+        closed: false,
+        offbudget: false,
+        balance: 0,
+      },
+    ];
+
+    vi.mocked(fetchAllAccounts).mockResolvedValue(mockAccounts);
+    vi.mocked(nameResolver.resolveAccount).mockResolvedValue('550e8400-e29b-41d4-a716-446655440000');
+    vi.mocked(getAccountBalance).mockResolvedValue(10000);
+
+    const result = await fetcher.fetchAccounts({
+      accountId: '550e8400-e29b-41d4-a716-446655440000',
+      includeClosed: false,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('550e8400-e29b-41d4-a716-446655440000');
+  });
+
+  it('should throw error when partial match finds no accounts', async () => {
+    const mockAccounts = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Checking',
+        type: 'checking',
+        closed: false,
+        offbudget: false,
+        balance: 0,
+      },
+    ];
+
+    vi.mocked(fetchAllAccounts).mockResolvedValue(mockAccounts);
+    vi.mocked(nameResolver.resolveAccount).mockRejectedValue(new Error('Account not found'));
+
+    await expect(
+      fetcher.fetchAccounts({
+        accountId: 'NonExistent',
+        includeClosed: false,
+      })
+    ).rejects.toThrow("Account 'NonExistent' not found");
+  });
+
   it('should exclude closed accounts by default', async () => {
     const mockAccounts = [
       {

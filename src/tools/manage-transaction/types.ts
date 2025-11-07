@@ -1,18 +1,12 @@
 // Types for manage-transaction tool
 
 /**
- * Arguments for the manage-transaction tool
+ * Arguments for the manage-transaction tool (flattened schema)
  */
 export interface ManageTransactionArgs {
   operation: 'create' | 'update' | 'delete';
   id?: string;
-  transaction?: TransactionData;
-}
-
-/**
- * Transaction data for create/update operations
- */
-export interface TransactionData {
+  // Flattened fields (for create/update)
   account?: string;
   date?: string;
   amount?: number;
@@ -30,7 +24,7 @@ export interface ParsedTransactionInput {
   id?: string;
   accountId?: string;
   date?: string;
-  amount?: number;
+  amount?: number; // Always in cents after parsing
   payeeId?: string;
   categoryId?: string;
   notes?: string;

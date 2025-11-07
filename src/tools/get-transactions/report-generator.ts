@@ -26,12 +26,11 @@ export class GetTransactionsReportGenerator {
       .map((t) => `| ${t.id} | ${t.date} | ${t.payee} | ${t.category} | ${t.amount} | ${t.notes} |`)
       .join('\n');
 
-    const table = rows.length > 0 ? `${header}${rows}` : `${header}| _No matching transactions_ | — | — | — | — | — |`;
-
     const filters = metadata.appliedFilters.length > 0 ? metadata.appliedFilters : ['None'];
     const filtersList = filters.map((filter) => `- ${filter}`).join('\n');
 
-    return [
+    // Build the report sections
+    const sections = [
       '# Filtered Transactions',
       '',
       `**Account reference provided:** ${metadata.accountReference}`,
@@ -42,7 +41,24 @@ export class GetTransactionsReportGenerator {
       '**Applied filters:**',
       filtersList,
       '',
-      table,
-    ].join('\n');
+    ];
+
+    // Add prominent empty state message if no transactions found
+    if (mappedTransactions.length === 0) {
+      sections.push('## ⚠️ No transactions found matching your filters', '');
+      sections.push('No transactions were found that match the specified filters. Try:', '');
+      sections.push(
+        '- Adjusting the date range',
+        '- Removing or relaxing amount filters',
+        '- Checking different category or payee filters',
+        ''
+      );
+    }
+
+    // Add table (with empty row if no transactions)
+    const table = rows.length > 0 ? `${header}${rows}` : `${header}| _No matching transactions_ | — | — | — | — | — |`;
+    sections.push(table);
+
+    return sections.join('\n');
   }
 }

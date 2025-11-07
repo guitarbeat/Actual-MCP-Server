@@ -19,8 +19,7 @@ describe('ScheduleHandler', () => {
         name: 'Test Schedule',
         accountId: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
         amount: 1000,
-        nextDate: '2025-12-01',
-        rule: 'every month',
+        date: '2025-12-01',
       };
       const expectedId = 'new-schedule-id';
       vi.mocked(actualApi.createSchedule).mockResolvedValue(expectedId);
@@ -36,8 +35,7 @@ describe('ScheduleHandler', () => {
         name: 'Test Schedule',
         accountId: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
         amount: 1000,
-        nextDate: '2025-12-01',
-        rule: 'every month',
+        date: '2025-12-01',
       };
       const unsupportedResponse = {
         isError: true,
@@ -60,8 +58,7 @@ describe('ScheduleHandler', () => {
         name: 'Test Schedule',
         accountId: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
         amount: 1000,
-        nextDate: '2025-12-01',
-        rule: 'every month',
+        date: '2025-12-01',
       };
       const unsupportedResponse = {
         isError: true,
@@ -87,8 +84,7 @@ describe('ScheduleHandler', () => {
         name: 'Test Schedule',
         accountId: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
         amount: 1000,
-        nextDate: '2025-12-01',
-        rule: 'every month',
+        date: '2025-12-01',
       };
       vi.mocked(actualApi.updateSchedule).mockResolvedValue(undefined);
 
