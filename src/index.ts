@@ -30,6 +30,7 @@ import {
 } from './core/performance/performance-logger.js';
 import { cacheService } from './core/cache/cache-service.js';
 import { metricsTracker } from './core/performance/metrics-tracker.js';
+import { setupSafeLogging, restoreConsoleMethods } from './core/logging/safe-logger.js';
 
 dotenv.config({ path: '.env' });
 
@@ -130,6 +131,9 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 // Global variable to track periodic logging interval
 let cacheStatsInterval: NodeJS.Timeout | null = null;
 
+// Global variable to track if stdio transport is already connected
+let stdioTransportConnected = false;
+
 // Start the server
 async function main(): Promise<void> {
   // Startup banner (skip for test modes)
@@ -183,6 +187,15 @@ async function main(): Promise<void> {
 
   // Initialize Actual Budget API at startup
   if (!testResources && !testCustom) {
+    // * CRITICAL: In stdio mode, setup safe logging BEFORE initialization
+    // * This ensures all logs during initialization go through MCP logging
+    if (!useSse && !stdioTransportConnected) {
+      const transport = new StdioServerTransport();
+      await server.connect(transport);
+      setupSafeLogging(server);
+      stdioTransportConnected = true;
+    }
+
     console.error('');
 
     try {
@@ -405,8 +418,15 @@ async function main(): Promise<void> {
       // Server started successfully
     });
   } else {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
+    // * Transport already connected and safe logging setup in main() above
+    // * Just log that we're ready
+    if (!stdioTransportConnected) {
+      // This shouldn't happen, but handle it gracefully
+      const transport = new StdioServerTransport();
+      await server.connect(transport);
+      setupSafeLogging(server);
+      stdioTransportConnected = true;
+    }
     console.error('Actual Budget MCP Server (stdio) started');
   }
 }
@@ -455,6 +475,11 @@ async function gracefulShutdown(signal: string): Promise<void> {
     // Close MCP server
     server.close();
 
+    // Restore console methods before exit
+    if (!useSse) {
+      restoreConsoleMethods();
+    }
+
     // Clear the force exit timeout since we completed successfully
     clearTimeout(forceExitTimeout);
 
@@ -476,10 +501,8 @@ process.on('SIGTERM', () => {
 
 main()
   .then(() => {
-    if (!useSse) {
-      console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
-      console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
-    }
+    // Safe logging is already set up in main() for stdio mode
+    // No need to override console methods here
   })
   .catch((error: unknown) => {
     console.error('Server error:', error);
