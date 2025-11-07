@@ -58,10 +58,24 @@ export async function handler(
   args: Record<string, unknown>
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    if (args.payeeId) {
-      if (typeof args.payeeId !== 'string') {
-        return errorFromCatch('payeeId must be a string');
+    // Validate payeeId type first if provided
+    if (args.payeeId !== undefined && typeof args.payeeId !== 'string') {
+      return errorFromCatch('payeeId must be a string');
+    }
+
+    // Validate search type if provided
+    if (args.search !== undefined && typeof args.search !== 'string') {
+      return errorFromCatch('search must be a string');
+    }
+
+    // Validate limit type if provided
+    if (args.limit !== undefined) {
+      if (typeof args.limit !== 'number' || args.limit < 1) {
+        return errorFromCatch('limit must be a positive number');
       }
+    }
+
+    if (args.payeeId) {
       const rules = await getPayeeRules(args.payeeId as string);
       return successWithJson(rules);
     } else {
@@ -69,19 +83,13 @@ export async function handler(
 
       // Filter by search term if provided
       if (args.search) {
-        if (typeof args.search !== 'string') {
-          return errorFromCatch('search must be a string');
-        }
-        const searchLower = args.search.toLowerCase();
+        const searchLower = (args.search as string).toLowerCase();
         payees = payees.filter((payee) => payee.name.toLowerCase().includes(searchLower));
       }
 
       // Apply limit if provided
       if (args.limit !== undefined) {
-        if (typeof args.limit !== 'number' || args.limit < 1) {
-          return errorFromCatch('limit must be a positive number');
-        }
-        payees = payees.slice(0, args.limit);
+        payees = payees.slice(0, args.limit as number);
       }
 
       const structured = payees.map((payee) => ({

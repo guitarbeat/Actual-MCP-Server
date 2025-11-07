@@ -26,7 +26,13 @@ describe('ScheduleHandler', () => {
 
       const result = await scheduleHandler.create(data);
 
-      expect(actualApi.createSchedule).toHaveBeenCalledWith(data);
+      // The handler transforms accountId to account
+      expect(actualApi.createSchedule).toHaveBeenCalledWith({
+        name: 'Test Schedule',
+        account: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
+        amount: 1000,
+        date: '2025-12-01',
+      });
       expect(result).toBe(expectedId);
     });
 
@@ -90,7 +96,13 @@ describe('ScheduleHandler', () => {
 
       await scheduleHandler.update(id, data);
 
-      expect(actualApi.updateSchedule).toHaveBeenCalledWith(id, data);
+      // The handler transforms accountId to account
+      expect(actualApi.updateSchedule).toHaveBeenCalledWith(id, {
+        name: 'Test Schedule',
+        account: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
+        amount: 1000,
+        date: '2025-12-01',
+      });
     });
   });
 

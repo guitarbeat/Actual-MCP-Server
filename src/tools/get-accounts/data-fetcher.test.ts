@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GetAccountsDataFetcher } from './data-fetcher.js';
-import { getAccountBalance } from '@actual-app/api';
+import { getAccountBalance } from '../../actual-api.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 
-vi.mock('@actual-app/api', () => ({
+vi.mock('../../actual-api.js', () => ({
   getAccountBalance: vi.fn(),
 }));
 
@@ -77,17 +77,18 @@ describe('GetAccountsDataFetcher', () => {
     ];
 
     vi.mocked(fetchAllAccounts).mockResolvedValue(mockAccounts);
+    // Use a UUID-like string to trigger ID resolution path
     vi.mocked(nameResolver.resolveAccount).mockResolvedValue('550e8400-e29b-41d4-a716-446655440000');
     vi.mocked(getAccountBalance).mockResolvedValue(10000);
 
     const result = await fetcher.fetchAccounts({
-      accountId: 'Checking',
+      accountId: '550e8400-e29b-41d4-a716-446655440000',
       includeClosed: false,
     });
 
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('Checking');
-    expect(nameResolver.resolveAccount).toHaveBeenCalledWith('Checking');
+    expect(nameResolver.resolveAccount).toHaveBeenCalledWith('550e8400-e29b-41d4-a716-446655440000');
   });
 
   it('should support partial name matching', async () => {

@@ -1,4 +1,5 @@
 // Core exports
+// Keep existing exports for backward compatibility
 export * from './input/argument-parser.js';
 export * from './input/validators.js';
 export * from './data/fetch-accounts.js';
@@ -14,3 +15,12 @@ export * from './mapping/transaction-mapper.js';
 export * from './mapping/category-classifier.js';
 export * from './utils/name-resolver.js';
 export * from './types/index.js';
+
+// New barrel exports for DRY improvements
+export * from './cache/index.js';
+export * from './performance/index.js';
+export * from './logging/index.js';
+export * from './utils/index.js';
+export * from './aggregation/index.js';
+export * from './mapping/index.js';
+export * from './data/index.js';

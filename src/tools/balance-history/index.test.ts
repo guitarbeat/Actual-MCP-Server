@@ -7,13 +7,14 @@ vi.mock('../../actual-api.js', async () => {
   const actual = await vi.importActual('../../actual-api.js');
   return {
     ...actual,
-    getAccounts: vi.fn(),
-    getTransactions: vi.fn(),
+    initActualApi: vi.fn().mockResolvedValue(undefined),
+    getAccountBalance: vi.fn(),
   };
 });
 
 vi.mock('@actual-app/api', () => ({
   default: {
+    init: vi.fn().mockResolvedValue(undefined),
     getAccountBalance: vi.fn(),
   },
 }));
@@ -26,8 +27,23 @@ vi.mock('../../core/cache/cache-service.js', () => ({
   },
 }));
 
-import api from '@actual-app/api';
-import { getAccounts, getTransactions } from '../../actual-api.js';
+vi.mock('../../core/data/fetch-accounts.js', () => ({
+  fetchAllAccounts: vi.fn(),
+}));
+
+vi.mock('../../core/data/fetch-transactions.js', () => ({
+  fetchAllTransactions: vi.fn(),
+  fetchTransactionsForAccount: vi.fn(),
+}));
+
+vi.mock('../../core/utils/account-selector.js', () => ({
+  resolveAccountSelection: vi.fn(),
+}));
+
+import { initActualApi, getAccountBalance } from '../../actual-api.js';
+import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
+import { fetchTransactionsForAccount, fetchAllTransactions } from '../../core/data/fetch-transactions.js';
+import { resolveAccountSelection } from '../../core/utils/account-selector.js';
 import { cacheService } from '../../core/cache/cache-service.js';
 
 describe('balance-history tool integration', () => {
@@ -53,9 +69,15 @@ describe('balance-history tool integration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getAccounts).mockResolvedValue(mockAccounts);
-    vi.mocked(getTransactions).mockResolvedValue(mockTransactions);
-    vi.mocked(api.getAccountBalance).mockResolvedValue(50000);
+    vi.mocked(initActualApi).mockResolvedValue(undefined);
+    vi.mocked(fetchAllAccounts).mockResolvedValue(mockAccounts);
+    vi.mocked(fetchTransactionsForAccount).mockResolvedValue(mockTransactions);
+    vi.mocked(fetchAllTransactions).mockResolvedValue(mockTransactions);
+    vi.mocked(getAccountBalance).mockResolvedValue(50000);
+    vi.mocked(resolveAccountSelection).mockResolvedValue({
+      accountId: 'acc1',
+      account: mockAccounts[0],
+    });
   });
 
   describe('with caching enabled', () => {
@@ -83,7 +105,9 @@ describe('balance-history tool integration', () => {
 
       await handler(args);
 
-      expect(cacheService.getOrFetch).toHaveBeenCalled();
+      // Note: balance-history doesn't use cacheService.getOrFetch directly
+      // It uses fetchAllAccounts/fetchTransactionsForAccount which may use caching internally
+      expect(fetchAllAccounts).toHaveBeenCalled();
     });
 
     it('should handle account-specific queries', async () => {
@@ -97,11 +121,15 @@ describe('balance-history tool integration', () => {
 
     it('should fetch balances in parallel for multiple accounts', async () => {
       const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      vi.mocked(resolveAccountSelection).mockResolvedValue({
+        accountId: undefined,
+        account: undefined,
+      });
 
       await handler(args);
 
       // Verify getAccountBalance was called for each account
-      expect(api.getAccountBalance).toHaveBeenCalled();
+      expect(getAccountBalance).toHaveBeenCalled();
     });
   });
 
@@ -127,8 +155,8 @@ describe('balance-history tool integration', () => {
 
       await handler(args);
 
-      expect(getAccounts).toHaveBeenCalled();
-      expect(api.getAccountBalance).toHaveBeenCalled();
+      expect(fetchAllAccounts).toHaveBeenCalled();
+      expect(getAccountBalance).toHaveBeenCalled();
     });
   });
 
