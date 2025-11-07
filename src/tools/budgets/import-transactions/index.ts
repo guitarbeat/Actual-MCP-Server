@@ -24,7 +24,7 @@ export const schema = {
     'SEE ALSO:\n' +
     '- Use get-accounts to find account IDs for syncing specific accounts\n' +
     '- Use get-transactions to view imported transactions\n' +
-    '- Use manage-transaction to manually add transactions not from bank\n\n' +
+    '- Use manage-entity to manually add transactions not from bank\n\n' +
     'NOTES:\n' +
     '- Bank sync requires configured bank connections\n' +
     '- To import transactions from CSV/OFX/QIF files, use the Actual Budget UI (file import is not available via API for existing budgets)',

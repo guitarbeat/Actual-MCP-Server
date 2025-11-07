@@ -13,12 +13,7 @@ vi.mock('./actual-api.js', () => ({
   getBudgetMonth: vi.fn(),
 }));
 
-vi.mock('./core/data/fetch-accounts.js', () => ({
-  fetchAllAccounts: vi.fn(),
-}));
-
 const { initActualApi, getBudgetMonths, getBudgetMonth } = await import('./actual-api.js');
-const { fetchAllAccounts } = await import('./core/data/fetch-accounts.js');
 
 type RequestHandler = (request: unknown, extra?: unknown) => Promise<unknown>;
 
@@ -64,67 +59,20 @@ describe('setupResources', () => {
     const server = new Server({ name: 'test', version: '0.0.0' }, { capabilities: { resources: {} } });
     setupResources(server);
 
-    const sampleAccount = {
-      id: 'acc-1',
-      name: 'Checking',
-      type: 'checking',
-      closed: false,
-      offbudget: false,
-      balance: 123_00,
-    } as const;
-
-    // Use current date to generate relevant months (3 back, current, 2 forward)
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    const relevantMonths: string[] = [];
-    for (let i = -3; i <= 2; i++) {
-      let year = currentYear;
-      let month = currentMonth + i;
-      if (month < 1) {
-        month += 12;
-        year -= 1;
-      } else if (month > 12) {
-        month -= 12;
-        year += 1;
-      }
-      relevantMonths.push(`${year}-${String(month).padStart(2, '0')}`);
-    }
-
-    // Include some months outside the range to test filtering
-    const allMonths = [
-      `${currentYear - 1}-12`, // Old month
-      ...relevantMonths,
-      `${currentYear + 1}-06`, // Future month beyond range
-    ];
-
-    vi.mocked(fetchAllAccounts).mockResolvedValue([sampleAccount]);
-    vi.mocked(getBudgetMonths).mockResolvedValue(allMonths);
-
     const handler = getRequestHandler(server, ListResourcesRequestSchema);
     const result = (await handler({ method: 'resources/list', params: {} })) as {
       resources: Array<{ uri: string; name: string; description?: string }>;
     };
 
     expect(initActualApi).toHaveBeenCalledTimes(1);
-    expect(fetchAllAccounts).toHaveBeenCalledTimes(1);
-    expect(getBudgetMonths).toHaveBeenCalledTimes(1);
-
-    // Should have: accounts overview + 1 account + budgets overview + 6 relevant months = 9 resources
-    expect(result.resources.length).toBe(9);
+    // Should only return 2 directory resources (no longer fetches accounts/budgets for listing)
+    expect(result.resources.length).toBe(2);
     expect(result.resources[0].uri).toBe('actual://accounts');
-    expect(result.resources[0].name).toBe('Accounts Overview');
-    expect(result.resources[1].uri).toBe(`actual://accounts/${sampleAccount.id}`);
-    expect(result.resources[1].name).toBe(sampleAccount.name);
-    expect(result.resources[2].uri).toBe('actual://budgets');
-    expect(result.resources[2].name).toBe('Budget Months');
-    // Check that only relevant months are included
-    const budgetResources = result.resources.slice(3);
-    expect(budgetResources.length).toBe(6);
-    budgetResources.forEach((resource, index) => {
-      expect(resource.uri).toBe(`actual://budgets/${relevantMonths[index]}`);
-      expect(resource.name).toBe(`Budget ${relevantMonths[index]}`);
-    });
+    expect(result.resources[0].name).toBe('Accounts Directory');
+    expect(result.resources[0].description).toContain('get-accounts tool');
+    expect(result.resources[1].uri).toBe('actual://budgets');
+    expect(result.resources[1].name).toBe('Budget Months Directory');
+    expect(result.resources[1].description).toContain('get-budget tool');
   });
 
   describe('budget resources', () => {

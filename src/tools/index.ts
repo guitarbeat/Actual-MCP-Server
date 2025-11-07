@@ -17,10 +17,6 @@ import * as monthlySummary from './monthly-summary/index.js';
 import * as getPayees from './payees/get-payees/index.js';
 import * as getRules from './rules/get-rules/index.js';
 import * as spendingByCategory from './spending-by-category/index.js';
-import * as manageTransaction from './manage-transaction/index.js';
-
-// Account management tools
-import * as manageAccount from './manage-account/index.js';
 
 // Budget operation tools
 import * as setBudget from './set-budget/index.js';
@@ -101,8 +97,6 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: getSchedules.schema, handler: getSchedules.handler, requiresWrite: false, category: 'core' },
 
   // Core write tools
-  { schema: manageTransaction.schema, handler: manageTransaction.handler, requiresWrite: true, category: 'core' },
-  { schema: manageAccount.schema, handler: manageAccount.handler, requiresWrite: true, category: 'core' },
   { schema: setBudget.schema, handler: setBudget.handler, requiresWrite: true, category: 'core' },
   { schema: mergePayees.schema, handler: mergePayees.handler, requiresWrite: true, category: 'core' },
   { schema: importTransactions.schema, handler: importTransactions.handler, requiresWrite: true, category: 'core' },

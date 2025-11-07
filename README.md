@@ -7,7 +7,7 @@ MCP server for integrating Actual Budget with Claude and other LLM assistants.
 The Actual Budget MCP Server allows you to interact with your personal financial data from [Actual Budget](https://actualbudget.com/) using natural language through LLMs. It exposes your accounts, transactions, and financial metrics through the Model Context Protocol (MCP).
 
 **Optimized for Conversational AI:**
-- **20 core tools** (down from 37) - 46% reduction in context window consumption
+- **17 core tools** (down from 37) - 54% reduction in context window consumption
 - **Name resolution** - Use account, category, and payee names instead of UUIDs
 - **Auto-loading** - Budget loads automatically on startup (no manual loading required)
 - **Consolidated operations** - Unified interfaces for common tasks
@@ -23,23 +23,23 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 
 ### Tools
 
-The server provides **20 core tools** optimized for conversational budget management. These tools support name resolution, allowing you to use account, category, and payee names instead of UUIDs.
+The server provides **17 core tools** optimized for conversational budget management. These tools support name resolution, allowing you to use account, category, and payee names instead of UUIDs.
 
-#### Transaction Management (2 tools)
+#### Transaction & Account Management (1 tool)
 
-- **`get-transactions`** - View and filter transactions by account, date range, category, or payee. Returns up to 1000 transactions.
-- **`manage-transaction`** - Create, update, or delete transactions with automatic name-to-ID resolution
+- **`manage-entity`** - Unified tool for all entity operations including transactions and accounts. Supports name resolution and automatic amount conversion.
 
 **Create Transaction Example:**
 ```json
 {
-  "tool": "manage-transaction",
+  "tool": "manage-entity",
   "args": {
+    "entityType": "transaction",
     "operation": "create",
-    "transaction": {
+    "data": {
       "account": "Checking",
       "date": "2025-01-15",
-      "amount": 5000,
+      "amount": -50.00,
       "payee": "Grocery Store",
       "category": "Food"
     }
@@ -47,31 +47,14 @@ The server provides **20 core tools** optimized for conversational budget manage
 }
 ```
 
-**Delete Transaction Example:**
+**Create Account Example:**
 ```json
 {
-  "tool": "manage-transaction",
+  "tool": "manage-entity",
   "args": {
-    "operation": "delete",
-    "id": "transaction-id-here"
-  }
-}
-```
-
-> ⚠️ **Warning:** Transaction deletion is permanent and cannot be undone. Make sure you have the correct transaction ID before deleting.
-
-#### Account Management (2 tools)
-
-- **`get-accounts`** - List all accounts with balances included by default. Supports filtering by account ID/name and excluding closed accounts.
-- **`manage-account`** - Complete account lifecycle management: create, update, delete, close, reopen, and query balance
-
-**Create Checking Account Example:**
-```json
-{
-  "tool": "manage-account",
-  "args": {
+    "entityType": "account",
     "operation": "create",
-    "account": {
+    "data": {
       "name": "My Checking",
       "type": "checking"
     }
@@ -79,54 +62,27 @@ The server provides **20 core tools** optimized for conversational budget manage
 }
 ```
 
-**Create Account with Initial Balance Example:**
-```json
-{
-  "tool": "manage-account",
-  "args": {
-    "operation": "create",
-    "account": {
-      "name": "Savings Account",
-      "type": "savings"
-    },
-    "initialBalance": 100000
-  }
-}
-```
-
-**Update Account Name Example:**
-```json
-{
-  "tool": "manage-account",
-  "args": {
-    "operation": "update",
-    "id": "account-id-here",
-    "account": {
-      "name": "Updated Account Name"
-    }
-  }
-}
-```
-
-**Close Account with Transfer Example:**
-```json
-{
-  "tool": "manage-account",
-  "args": {
-    "operation": "close",
-    "id": "account-id-here",
-    "transferAccountId": "destination-account-id",
-    "transferCategoryId": "category-id-for-transfer"
-  }
-}
-```
+> ⚠️ **Note**: `manage-transaction` and `manage-account` are deprecated. Use `manage-entity` with `entityType: "transaction"` or `entityType: "account"` instead.
 
 **Query Account Balance Example:**
 ```json
 {
-  "tool": "manage-account",
+  "tool": "manage-entity",
   "args": {
+    "entityType": "account",
     "operation": "balance",
+    "id": "account-id-here"
+  }
+}
+```
+
+**Close Account Example:**
+```json
+{
+  "tool": "manage-entity",
+  "args": {
+    "entityType": "account",
+    "operation": "close",
     "id": "account-id-here"
   }
 }
@@ -135,8 +91,9 @@ The server provides **20 core tools** optimized for conversational budget manage
 **Delete Account Example:**
 ```json
 {
-  "tool": "manage-account",
+  "tool": "manage-entity",
   "args": {
+    "entityType": "account",
     "operation": "delete",
     "id": "account-id-here"
   }

@@ -19,7 +19,6 @@ import {
   getAccountBalance,
   getTransactions,
 } from './actual-api.js';
-import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 
 /**
  * Filter budget months to show only relevant months:
@@ -109,35 +108,21 @@ export const setupResources = (server: Server): void => {
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
     try {
       await initActualApi();
-      const accounts: Account[] = await fetchAllAccounts();
-      const allBudgetMonths: string[] = await getBudgetMonths();
-      const budgetMonths: string[] = filterRelevantBudgetMonths(allBudgetMonths);
 
       const resources = [
         {
           uri: 'actual://accounts',
-          name: 'Accounts Overview',
-          description: 'All accounts with balance summaries and status indicators.',
+          name: 'Accounts Directory',
+          description: 'Browse all accounts. Use the get-accounts tool for detailed account information and balances.',
           mimeType: 'text/markdown',
         },
-        ...accounts.map((account) => ({
-          uri: `actual://accounts/${account.id}`,
-          name: account.name,
-          description: `${account.name} (${account.type || 'Account'})${account.closed ? ' - CLOSED' : ''}`,
-          mimeType: 'text/markdown',
-        })),
         {
           uri: 'actual://budgets',
-          name: 'Budget Months',
-          description: 'Relevant budget months (3 months back, current month, 2 months forward).',
+          name: 'Budget Months Directory',
+          description:
+            'Browse budget months. Use the get-budget tool to retrieve detailed budget data for specific months.',
           mimeType: 'text/markdown',
         },
-        ...budgetMonths.map((month) => ({
-          uri: `actual://budgets/${month}`,
-          name: `Budget ${month}`,
-          description: `Budget breakdown for ${month}`,
-          mimeType: 'text/markdown',
-        })),
       ];
       return {
         resources,
