@@ -127,13 +127,8 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    console.log(
-      JSON.stringify({
-        dataDir,
-        serverURL: process.env.ACTUAL_SERVER_URL,
-        password: process.env.ACTUAL_PASSWORD ? '***' : '(empty)',
-      })
-    );
+    // * Removed JSON log to stdout - this was being interpreted as JSON-RPC in stdio mode
+    // * Configuration details are logged via MCP logging if needed
     await api.init({
       dataDir,
       serverURL: process.env.ACTUAL_SERVER_URL,
