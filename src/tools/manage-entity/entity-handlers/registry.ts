@@ -9,6 +9,8 @@ import { CategoryGroupHandler } from './category-group-handler.js';
 import { PayeeHandler } from './payee-handler.js';
 import { RuleHandler } from './rule-handler.js';
 import { ScheduleHandler } from './schedule-handler.js';
+import { TransactionHandler } from './transaction-handler.js';
+import { AccountHandler } from './account-handler.js';
 
 /**
  * Registry of entity handlers
@@ -21,6 +23,8 @@ const entityHandlers: Record<EntityType, EntityHandler> = {
   payee: new PayeeHandler(),
   rule: new RuleHandler(),
   schedule: new ScheduleHandler(),
+  transaction: new TransactionHandler(),
+  account: new AccountHandler(),
 };
 
 /**

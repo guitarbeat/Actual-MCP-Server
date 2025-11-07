@@ -4,8 +4,10 @@
 
 /**
  * Operation types supported by entity handlers
+ * Standard CRUD operations are supported by all entities
+ * Extended operations (close, reopen, balance) are account-specific
  */
-export type Operation = 'create' | 'update' | 'delete';
+export type Operation = 'create' | 'update' | 'delete' | 'close' | 'reopen' | 'balance';
 
 /**
  * Base interface for all entity handlers

@@ -8,16 +8,17 @@ This guide helps you migrate from deprecated and removed tools to the new consol
 
 As of version 2.0.0, the 15 individual entity CRUD tools have been **permanently removed**. You must use the `manage-entity` tool for all entity Create, Update, and Delete operations.
 
-### v2.1.0 - Transaction & Budget Tool Consolidation
+### v3.0.0 - Transaction & Account Tool Removal
 
-As of version 2.1.0, additional tools have been **permanently removed**:
-- Transaction tools consolidated into `manage-transaction`
-- Budget tools consolidated into `set-budget`
-- Account balance included in `get-accounts` by default
+As of version 3.0.0, `manage-transaction` and `manage-account` have been **permanently removed**. You must use `manage-entity` with `entityType: "transaction"` or `entityType: "account"` instead.
+
+### v2.2.0 - Transaction & Account Tool Consolidation
+
+As of version 2.2.0, `manage-transaction` and `manage-account` were marked as deprecated (now removed in v3.0.0):
 
 ## Overview
 
-The Actual Budget MCP Server has been simplified from 37 tools to 20 core tools (46% reduction), optimized for conversational budget management with single-budget users.
+The Actual Budget MCP Server has been simplified from 37 tools to 17 core tools (54% reduction), optimized for conversational budget management with single-budget users.
 
 **Benefits:**
 - ✅ Simpler API with fewer tools to learn
@@ -731,7 +732,7 @@ The following tools have been permanently removed in v2.1.0. Use the consolidate
 
 #### `create-transaction` (Removed)
 
-**Migration:** Use `manage-transaction` with `operation: "create"`
+**Migration:** Use `manage-entity` with `entityType: "transaction"` and `operation: "create"`
 
 **Before:**
 ```json
@@ -750,10 +751,11 @@ The following tools have been permanently removed in v2.1.0. Use the consolidate
 **After:**
 ```json
 {
-  "tool": "manage-transaction",
+  "tool": "manage-entity",
   "args": {
+    "entityType": "transaction",
     "operation": "create",
-    "transaction": {
+    "data": {
       "account": "Checking",
       "date": "2025-01-15",
       "amount": 5000,
@@ -766,7 +768,7 @@ The following tools have been permanently removed in v2.1.0. Use the consolidate
 
 #### `update-transaction` (Removed)
 
-**Migration:** Use `manage-transaction` with `operation: "update"`
+**Migration:** Use `manage-entity` with `entityType: "transaction"` and `operation: "update"`
 
 **Before:**
 ```json
@@ -783,11 +785,12 @@ The following tools have been permanently removed in v2.1.0. Use the consolidate
 **After:**
 ```json
 {
-  "tool": "manage-transaction",
+  "tool": "manage-entity",
   "args": {
+    "entityType": "transaction",
     "operation": "update",
     "id": "transaction-id",
-    "transaction": {
+    "data": {
       "amount": 6000,
       "notes": "Updated amount"
     }
@@ -913,10 +916,11 @@ All new consolidated tools support **name resolution**, allowing you to use huma
 **Using UUIDs (still supported):**
 ```json
 {
-  "tool": "manage-transaction",
+  "tool": "manage-entity",
   "args": {
+    "entityType": "transaction",
     "operation": "create",
-    "transaction": {
+    "data": {
       "account": "550e8400-e29b-41d4-a716-446655440000",
       "payee": "650e8400-e29b-41d4-a716-446655440000",
       "category": "750e8400-e29b-41d4-a716-446655440000"
@@ -928,10 +932,11 @@ All new consolidated tools support **name resolution**, allowing you to use huma
 **Using Names (recommended):**
 ```json
 {
-  "tool": "manage-transaction",
+  "tool": "manage-entity",
   "args": {
+    "entityType": "transaction",
     "operation": "create",
-    "transaction": {
+    "data": {
       "account": "Checking",
       "payee": "Grocery Store",
       "category": "Food"
@@ -1046,7 +1051,7 @@ export ACTUAL_BUDGET_SYNC_ID="your-budget-id"
 
 **Important**: 
 - Entity CRUD tools have been permanently removed. Use `manage-entity`.
-- Transaction/budget tools have been permanently removed. Use `manage-transaction` and `set-budget`.
+- Transaction/budget tools have been permanently removed. Use `manage-entity` with `entityType: "transaction"` or `entityType: "account"` and `set-budget`.
 - Optional tools can be re-enabled via environment variables.
 
 ## Benefits of Migration
@@ -1080,7 +1085,7 @@ If you encounter issues during migration:
 - **Removed**: 5 transaction/budget tools (replaced by consolidated tools)
 - **Removed from default**: 16 optional tools (can be re-enabled)
 - **Added**: 
-  - `manage-transaction` (consolidates create/update)
+  - `manage-entity` (consolidates all entity operations including transactions and accounts)
   - `set-budget` (consolidates amount/carryover)
   - Name resolution utility
   - Automatic budget loading

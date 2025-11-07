@@ -146,7 +146,35 @@ export function error(message: string, suggestion: string): MCPResponse {
  * @returns An error response object
  */
 export function errorFromCatch(err: unknown, context: ErrorContext = {}): MCPResponse {
-  const resolvedMessage = err instanceof Error ? err.message : typeof err === 'string' ? err : undefined;
+  let resolvedMessage: string | undefined;
+
+  try {
+    if (err instanceof Error) {
+      resolvedMessage = err.message || 'Unknown error';
+    } else if (typeof err === 'string') {
+      resolvedMessage = err;
+    } else if (err === null || err === undefined) {
+      // For null/undefined, use fallback message if provided, otherwise use string representation
+      resolvedMessage = undefined; // Will fall back to context.fallbackMessage
+    } else {
+      // Try to extract message from object, but handle non-serializable objects
+      try {
+        const stringified = JSON.stringify(err);
+        // If it's an object with a message property, use that
+        if (typeof err === 'object' && err !== null && 'message' in err) {
+          resolvedMessage = String((err as { message: unknown }).message);
+        } else {
+          resolvedMessage = stringified;
+        }
+      } catch {
+        // If JSON.stringify fails (circular reference, etc.), use String conversion
+        resolvedMessage = String(err);
+      }
+    }
+  } catch {
+    // Fallback if anything goes wrong
+    resolvedMessage = 'Unknown error (could not process error object)';
+  }
 
   const message = resolvedMessage ?? context.fallbackMessage ?? 'Unknown error encountered';
   const suggestion = context.suggestion ?? inferSuggestion(message);
@@ -164,14 +192,40 @@ export function errorFromCatch(err: unknown, context: ErrorContext = {}): MCPRes
  */
 function logErrorWithContext(err: unknown, context: ErrorContext): void {
   const timestamp = new Date().toISOString();
-  const errorMessage = err instanceof Error ? err.message : String(err);
-  const errorStack = err instanceof Error ? err.stack : undefined;
+  let errorMessage: string;
+  let errorStack: string | undefined;
+
+  try {
+    if (err instanceof Error) {
+      errorMessage = err.message || 'Unknown error';
+      errorStack = err.stack;
+    } else if (typeof err === 'string') {
+      errorMessage = err;
+    } else if (err === null || err === undefined) {
+      errorMessage = String(err);
+    } else {
+      // Try to stringify, but catch circular reference errors
+      try {
+        errorMessage = JSON.stringify(err);
+      } catch {
+        errorMessage = String(err);
+      }
+    }
+  } catch {
+    errorMessage = 'Unknown error (could not serialize)';
+  }
 
   // Build context string with all available information
   const contextParts: string[] = [];
   if (context.operation) contextParts.push(`operation=${context.operation}`);
   if (context.tool) contextParts.push(`tool=${context.tool}`);
-  if (context.args) contextParts.push(`args=${JSON.stringify(context.args)}`);
+  if (context.args) {
+    try {
+      contextParts.push(`args=${JSON.stringify(context.args)}`);
+    } catch {
+      contextParts.push(`args=[non-serializable]`);
+    }
+  }
 
   const contextStr = contextParts.length > 0 ? ` [${contextParts.join(', ')}]` : '';
 

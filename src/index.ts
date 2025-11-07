@@ -491,6 +491,37 @@ async function gracefulShutdown(signal: string): Promise<void> {
   }
 }
 
+// Handle unhandled promise rejections to prevent crashes
+process.on('unhandledRejection', (reason: unknown, _promise: Promise<unknown>) => {
+  let errorMessage: string;
+  try {
+    if (reason instanceof Error) {
+      errorMessage = reason.message || 'Unknown error';
+      console.error(`[UNHANDLED REJECTION] ${errorMessage}`);
+      if (reason.stack) {
+        console.error(`[UNHANDLED REJECTION] Stack: ${reason.stack}`);
+      }
+    } else if (typeof reason === 'string') {
+      errorMessage = reason;
+      console.error(`[UNHANDLED REJECTION] ${errorMessage}`);
+    } else {
+      // Try to stringify, but catch circular reference errors
+      try {
+        errorMessage = JSON.stringify(reason);
+        console.error(`[UNHANDLED REJECTION] ${errorMessage}`);
+      } catch {
+        errorMessage = String(reason);
+        console.error(`[UNHANDLED REJECTION] ${errorMessage} (non-serializable object)`);
+      }
+    }
+  } catch {
+    console.error('[UNHANDLED REJECTION] Unknown error (could not process rejection reason)');
+  }
+
+  // Don't exit - just log the error so the server can continue
+  // The error is already logged above
+});
+
 process.on('SIGINT', () => {
   void gracefulShutdown('SIGINT');
 });

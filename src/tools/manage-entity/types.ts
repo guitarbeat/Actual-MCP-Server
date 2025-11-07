@@ -13,7 +13,7 @@ import type { Operation } from './entity-handlers/base-handler.js';
 /**
  * Supported entity types for the manage-entity tool
  */
-export type EntityType = 'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule';
+export type EntityType = 'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule' | 'transaction' | 'account';
 
 // ----------------------------
 // Entity-Specific Data Types
@@ -264,6 +264,48 @@ export const ScheduleDataSchema = z.object({
 // ----------------------------
 
 /**
+ * Data required to create or update a transaction
+ * Supports flattened schema with name resolution
+ */
+export interface TransactionData {
+  account?: string; // Name or ID
+  date?: string; // YYYY-MM-DD format
+  amount?: number; // Dollars or cents (auto-detected)
+  payee?: string; // Name or ID
+  category?: string; // Name or ID
+  notes?: string;
+  cleared?: boolean;
+  subtransactions?: Array<{
+    amount: number;
+    category?: string;
+    notes?: string;
+  }>;
+}
+
+/**
+ * Account type enum
+ */
+export type AccountType = 'checking' | 'savings' | 'credit' | 'investment' | 'mortgage' | 'debt' | 'other';
+
+/**
+ * Data required to create or update an account
+ */
+export interface AccountData {
+  name?: string;
+  type?: AccountType;
+  offbudget?: boolean;
+  initialBalance?: number; // For create operation only, in cents
+}
+
+/**
+ * Close account data structure
+ */
+export interface CloseAccountData {
+  transferAccountId?: string;
+  transferCategoryId?: string;
+}
+
+/**
  * Discriminated union for entity-specific data
  * Enables type-safe handling of different entity types
  */
@@ -272,7 +314,9 @@ export type EntityDataUnion =
   | { entityType: 'categoryGroup'; data: CategoryGroupData }
   | { entityType: 'payee'; data: PayeeData }
   | { entityType: 'rule'; data: RuleData }
-  | { entityType: 'schedule'; data: ScheduleData };
+  | { entityType: 'schedule'; data: ScheduleData }
+  | { entityType: 'transaction'; data: TransactionData }
+  | { entityType: 'account'; data: AccountData };
 
 // ----------------------------
 // Main Tool Arguments
