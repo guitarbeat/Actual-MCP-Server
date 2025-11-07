@@ -15,11 +15,11 @@ describe('Tool Registry', () => {
   });
 
   describe('Core tools', () => {
-    it('should include all 41 core tools by default', () => {
+    it('should include all 37 core tools by default', () => {
       const tools = getAvailableTools(true);
 
-      // Should have exactly 41 core tools (CRUD layout + split budget hold)
-      expect(tools.length).toBe(41);
+      // Should have exactly 37 core tools (removed 4 schedule tools, run-query was conditional so didn't affect count)
+      expect(tools.length).toBe(37);
 
       // Core read tools
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
@@ -27,7 +27,6 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'get-grouped-categories')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-payees')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-rules')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'get-schedules')).toBe(true);
 
       // Core insight tools
       expect(tools.some((t) => t.schema.name === 'spending-by-category')).toBe(true);
@@ -67,11 +66,6 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'update-rule')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'delete-rule')).toBe(true);
 
-      // Schedule CRUD tools
-      expect(tools.some((t) => t.schema.name === 'create-schedule')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'update-schedule')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'delete-schedule')).toBe(true);
-
       // Other write tools
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'merge-payees')).toBe(true);
@@ -88,6 +82,12 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-account')).toBe(false);
+
+      // Schedule tools removed (not supported by Actual Budget server)
+      expect(tools.some((t) => t.schema.name === 'get-schedules')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'create-schedule')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'update-schedule')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'delete-schedule')).toBe(false);
     });
 
     it('should not include removed tools', () => {

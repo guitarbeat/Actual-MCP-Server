@@ -26,7 +26,7 @@ describe('set-budget tool', () => {
     const args: SetBudgetArgs = {
       month: '2025-03',
       category: 'Groceries',
-      amount: 50000,
+      amount: 500, // Dollars (will be converted to 50000 cents)
     };
 
     const response = await handler(args);
@@ -36,7 +36,7 @@ describe('set-budget tool', () => {
     expect(mockApi.setBudgetCarryover).not.toHaveBeenCalled();
     const text = (response.content?.[0] as { text: string }).text;
     expect(text).toContain('Successfully updated budget');
-    expect(text).toContain('amount set to 50000');
+    expect(text).toContain('amount set to $500.00');
   });
 
   it('sets carryover only', async () => {
@@ -60,7 +60,7 @@ describe('set-budget tool', () => {
     const args: SetBudgetArgs = {
       month: '2025-03',
       category: 'Groceries',
-      amount: 50000,
+      amount: 500, // Dollars (will be converted to 50000 cents)
       carryover: false,
     };
 
@@ -71,7 +71,7 @@ describe('set-budget tool', () => {
     expect(mockApi.setBudgetCarryover).toHaveBeenCalledWith('2025-03', 'cat-123', false);
     const text = (response.content?.[0] as { text: string }).text;
     expect(text).toContain('Successfully updated budget');
-    expect(text).toContain('amount set to 50000');
+    expect(text).toContain('amount set to $500.00');
     expect(text).toContain('carryover disabled');
   });
 
@@ -81,13 +81,40 @@ describe('set-budget tool', () => {
     const args: SetBudgetArgs = {
       month: '2025-03',
       category: 'Food',
-      amount: 30000,
+      amount: 300, // Dollars (will be converted to 30000 cents)
     };
 
     await handler(args);
 
     expect(mockNameResolver.resolveCategory).toHaveBeenCalledWith('Food');
     expect(mockApi.setBudgetAmount).toHaveBeenCalledWith('2025-03', 'resolved-cat-id', 30000);
+  });
+
+  it('handles amounts in cents (>= 1000)', async () => {
+    const args: SetBudgetArgs = {
+      month: '2025-03',
+      category: 'Groceries',
+      amount: 50000, // >= 1000, treated as cents
+    };
+
+    const response = await handler(args);
+
+    expect(mockApi.setBudgetAmount).toHaveBeenCalledWith('2025-03', 'cat-123', 50000);
+    const text = (response.content?.[0] as { text: string }).text;
+    expect(text).toContain('amount set to $500.00');
+  });
+
+  it('rejects negative amounts', async () => {
+    const args = {
+      month: '2025-03',
+      category: 'Groceries',
+      amount: -100, // Negative amount should be rejected
+    };
+
+    const response = await handler(args as unknown as SetBudgetArgs);
+
+    expect(response.isError).toBe(true);
+    expect(mockApi.setBudgetAmount).not.toHaveBeenCalled();
   });
 
   it('returns error when neither amount nor carryover provided', async () => {
@@ -105,7 +132,7 @@ describe('set-budget tool', () => {
     const args = {
       month: '2025-3',
       category: 'Groceries',
-      amount: 50000,
+      amount: 500, // Dollars
     } as SetBudgetArgs;
 
     const response = await handler(args);

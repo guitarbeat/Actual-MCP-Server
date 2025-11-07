@@ -15,11 +15,11 @@ import { getInitializationStats, resetInitializationStats } from './actual-api.j
 
 describe('Performance Validation', () => {
   describe('Context Window Token Reduction', () => {
-    it('should have 41 core tools (no optional tools)', () => {
+    it('should have 37 core tools (no optional tools)', () => {
       const coreTools = getAvailableTools(true);
 
-      // All 41 tools are core now (CRUD layout + split budget hold)
-      expect(coreTools.length).toBe(41);
+      // All 37 tools are core now (removed run-query - not supported on latest server)
+      expect(coreTools.length).toBe(37);
     });
 
     it('should calculate token savings from original 37 tools', () => {
@@ -28,7 +28,7 @@ describe('Performance Validation', () => {
       // Calculate token savings from original 37 tools
       const TOKENS_PER_TOOL = 150; // Estimated average tokens per tool schema
       const originalToolCount = 37;
-      const currentToolCount = coreTools.length; // 41 core tools (CRUD layout + split budget hold)
+      const currentToolCount = coreTools.length; // 37 core tools (removed run-query)
       const toolsAdded = currentToolCount - originalToolCount;
       const tokensAdded = toolsAdded * TOKENS_PER_TOOL;
       const percentageChange = (tokensAdded / (originalToolCount * TOKENS_PER_TOOL)) * 100;
@@ -40,8 +40,8 @@ describe('Performance Validation', () => {
       console.log(`   Estimated tokens added: ${tokensAdded}`);
       console.log(`   Percentage change: ${percentageChange.toFixed(1)}%`);
 
-      // Note: We increased tool count for better discoverability (CRUD layout)
-      expect(coreTools.length).toBe(41);
+      // Note: Tool count is still 37 (run-query was conditional, so removing it didn't change count)
+      expect(coreTools.length).toBe(37);
     });
 
     it('should have CRUD transaction tools', () => {
@@ -340,9 +340,8 @@ describe('Performance Validation', () => {
       for (let i = 0; i < iterations; i++) {
         const enableBudgetManagement = process.env.ENABLE_BUDGET_MANAGEMENT === 'true';
         const enableAdvancedAccountOps = process.env.ENABLE_ADVANCED_ACCOUNT_OPS === 'true';
-        const enableUtilityTools = process.env.ENABLE_UTILITY_TOOLS === 'true';
         // Use values to prevent optimization
-        if (enableBudgetManagement && enableAdvancedAccountOps && enableUtilityTools) {
+        if (enableBudgetManagement && enableAdvancedAccountOps) {
           // noop
         }
       }
@@ -365,12 +364,10 @@ describe('Performance Validation', () => {
       // Get tool counts
       process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
-      process.env.ENABLE_UTILITY_TOOLS = 'false';
       const coreTools = getAvailableTools(true);
 
       process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
-      process.env.ENABLE_UTILITY_TOOLS = 'true';
       const allTools = getAvailableTools(true);
 
       process.env = originalEnv;
@@ -426,14 +423,13 @@ describe('Performance Validation', () => {
       console.log(`${'='.repeat(60)}\n`);
 
       // Final assertions
-      expect(coreTools.length).toBe(41);
+      expect(coreTools.length).toBe(37);
 
-      // Note: We increased tool count for better discoverability (CRUD layout)
-      // This is a trade-off: more tools = better discoverability, but more context tokens
+      // Note: Tool count is still 37 (run-query was conditional, so removing it didn't change count)
       const originalToolCount = 37;
       const currentToolCount = coreTools.length;
       const toolsAdded = currentToolCount - originalToolCount;
-      expect(toolsAdded).toBe(4); // 41 - 37 = 4 tools added
+      expect(toolsAdded).toBe(0); // 37 - 37 = 0 tools added
     });
   });
 });

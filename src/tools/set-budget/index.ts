@@ -6,6 +6,7 @@
 import { successWithJson, errorFromCatch } from '../../core/response/index.js';
 import { setBudgetAmount, setBudgetCarryover } from '../../actual-api.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
+import { formatAmount } from '../../utils.js';
 import { SetBudgetArgsSchema, type SetBudgetArgs } from './types.js';
 
 export const schema = {
@@ -17,9 +18,10 @@ export const schema = {
     '- category: Category name or ID (supports partial name matching, case-sensitive)\n' +
     '- At least one of: amount or carryover\n\n' +
     'EXAMPLES:\n' +
-    '- Set amount: {"month": "2024-01", "category": "Groceries", "amount": 50000}\n' +
+    '- Set amount: {"month": "2024-01", "category": "Groceries", "amount": 500}\n' +
+    '- Set amount (cents): {"month": "2024-01", "category": "Groceries", "amount": 50000}\n' +
     '- Set carryover: {"month": "2024-01", "category": "Groceries", "carryover": true}\n' +
-    '- Set both: {"month": "2024-01", "category": "Groceries", "amount": 50000, "carryover": true}\n' +
+    '- Set both: {"month": "2024-01", "category": "Groceries", "amount": 500, "carryover": true}\n' +
     '- Disable carryover: {"month": "2024-01", "category": "Groceries", "carryover": false}\n' +
     '- Multiple months: Set budget for each month separately\n\n' +
     'COMMON USE CASES:\n' +
@@ -36,10 +38,12 @@ export const schema = {
     '- Use hold-budget to hold budget for next month\n' +
     '- Use reset-budget-hold to clear budget holds\n\n' +
     'NOTES:\n' +
-    '- Amount in cents (e.g., 50000 = $500.00, 12500 = $125.00)\n' +
+    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., 500 → $500.00, 500.50 → $500.50)\n' +
+    '- Amounts >= 1000 treated as cents (e.g., 50000 → $500.00)\n' +
     '- Month format: YYYY-MM (e.g., "2024-01" for January 2024)\n' +
     '- Category names are case-sensitive for partial matching\n' +
-    '- Carryover enables unused budget to roll over to next month',
+    '- Carryover enables unused budget to roll over to next month\n' +
+    '- Budget amounts must be non-negative',
   inputSchema: {
     type: 'object',
     properties: {
@@ -56,7 +60,7 @@ export const schema = {
       amount: {
         type: 'number',
         description:
-          'Budget amount in cents (e.g., 50000 = $500.00, 12500 = $125.00). Must be a positive integer. Optional if carryover is provided.',
+          'Budget amount (dollars or cents, auto-detected). Amounts < 1000 are treated as dollars (e.g., 500 = $500.00), amounts >= 1000 are treated as cents (e.g., 50000 = $500.00). Must be non-negative. Optional if carryover is provided.',
       },
       carryover: {
         type: 'boolean',
@@ -82,15 +86,16 @@ export async function handler(
     // Validate arguments
     const parsedArgs = SetBudgetArgsSchema.parse(args);
 
-    // Resolve category name to ID if needed
+    // Resolve category name to ID if needed (provides helpful error with available categories)
     const categoryId = await nameResolver.resolveCategory(parsedArgs.category);
 
     const operations: string[] = [];
 
-    // Set amount if provided
+    // Set amount if provided (already converted to cents by schema transform)
     if (parsedArgs.amount !== undefined) {
       await setBudgetAmount(parsedArgs.month, categoryId, parsedArgs.amount);
-      operations.push(`amount set to ${parsedArgs.amount}`);
+      // Format amount for display using formatAmount utility
+      operations.push(`amount set to ${formatAmount(parsedArgs.amount)}`);
     }
 
     // Set carryover if provided
@@ -103,6 +108,11 @@ export async function handler(
       `Successfully updated budget for category '${parsedArgs.category}' in ${parsedArgs.month}: ${operations.join(', ')}`
     );
   } catch (err) {
-    return errorFromCatch(err);
+    // NameResolver already provides helpful error messages with available categories
+    // errorFromCatch will preserve those messages
+    return errorFromCatch(err, {
+      fallbackMessage: 'Failed to set budget',
+      suggestion: 'Check that the category name/ID is correct and the month is in YYYY-MM format.',
+    });
   }
 }
