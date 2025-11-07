@@ -33,7 +33,8 @@ export const schema = {
     '- Use get-grouped-categories to find category names/IDs\n' +
     '- Use get-budget to view current budget amounts and spending\n' +
     '- Use spending-by-category to see actual spending vs budgets\n' +
-    '- Use manage-budget-hold to hold budget for next month\n\n' +
+    '- Use hold-budget to hold budget for next month\n' +
+    '- Use reset-budget-hold to clear budget holds\n\n' +
     'NOTES:\n' +
     '- Amount in cents (e.g., 50000 = $500.00, 12500 = $125.00)\n' +
     '- Month format: YYYY-MM (e.g., "2024-01" for January 2024)\n' +

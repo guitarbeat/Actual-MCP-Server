@@ -22,7 +22,8 @@ export const schema = {
     '- Analyze budget performance\n\n' +
     'SEE ALSO:\n' +
     '- Use with set-budget to set budget amounts for categories\n' +
-    '- Use with manage-budget-hold to hold budget for next month\n' +
+    '- Use with hold-budget to hold budget for next month\n' +
+    '- Use with reset-budget-hold to clear budget holds\n' +
     '- Use with spending-by-category to compare actual spending to budgets\n\n' +
     'RETURNS:\n' +
     '- If month omitted: Array of month strings in YYYY-MM format\n' +

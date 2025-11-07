@@ -28,7 +28,8 @@ export const schema = {
     '- Get account metadata for transaction operations\n\n' +
     'SEE ALSO:\n' +
     '- Use with get-transactions, balance-history, or monthly-summary (requires accountId)\n' +
-    '- Use with manage-entity to modify account properties or create transactions\n\n' +
+    '- Use with create-account, update-account, delete-account to manage accounts\n' +
+    '- Use with create-transaction to add transactions\n\n' +
     'RETURNS:\n' +
     '- Account ID, name, balance, type, status\n' +
     '- Use account IDs with other tools\n' +

@@ -110,10 +110,11 @@ describe('Integration Tests - MCP Simplification', () => {
 
       expect(callToolHandler).toBeDefined();
 
-      // Verify new consolidated tools are registered
+      // Verify new CRUD tools are registered
       const tools = getAvailableTools(true);
 
-      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
     });
@@ -136,7 +137,8 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(tools.some((t) => t.schema.name === 'get-grouped-categories')).toBe(true);
 
       // Verify write tools are not available in read-only mode
-      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
     });
   });
 
@@ -199,7 +201,7 @@ describe('Integration Tests - MCP Simplification', () => {
       // Verify tools that use name resolution are registered
       const tools = getAvailableTools(true);
 
-      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
     });
 
@@ -219,27 +221,29 @@ describe('Integration Tests - MCP Simplification', () => {
   });
 
   describe('Production-Ready Tool Set', () => {
-    it('should have 17 core tools by default', async () => {
+    it('should have 41 core tools by default', async () => {
       const tools = getAvailableTools(true);
       const toolNames = tools.map((t) => t.schema.name);
 
-      // Should have exactly 17 core tools (removed manage-transaction and manage-account, consolidated into manage-entity)
-      expect(tools.length).toBe(17);
+      // Should have exactly 41 core tools (CRUD layout + split budget hold)
+      expect(tools.length).toBe(41);
 
-      // New consolidated tools should be available
-      expect(toolNames).toContain('manage-entity');
+      // CRUD tools should be available
+      expect(toolNames).toContain('create-transaction');
+      expect(toolNames).toContain('create-account');
+      expect(toolNames).toContain('create-category');
       expect(toolNames).toContain('set-budget');
       expect(toolNames).toContain('get-budget');
-      expect(toolNames).toContain('manage-budget-hold');
+      expect(toolNames).toContain('hold-budget');
+      expect(toolNames).toContain('reset-budget-hold');
       expect(toolNames).toContain('import-transactions');
 
-      // New utility tools should be available
+      // Budget file management tools
       expect(toolNames).toContain('get-budgets');
       expect(toolNames).toContain('switch-budget');
 
-      // get-server-info removed (not helpful)
-
-      // Deprecated tools removed (consolidated into manage-entity)
+      // Deprecated tools removed (replaced by CRUD tools)
+      expect(toolNames).not.toContain('manage-entity');
       expect(toolNames).not.toContain('manage-transaction');
       expect(toolNames).not.toContain('manage-account');
     });
@@ -270,10 +274,13 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(toolNames).toContain('get-grouped-categories');
       expect(toolNames).toContain('set-budget');
       expect(toolNames).toContain('get-budget');
-      expect(toolNames).toContain('manage-budget-hold');
+      expect(toolNames).toContain('hold-budget');
+      expect(toolNames).toContain('reset-budget-hold');
 
-      // Core entity management
-      expect(toolNames).toContain('manage-entity');
+      // Core entity management (CRUD tools)
+      expect(toolNames).toContain('create-transaction');
+      expect(toolNames).toContain('create-account');
+      expect(toolNames).toContain('create-category');
       expect(toolNames).toContain('get-payees');
       expect(toolNames).toContain('get-rules');
 
@@ -317,13 +324,14 @@ describe('Integration Tests - MCP Simplification', () => {
       // 4. Verify core tools are available
       const tools = getAvailableTools(true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
 
       // 5. Verify removed tools are not available
-      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true); // Now available as utility tool
-      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
 
       // run-query is now optional, so it should NOT be available by default
       expect(tools.some((t) => t.schema.name === 'run-query')).toBe(false);

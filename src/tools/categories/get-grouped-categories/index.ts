@@ -21,7 +21,8 @@ export const schema = {
     '- Get category metadata before using in other operations\n\n' +
     'SEE ALSO:\n' +
     '- Use with set-budget to set budget amounts for categories\n' +
-    '- Use with manage-entity to create new categories or category groups\n' +
+    '- Use with create-category, update-category, delete-category to manage categories\n' +
+    '- Use with create-category-group, update-category-group, delete-category-group to manage groups\n' +
     '- Use with get-transactions or spending-by-category to filter by category\n\n' +
     'RETURNS:\n' +
     '- Category group ID, name, type\n' +
