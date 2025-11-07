@@ -17,7 +17,7 @@ export const schema = {
     '- Understand recurring transaction patterns\n' +
     '- Review scheduled transactions\n\n' +
     'SEE ALSO:\n' +
-    '- Use with manage-entity to create, update, or delete schedules\n' +
+    '- Use with create-schedule, update-schedule, delete-schedule to manage schedules\n' +
     '- Use with get-accounts to see account details for schedules\n\n' +
     'RETURNS:\n' +
     '- Schedule ID, name, account, amount, next date, frequency\n' +

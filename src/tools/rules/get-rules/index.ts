@@ -26,7 +26,7 @@ export const schema = {
     '- Understand how transactions are automatically categorized\n' +
     '- Review rule conditions and actions\n\n' +
     'SEE ALSO:\n' +
-    '- Use with manage-entity to create, update, or delete rules\n' +
+    '- Use with create-rule, update-rule, delete-rule to manage rules\n' +
     '- Use with get-payees to find payee IDs for filtering\n' +
     '- Use with get-grouped-categories to find category IDs for filtering\n\n' +
     'RETURNS:\n' +

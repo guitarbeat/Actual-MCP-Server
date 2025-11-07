@@ -27,7 +27,7 @@ export const schema = {
     '- Understand payee structure and organization\n\n' +
     'SEE ALSO:\n' +
     '- Use with merge-payees to combine duplicate payees\n' +
-    '- Use with manage-entity to create or update payees\n' +
+    '- Use with create-payee, update-payee, delete-payee to manage payees\n' +
     '- Use with get-rules to see all auto-categorization rules\n' +
     '- Use with get-transactions to filter transactions by payee\n\n' +
     'RETURNS:\n' +
