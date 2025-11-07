@@ -8,13 +8,61 @@ import {
   ReadResourceRequestSchema,
   ListResourceTemplatesRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import api from '@actual-app/api';
-
 // Import types from core/types
 import type { Account, Transaction } from './core/types/index.js';
 import { formatAmount, formatDate, getDateRange } from './utils.js';
-import { initActualApi } from './actual-api.js';
+import {
+  initActualApi,
+  getBudgetMonths,
+  getBudgetMonth,
+  getAccounts,
+  getAccountBalance,
+  getTransactions,
+} from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
+
+/**
+ * Filter budget months to show only relevant months:
+ * - 3 months backward from present
+ * - Current month
+ * - 2 months future
+ *
+ * @param months - Array of month strings in YYYY-MM format
+ * @returns Filtered array of months within the relevant range
+ */
+function filterRelevantBudgetMonths(months: string[]): string[] {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+
+  // Calculate the range: 3 months back to 2 months forward
+  const startMonth = currentMonth - 3;
+  const endMonth = currentMonth + 2;
+
+  // Generate all months in the range
+  const relevantMonths: string[] = [];
+  for (let i = startMonth; i <= endMonth; i++) {
+    let year = currentYear;
+    let month = i;
+
+    // Handle year rollover for months before January
+    if (month < 1) {
+      month += 12;
+      year -= 1;
+    }
+    // Handle year rollover for months after December
+    else if (month > 12) {
+      month -= 12;
+      year += 1;
+    }
+
+    const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+    relevantMonths.push(monthStr);
+  }
+
+  // Filter the provided months to only include those in the relevant range
+  return months.filter((month) => relevantMonths.includes(month));
+}
 
 export const RESOURCE_TEMPLATES = [
   {
@@ -38,16 +86,33 @@ export const RESOURCE_TEMPLATES = [
     description: 'Shows recent transactions for an account across the default reporting window.',
     mimeType: 'text/markdown',
   },
+  {
+    name: 'budgets-directory',
+    title: 'Budget Months',
+    uriTemplate: 'actual://budgets',
+    description: 'Lists relevant budget months (3 months back, current month, 2 months forward).',
+    mimeType: 'text/markdown',
+  },
+  {
+    name: 'budget-month',
+    title: 'Monthly Budget',
+    uriTemplate: 'actual://budgets/{month}',
+    description: 'Detailed budget breakdown for a specific month (YYYY-MM format).',
+    mimeType: 'text/markdown',
+  },
 ];
 
 export const setupResources = (server: Server): void => {
   /**
-   * Handler for listing available resources (accounts)
+   * Handler for listing available resources (accounts and budgets)
    */
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
     try {
       await initActualApi();
       const accounts: Account[] = await fetchAllAccounts();
+      const allBudgetMonths: string[] = await getBudgetMonths();
+      const budgetMonths: string[] = filterRelevantBudgetMonths(allBudgetMonths);
+
       const resources = [
         {
           uri: 'actual://accounts',
@@ -59,6 +124,18 @@ export const setupResources = (server: Server): void => {
           uri: `actual://accounts/${account.id}`,
           name: account.name,
           description: `${account.name} (${account.type || 'Account'})${account.closed ? ' - CLOSED' : ''}`,
+          mimeType: 'text/markdown',
+        })),
+        {
+          uri: 'actual://budgets',
+          name: 'Budget Months',
+          description: 'Relevant budget months (3 months back, current month, 2 months forward).',
+          mimeType: 'text/markdown',
+        },
+        ...budgetMonths.map((month) => ({
+          uri: `actual://budgets/${month}`,
+          name: `Budget ${month}`,
+          description: `Budget breakdown for ${month}`,
           mimeType: 'text/markdown',
         })),
       ];
@@ -94,7 +171,7 @@ export const setupResources = (server: Server): void => {
 
       // If the path is just "accounts", return list of all accounts
       if (pathParts.length === 0 && url.hostname === 'accounts') {
-        const accounts: Account[] = await api.getAccounts();
+        const accounts: Account[] = await getAccounts();
 
         const accountsText: string = accounts
           .map((account) => {
@@ -120,7 +197,7 @@ export const setupResources = (server: Server): void => {
       // If the path is "accounts/{id}", return account details
       if (pathParts.length === 1 && url.hostname === 'accounts') {
         const accountId: string = pathParts[0];
-        const accounts: Account[] = await api.getAccounts();
+        const accounts: Account[] = await getAccounts();
         const account: Account | undefined = accounts.find((a) => a.id === accountId);
 
         if (!account) {
@@ -135,7 +212,7 @@ export const setupResources = (server: Server): void => {
           };
         }
 
-        const balance: number = await api.getAccountBalance(accountId);
+        const balance: number = await getAccountBalance(accountId);
         const formattedBalance: string = formatAmount(balance);
 
         const details = `# Account: ${account.name}
@@ -163,7 +240,7 @@ To view transactions for this account, use the get-transactions tool.`;
       if (pathParts.length === 2 && pathParts[1] === 'transactions' && url.hostname === 'accounts') {
         const accountId: string = pathParts[0];
         const { startDate, endDate } = getDateRange();
-        const transactions: Transaction[] = await api.getTransactions(accountId, startDate, endDate);
+        const transactions: Transaction[] = await getTransactions(accountId, startDate, endDate);
 
         if (!transactions || transactions.length === 0) {
           return {
@@ -204,6 +281,67 @@ To view transactions for this account, use the get-transactions tool.`;
         };
       }
 
+      // If the path is just "budgets", return list of relevant budget months
+      if (pathParts.length === 0 && url.hostname === 'budgets') {
+        const allMonths: string[] = await getBudgetMonths();
+        const months: string[] = filterRelevantBudgetMonths(allMonths);
+
+        const monthsText: string = months.map((month) => `- ${month}`).join('\n');
+
+        return {
+          contents: [
+            {
+              uri: uri,
+              text: `# Actual Budget Months\n\nShowing relevant months (3 months back, current month, 2 months forward):\n\n${monthsText}\n\nTotal Months: ${months.length}`,
+              mimeType: 'text/markdown',
+            },
+          ],
+        };
+      }
+
+      // If the path is "budgets/{month}", return budget details
+      if (pathParts.length === 1 && url.hostname === 'budgets') {
+        const month: string = pathParts[0];
+
+        // Validate month format (YYYY-MM)
+        if (!/^\d{4}-\d{2}$/.test(month)) {
+          return {
+            contents: [
+              {
+                uri: uri,
+                text: `Error: Invalid month format. Expected YYYY-MM format (e.g., 2024-01), got: ${month}`,
+                mimeType: 'text/plain',
+              },
+            ],
+          };
+        }
+
+        try {
+          const budgetData = await getBudgetMonth(month);
+          const formattedBudget = formatBudgetMonth(budgetData, month);
+
+          return {
+            contents: [
+              {
+                uri: uri,
+                text: formattedBudget,
+                mimeType: 'text/markdown',
+              },
+            ],
+          };
+        } catch (_error) {
+          return {
+            contents: [
+              {
+                uri: uri,
+                text: `Error: Budget data for month ${month} not found or could not be retrieved.`,
+                mimeType: 'text/plain',
+              },
+            ],
+          };
+        }
+      }
+
       // If we don't recognize the URI pattern, return an error
       return {
         contents: [
@@ -220,3 +358,82 @@ To view transactions for this account, use the get-transactions tool.`;
     }
   });
 };
+
+/**
+ * Format budget month data as markdown
+ */
+function formatBudgetMonth(budgetData: any, month: string): string {
+  const {
+    totalIncome = 0,
+    totalBudgeted = 0,
+    totalSpent = 0,
+    totalBalance = 0,
+    toBudget = 0,
+    fromLastMonth = 0,
+    lastMonthOverspent = 0,
+    forNextMonth = 0,
+    categoryGroups = [],
+  } = budgetData;
+
+  let markdown = `# Budget: ${month}\n\n`;
+
+  // Summary section
+  markdown += `## Summary\n\n`;
+  markdown += `| Metric | Amount |\n`;
+  markdown += `|--------|--------|\n`;
+  markdown += `| Total Income | ${formatAmount(totalIncome)} |\n`;
+  markdown += `| Total Budgeted | ${formatAmount(totalBudgeted)} |\n`;
+  markdown += `| Total Spent | ${formatAmount(totalSpent)} |\n`;
+  markdown += `| Total Balance | ${formatAmount(totalBalance)} |\n`;
+  markdown += `| Available to Budget | ${formatAmount(toBudget)} |\n`;
+  if (fromLastMonth !== 0) {
+    markdown += `| From Last Month | ${formatAmount(fromLastMonth)} |\n`;
+  }
+  if (lastMonthOverspent !== 0) {
+    markdown += `| Last Month Overspent | ${formatAmount(lastMonthOverspent)} |\n`;
+  }
+  if (forNextMonth !== 0) {
+    markdown += `| Held for Next Month | ${formatAmount(forNextMonth)} |\n`;
+  }
+  markdown += `\n`;
+
+  // Category groups section
+  if (categoryGroups && categoryGroups.length > 0) {
+    markdown += `## Category Groups\n\n`;
+
+    for (const group of categoryGroups) {
+      if (group.is_income) {
+        // Income categories
+        markdown += `### ${group.name}\n\n`;
+        if (group.categories && group.categories.length > 0) {
+          markdown += `| Category | Received |\n`;
+          markdown += `|----------|----------|\n`;
+          for (const category of group.categories) {
+            const received = category.received || 0;
+            markdown += `| ${category.name} | ${formatAmount(received)} |\n`;
+          }
+          markdown += `\n`;
+        }
+      } else {
+        // Expense categories
+        markdown += `### ${group.name}\n\n`;
+        markdown += `**Group Total**: Budgeted ${formatAmount(group.budgeted || 0)}, Spent ${formatAmount(Math.abs(group.spent || 0))}, Balance ${formatAmount(group.balance || 0)}\n\n`;
+
+        if (group.categories && group.categories.length > 0) {
+          markdown += `| Category | Budgeted | Spent | Balance |\n`;
+          markdown += `|----------|----------|-------|----------|\n`;
+          for (const category of group.categories) {
+            const budgeted = category.budgeted || 0;
+            const spent = Math.abs(category.spent || 0);
+            const balance = category.balance || 0;
+            const carryover = category.carryover ? ' ✓' : '';
+            markdown += `| ${category.name} | ${formatAmount(budgeted)} | ${formatAmount(spent)} | ${formatAmount(balance)}${carryover} |\n`;
+          }
+          markdown += `\n`;
+        }
+      }
+    }
+  }
+
+  return markdown;
+}

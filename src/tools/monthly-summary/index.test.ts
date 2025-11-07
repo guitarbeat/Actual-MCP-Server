@@ -87,7 +87,7 @@ describe('monthly-summary tool integration', () => {
     });
 
     it('should handle account-specific queries', async () => {
-      const args: MonthlySummaryArgs = { months: 1, accountId: 'acc1' };
+      const args: MonthlySummaryArgs = { months: 1, accountId: 'Checking' };
 
       const result = await handler(args);
 

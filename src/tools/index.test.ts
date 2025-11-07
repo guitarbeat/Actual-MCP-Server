@@ -15,11 +15,11 @@ describe('Tool Registry', () => {
   });
 
   describe('Core tools', () => {
-    it('should include all 22 core tools by default', () => {
+    it('should include all 19 core tools by default', () => {
       const tools = getAvailableTools(true);
 
-      // Should have exactly 22 core tools
-      expect(tools.length).toBe(22);
+      // Should have exactly 19 core tools (removed get-server-info)
+      expect(tools.length).toBe(19);
 
       // Core read tools
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
@@ -40,38 +40,42 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'merge-payees')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'run-bank-sync')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'run-import')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'import-transactions')).toBe(true);
 
-      // Budget tools (now core)
-      expect(tools.some((t) => t.schema.name === 'get-budget-months')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'get-budget-month')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'hold-budget-for-next-month')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'reset-budget-hold')).toBe(true);
+      // Budget tools (consolidated)
+      expect(tools.some((t) => t.schema.name === 'get-budget')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'manage-budget-hold')).toBe(true);
 
-      // Payee rules (now core)
-      expect(tools.some((t) => t.schema.name === 'get-payee-rules')).toBe(true);
+      // Budget file management tools (newly added)
+      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'switch-budget')).toBe(true);
 
-      // Query tool (now core)
-      expect(tools.some((t) => t.schema.name === 'run-query')).toBe(true);
+      // get-server-info removed (not helpful)
+
+      // Consolidated tools should not exist
+      expect(tools.some((t) => t.schema.name === 'get-budget-months')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'get-budget-month')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'hold-budget-for-next-month')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'reset-budget-hold')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'get-payee-rules')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'run-bank-sync')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'run-import')).toBe(false);
     });
 
     it('should not include removed tools', () => {
       const tools = getAvailableTools(true);
 
-      // Removed account management tools
+      // Removed account management tools (now consolidated into manage-account)
       expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'close-account')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'reopen-account')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'delete-account')).toBe(false);
 
-      // Removed budget file management tools
-      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(false);
+      // Removed utility tools
+      expect(tools.some((t) => t.schema.name === 'get-server-info')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'load-budget')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'download-budget')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'sync')).toBe(false);
-
-      // Removed utility tools
       expect(tools.some((t) => t.schema.name === 'get-id-by-name')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'get-server-version')).toBe(false);
     });
@@ -86,14 +90,13 @@ describe('Tool Registry', () => {
       // Read-only tools should be present
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'get-budget-months')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'get-budget-month')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'get-budget')).toBe(true);
 
       // Write tools should not be present
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'hold-budget-for-next-month')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'manage-budget-hold')).toBe(false);
     });
   });
 
@@ -119,7 +122,7 @@ describe('Tool Registry', () => {
 
       expect(manageTxTool).toBeDefined();
       expect(manageTxTool?.schema.description).toContain('delete');
-      expect(manageTxTool?.schema.description).toContain('WARNING: Cannot be undone!');
+      expect(manageTxTool?.schema.description).toContain('Delete is permanent');
 
       // Check that the schema includes delete in the operation enum
       const inputSchema = manageTxTool?.schema.inputSchema as any;

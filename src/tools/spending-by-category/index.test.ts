@@ -98,7 +98,7 @@ describe('spending-by-category tool integration', () => {
       const args: SpendingByCategoryArgs = {
         startDate: '2024-01-01',
         endDate: '2024-01-31',
-        accountId: 'acc1',
+        accountId: 'Checking',
       };
 
       const result = await handler(args);

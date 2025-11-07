@@ -72,28 +72,45 @@ export const schema = {
   description:
     'Manage accounts in Actual Budget. Create, update, delete, close, reopen accounts, or query balances.\n\n' +
     'OPERATIONS:\n\n' +
-    '• CREATE: Add a new account\n' +
+    '• create: Add new account\n' +
     '  Required: account.name, account.type\n' +
-    '  Optional: initialBalance (cents), account.offbudget\n' +
-    '  Example: {"operation": "create", "account": {"name": "Chase Checking", "type": "checking"}, "initialBalance": 100000}\n\n' +
-    '• UPDATE: Modify account properties\n' +
-    '  Required: id\n' +
+    '  Optional: initialBalance (cents), account.offbudget (boolean)\n' +
+    '  Example: {"operation": "create", "account": {"name": "Chase Checking", "type": "checking"}, "initialBalance": 100000}\n' +
+    '  Example: {"operation": "create", "account": {"name": "Investment Account", "type": "investment", "offbudget": true}}\n\n' +
+    '• update: Modify account properties\n' +
+    '  Required: id (account UUID)\n' +
     '  Optional: account.name, account.type, account.offbudget\n' +
-    '  Example: {"operation": "update", "id": "abc123", "account": {"name": "Chase Freedom"}}\n\n' +
-    '• DELETE: Permanently remove an account (WARNING: Cannot be undone!)\n' +
-    '  Required: id\n' +
-    '  Example: {"operation": "delete", "id": "abc123"}\n\n' +
-    '• CLOSE: Close an account (keeps history)\n' +
-    '  Required: id\n' +
-    '  Optional: transferAccountId (required if balance ≠ 0), transferCategoryId\n' +
-    '  Example: {"operation": "close", "id": "abc123", "transferAccountId": "def456", "transferCategoryId": "ghi789"}\n\n' +
-    '• REOPEN: Reactivate a closed account\n' +
-    '  Required: id\n' +
+    '  Example: {"operation": "update", "id": "abc123", "account": {"name": "Updated Name"}}\n' +
+    '  Example: {"operation": "update", "id": "abc123", "account": {"offbudget": true}}\n\n' +
+    '• delete: Permanently remove account\n' +
+    '  Required: id (account UUID)\n' +
+    '  Example: {"operation": "delete", "id": "abc123"}\n' +
+    '  WARNING: Cannot be undone! Use close instead to preserve history.\n\n' +
+    '• close: Close account (keeps history)\n' +
+    '  Required: id (account UUID)\n' +
+    '  Optional: transferAccountId (if balance ≠ 0)\n' +
+    '  Example: {"operation": "close", "id": "abc123"}\n' +
+    '  Example: {"operation": "close", "id": "abc123", "transferAccountId": "def456"}\n\n' +
+    '• reopen: Reactivate closed account\n' +
+    '  Required: id (account UUID)\n' +
     '  Example: {"operation": "reopen", "id": "abc123"}\n\n' +
-    '• BALANCE: Query account balance\n' +
-    '  Required: id\n' +
+    '• balance: Query account balance\n' +
+    '  Required: id (account UUID)\n' +
     '  Optional: date (YYYY-MM-DD, defaults to today)\n' +
+    '  Example: {"operation": "balance", "id": "abc123"}\n' +
     '  Example: {"operation": "balance", "id": "abc123", "date": "2024-01-01"}\n\n' +
+    'COMMON USE CASES:\n' +
+    '- Add new bank accounts, credit cards, or investment accounts\n' +
+    '- Rename accounts or change account types\n' +
+    '- Mark accounts as on-budget or off-budget\n' +
+    '- Close accounts that are no longer active (preserves history)\n' +
+    '- Reopen previously closed accounts\n' +
+    '- Query account balance at a specific date\n' +
+    '- Remove accounts permanently (use with caution)\n\n' +
+    'SEE ALSO:\n' +
+    '- Use get-accounts to find account IDs before update/delete/close/reopen operations\n' +
+    '- Use get-accounts to see current account balances and metadata\n' +
+    '- Use manage-transaction to create transactions in accounts\n\n' +
     'ACCOUNT TYPES:\n' +
     '- checking: Standard checking account\n' +
     '- savings: Savings account\n' +
@@ -102,27 +119,11 @@ export const schema = {
     '- mortgage: Mortgage loan\n' +
     '- debt: Other debt/loan\n' +
     '- other: Other account types\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Adding a new bank account: operation=create with name and type\n' +
-    '- Renaming an account: operation=update with id and new name\n' +
-    '- Closing a paid-off credit card: operation=close with id\n' +
-    '- Checking current balance: operation=balance with id\n\n' +
     'NOTES:\n' +
-    '- Use get-accounts tool to find account IDs before update, delete, close, reopen, or balance operations\n' +
-    '- Amounts are in cents (e.g., 100000 = $1,000.00)\n' +
-    '- Delete operation is permanent and cannot be undone - use close instead to preserve history\n' +
-    '- When closing an account with a non-zero balance, you must specify transferAccountId\n\n' +
-    'TYPICAL WORKFLOW:\n' +
-    '1. CREATE: Create account, then use manage-transaction to add initial transactions\n' +
-    '2. UPDATE/CLOSE/REOPEN: Use get-accounts to find account ID, then perform operation\n' +
-    '3. BALANCE: Use get-accounts to find account ID, then query balance for specific date\n' +
-    '4. VERIFY: Use get-accounts to confirm account changes\n\n' +
-    'SEE ALSO:\n' +
-    '- get-accounts: Find account IDs and view current account status\n' +
-    '- manage-transaction: Create transactions for newly created accounts\n' +
-    '- get-transactions: View transactions for an account\n' +
-    '- balance-history: View balance trends over time for an account\n' +
-    '- get-grouped-categories: Find category IDs for transfer transactions when closing',
+    '- Amounts in cents (e.g., 100000 = $1,000.00)\n' +
+    '- Use get-accounts to find account IDs\n' +
+    '- Delete is permanent, use close to preserve history\n' +
+    '- Off-budget accounts do not affect budget calculations',
   inputSchema: zodToJsonSchema(ManageAccountArgsSchema) as ToolInput,
 };
 

@@ -11,40 +11,34 @@ import { SetBudgetArgsSchema, type SetBudgetArgs } from './types.js';
 export const schema = {
   name: 'set-budget',
   description:
-    'Set budget amount and/or carryover for a category in a specific month. Accepts category name or ID.\n\n' +
-    'REQUIRED PARAMETERS:\n' +
-    '- month: Month in YYYY-MM format (e.g., "2024-01" for January 2024)\n' +
-    '- category: Category name or ID (use get-grouped-categories to find IDs)\n' +
-    '- At least one of amount or carryover must be provided\n\n' +
-    'OPTIONAL PARAMETERS:\n' +
-    '- amount: Budget amount in cents (e.g., 50000 = $500.00)\n' +
-    '- carryover: Enable (true) or disable (false) budget carryover to next month\n\n' +
+    'Set budget amount and/or carryover for a category in a specific month.\n\n' +
+    'REQUIRED:\n' +
+    '- month: Month in YYYY-MM format (e.g., "2024-01")\n' +
+    '- category: Category name or ID (supports partial name matching, case-sensitive)\n' +
+    '- At least one of: amount or carryover\n\n' +
     'EXAMPLES:\n' +
-    '- Set amount only: {"month": "2024-01", "category": "Groceries", "amount": 50000}\n' +
-    '- Set carryover only: {"month": "2024-01", "category": "Groceries", "carryover": true}\n' +
+    '- Set amount: {"month": "2024-01", "category": "Groceries", "amount": 50000}\n' +
+    '- Set carryover: {"month": "2024-01", "category": "Groceries", "carryover": true}\n' +
     '- Set both: {"month": "2024-01", "category": "Groceries", "amount": 50000, "carryover": true}\n' +
-    '- Using category ID: {"month": "2024-01", "category": "abc123-def456", "amount": 30000}\n\n' +
+    '- Disable carryover: {"month": "2024-01", "category": "Groceries", "carryover": false}\n' +
+    '- Multiple months: Set budget for each month separately\n\n' +
     'COMMON USE CASES:\n' +
-    '- Setting monthly budget: Specify amount for a category in a specific month\n' +
-    '- Enabling rollover: Set carryover=true to roll unused budget to next month\n' +
-    '- Adjusting budget mid-month: Update amount for current month\n' +
-    '- Disabling rollover: Set carryover=false to prevent budget from carrying over\n\n' +
-    'NOTES:\n' +
-    '- Amounts are in cents (multiply dollars by 100)\n' +
-    '- Month format must be YYYY-MM (e.g., "2024-01", not "01/2024" or "January 2024")\n' +
-    '- Category names are case-sensitive but flexible (partial matches work)\n' +
-    '- You can set amount, carryover, or both in a single call\n\n' +
-    'TYPICAL WORKFLOW:\n' +
-    '1. Use get-grouped-categories to find category names or IDs\n' +
-    '2. Use set-budget to set budget amounts for categories\n' +
-    '3. Use spending-by-category to track actual spending vs budget\n' +
-    '4. Use monthly-summary to see overall budget performance\n\n' +
+    '- Set monthly budget amounts for categories\n' +
+    '- Enable or disable budget carryover (rollover unused amounts)\n' +
+    '- Adjust budgets month-over-month\n' +
+    '- Set up initial budgets for new categories\n' +
+    '- Modify budgets based on spending patterns\n' +
+    '- Copy budgets from previous months\n\n' +
     'SEE ALSO:\n' +
-    '- get-grouped-categories: Find category IDs and names before setting budgets\n' +
-    '- spending-by-category: Compare actual spending to budgeted amounts\n' +
-    '- monthly-summary: View overall financial performance including budgeted categories\n' +
-    '- hold-budget-for-next-month: Hold entire budget for next month\n' +
-    '- reset-budget-hold: Reset budget hold for a category',
+    '- Use get-grouped-categories to find category names/IDs\n' +
+    '- Use get-budget to view current budget amounts and spending\n' +
+    '- Use spending-by-category to see actual spending vs budgets\n' +
+    '- Use manage-budget-hold to hold budget for next month\n\n' +
+    'NOTES:\n' +
+    '- Amount in cents (e.g., 50000 = $500.00, 12500 = $125.00)\n' +
+    '- Month format: YYYY-MM (e.g., "2024-01" for January 2024)\n' +
+    '- Category names are case-sensitive for partial matching\n' +
+    '- Carryover enables unused budget to roll over to next month',
   inputSchema: {
     type: 'object',
     properties: {

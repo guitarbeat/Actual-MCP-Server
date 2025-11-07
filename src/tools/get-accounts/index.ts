@@ -11,47 +11,29 @@ import { GetAccountsReportGenerator } from './report-generator.js';
 export const schema = {
   name: 'get-accounts',
   description:
-    'Retrieve all accounts with current balances and metadata. Essential for getting account IDs before using other tools like manage-transaction, get-transactions, or manage-account.\n\n' +
-    'RETURNED DATA STRUCTURE:\n' +
-    '- Account ID (UUID) - Use this for other tools that require account IDs\n' +
-    '- Account name - Human-readable account name\n' +
-    '- Current balance - Balance in cents (e.g., 50000 = $500.00)\n' +
-    '- Account type - checking, savings, credit, investment, mortgage, debt, or other\n' +
-    '- Status - open or closed\n' +
-    '- On-budget flag - Whether account is included in budget calculations\n' +
-    '- Off-budget flag - Whether account is excluded from budget\n\n' +
-    'OPTIONAL PARAMETERS:\n' +
-    '- accountId: Filter by specific account name or ID (partial match supported)\n' +
-    '- includeClosed: Include closed accounts in results (default: false)\n\n' +
+    'Retrieve all accounts with current balances and metadata.\n\n' +
+    'OPTIONAL FILTERS:\n' +
+    '- accountId: Filter by account name or ID (supports exact and partial name matching)\n' +
+    '- includeClosed: Include closed accounts (default: false)\n\n' +
     'EXAMPLES:\n' +
-    '- List all open accounts: {} or no arguments\n' +
-    '- Find specific account: {"accountId": "Checking"}\n' +
-    '- Search by partial name: {"accountId": "Chase"}\n' +
-    '- Include closed accounts: {"includeClosed": true}\n' +
-    '- Find and include closed: {"accountId": "Savings", "includeClosed": true}\n\n' +
+    '- All accounts: {}\n' +
+    '- Find account by partial name: {"accountId": "Chase"}\n' +
+    '- Find account by exact name: {"accountId": "Chase Checking"}\n' +
+    '- Include closed: {"includeClosed": true}\n\n' +
     'COMMON USE CASES:\n' +
-    '- Getting account IDs before creating transactions with manage-transaction\n' +
-    '- Getting account IDs before querying transactions with get-transactions\n' +
-    '- Checking current balances across all accounts\n' +
-    '- Finding closed accounts to reopen with manage-account\n' +
-    '- Verifying account names before performing operations\n' +
-    '- Listing all accounts to understand budget structure\n\n' +
-    'WORKFLOW GUIDANCE:\n' +
-    '- Use this tool FIRST when you need an account ID for other operations\n' +
-    '- The returned account ID can be used directly in manage-transaction, get-transactions, manage-account, and other account-related tools\n' +
-    '- Account names support partial matching, so "Check" will find "Checking Account"\n' +
-    '- Both account names and IDs are accepted by most tools, but IDs are more reliable for exact matches\n\n' +
-    'NOTES:\n' +
-    '- Balances are always included in the response (no need to request separately)\n' +
-    '- Closed accounts are excluded by default to reduce clutter\n' +
-    '- Credit card accounts typically show negative balances (representing debt)\n' +
-    '- Off-budget accounts (like tracking accounts) are included but flagged separately\n\n' +
+    '- List all accounts to find account IDs for other tools\n' +
+    '- Check current account balances\n' +
+    '- Find account by name before using in other operations\n' +
+    '- View account types and status\n' +
+    '- Get account metadata for transaction operations\n\n' +
     'SEE ALSO:\n' +
-    '- manage-transaction: Use account IDs from this tool to create/update transactions\n' +
-    '- get-transactions: Use account IDs to query transactions for specific accounts\n' +
-    '- manage-account: Use account IDs to update, close, or reopen accounts\n' +
-    '- balance-history: Use account IDs to view balance trends over time\n' +
-    '- spending-by-category: Use account IDs to analyze spending for specific accounts',
+    '- Use with get-transactions, balance-history, or monthly-summary (requires accountId)\n' +
+    '- Use with manage-account to modify account properties\n' +
+    '- Use with manage-transaction to create transactions in specific accounts\n\n' +
+    'RETURNS:\n' +
+    '- Account ID, name, balance, type, status\n' +
+    '- Use account IDs with other tools\n' +
+    '- Partial name matches return all matching accounts',
   inputSchema: zodToJsonSchema(GetAccountsArgsSchema) as ToolInput,
 };
 
