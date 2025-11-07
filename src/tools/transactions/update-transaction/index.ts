@@ -55,7 +55,8 @@ export const schema = {
     '- Use delete-transaction to remove transactions\n\n' +
     'NOTES:\n' +
     '- Only provided fields will be updated\n' +
-    '- Amount auto-detection: amounts < 1000 with decimal treated as dollars\n' +
+    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -30 → -$30.00, -30.50 → -$30.50)\n' +
+    '- Amounts >= 1000 treated as cents (e.g., -5000 → -$50.00)\n' +
     '- Supports name resolution for account, payee, and category',
   inputSchema: zodToJsonSchema(UpdateTransactionSchema) as ToolInput,
 };

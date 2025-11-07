@@ -59,8 +59,8 @@ export const schema = {
     '- Use update-transaction to modify transactions\n' +
     '- Use delete-transaction to remove transactions\n\n' +
     'NOTES:\n' +
-    '- Amount auto-detection: amounts < 1000 with decimal treated as dollars (e.g., -50.00 → -5000 cents)\n' +
-    '- Amounts >= 1000 or whole numbers < 1000 treated as cents\n' +
+    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -30 → -$30.00, -30.50 → -$30.50)\n' +
+    '- Amounts >= 1000 treated as cents (e.g., -5000 → -$50.00)\n' +
     '- Supports name resolution for account, payee, and category (partial matching)\n' +
     '- Transactions are automatically processed by rules and duplicate detection',
   inputSchema: zodToJsonSchema(CreateTransactionSchema) as ToolInput,
