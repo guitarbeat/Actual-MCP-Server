@@ -15,11 +15,11 @@ describe('Tool Registry', () => {
   });
 
   describe('Core tools', () => {
-    it('should include all 17 core tools by default', () => {
+    it('should include all 41 core tools by default', () => {
       const tools = getAvailableTools(true);
 
-      // Should have exactly 17 core tools (removed manage-transaction and manage-account)
-      expect(tools.length).toBe(17);
+      // Should have exactly 41 core tools (CRUD layout + split budget hold)
+      expect(tools.length).toBe(41);
 
       // Core read tools
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
@@ -34,32 +34,58 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'monthly-summary')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'balance-history')).toBe(true);
 
-      // Core write tools
+      // Transaction CRUD tools
+      expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'update-transaction')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'delete-transaction')).toBe(true);
+
+      // Account CRUD tools
+      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'update-account')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'delete-account')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'close-account')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'reopen-account')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'get-account-balance')).toBe(true);
+
+      // Category CRUD tools
+      expect(tools.some((t) => t.schema.name === 'create-category')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'update-category')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'delete-category')).toBe(true);
+
+      // Category Group CRUD tools
+      expect(tools.some((t) => t.schema.name === 'create-category-group')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'update-category-group')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'delete-category-group')).toBe(true);
+
+      // Payee CRUD tools
+      expect(tools.some((t) => t.schema.name === 'create-payee')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'update-payee')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'delete-payee')).toBe(true);
+
+      // Rule CRUD tools
+      expect(tools.some((t) => t.schema.name === 'create-rule')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'update-rule')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'delete-rule')).toBe(true);
+
+      // Schedule CRUD tools
+      expect(tools.some((t) => t.schema.name === 'create-schedule')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'update-schedule')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'delete-schedule')).toBe(true);
+
+      // Other write tools
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'merge-payees')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'import-transactions')).toBe(true);
 
-      // Budget tools (consolidated)
+      // Budget tools
       expect(tools.some((t) => t.schema.name === 'get-budget')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'manage-budget-hold')).toBe(true);
-
-      // Budget file management tools (newly added)
+      expect(tools.some((t) => t.schema.name === 'hold-budget')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'reset-budget-hold')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'switch-budget')).toBe(true);
 
-      // get-server-info removed (not helpful)
-
-      // Consolidated tools should not exist
-      expect(tools.some((t) => t.schema.name === 'get-budget-months')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'get-budget-month')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'hold-budget-for-next-month')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'reset-budget-hold')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'get-payee-rules')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'run-bank-sync')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'run-import')).toBe(false);
-
       // Deprecated tools removed
+      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-account')).toBe(false);
     });
@@ -67,13 +93,8 @@ describe('Tool Registry', () => {
     it('should not include removed tools', () => {
       const tools = getAvailableTools(true);
 
-      // Removed account management tools (now consolidated into manage-entity)
-      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'close-account')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'reopen-account')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'delete-account')).toBe(false);
-
-      // Deprecated tools removed (consolidated into manage-entity)
+      // Deprecated consolidated tool removed
+      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-account')).toBe(false);
 
@@ -100,8 +121,10 @@ describe('Tool Registry', () => {
 
       // Write tools should not be present
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
-      expect(tools.some((t) => t.schema.name === 'manage-budget-hold')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'hold-budget')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'reset-budget-hold')).toBe(false);
     });
   });
 });

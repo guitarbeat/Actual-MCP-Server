@@ -15,11 +15,11 @@ import { getInitializationStats, resetInitializationStats } from './actual-api.j
 
 describe('Performance Validation', () => {
   describe('Context Window Token Reduction', () => {
-    it('should have 17 core tools (no optional tools)', () => {
+    it('should have 41 core tools (no optional tools)', () => {
       const coreTools = getAvailableTools(true);
 
-      // All 17 tools are core now (removed manage-transaction and manage-account, consolidated into manage-entity)
-      expect(coreTools.length).toBe(17);
+      // All 41 tools are core now (CRUD layout + split budget hold)
+      expect(coreTools.length).toBe(41);
     });
 
     it('should calculate token savings from original 37 tools', () => {
@@ -28,33 +28,33 @@ describe('Performance Validation', () => {
       // Calculate token savings from original 37 tools
       const TOKENS_PER_TOOL = 150; // Estimated average tokens per tool schema
       const originalToolCount = 37;
-      const currentToolCount = coreTools.length; // 20 core tools
-      const toolsRemoved = originalToolCount - currentToolCount;
-      const tokensSaved = toolsRemoved * TOKENS_PER_TOOL;
-      const percentageReduction = (tokensSaved / (originalToolCount * TOKENS_PER_TOOL)) * 100;
+      const currentToolCount = coreTools.length; // 41 core tools (CRUD layout + split budget hold)
+      const toolsAdded = currentToolCount - originalToolCount;
+      const tokensAdded = toolsAdded * TOKENS_PER_TOOL;
+      const percentageChange = (tokensAdded / (originalToolCount * TOKENS_PER_TOOL)) * 100;
 
-      console.log(`\n📊 Context Window Optimization:`);
+      console.log(`\n📊 Context Window Impact:`);
       console.log(`   Original tools: ${originalToolCount}`);
       console.log(`   Current tools: ${coreTools.length}`);
-      console.log(`   Tools removed: ${toolsRemoved}`);
-      console.log(`   Estimated tokens saved: ${tokensSaved}`);
-      console.log(`   Percentage reduction: ${percentageReduction.toFixed(1)}%`);
+      console.log(`   Tools added: ${toolsAdded}`);
+      console.log(`   Estimated tokens added: ${tokensAdded}`);
+      console.log(`   Percentage change: ${percentageChange.toFixed(1)}%`);
 
-      // Verify we achieved significant reduction
-      expect(toolsRemoved).toBeGreaterThanOrEqual(15);
-      expect(percentageReduction).toBeGreaterThanOrEqual(40); // At least 40% reduction
+      // Note: We increased tool count for better discoverability (CRUD layout)
+      expect(coreTools.length).toBe(41);
     });
 
-    it('should have consolidated transaction tools', () => {
+    it('should have CRUD transaction tools', () => {
       const tools = getAvailableTools(true);
       const toolNames = tools.map((t) => t.schema.name);
 
-      // Should have manage-entity (consolidated tool for transactions and accounts)
-      expect(toolNames).toContain('manage-entity');
+      // Should have CRUD tools for transactions
+      expect(toolNames).toContain('create-transaction');
+      expect(toolNames).toContain('update-transaction');
+      expect(toolNames).toContain('delete-transaction');
 
-      // Should NOT have deprecated transaction tools
-      expect(toolNames).not.toContain('create-transaction');
-      expect(toolNames).not.toContain('update-transaction');
+      // Should NOT have deprecated consolidated tool
+      expect(toolNames).not.toContain('manage-entity');
     });
 
     it('should have consolidated budget tools', () => {
@@ -426,12 +426,14 @@ describe('Performance Validation', () => {
       console.log(`${'='.repeat(60)}\n`);
 
       // Final assertions
-      expect(coreTools.length).toBe(17);
+      expect(coreTools.length).toBe(41);
 
-      // Calculate actual reduction from original 37 tools
+      // Note: We increased tool count for better discoverability (CRUD layout)
+      // This is a trade-off: more tools = better discoverability, but more context tokens
       const originalToolCount = 37;
-      const actualReduction = ((originalToolCount - coreTools.length) / originalToolCount) * 100;
-      expect(actualReduction).toBeGreaterThanOrEqual(40); // At least 40% reduction
+      const currentToolCount = coreTools.length;
+      const toolsAdded = currentToolCount - originalToolCount;
+      expect(toolsAdded).toBe(4); // 41 - 37 = 4 tools added
     });
   });
 });

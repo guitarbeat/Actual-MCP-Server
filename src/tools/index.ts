@@ -20,7 +20,8 @@ import * as spendingByCategory from './spending-by-category/index.js';
 
 // Budget operation tools
 import * as setBudget from './set-budget/index.js';
-import * as manageBudgetHold from './budget/manage-budget-hold/index.js';
+import * as holdBudget from './budget/hold-budget/index.js';
+import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
 import * as getBudget from './budgets/get-budget/index.js';
 import * as importTransactions from './budgets/import-transactions/index.js';
 import * as getBudgets from './budgets/get-budgets/index.js';
@@ -32,8 +33,43 @@ import * as getSchedules from './schedules/get-schedules/index.js';
 // Payee tools
 import * as mergePayees from './payees/merge-payees/index.js';
 
-// Entity management
-import * as manageEntity from './manage-entity/index.js';
+// Transaction CRUD tools
+import * as createTransaction from './transactions/create-transaction/index.js';
+import * as updateTransaction from './transactions/update-transaction/index.js';
+import * as deleteTransaction from './transactions/delete-transaction/index.js';
+
+// Account CRUD tools
+import * as createAccount from './accounts/create-account/index.js';
+import * as updateAccount from './accounts/update-account/index.js';
+import * as deleteAccount from './accounts/delete-account/index.js';
+import * as closeAccount from './accounts/close-account/index.js';
+import * as reopenAccount from './accounts/reopen-account/index.js';
+import * as getAccountBalance from './accounts/get-account-balance/index.js';
+
+// Category CRUD tools
+import * as createCategory from './categories/create-category/index.js';
+import * as updateCategory from './categories/update-category/index.js';
+import * as deleteCategory from './categories/delete-category/index.js';
+
+// Category Group CRUD tools
+import * as createCategoryGroup from './category-groups/create-category-group/index.js';
+import * as updateCategoryGroup from './category-groups/update-category-group/index.js';
+import * as deleteCategoryGroup from './category-groups/delete-category-group/index.js';
+
+// Payee CRUD tools
+import * as createPayee from './payees/create-payee/index.js';
+import * as updatePayee from './payees/update-payee/index.js';
+import * as deletePayee from './payees/delete-payee/index.js';
+
+// Rule CRUD tools
+import * as createRule from './rules/create-rule/index.js';
+import * as updateRule from './rules/update-rule/index.js';
+import * as deleteRule from './rules/delete-rule/index.js';
+
+// Schedule CRUD tools
+import * as createSchedule from './schedules/create-schedule/index.js';
+import * as updateSchedule from './schedules/update-schedule/index.js';
+import * as deleteSchedule from './schedules/delete-schedule/index.js';
 
 // Utility tools (optional)
 import * as runQuery from './utilities/run-query/index.js';
@@ -100,16 +136,49 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: setBudget.schema, handler: setBudget.handler, requiresWrite: true, category: 'core' },
   { schema: mergePayees.schema, handler: mergePayees.handler, requiresWrite: true, category: 'core' },
   { schema: importTransactions.schema, handler: importTransactions.handler, requiresWrite: true, category: 'core' },
-  { schema: manageEntity.schema, handler: manageEntity.handler, requiresWrite: true, category: 'core' },
+
+  // Transaction CRUD tools
+  { schema: createTransaction.schema, handler: createTransaction.handler, requiresWrite: true, category: 'core' },
+  { schema: updateTransaction.schema, handler: updateTransaction.handler, requiresWrite: true, category: 'core' },
+  { schema: deleteTransaction.schema, handler: deleteTransaction.handler, requiresWrite: true, category: 'core' },
+
+  // Account CRUD tools
+  { schema: createAccount.schema, handler: createAccount.handler, requiresWrite: true, category: 'core' },
+  { schema: updateAccount.schema, handler: updateAccount.handler, requiresWrite: true, category: 'core' },
+  { schema: deleteAccount.schema, handler: deleteAccount.handler, requiresWrite: true, category: 'core' },
+  { schema: closeAccount.schema, handler: closeAccount.handler, requiresWrite: true, category: 'core' },
+  { schema: reopenAccount.schema, handler: reopenAccount.handler, requiresWrite: true, category: 'core' },
+  { schema: getAccountBalance.schema, handler: getAccountBalance.handler, requiresWrite: false, category: 'core' },
+
+  // Category CRUD tools
+  { schema: createCategory.schema, handler: createCategory.handler, requiresWrite: true, category: 'core' },
+  { schema: updateCategory.schema, handler: updateCategory.handler, requiresWrite: true, category: 'core' },
+  { schema: deleteCategory.schema, handler: deleteCategory.handler, requiresWrite: true, category: 'core' },
+
+  // Category Group CRUD tools
+  { schema: createCategoryGroup.schema, handler: createCategoryGroup.handler, requiresWrite: true, category: 'core' },
+  { schema: updateCategoryGroup.schema, handler: updateCategoryGroup.handler, requiresWrite: true, category: 'core' },
+  { schema: deleteCategoryGroup.schema, handler: deleteCategoryGroup.handler, requiresWrite: true, category: 'core' },
+
+  // Payee CRUD tools
+  { schema: createPayee.schema, handler: createPayee.handler, requiresWrite: true, category: 'core' },
+  { schema: updatePayee.schema, handler: updatePayee.handler, requiresWrite: true, category: 'core' },
+  { schema: deletePayee.schema, handler: deletePayee.handler, requiresWrite: true, category: 'core' },
+
+  // Rule CRUD tools
+  { schema: createRule.schema, handler: createRule.handler, requiresWrite: true, category: 'core' },
+  { schema: updateRule.schema, handler: updateRule.handler, requiresWrite: true, category: 'core' },
+  { schema: deleteRule.schema, handler: deleteRule.handler, requiresWrite: true, category: 'core' },
+
+  // Schedule CRUD tools
+  { schema: createSchedule.schema, handler: createSchedule.handler, requiresWrite: true, category: 'core' },
+  { schema: updateSchedule.schema, handler: updateSchedule.handler, requiresWrite: true, category: 'core' },
+  { schema: deleteSchedule.schema, handler: deleteSchedule.handler, requiresWrite: true, category: 'core' },
 
   // Budget tools (now core)
   { schema: getBudget.schema, handler: getBudget.handler, requiresWrite: false, category: 'core' },
-  {
-    schema: manageBudgetHold.schema,
-    handler: manageBudgetHold.handler,
-    requiresWrite: true,
-    category: 'core',
-  },
+  { schema: holdBudget.schema, handler: holdBudget.handler, requiresWrite: true, category: 'core' },
+  { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true, category: 'core' },
 
   // Budget file management (optional utilities)
   { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false, category: 'core' },
