@@ -116,16 +116,17 @@ export interface RecurConfig {
 /**
  * Data required to create or update a schedule
  * Matches Actual Budget API schedule structure
+ * Supports name resolution for account, payee, and category (like TransactionData)
  */
 export interface ScheduleData {
   name?: string; // Optional but recommended, must be unique
-  account?: string | null; // Optional, defaults to null (use accountId for convenience)
-  accountId?: string; // Convenience field - maps to account
-  amount?: number | { num1: number; num2: number }; // Optional, can be object for isbetween
+  account?: string | null; // Optional, name or ID (use accountId for convenience)
+  accountId?: string; // Convenience field - maps to account, name or ID
+  amount?: number | { num1: number; num2: number }; // Optional, dollars or cents (auto-detected)
   amountOp?: 'is' | 'isapprox' | 'isbetween'; // Optional, controls amount interpretation
   date: string | RecurConfig; // REQUIRED - date string OR RecurConfig
-  payee?: string | null; // Optional, defaults to null
-  category?: string | null; // Optional
+  payee?: string | null; // Optional, name or ID
+  category?: string | null; // Optional, name or ID
   notes?: string; // Optional
   posts_transaction?: boolean; // Optional, defaults to false
   // DO NOT include: rule, next_date, completed (auto-managed by API)
@@ -237,14 +238,15 @@ export const RecurConfigSchema = z.object({
 
 /**
  * Schema for schedule data validation
+ * Supports name resolution for account, payee, and category (like TransactionData)
  */
 export const ScheduleDataSchema = z.object({
   name: z.string().min(1, 'Schedule name is recommended').optional(),
-  account: z.string().uuid('Account must be a valid UUID').nullable().optional(),
-  accountId: z.string().uuid('Account ID must be a valid UUID').optional(),
+  account: z.string().min(1, 'Account name or ID is required').nullable().optional(), // Name or ID
+  accountId: z.string().min(1, 'Account name or ID is required').optional(), // Name or ID (convenience field)
   amount: z
     .union([
-      z.number().int('Amount must be an integer in milliunits'),
+      z.number(), // Dollars or cents (auto-detected, like transactions)
       z.object({
         num1: z.number(),
         num2: z.number(),
@@ -253,8 +255,8 @@ export const ScheduleDataSchema = z.object({
     .optional(),
   amountOp: z.enum(['is', 'isapprox', 'isbetween']).optional(),
   date: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'), RecurConfigSchema]),
-  payee: z.string().uuid('Payee must be a valid UUID').nullable().optional(),
-  category: z.string().uuid('Category must be a valid UUID').nullable().optional(),
+  payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
+  category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
   notes: z.string().optional(),
   posts_transaction: z.boolean().optional(),
 });
