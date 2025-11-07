@@ -47,8 +47,9 @@ interface NormalizedTransactionData {
 
 /**
  * Converts amount to cents if it appears to be in dollars.
- * Smart detection: if amount < 1000 and has decimal, treat as dollars.
- * Examples: -50.00 → -5000, -50.5 → -5050, -5000 → -5000
+ * Smart detection: amounts < 1000 are treated as dollars (multiply by 100).
+ * Amounts >= 1000 are assumed to already be in cents.
+ * Examples: -50 → -5000, -50.00 → -5000, -50.5 → -5050, -5000 → -5000
  */
 function convertAmountToCents(amount: number): number {
   const absAmount = Math.abs(amount);
@@ -58,13 +59,9 @@ function convertAmountToCents(amount: number): number {
     return Math.round(amount);
   }
 
-  // If amount has a decimal part, treat as dollars
-  if (amount % 1 !== 0) {
-    return Math.round(amount * 100);
-  }
-
-  // For whole numbers < 1000, default to cents for precision
-  return Math.round(amount);
+  // For amounts < 1000, treat as dollars (multiply by 100)
+  // This handles both whole numbers (e.g., -30 → -3000) and decimals (e.g., -30.50 → -3050)
+  return Math.round(amount * 100);
 }
 
 /**
