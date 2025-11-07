@@ -24,19 +24,19 @@ export const schema = {
     '- id: Schedule ID (UUID)\n\n' +
     'OPTIONAL (at least one required):\n' +
     '- name: Schedule name\n' +
-    '- accountId: Account ID (UUID)\n' +
-    '- account: Account ID (UUID)\n' +
-    '- amount: Amount in cents\n' +
+    '- accountId: Account name or ID (supports partial matching)\n' +
+    '- account: Account name or ID (alternative to accountId)\n' +
+    '- amount: Amount in dollars or cents (auto-detected, like transactions)\n' +
     '- amountOp: Amount operation\n' +
     '- date: Date string or RecurConfig\n' +
-    '- payee: Payee ID (UUID)\n' +
-    '- category: Category ID (UUID)\n' +
+    '- payee: Payee name or ID\n' +
+    '- category: Category name or ID\n' +
     '- notes: Transaction notes\n' +
     '- posts_transaction: Whether to auto-post transactions\n\n' +
     'EXAMPLES:\n' +
-    '- Update amount: {"id": "schedule-id", "amount": -200000}\n' +
+    '- Update amount: {"id": "schedule-id", "amount": -2000.00}\n' +
     '- Update date: {"id": "schedule-id", "date": "2024-03-01"}\n' +
-    '- Multiple fields: {"id": "schedule-id", "amount": -175000, "notes": "Updated amount"}\n\n' +
+    '- Multiple fields: {"id": "schedule-id", "amount": -1750.00, "notes": "Updated amount"}\n\n' +
     'COMMON USE CASES:\n' +
     '- Update recurring bill amounts\n' +
     '- Change schedule dates\n' +
@@ -48,6 +48,9 @@ export const schema = {
     '- Use delete-schedule to remove schedules\n\n' +
     'NOTES:\n' +
     '- Only provided fields will be updated\n' +
+    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -2000 → -$2,000.00)\n' +
+    '- Amounts >= 1000 treated as cents (e.g., -200000 → -$2,000.00)\n' +
+    '- Supports name resolution for account, payee, and category (partial matching)\n' +
     '- See create-schedule for date and amount formats',
   inputSchema: zodToJsonSchema(UpdateScheduleSchema) as ToolInput,
 };

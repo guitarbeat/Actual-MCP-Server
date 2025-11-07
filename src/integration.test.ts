@@ -221,12 +221,12 @@ describe('Integration Tests - MCP Simplification', () => {
   });
 
   describe('Production-Ready Tool Set', () => {
-    it('should have 41 core tools by default', async () => {
+    it('should have 37 core tools by default', async () => {
       const tools = getAvailableTools(true);
       const toolNames = tools.map((t) => t.schema.name);
 
-      // Should have exactly 41 core tools (CRUD layout + split budget hold)
-      expect(tools.length).toBe(41);
+      // Should have exactly 37 core tools (removed 4 schedule tools, run-query was conditional so didn't affect count)
+      expect(tools.length).toBe(37);
 
       // CRUD tools should be available
       expect(toolNames).toContain('create-transaction');
@@ -246,6 +246,12 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(toolNames).not.toContain('manage-entity');
       expect(toolNames).not.toContain('manage-transaction');
       expect(toolNames).not.toContain('manage-account');
+
+      // Schedule tools removed (not supported by Actual Budget server)
+      expect(toolNames).not.toContain('get-schedules');
+      expect(toolNames).not.toContain('create-schedule');
+      expect(toolNames).not.toContain('update-schedule');
+      expect(toolNames).not.toContain('delete-schedule');
     });
 
     it('should have clean tool descriptions without deprecation notices', async () => {
@@ -293,11 +299,8 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(toolNames).toContain('merge-payees');
       expect(toolNames).toContain('import-transactions');
 
-      // Core schedules
-      expect(toolNames).toContain('get-schedules');
-
       // Query tool is optional (not included when ENABLE_UTILITY_TOOLS=false)
-      expect(toolNames).not.toContain('run-query');
+      expect(toolNames).not.toContain('run-query'); // Removed - not supported on latest server
     });
   });
 
@@ -333,7 +336,7 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
 
-      // run-query is now optional, so it should NOT be available by default
+      // run-query was removed - not supported on latest server
       expect(tools.some((t) => t.schema.name === 'run-query')).toBe(false);
 
       // 6. Shutdown

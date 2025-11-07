@@ -5,7 +5,6 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi } from '../actual-api.js';
 import { error, errorFromCatch, MCPResponse } from '../core/response/index.js';
-import { features } from '../features.js';
 import { logToolExecution } from '../core/performance/performance-logger.js';
 import { metricsTracker } from '../core/performance/metrics-tracker.js';
 
@@ -26,9 +25,6 @@ import * as getBudget from './budgets/get-budget/index.js';
 import * as importTransactions from './budgets/import-transactions/index.js';
 import * as getBudgets from './budgets/get-budgets/index.js';
 import * as switchBudget from './budgets/switch-budget/index.js';
-
-// Schedule management tools
-import * as getSchedules from './schedules/get-schedules/index.js';
 
 // Payee tools
 import * as mergePayees from './payees/merge-payees/index.js';
@@ -65,14 +61,6 @@ import * as deletePayee from './payees/delete-payee/index.js';
 import * as createRule from './rules/create-rule/index.js';
 import * as updateRule from './rules/update-rule/index.js';
 import * as deleteRule from './rules/delete-rule/index.js';
-
-// Schedule CRUD tools
-import * as createSchedule from './schedules/create-schedule/index.js';
-import * as updateSchedule from './schedules/update-schedule/index.js';
-import * as deleteSchedule from './schedules/delete-schedule/index.js';
-
-// Utility tools (optional)
-import * as runQuery from './utilities/run-query/index.js';
 
 /**
  * Tool definition interface for registry-based tool management
@@ -130,7 +118,6 @@ const toolRegistry: CategorizedToolDefinition[] = [
   },
   { schema: getPayees.schema, handler: getPayees.handler, requiresWrite: false, category: 'core' },
   { schema: getRules.schema, handler: getRules.handler, requiresWrite: false, category: 'core' },
-  { schema: getSchedules.schema, handler: getSchedules.handler, requiresWrite: false, category: 'core' },
 
   // Core write tools
   { schema: setBudget.schema, handler: setBudget.handler, requiresWrite: true, category: 'core' },
@@ -170,24 +157,14 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: updateRule.schema, handler: updateRule.handler, requiresWrite: true, category: 'core' },
   { schema: deleteRule.schema, handler: deleteRule.handler, requiresWrite: true, category: 'core' },
 
-  // Schedule CRUD tools
-  { schema: createSchedule.schema, handler: createSchedule.handler, requiresWrite: true, category: 'core' },
-  { schema: updateSchedule.schema, handler: updateSchedule.handler, requiresWrite: true, category: 'core' },
-  { schema: deleteSchedule.schema, handler: deleteSchedule.handler, requiresWrite: true, category: 'core' },
-
   // Budget tools (now core)
   { schema: getBudget.schema, handler: getBudget.handler, requiresWrite: false, category: 'core' },
   { schema: holdBudget.schema, handler: holdBudget.handler, requiresWrite: true, category: 'core' },
   { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true, category: 'core' },
 
-  // Budget file management (optional utilities)
+  // Budget file management
   { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false, category: 'core' },
   { schema: switchBudget.schema, handler: switchBudget.handler, requiresWrite: true, category: 'core' },
-
-  // Query tool (optional, requires ENABLE_UTILITY_TOOLS=true)
-  ...(features.utilityTools
-    ? [{ schema: runQuery.schema, handler: runQuery.handler, requiresWrite: false, category: 'core' as const }]
-    : []),
 ];
 
 /**

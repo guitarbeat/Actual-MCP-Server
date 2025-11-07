@@ -2,8 +2,16 @@
 // IMPORT TRANSACTIONS TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch, validationError } from '../../../core/response/index.js';
+import {
+  successWithJson,
+  errorFromCatch,
+  validationError,
+  unsupportedFeatureError,
+} from '../../../core/response/index.js';
 import { runBankSync } from '../../../actual-api.js';
+
+const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
+const METHOD_NOT_FUNCTION_FRAGMENT = 'is not a function';
 
 export const schema = {
   name: 'import-transactions',
@@ -61,6 +69,20 @@ export async function handler(
       accountIdStr ? `Successfully synced bank account ${accountIdStr}` : 'Successfully synced all bank accounts'
     );
   } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+
+    // Check if this is an "unsupported feature" error
+    if (
+      errorMessage.includes(API_UNAVAILABLE_ERROR_FRAGMENT) ||
+      errorMessage.includes(METHOD_NOT_FUNCTION_FRAGMENT) ||
+      err instanceof TypeError
+    ) {
+      return unsupportedFeatureError('Bank sync', {
+        suggestion:
+          'Upgrade your Actual Budget server to a version that supports bank sync or import transactions manually in the Actual app.',
+      });
+    }
+
     return errorFromCatch(err);
   }
 }

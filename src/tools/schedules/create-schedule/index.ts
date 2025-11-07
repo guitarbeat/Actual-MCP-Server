@@ -17,18 +17,18 @@ export const schema = {
     '- date: Date string (YYYY-MM-DD) or RecurConfig object for recurring schedules\n\n' +
     'OPTIONAL:\n' +
     '- name: Schedule name (recommended, must be unique)\n' +
-    '- accountId: Account ID (UUID) - convenience field\n' +
-    '- account: Account ID (UUID) - alternative to accountId\n' +
-    '- amount: Amount in cents (integer) or object for isbetween\n' +
+    '- accountId: Account name or ID (supports partial matching, e.g., "Chase" matches "Chase Checking")\n' +
+    '- account: Account name or ID (alternative to accountId)\n' +
+    '- amount: Amount in dollars or cents (auto-detected, like transactions)\n' +
     '- amountOp: Amount operation (is, isapprox, isbetween)\n' +
-    '- payee: Payee ID (UUID)\n' +
-    '- category: Category ID (UUID)\n' +
+    '- payee: Payee name or ID\n' +
+    '- category: Category name or ID\n' +
     '- notes: Transaction notes\n' +
     '- posts_transaction: Whether to automatically post transactions (default: false)\n\n' +
     'EXAMPLES:\n' +
-    '- Simple date: {"name": "Monthly Rent", "accountId": "acc-id", "amount": -150000, "date": "2024-02-01"}\n' +
-    '- Recurring monthly: {"name": "Monthly Rent", "accountId": "acc-id", "amount": -150000, "date": {"frequency": "monthly", "start": "2024-02-01", "endMode": "never"}}\n' +
-    '- Weekly: {"name": "Weekly Groceries", "accountId": "acc-id", "amount": -10000, "date": {"frequency": "weekly", "start": "2024-02-01", "endMode": "after_n_occurrences", "endOccurrences": 52}}\n\n' +
+    '- Simple date: {"name": "Monthly Rent", "accountId": "Chase Checking", "amount": -1500.00, "date": "2024-02-01"}\n' +
+    '- Recurring monthly: {"name": "Monthly Rent", "accountId": "🏦 Chase Checking", "amount": -1500.00, "date": {"frequency": "monthly", "start": "2024-02-01", "endMode": "never"}}\n' +
+    '- Weekly: {"name": "Weekly Groceries", "accountId": "Checking", "amount": -100.00, "date": {"frequency": "weekly", "start": "2024-02-01", "endMode": "after_n_occurrences", "endOccurrences": 52}}\n\n' +
     'COMMON USE CASES:\n' +
     '- Set up recurring bills\n' +
     '- Schedule regular income\n' +
@@ -41,7 +41,9 @@ export const schema = {
     'NOTES:\n' +
     '- Date can be a simple string (YYYY-MM-DD) or RecurConfig object\n' +
     '- RecurConfig supports daily, weekly, monthly, yearly frequencies\n' +
-    '- Amount is in cents (e.g., -150000 = -$1,500.00)',
+    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -1500 → -$1,500.00)\n' +
+    '- Amounts >= 1000 treated as cents (e.g., -150000 → -$1,500.00)\n' +
+    '- Supports name resolution for account, payee, and category (partial matching)',
   inputSchema: zodToJsonSchema(ScheduleDataSchema) as ToolInput,
 };
 

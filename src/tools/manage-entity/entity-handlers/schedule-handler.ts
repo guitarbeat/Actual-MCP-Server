@@ -4,12 +4,32 @@
 
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { createSchedule, deleteSchedule, updateSchedule } from '../../../actual-api.js';
+import { nameResolver } from '../../../core/utils/name-resolver.js';
 import type { EntityHandler, Operation } from './base-handler.js';
 import type { ScheduleData } from '../types.js';
 import { ScheduleDataSchema } from '../types.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
+
+/**
+ * Converts amount to cents if it appears to be in dollars.
+ * Smart detection: amounts < 1000 are treated as dollars (multiply by 100).
+ * Amounts >= 1000 are assumed to already be in cents.
+ * Examples: -50 → -5000, -50.00 → -5000, -50.5 → -5050, -5000 → -5000
+ */
+function convertAmountToCents(amount: number): number {
+  const absAmount = Math.abs(amount);
+
+  // If amount is >= 1000, assume it's already in cents
+  if (absAmount >= 1000) {
+    return Math.round(amount);
+  }
+
+  // For amounts < 1000, treat as dollars (multiply by 100)
+  // This handles both whole numbers (e.g., -30 → -3000) and decimals (e.g., -30.50 → -3050)
+  return Math.round(amount * 100);
+}
 
 /**
  * Handler for schedule entity operations
@@ -30,34 +50,58 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
       throw new Error('date field is required for schedule creation');
     }
 
-    // Transform data for API: map accountId to account, remove invalid fields
+    // Transform data for API: resolve names to IDs and convert amounts
     const apiData: Record<string, unknown> = {
       date: validated.date,
     };
 
-    // Map accountId to account if provided
+    // Resolve account name to ID if provided
     if (validated.accountId) {
-      apiData.account = validated.accountId;
-    } else if (validated.account !== undefined) {
-      apiData.account = validated.account;
+      apiData.account = await nameResolver.resolveAccount(validated.accountId);
+    } else if (validated.account !== undefined && validated.account !== null) {
+      apiData.account = await nameResolver.resolveAccount(validated.account);
     }
 
     // Add optional fields
     if (validated.name !== undefined) {
       apiData.name = validated.name;
     }
+
+    // Convert amount to cents if it's a number
     if (validated.amount !== undefined) {
-      apiData.amount = validated.amount;
+      if (typeof validated.amount === 'number') {
+        apiData.amount = convertAmountToCents(validated.amount);
+      } else {
+        // For isbetween, convert both numbers
+        apiData.amount = {
+          num1: convertAmountToCents(validated.amount.num1),
+          num2: convertAmountToCents(validated.amount.num2),
+        };
+      }
     }
+
     if (validated.amountOp !== undefined) {
       apiData.amountOp = validated.amountOp;
     }
+
+    // Resolve payee name to ID if provided
     if (validated.payee !== undefined) {
-      apiData.payee = validated.payee;
+      if (validated.payee) {
+        apiData.payee = await nameResolver.resolvePayee(validated.payee);
+      } else {
+        apiData.payee = null;
+      }
     }
+
+    // Resolve category name to ID if provided
     if (validated.category !== undefined) {
-      apiData.category = validated.category;
+      if (validated.category) {
+        apiData.category = await nameResolver.resolveCategory(validated.category);
+      } else {
+        apiData.category = null;
+      }
     }
+
     if (validated.notes !== undefined) {
       apiData.notes = validated.notes;
     }
@@ -85,14 +129,18 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
     // Validate data
     const validated = ScheduleDataSchema.parse(data);
 
-    // Transform data for API: map accountId to account, remove invalid fields
+    // Transform data for API: resolve names to IDs and convert amounts
     const apiData: Record<string, unknown> = {};
 
-    // Map accountId to account if provided
+    // Resolve account name to ID if provided
     if (validated.accountId !== undefined) {
-      apiData.account = validated.accountId;
+      apiData.account = await nameResolver.resolveAccount(validated.accountId);
     } else if (validated.account !== undefined) {
-      apiData.account = validated.account;
+      if (validated.account !== null) {
+        apiData.account = await nameResolver.resolveAccount(validated.account);
+      } else {
+        apiData.account = null;
+      }
     }
 
     // Add optional fields (only include if provided)
@@ -102,18 +150,42 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
     if (validated.date !== undefined) {
       apiData.date = validated.date;
     }
+
+    // Convert amount to cents if it's a number
     if (validated.amount !== undefined) {
-      apiData.amount = validated.amount;
+      if (typeof validated.amount === 'number') {
+        apiData.amount = convertAmountToCents(validated.amount);
+      } else {
+        // For isbetween, convert both numbers
+        apiData.amount = {
+          num1: convertAmountToCents(validated.amount.num1),
+          num2: convertAmountToCents(validated.amount.num2),
+        };
+      }
     }
+
     if (validated.amountOp !== undefined) {
       apiData.amountOp = validated.amountOp;
     }
+
+    // Resolve payee name to ID if provided
     if (validated.payee !== undefined) {
-      apiData.payee = validated.payee;
+      if (validated.payee) {
+        apiData.payee = await nameResolver.resolvePayee(validated.payee);
+      } else {
+        apiData.payee = null;
+      }
     }
+
+    // Resolve category name to ID if provided
     if (validated.category !== undefined) {
-      apiData.category = validated.category;
+      if (validated.category) {
+        apiData.category = await nameResolver.resolveCategory(validated.category);
+      } else {
+        apiData.category = null;
+      }
     }
+
     if (validated.notes !== undefined) {
       apiData.notes = validated.notes;
     }
