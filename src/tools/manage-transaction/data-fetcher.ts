@@ -51,7 +51,8 @@ export class ManageTransactionDataFetcher {
     const importResult = await importTransactions(input.accountId, [transaction]);
 
     if (importResult.errors?.length) {
-      throw new Error(`Failed to create transaction: ${importResult.errors.join('; ')}`);
+      const errorMessages = importResult.errors.map((err: { message: string }) => err.message).join('; ');
+      throw new Error(`Failed to create transaction: ${errorMessages}`);
     }
 
     // Get the transaction ID from the result

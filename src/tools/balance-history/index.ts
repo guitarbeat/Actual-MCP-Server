@@ -13,38 +13,26 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 export const schema = {
   name: 'balance-history',
   description:
-    'Get account balance history over time, showing how the balance changed month by month.\n\n' +
-    'REQUIRED PARAMETERS:\n' +
-    '- accountId: Account name or ID (use get-accounts to find account IDs)\n' +
-    '- months: Number of months of history to retrieve (e.g., 3, 6, 12)\n\n' +
-    'RETURNED DATA:\n' +
-    '- Monthly balance snapshots showing balance at the end of each month\n' +
-    '- Balance changes over the specified time period\n' +
-    '- Account name and date range\n\n' +
+    'Get account balance history showing monthly balance changes.\n\n' +
+    'REQUIRED:\n' +
+    '- accountId: Account name or ID\n' +
+    '- months: Number of months (e.g., 3, 6, 12)\n\n' +
     'EXAMPLES:\n' +
     '- Last 6 months: {"accountId": "Checking", "months": 6}\n' +
-    '- Last year: {"accountId": "Savings", "months": 12}\n' +
-    '- Last quarter: {"accountId": "Credit Card", "months": 3}\n\n' +
+    '- Last year: {"accountId": "Savings", "months": 12}\n\n' +
     'COMMON USE CASES:\n' +
-    '- Tracking account balance trends over time\n' +
-    '- Identifying unusual balance changes\n' +
-    '- Monitoring savings account growth\n' +
-    '- Reviewing credit card balance patterns\n\n' +
-    'NOTES:\n' +
-    '- Balances are calculated at the end of each month\n' +
-    '- Accepts account name or ID (use get-accounts to find IDs)\n' +
-    '- Months parameter determines how far back to look from today\n' +
-    '- Balances include all transactions up to the end of each month\n\n' +
-    'TYPICAL WORKFLOW:\n' +
-    '1. Use get-accounts to find account ID or name\n' +
-    '2. Use balance-history to view balance trends\n' +
-    '3. Use get-transactions to investigate specific months with unusual changes\n' +
-    '4. Use monthly-summary for overall financial trends across all accounts\n\n' +
+    '- Track account balance trends over time\n' +
+    '- Analyze balance changes month-over-month\n' +
+    '- Review account growth or decline patterns\n' +
+    '- Generate balance history reports\n' +
+    '- Understand account activity patterns\n\n' +
     'SEE ALSO:\n' +
-    '- get-accounts: Find account IDs before querying balance history\n' +
-    '- manage-account: Query current balance for a specific date\n' +
-    '- monthly-summary: View overall financial trends including all accounts\n' +
-    '- get-transactions: View transactions that caused balance changes',
+    '- Use get-accounts to find account IDs\n' +
+    '- Use get-transactions to see transaction details affecting balances\n' +
+    '- Use monthly-summary for high-level financial overview\n\n' +
+    'RETURNS:\n' +
+    '- Monthly balance snapshots\n' +
+    '- Balance changes over time',
   inputSchema: zodToJsonSchema(BalanceHistoryArgsSchema) as ToolInput,
 };
 

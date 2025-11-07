@@ -2,8 +2,9 @@
 // RUN QUERY TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
+import { successWithJson, errorFromCatch, error } from '../../../core/response/index.js';
 import { runQuery } from '../../../actual-api.js';
+import { features } from '../../../features.js';
 
 export const schema = {
   name: 'run-query',
@@ -14,34 +15,26 @@ export const schema = {
     'EXAMPLE:\n' +
     '{"query": "SELECT * FROM transactions WHERE amount > 5000 LIMIT 10"}\n\n' +
     'COMMON USE CASES:\n' +
-    '- Custom data analysis not available through standard tools\n' +
-    '- Complex filtering across multiple tables\n' +
-    '- Retrieving specific database fields\n' +
-    '- Advanced reporting queries\n\n' +
-    'NOTES:\n' +
-    '- WARNING: Advanced tool - requires knowledge of ActualQL syntax and database schema\n' +
-    '- Amounts in database are stored in cents (e.g., 5000 = $50.00)\n' +
-    '- Use standard tools (get-transactions, get-accounts, etc.) when possible\n' +
-    '- Query syntax is similar to SQL but specific to Actual Budget\n' +
-    '- Available tables: transactions, accounts, categories, payees, rules, schedules, and more\n' +
-    '- Read-only queries recommended - write operations may cause data corruption\n\n' +
-    'TYPICAL WORKFLOW:\n' +
-    '1. Determine if standard tools can accomplish the task\n' +
-    '2. If not, use run-query with ActualQL syntax\n' +
-    '3. Test queries with LIMIT clause to avoid large result sets\n' +
-    '4. Use results for custom analysis or reporting\n\n' +
+    '- Execute complex queries not supported by standard tools\n' +
+    '- Custom data analysis and reporting\n' +
+    '- Advanced filtering and aggregation\n' +
+    '- Direct database access for specialized needs\n' +
+    '- Complex joins across multiple tables\n\n' +
     'SEE ALSO:\n' +
-    '- get-transactions: Standard tool for transaction queries\n' +
-    '- get-accounts: Standard tool for account queries\n' +
-    '- spending-by-category: Standard tool for spending analysis\n' +
-    '- monthly-summary: Standard tool for financial summaries',
+    '- Use standard tools (get-transactions, spending-by-category, etc.) when possible\n' +
+    '- Standard tools are easier to use and more reliable\n\n' +
+    'NOTES:\n' +
+    '- WARNING: Advanced tool - requires knowledge of ActualQL syntax\n' +
+    '- Amounts in database are stored in cents\n' +
+    '- Use standard tools when possible\n' +
+    '- Read-only queries recommended',
   inputSchema: {
     type: 'object',
     properties: {
       query: {
         type: 'string',
         description:
-          'ActualQL query string to execute. ActualQL is Actual Budget\'s query language for retrieving data from the database. Example: "SELECT * FROM transactions WHERE amount > 5000" (amounts in cents).',
+          'ActualQL query string to execute. Example: "SELECT * FROM transactions WHERE amount > 5000" (amounts in cents).',
       },
     },
     required: ['query'],
@@ -50,7 +43,14 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch> | ReturnType<typeof error>> {
+  if (!features.utilityTools) {
+    return error(
+      'The run-query tool is not enabled.',
+      'Set ENABLE_UTILITY_TOOLS=true environment variable to enable this advanced tool.'
+    );
+  }
+
   try {
     if (!args.query || typeof args.query !== 'string') {
       return errorFromCatch('query is required and must be a string');

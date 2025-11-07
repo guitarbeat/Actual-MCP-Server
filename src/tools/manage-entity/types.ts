@@ -91,17 +91,44 @@ export interface RuleData {
 }
 
 /**
+ * Recurrence pattern for schedule dates
+ */
+export interface RecurPattern {
+  type: 'day' | 'weekday' | 'weekend' | 'dayOfMonth' | 'dayOfWeek';
+  value: number | number[];
+}
+
+/**
+ * Recurrence configuration for schedules
+ */
+export interface RecurConfig {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval?: number; // Defaults to 1
+  patterns?: RecurPattern[];
+  skipWeekend?: boolean;
+  start: string; // ISO date string
+  endMode: 'never' | 'after_n_occurrences' | 'on_date';
+  endOccurrences?: number; // Required if endMode is 'after_n_occurrences'
+  endDate?: string; // Required if endMode is 'on_date' (ISO date string)
+  weekendSolveMode?: 'before' | 'after'; // If skipWeekend is true
+}
+
+/**
  * Data required to create or update a schedule
+ * Matches Actual Budget API schedule structure
  */
 export interface ScheduleData {
-  name: string;
-  accountId: string;
-  amount: number;
-  nextDate: string;
-  rule: string;
-  payee?: string;
-  category?: string;
-  notes?: string;
+  name?: string; // Optional but recommended, must be unique
+  account?: string | null; // Optional, defaults to null (use accountId for convenience)
+  accountId?: string; // Convenience field - maps to account
+  amount?: number | { num1: number; num2: number }; // Optional, can be object for isbetween
+  amountOp?: 'is' | 'isapprox' | 'isbetween'; // Optional, controls amount interpretation
+  date: string | RecurConfig; // REQUIRED - date string OR RecurConfig
+  payee?: string | null; // Optional, defaults to null
+  category?: string | null; // Optional
+  notes?: string; // Optional
+  posts_transaction?: boolean; // Optional, defaults to false
+  // DO NOT include: rule, next_date, completed (auto-managed by API)
 }
 
 // ----------------------------
@@ -183,17 +210,53 @@ export const RuleDataSchema = z.object({
 });
 
 /**
+ * Schema for recurrence pattern validation
+ */
+export const RecurPatternSchema = z.object({
+  type: z.enum(['day', 'weekday', 'weekend', 'dayOfMonth', 'dayOfWeek']),
+  value: z.union([z.number(), z.array(z.number())]),
+});
+
+/**
+ * Schema for recurrence configuration validation
+ */
+export const RecurConfigSchema = z.object({
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  interval: z.number().int().positive().optional(),
+  patterns: z.array(RecurPatternSchema).optional(),
+  skipWeekend: z.boolean().optional(),
+  start: z.string().regex(/^\d{4}-\d{2}-\d{2}/, 'Start date must be an ISO date string'),
+  endMode: z.enum(['never', 'after_n_occurrences', 'on_date']),
+  endOccurrences: z.number().int().positive().optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}/, 'End date must be an ISO date string')
+    .optional(),
+  weekendSolveMode: z.enum(['before', 'after']).optional(),
+});
+
+/**
  * Schema for schedule data validation
  */
 export const ScheduleDataSchema = z.object({
-  name: z.string().min(1, 'Schedule name is required'),
-  accountId: z.string().uuid('Account ID must be a valid UUID'),
-  amount: z.number().int('Amount must be an integer in milliunits'),
-  nextDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Next date must be in YYYY-MM-DD format'),
-  rule: z.string().min(1, 'Recurrence rule is required'),
-  payee: z.string().optional(),
-  category: z.string().optional(),
+  name: z.string().min(1, 'Schedule name is recommended').optional(),
+  account: z.string().uuid('Account must be a valid UUID').nullable().optional(),
+  accountId: z.string().uuid('Account ID must be a valid UUID').optional(),
+  amount: z
+    .union([
+      z.number().int('Amount must be an integer in milliunits'),
+      z.object({
+        num1: z.number(),
+        num2: z.number(),
+      }),
+    ])
+    .optional(),
+  amountOp: z.enum(['is', 'isapprox', 'isbetween']).optional(),
+  date: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'), RecurConfigSchema]),
+  payee: z.string().uuid('Payee must be a valid UUID').nullable().optional(),
+  category: z.string().uuid('Category must be a valid UUID').nullable().optional(),
   notes: z.string().optional(),
+  posts_transaction: z.boolean().optional(),
 });
 
 // ----------------------------

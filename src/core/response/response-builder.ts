@@ -29,7 +29,8 @@ const suggestionMatchers: Array<{ test: RegExp; suggestion: string }> = [
   },
   {
     test: /month/i,
-    suggestion: 'Use the get-budget-months tool and provide the month in YYYY-MM format (e.g., 2024-08).',
+    suggestion:
+      'Use the get-budget tool to list available months, then provide the month in YYYY-MM format (e.g., 2024-08).',
   },
   {
     test: /amount/i,

@@ -2,41 +2,28 @@ import { successWithJson, errorFromCatch, unsupportedFeatureError } from '../../
 import { getSchedules } from '../../../actual-api.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
+const METHOD_NOT_FUNCTION_FRAGMENT = 'is not a function';
 
 export const schema = {
   name: 'get-schedules',
   description:
-    'Retrieve all recurring transaction schedules. Schedules automatically create transactions on a recurring basis (monthly rent, weekly groceries, etc.).\n\n' +
-    'RETURNED DATA:\n' +
-    '- Schedule ID (UUID) - Use this to update or delete schedules\n' +
-    '- Schedule name (e.g., "Monthly Rent", "Weekly Groceries")\n' +
-    '- Account ID and name\n' +
-    '- Amount in cents (negative for expenses, positive for income)\n' +
-    '- Next occurrence date\n' +
-    '- Recurrence rule (frequency: monthly, weekly, yearly, etc.)\n' +
-    '- Payee and category (if set)\n\n' +
+    'Retrieve all recurring transaction schedules.\n\n' +
     'EXAMPLE:\n' +
-    '- Get all schedules: {} or no arguments\n\n' +
+    '- Get all: {}\n\n' +
     'COMMON USE CASES:\n' +
-    '- Reviewing all recurring transactions\n' +
-    '- Finding schedule IDs before updating or deleting with manage-entity\n' +
-    '- Checking next occurrence dates for scheduled transactions\n' +
-    '- Verifying recurring bill schedules\n\n' +
-    'NOTES:\n' +
-    '- No parameters required\n' +
-    '- Amounts are in cents (e.g., -150000 = -$1,500.00)\n' +
-    '- Negative amounts = expenses, positive = income\n' +
-    '- Next occurrence date shows when transaction will be created\n' +
-    '- Use manage-entity to create, update, or delete schedules\n\n' +
-    'TYPICAL WORKFLOW:\n' +
-    '1. Use get-schedules to see all recurring transactions\n' +
-    '2. Use manage-entity to create, update, or delete schedules\n' +
-    '3. Use get-transactions to verify scheduled transactions were created\n\n' +
+    '- List all recurring transaction schedules\n' +
+    '- View schedule details (frequency, amount, next date)\n' +
+    '- Find schedule IDs for updating or deleting schedules\n' +
+    '- Understand recurring transaction patterns\n' +
+    '- Review scheduled transactions\n\n' +
     'SEE ALSO:\n' +
-    '- manage-entity: Create, update, or delete schedules\n' +
-    '- get-accounts: Find account IDs for schedules\n' +
-    '- get-transactions: View transactions created by schedules\n' +
-    '- get-payees: Find payee IDs for schedules',
+    '- Use with manage-entity to create, update, or delete schedules\n' +
+    '- Use with get-accounts to see account details for schedules\n\n' +
+    'RETURNS:\n' +
+    '- Schedule ID, name, account, amount, next date, frequency\n' +
+    '- Schedules create transactions automatically\n\n' +
+    'NOTE:\n' +
+    '- May not be available on all Actual Budget server versions',
   inputSchema: {
     type: 'object',
     description:
@@ -53,7 +40,13 @@ export async function handler(
 
     return successWithJson(schedules);
   } catch (err) {
-    if (err instanceof Error && err.message.includes(API_UNAVAILABLE_ERROR_FRAGMENT)) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+
+    if (
+      errorMessage.includes(API_UNAVAILABLE_ERROR_FRAGMENT) ||
+      errorMessage.includes(METHOD_NOT_FUNCTION_FRAGMENT) ||
+      err instanceof TypeError
+    ) {
       return unsupportedFeatureError('Reading recurring schedules', {
         suggestion:
           'Upgrade your Actual Budget server to a version that exposes schedule APIs or manage schedules directly in the Actual app.',

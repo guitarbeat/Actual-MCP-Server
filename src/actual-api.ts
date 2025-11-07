@@ -10,6 +10,7 @@ import {
   APIPayeeEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
+import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
 import { cacheService } from './core/cache/cache-service.js';
 
 type ExtendedActualApi = typeof api & {
@@ -30,6 +31,7 @@ const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 let initialized = false;
 let initializing = false;
 let initializationError: Error | null = null;
+let checkingHealth = false; // Prevent recursion in health checks
 
 // Performance tracking for initialization
 let initializationTime: number | null = null;
@@ -39,10 +41,56 @@ let initializationSkipCount = 0;
 let autoSyncInterval: NodeJS.Timeout | null = null;
 
 /**
- * Initialize the Actual Budget API
+ * Check if the Actual Budget API connection is healthy
+ * @returns true if connection is healthy, false otherwise
  */
-export async function initActualApi(): Promise<void> {
-  if (initialized) {
+async function checkConnectionHealth(): Promise<boolean> {
+  if (!initialized) {
+    return false;
+  }
+
+  // Prevent recursion - if we're already checking health, skip
+  if (checkingHealth) {
+    return true; // Assume healthy to avoid recursion
+  }
+
+  checkingHealth = true;
+  try {
+    // Use a lightweight API call to verify connection
+    // Call raw API directly to avoid recursion with ensureConnection wrapper
+    await api.getAccounts();
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStr = errorMessage.toLowerCase();
+
+    // Check for connection-related errors
+    if (
+      errorStr.includes('not connected') ||
+      errorStr.includes('connection') ||
+      errorStr.includes('econnrefused') ||
+      errorStr.includes('network') ||
+      errorStr.includes('timeout')
+    ) {
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        console.error('[CONNECTION] Health check failed - connection lost');
+      }
+      return false;
+    }
+
+    // Other errors might be valid (e.g., no accounts), so assume connection is OK
+    return true;
+  } finally {
+    checkingHealth = false;
+  }
+}
+
+/**
+ * Initialize the Actual Budget API
+ * @param forceReconnect - If true, force reconnection even if already initialized
+ */
+export async function initActualApi(forceReconnect = false): Promise<void> {
+  if (initialized && !forceReconnect) {
     // Log when initialization is skipped due to existing connection
     initializationSkipCount++;
     if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
@@ -52,6 +100,14 @@ export async function initActualApi(): Promise<void> {
       );
     }
     return;
+  }
+
+  // If forcing reconnect, reset initialization state
+  if (forceReconnect && initialized) {
+    initialized = false;
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error('[CONNECTION] Forcing reconnection...');
+    }
   }
   if (initializing) {
     // Wait for initialization to complete if already in progress
@@ -209,6 +265,84 @@ export function resetInitializationStats(): void {
   initializationSkipCount = 0;
 }
 
+/**
+ * Ensure the Actual Budget API connection is healthy
+ * Automatically reconnects if connection is lost
+ * @param operation - Function to execute after ensuring connection
+ * @returns Result of the operation
+ */
+async function ensureConnection<T>(operation: () => Promise<T>): Promise<T> {
+  const maxRetries = 2;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Skip health check if we're already initializing to avoid recursion
+      if (!initializing) {
+        const isHealthy = await checkConnectionHealth();
+
+        if (!isHealthy) {
+          if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+            console.error(
+              `[CONNECTION] Connection unhealthy, attempting reconnect (attempt ${attempt + 1}/${maxRetries + 1})`
+            );
+          }
+
+          // Force reconnection
+          initialized = false;
+          await initActualApi(true);
+        } else if (!initialized) {
+          // Ensure initialization (in case initialized flag is false but connection works)
+          await initActualApi();
+        }
+      } else {
+        // If already initializing, wait for it to complete
+        while (initializing) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        if (initializationError) {
+          throw initializationError;
+        }
+      }
+
+      // Try the operation
+      return await operation();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const errorMessage = lastError.message.toLowerCase();
+
+      // Check if this is a connection error
+      const isConnectionError =
+        errorMessage.includes('not connected') ||
+        errorMessage.includes('connection') ||
+        errorMessage.includes('econnrefused') ||
+        errorMessage.includes('network') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('unknown operator'); // Some API errors indicate connection issues
+
+      if (isConnectionError && attempt < maxRetries) {
+        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+          console.error(
+            `[CONNECTION] Connection error detected, reconnecting (attempt ${attempt + 1}/${maxRetries + 1}): ${errorMessage}`
+          );
+        }
+
+        // Reset connection state and retry
+        initialized = false;
+        checkingHealth = false;
+        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1))); // Exponential backoff
+        continue;
+      }
+
+      // Not a connection error or max retries reached
+      throw lastError;
+    }
+  }
+
+  // Should never reach here, but TypeScript needs it
+  throw lastError || new Error('Failed to ensure connection');
+}
+
 // ----------------------------
 // FETCH
 // ----------------------------
@@ -217,56 +351,49 @@ export function resetInitializationStats(): void {
  * Get all accounts (ensures API is initialized)
  */
 export async function getAccounts(): Promise<APIAccountEntity[]> {
-  await initActualApi();
-  return api.getAccounts();
+  return ensureConnection(() => api.getAccounts());
 }
 
 /**
  * Get all categories (ensures API is initialized)
  */
 export async function getCategories(): Promise<APICategoryEntity[]> {
-  await initActualApi();
-  return api.getCategories();
+  return ensureConnection(() => api.getCategories());
 }
 
 /**
  * Get all category groups (ensures API is initialized)
  */
 export async function getCategoryGroups(): Promise<APICategoryGroupEntity[]> {
-  await initActualApi();
-  return api.getCategoryGroups();
+  return ensureConnection(() => api.getCategoryGroups());
 }
 
 /**
  * Get all payees (ensures API is initialized)
  */
 export async function getPayees(): Promise<APIPayeeEntity[]> {
-  await initActualApi();
-  return api.getPayees();
+  return ensureConnection(() => api.getPayees());
 }
 
 /**
  * Get transactions for a specific account and date range (ensures API is initialized)
  */
 export async function getTransactions(accountId: string, start: string, end: string): Promise<TransactionEntity[]> {
-  await initActualApi();
-  return api.getTransactions(accountId, start, end);
+  return ensureConnection(() => api.getTransactions(accountId, start, end));
 }
 
 /**
  * Get all rules (ensures API is initialized)
  */
 export async function getRules(): Promise<RuleEntity[]> {
-  await initActualApi();
-  return api.getRules();
+  return ensureConnection(() => api.getRules());
 }
 
 /**
  * Get account balance for a specific account and date (ensures API is initialized)
  */
 export async function getAccountBalance(accountId: string, date?: string): Promise<number> {
-  await initActualApi();
-  return api.getAccountBalance(accountId, date);
+  return ensureConnection(() => api.getAccountBalance(accountId, date));
 }
 
 // ----------------------------
@@ -277,114 +404,120 @@ export async function getAccountBalance(accountId: string, date?: string): Promi
  * Create a new payee (ensures API is initialized)
  */
 export async function createPayee(args: Record<string, unknown>): Promise<string> {
-  await initActualApi();
-  const result = await api.createPayee(args);
-  cacheService.invalidate('payees:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.createPayee(args);
+    cacheService.invalidate('payees:all');
+    return result;
+  });
 }
 
 /**
  * Update a payee (ensures API is initialized)
  */
 export async function updatePayee(id: string, args: Record<string, unknown>): Promise<unknown> {
-  await initActualApi();
-  const result = await api.updatePayee(id, args);
-  cacheService.invalidate('payees:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.updatePayee(id, args);
+    cacheService.invalidate('payees:all');
+    return result;
+  });
 }
 
 /**
  * Delete a payee (ensures API is initialized)
  */
 export async function deletePayee(id: string): Promise<unknown> {
-  await initActualApi();
-  const result = await api.deletePayee(id);
-  cacheService.invalidate('payees:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.deletePayee(id);
+    cacheService.invalidate('payees:all');
+    return result;
+  });
 }
 
 /**
  * Create a new rule (ensures API is initialized)
  */
 export async function createRule(args: Record<string, unknown>): Promise<RuleEntity> {
-  await initActualApi();
-  return api.createRule(args);
+  return ensureConnection(() => api.createRule(args));
 }
 
 /**
  * Update a rule (ensures API is initialized)
  */
 export async function updateRule(args: Record<string, unknown>): Promise<RuleEntity> {
-  await initActualApi();
-  return api.updateRule(args);
+  return ensureConnection(() => api.updateRule(args));
 }
 
 /**
  * Delete a rule (ensures API is initialized)
  */
 export async function deleteRule(id: string): Promise<boolean> {
-  await initActualApi();
-  return api.deleteRule(id);
+  return ensureConnection(() => api.deleteRule(id));
 }
 
 /**
  * Create a new category (ensures API is initialized)
  */
 export async function createCategory(args: Record<string, unknown>): Promise<string> {
-  await initActualApi();
-  const result = await api.createCategory(args);
-  cacheService.invalidate('categories:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.createCategory(args);
+    cacheService.invalidate('categories:all');
+    return result;
+  });
 }
 
 /**
  * Update a category (ensures API is initialized)
  */
 export async function updateCategory(id: string, args: Record<string, unknown>): Promise<unknown> {
-  await initActualApi();
-  const result = await api.updateCategory(id, args);
-  cacheService.invalidate('categories:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.updateCategory(id, args);
+    cacheService.invalidate('categories:all');
+    return result;
+  });
 }
 
 /**
  * Delete a category (ensures API is initialized)
  */
 export async function deleteCategory(id: string): Promise<{ error?: string }> {
-  await initActualApi();
-  const result = await api.deleteCategory(id);
-  cacheService.invalidate('categories:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.deleteCategory(id);
+    cacheService.invalidate('categories:all');
+    return result;
+  });
 }
 
 /**
  * Create a new category group (ensures API is initialized)
  */
 export async function createCategoryGroup(args: Record<string, unknown>): Promise<string> {
-  await initActualApi();
-  const result = await api.createCategoryGroup(args);
-  cacheService.invalidate('categoryGroups:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.createCategoryGroup(args);
+    cacheService.invalidate('categoryGroups:all');
+    return result;
+  });
 }
 
 /**
  * Update a category group (ensures API is initialized)
  */
 export async function updateCategoryGroup(id: string, args: Record<string, unknown>): Promise<unknown> {
-  await initActualApi();
-  const result = await api.updateCategoryGroup(id, args);
-  cacheService.invalidate('categoryGroups:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.updateCategoryGroup(id, args);
+    cacheService.invalidate('categoryGroups:all');
+    return result;
+  });
 }
 
 /**
  * Delete a category group (ensures API is initialized)
  */
 export async function deleteCategoryGroup(id: string): Promise<unknown> {
-  await initActualApi();
-  const result = await api.deleteCategoryGroup(id);
-  cacheService.invalidate('categoryGroups:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.deleteCategoryGroup(id);
+    cacheService.invalidate('categoryGroups:all');
+    return result;
+  });
 }
 
 /**
@@ -401,13 +534,17 @@ export async function addTransactions(
     cleared?: boolean;
   }>,
   options?: { learnCategories?: boolean; runTransfers?: boolean }
-): Promise<void> {
-  await initActualApi();
-  await api.addTransactions(accountId, transactions, options);
+): Promise<'ok'> {
+  return ensureConnection(() => api.addTransactions(accountId, transactions, options));
 }
 
 /**
  * Import transactions with duplicate detection and rule execution (ensures API is initialized)
+ *
+ * @param accountId - Account ID to import transactions into
+ * @param transactions - Array of transactions to import
+ * @param opts - Optional import options (e.g., defaultCleared)
+ * @returns Result with added/updated transaction IDs and any errors
  */
 export async function importTransactions(
   accountId: string,
@@ -426,29 +563,32 @@ export async function importTransactions(
       category?: string | null;
       notes?: string;
     }>;
-  }>
-): Promise<{ errors?: string[]; added: string[]; updated: string[] }> {
-  await initActualApi();
-  const transactionsWithAccount = transactions.map((transaction) => ({
-    account: accountId,
-    ...transaction,
-    payee: transaction.payee ?? undefined,
-    category: transaction.category ?? undefined,
-    subtransactions: transaction.subtransactions?.map((subtransaction) => ({
-      ...subtransaction,
-      category: subtransaction.category ?? undefined,
-    })),
-  }));
-  const result = await api.importTransactions(accountId, transactionsWithAccount);
+  }>,
+  opts?: ImportTransactionsOpts
+): Promise<{ errors?: Array<{ message: string }>; added: string[]; updated: string[] }> {
+  return ensureConnection(async () => {
+    const transactionsWithAccount = transactions.map((transaction) => ({
+      account: accountId,
+      ...transaction,
+      payee: transaction.payee ?? undefined,
+      category: transaction.category ?? undefined,
+      subtransactions: transaction.subtransactions?.map((subtransaction) => ({
+        ...subtransaction,
+        category: subtransaction.category ?? undefined,
+      })),
+    }));
+    const result = await api.importTransactions(accountId, transactionsWithAccount, opts);
 
-  if (result.errors && result.errors.length > 0) {
-    throw new Error(`importTransactions reported errors: ${result.errors.join('; ')}`);
-  }
+    if (result.errors && result.errors.length > 0) {
+      const errorMessages = result.errors.map((err: { message: string }) => err.message).join('; ');
+      throw new Error(`importTransactions reported errors: ${errorMessages}`);
+    }
 
-  cacheService.invalidate('transactions');
-  cacheService.invalidate('accounts:all');
+    cacheService.invalidate('transactions');
+    cacheService.invalidate('accounts:all');
 
-  return result;
+    return result;
+  });
 }
 
 /**
@@ -459,9 +599,10 @@ export async function importTransactions(
  * @returns Promise that resolves when update is complete
  */
 export async function updateTransaction(id: string, updates: Record<string, unknown>): Promise<void> {
-  await initActualApi();
-  await api.updateTransaction(id, updates);
-  cacheService.invalidate('transactions');
+  return ensureConnection(async () => {
+    await api.updateTransaction(id, updates);
+    cacheService.invalidate('transactions');
+  });
 }
 
 /**
@@ -471,177 +612,177 @@ export async function updateTransaction(id: string, updates: Record<string, unkn
  * @returns Promise that resolves when deletion is complete
  */
 export async function deleteTransaction(id: string): Promise<void> {
-  await initActualApi();
-  await api.deleteTransaction({ id });
-  cacheService.invalidate('transactions');
+  return ensureConnection(async () => {
+    await api.deleteTransaction(id);
+    cacheService.invalidate('transactions');
+  });
 }
 
 /**
  * Create a new account (ensures API is initialized)
  */
 export async function createAccount(args: Record<string, unknown>): Promise<string> {
-  await initActualApi();
-  const result = await api.createAccount(args);
-  cacheService.invalidate('accounts:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.createAccount(args);
+    cacheService.invalidate('accounts:all');
+    return result;
+  });
 }
 
 /**
  * Update an account (ensures API is initialized)
  */
 export async function updateAccount(id: string, args: Record<string, unknown>): Promise<unknown> {
-  await initActualApi();
-  const result = await api.updateAccount(id, args);
-  cacheService.invalidate('accounts:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.updateAccount(id, args);
+    cacheService.invalidate('accounts:all');
+    return result;
+  });
 }
 
 /**
  * Close an account (ensures API is initialized)
  */
 export async function closeAccount(id: string): Promise<unknown> {
-  await initActualApi();
-  const result = await api.closeAccount(id);
-  cacheService.invalidate('accounts:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.closeAccount(id);
+    cacheService.invalidate('accounts:all');
+    return result;
+  });
 }
 
 /**
  * Reopen a closed account (ensures API is initialized)
  */
 export async function reopenAccount(id: string): Promise<unknown> {
-  await initActualApi();
-  const result = await api.reopenAccount(id);
-  cacheService.invalidate('accounts:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.reopenAccount(id);
+    cacheService.invalidate('accounts:all');
+    return result;
+  });
 }
 
 /**
  * Delete an account (ensures API is initialized)
  */
 export async function deleteAccount(id: string): Promise<unknown> {
-  await initActualApi();
-  const result = await api.deleteAccount(id);
-  cacheService.invalidate('accounts:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.deleteAccount(id);
+    cacheService.invalidate('accounts:all');
+    return result;
+  });
 }
 
 /**
  * Get all budget months (ensures API is initialized)
  */
 export async function getBudgetMonths(): Promise<string[]> {
-  await initActualApi();
-  return api.getBudgetMonths();
+  return ensureConnection(() => api.getBudgetMonths());
 }
 
 /**
  * Get budget data for a specific month (ensures API is initialized)
  */
 export async function getBudgetMonth(month: string): Promise<unknown> {
-  await initActualApi();
-  return api.getBudgetMonth(month);
+  return ensureConnection(() => api.getBudgetMonth(month));
 }
 
 /**
  * Set budget amount for a category in a specific month (ensures API is initialized)
  */
 export async function setBudgetAmount(month: string, categoryId: string, amount: number): Promise<unknown> {
-  await initActualApi();
-  return api.setBudgetAmount(month, categoryId, amount);
+  return ensureConnection(() => api.setBudgetAmount(month, categoryId, amount));
 }
 
 /**
  * Set budget carryover for a category in a specific month (ensures API is initialized)
  */
 export async function setBudgetCarryover(month: string, categoryId: string, flag: boolean): Promise<unknown> {
-  await initActualApi();
-  return api.setBudgetCarryover(month, categoryId, flag);
+  return ensureConnection(() => api.setBudgetCarryover(month, categoryId, flag));
 }
 
 /**
  * Hold budget amount for next month (ensures API is initialized)
  */
 export async function holdBudgetForNextMonth(month: string, amount: number): Promise<unknown> {
-  await initActualApi();
-  return api.holdBudgetForNextMonth(month, amount);
+  return ensureConnection(() => api.holdBudgetForNextMonth(month, amount));
 }
 
 /**
  * Reset budget hold for a specific month (ensures API is initialized)
  */
 export async function resetBudgetHold(month: string): Promise<unknown> {
-  await initActualApi();
-  return api.resetBudgetHold(month);
+  return ensureConnection(() => api.resetBudgetHold(month));
 }
 
 /**
  * Create a new schedule (ensures API is initialized)
  */
 export async function createSchedule(args: Record<string, unknown>): Promise<string> {
-  await initActualApi();
-  if (!extendedApi.createSchedule) {
-    throw new Error('createSchedule method is not available in this version of the API');
-  }
-  return extendedApi.createSchedule(args);
+  return ensureConnection(async () => {
+    if (!extendedApi.createSchedule) {
+      throw new Error('createSchedule method is not available in this version of the API');
+    }
+    return extendedApi.createSchedule(args);
+  });
 }
 
 /**
  * Update a schedule (ensures API is initialized)
  */
 export async function updateSchedule(id: string, args: Record<string, unknown>): Promise<unknown> {
-  await initActualApi();
-  if (!extendedApi.updateSchedule) {
-    throw new Error('updateSchedule method is not available in this version of the API');
-  }
-  return extendedApi.updateSchedule(id, args);
+  return ensureConnection(async () => {
+    if (!extendedApi.updateSchedule) {
+      throw new Error('updateSchedule method is not available in this version of the API');
+    }
+    return extendedApi.updateSchedule(id, args);
+  });
 }
 
 /**
  * Delete a schedule (ensures API is initialized)
  */
 export async function deleteSchedule(id: string): Promise<unknown> {
-  await initActualApi();
-  if (!extendedApi.deleteSchedule) {
-    throw new Error('deleteSchedule method is not available in this version of the API');
-  }
-  return extendedApi.deleteSchedule(id);
+  return ensureConnection(async () => {
+    if (!extendedApi.deleteSchedule) {
+      throw new Error('deleteSchedule method is not available in this version of the API');
+    }
+    return extendedApi.deleteSchedule(id);
+  });
 }
 
 /**
  * Get all schedules (ensures API is initialized)
  */
 export async function getSchedules(): Promise<unknown[]> {
-  await initActualApi();
-  if (!extendedApi.getSchedules) {
-    throw new Error('getSchedules method is not available in this version of the API');
-  }
-  return extendedApi.getSchedules();
+  return ensureConnection(async () => {
+    return extendedApi.getSchedules!();
+  });
 }
 
 /**
  * Merge multiple payees into a target payee (ensures API is initialized)
  */
 export async function mergePayees(targetId: string, sourceIds: string[]): Promise<unknown> {
-  await initActualApi();
-  const result = await api.mergePayees(targetId, sourceIds);
-  cacheService.invalidate('payees:all');
-  return result;
+  return ensureConnection(async () => {
+    const result = await api.mergePayees(targetId, sourceIds);
+    cacheService.invalidate('payees:all');
+    return result;
+  });
 }
 
 /**
  * Get rules for a specific payee (ensures API is initialized)
  */
 export async function getPayeeRules(payeeId: string): Promise<RuleEntity[]> {
-  await initActualApi();
-  return api.getPayeeRules(payeeId);
+  return ensureConnection(() => api.getPayeeRules(payeeId));
 }
 
 /**
  * Get all budgets (ensures API is initialized)
  */
 export async function getBudgets(): Promise<BudgetFile[]> {
-  await initActualApi();
-  return api.getBudgets();
+  return ensureConnection(() => api.getBudgets());
 }
 
 /**
@@ -650,12 +791,13 @@ export async function getBudgets(): Promise<BudgetFile[]> {
  * @param password - Optional password for end-to-end encrypted budgets
  */
 export async function downloadBudget(budgetId: string, password?: string): Promise<void> {
-  await initActualApi();
-  if (password) {
-    await api.downloadBudget(budgetId, { password });
-  } else {
-    await api.downloadBudget(budgetId);
-  }
+  return ensureConnection(async () => {
+    if (password) {
+      await api.downloadBudget(budgetId, { password });
+    } else {
+      await api.downloadBudget(budgetId);
+    }
+  });
 }
 
 /**
@@ -663,88 +805,96 @@ export async function downloadBudget(budgetId: string, password?: string): Promi
  * Note: This may be the same as downloadBudget in some API versions
  */
 export async function loadBudget(budgetId: string): Promise<void> {
-  await initActualApi();
-  if (typeof api.loadBudget === 'function') {
-    await api.loadBudget(budgetId);
-  } else {
-    // Fallback to downloadBudget if loadBudget doesn't exist
-    await api.downloadBudget(budgetId);
-  }
+  return ensureConnection(async () => {
+    if (typeof api.loadBudget === 'function') {
+      await api.loadBudget(budgetId);
+    } else {
+      // Fallback to downloadBudget if loadBudget doesn't exist
+      await api.downloadBudget(budgetId);
+    }
+  });
 }
 
 /**
  * Sync with the server (ensures API is initialized)
  */
 export async function sync(): Promise<unknown> {
-  await initActualApi();
-  if (typeof api.sync === 'function') {
-    return api.sync();
-  }
-  throw new Error('sync method is not available in this version of the API');
+  return ensureConnection(async () => {
+    if (typeof api.sync === 'function') {
+      return api.sync();
+    }
+    throw new Error('sync method is not available in this version of the API');
+  });
 }
 
 /**
  * Run bank sync (ensures API is initialized)
  */
 export async function runBankSync(accountId?: string): Promise<unknown> {
-  await initActualApi();
-  if (extendedApi.runBankSync) {
-    return extendedApi.runBankSync(accountId ? { accountId } : undefined);
-  }
-  throw new Error('runBankSync method is not available in this version of the API');
+  return ensureConnection(async () => {
+    if (extendedApi.runBankSync) {
+      return extendedApi.runBankSync(accountId ? { accountId } : undefined);
+    }
+    throw new Error('runBankSync method is not available in this version of the API');
+  });
 }
 
 /**
  * Run import (ensures API is initialized)
  */
 export async function runImport(file: string, importType?: string): Promise<unknown> {
-  await initActualApi();
-  if (typeof api.runImport === 'function') {
-    return api.runImport(file, importType);
-  }
-  throw new Error('runImport method is not available in this version of the API');
+  return ensureConnection(async () => {
+    if (typeof api.runImport === 'function') {
+      return api.runImport(file, importType);
+    }
+    throw new Error('runImport method is not available in this version of the API');
+  });
 }
 
 /**
  * Batch budget updates (ensures API is initialized)
  */
 export async function batchBudgetUpdates(updates: Array<Record<string, unknown>>): Promise<unknown> {
-  await initActualApi();
-  if (typeof api.batchBudgetUpdates === 'function') {
-    return api.batchBudgetUpdates(updates);
-  }
-  throw new Error('batchBudgetUpdates method is not available in this version of the API');
+  return ensureConnection(async () => {
+    if (typeof api.batchBudgetUpdates === 'function') {
+      return api.batchBudgetUpdates(updates);
+    }
+    throw new Error('batchBudgetUpdates method is not available in this version of the API');
+  });
 }
 
 /**
  * Run an ActualQL query (ensures API is initialized)
  */
 export async function runQuery(query: string): Promise<unknown> {
-  await initActualApi();
-  if (typeof api.runQuery === 'function') {
-    return api.runQuery({ query });
-  }
-  throw new Error('runQuery method is not available in this version of the API');
+  return ensureConnection(async () => {
+    if (typeof api.runQuery === 'function') {
+      return api.runQuery({ query });
+    }
+    throw new Error('runQuery method is not available in this version of the API');
+  });
 }
 
 /**
  * Get server version (ensures API is initialized)
  */
 export async function getServerVersion(): Promise<{ error?: string } | { version: string }> {
-  await initActualApi();
-  if (extendedApi.getServerVersion) {
-    return extendedApi.getServerVersion();
-  }
-  throw new Error('getServerVersion method is not available in this version of the API');
+  return ensureConnection(async () => {
+    if (extendedApi.getServerVersion) {
+      return extendedApi.getServerVersion();
+    }
+    throw new Error('getServerVersion method is not available in this version of the API');
+  });
 }
 
 /**
  * Get ID by name for accounts, categories, payees, or schedules (ensures API is initialized)
  */
 export async function getIDByName(type: string, name: string): Promise<string> {
-  await initActualApi();
-  if (extendedApi.getIDByName) {
-    return extendedApi.getIDByName({ type, string: name });
-  }
-  throw new Error('getIDByName method is not available in this version of the API');
+  return ensureConnection(async () => {
+    if (extendedApi.getIDByName) {
+      return extendedApi.getIDByName({ type, string: name });
+    }
+    throw new Error('getIDByName method is not available in this version of the API');
+  });
 }

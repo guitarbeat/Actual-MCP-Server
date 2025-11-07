@@ -10,51 +10,135 @@ import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/ru
 export const schema = {
   name: 'get-rules',
   description:
-    'Retrieve all auto-categorization rules in the system. Rules automatically categorize transactions based on conditions like payee, amount, or account.\n\n' +
-    'RETURNED DATA:\n' +
-    '- Rule ID (UUID) - Use this to update or delete rules\n' +
-    '- Rule conditions (what triggers the rule)\n' +
-    '- Rule actions (what the rule does when triggered)\n' +
-    '- Rule stage (pre or post - when rule runs)\n' +
-    '- Conditions operator (and/or - how conditions are combined)\n\n' +
-    'EXAMPLE:\n' +
-    '- Get all rules: {} or no arguments\n\n' +
+    'Retrieve all auto-categorization rules with optional filtering.\n\n' +
+    'OPTIONAL FILTERS:\n' +
+    '- payeeId: Filter rules that match a specific payee\n' +
+    '- categoryId: Filter rules that match a specific category\n' +
+    '- limit: Maximum number of rules to return\n\n' +
+    'EXAMPLES:\n' +
+    '- Get all: {}\n' +
+    '- Filter by payee: {"payeeId": "abc123", "limit": 10}\n' +
+    '- Filter by category: {"categoryId": "def456"}\n\n' +
     'COMMON USE CASES:\n' +
-    '- Reviewing existing auto-categorization rules\n' +
-    '- Finding rule IDs before updating or deleting with manage-entity\n' +
-    '- Understanding why transactions are auto-categorized\n' +
-    '- Checking for duplicate or conflicting rules\n\n' +
-    'NOTES:\n' +
-    '- No parameters required\n' +
-    '- Amounts in rules are in cents (e.g., 5000 = $50.00)\n' +
-    '- Positive amounts = deposits/income, negative = payments/expenses\n' +
-    '- Rules can have multiple conditions (combined with AND or OR)\n' +
-    '- Rules can have multiple actions (applied sequentially)\n' +
-    '- Use get-payee-rules to see rules for a specific payee\n\n' +
-    'TYPICAL WORKFLOW:\n' +
-    '1. Use get-rules to see all existing rules\n' +
-    '2. Use manage-entity to create, update, or delete rules\n' +
-    '3. Use get-transactions to verify rules are working correctly\n\n' +
+    '- View all auto-categorization rules\n' +
+    '- Find rules that apply to specific payees\n' +
+    '- Find rules that categorize to specific categories\n' +
+    '- Understand how transactions are automatically categorized\n' +
+    '- Review rule conditions and actions\n\n' +
     'SEE ALSO:\n' +
-    '- manage-entity: Create, update, or delete rules\n' +
-    '- get-payee-rules: View rules for a specific payee\n' +
-    '- get-payees: Find payee IDs for rule conditions\n' +
-    '- get-grouped-categories: Find category IDs for rule actions',
+    '- Use with manage-entity to create, update, or delete rules\n' +
+    '- Use with get-payees to find payee IDs for filtering\n' +
+    '- Use with get-grouped-categories to find category IDs for filtering\n\n' +
+    'RETURNS:\n' +
+    '- Rule ID, conditions, actions, stage\n' +
+    '- Rules automatically categorize transactions',
   inputSchema: {
     type: 'object',
-    description:
-      'This tool does not accept any arguments. Returns all auto-categorization rules with their conditions and actions. Note: amounts in rules are in cents (e.g., 5000 = $50.00), positive for deposits, negative for payments.',
-    properties: {},
-    additionalProperties: false,
+    properties: {
+      payeeId: {
+        type: 'string',
+        description: 'Filter rules that have a condition matching this payee ID.',
+      },
+      categoryId: {
+        type: 'string',
+        description: 'Filter rules that have a condition matching this category ID.',
+      },
+      limit: {
+        type: 'number',
+        description: 'Maximum number of rules to return. Applied after filtering.',
+      },
+    },
+    required: [],
   },
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+/**
+ * Check if a rule matches a payee ID by checking its conditions
+ *
+ * @param rule - Rule to check
+ * @param payeeId - Payee ID to match
+ * @returns True if rule has a condition matching the payee
+ */
+function ruleMatchesPayee(rule: RuleEntity, payeeId: string): boolean {
+  if (!rule.conditions || rule.conditions.length === 0) {
+    return false;
+  }
+
+  return rule.conditions.some((condition) => {
+    if (condition.field === 'payee') {
+      // Handle different operators
+      if (condition.op === 'is' && condition.value === payeeId) {
+        return true;
+      }
+      if (condition.op === 'oneOf' && Array.isArray(condition.value)) {
+        return condition.value.includes(payeeId);
+      }
+    }
+    return false;
+  });
+}
+
+/**
+ * Check if a rule matches a category ID by checking its conditions
+ *
+ * @param rule - Rule to check
+ * @param categoryId - Category ID to match
+ * @returns True if rule has a condition matching the category
+ */
+function ruleMatchesCategory(rule: RuleEntity, categoryId: string): boolean {
+  if (!rule.conditions || rule.conditions.length === 0) {
+    return false;
+  }
+
+  return rule.conditions.some((condition) => {
+    if (condition.field === 'category') {
+      // Handle different operators
+      if (condition.op === 'is' && condition.value === categoryId) {
+        return true;
+      }
+      if (condition.op === 'oneOf' && Array.isArray(condition.value)) {
+        return condition.value.includes(categoryId);
+      }
+    }
+    return false;
+  });
+}
+
+export async function handler(
+  args: Record<string, unknown> = {}
+): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const rules: RuleEntity[] = await fetchAllRules();
+    let rules: RuleEntity[] = await fetchAllRules();
+
+    // Filter by payeeId if provided
+    if (args.payeeId) {
+      if (typeof args.payeeId !== 'string') {
+        return errorFromCatch('payeeId must be a string');
+      }
+      rules = rules.filter((rule) => ruleMatchesPayee(rule, args.payeeId as string));
+    }
+
+    // Filter by categoryId if provided
+    if (args.categoryId) {
+      if (typeof args.categoryId !== 'string') {
+        return errorFromCatch('categoryId must be a string');
+      }
+      rules = rules.filter((rule) => ruleMatchesCategory(rule, args.categoryId as string));
+    }
+
+    // Apply limit if provided
+    if (args.limit !== undefined) {
+      if (typeof args.limit !== 'number' || args.limit < 1) {
+        return errorFromCatch('limit must be a positive number');
+      }
+      rules = rules.slice(0, args.limit);
+    }
 
     return successWithJson(rules);
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: 'Failed to retrieve rules',
+      suggestion: 'Check the Actual Budget server logs and verify the provided arguments before retrying.',
+    });
   }
 }

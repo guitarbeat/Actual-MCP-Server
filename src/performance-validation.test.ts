@@ -15,11 +15,11 @@ import { getInitializationStats, resetInitializationStats } from './actual-api.j
 
 describe('Performance Validation', () => {
   describe('Context Window Token Reduction', () => {
-    it('should have 22 core tools (no optional tools)', () => {
+    it('should have 19 core tools (no optional tools)', () => {
       const coreTools = getAvailableTools(true);
 
-      // All 22 tools are core now (no optional tools)
-      expect(coreTools.length).toBe(22);
+      // All 19 tools are core now (removed get-server-info)
+      expect(coreTools.length).toBe(19);
     });
 
     it('should calculate token savings from original 37 tools', () => {
@@ -426,7 +426,7 @@ describe('Performance Validation', () => {
       console.log(`${'='.repeat(60)}\n`);
 
       // Final assertions
-      expect(coreTools.length).toBe(22);
+      expect(coreTools.length).toBe(19);
 
       // Calculate actual reduction from original 37 tools
       const originalToolCount = 37;

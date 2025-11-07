@@ -22,84 +22,52 @@ export const schema = {
   name: 'manage-entity',
   description:
     'Create, update, or delete budget entities: categories, category groups, payees, rules, and schedules.\n\n' +
-    'ENTITY TYPES & DATA STRUCTURES:\n\n' +
-    '• CATEGORY\n' +
-    '  Required fields: name (string), groupId (string)\n' +
-    '  - name: Category name (e.g., "Groceries", "Gas")\n' +
-    '  - groupId: UUID of the parent category group (use get-grouped-categories to find group IDs)\n' +
-    '  Create example: {"entityType": "category", "operation": "create", "data": {"name": "Groceries", "groupId": "550e8400-e29b-41d4-a716-446655440000"}}\n' +
-    '  Update example: {"entityType": "category", "operation": "update", "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7", "data": {"name": "Grocery Shopping", "groupId": "550e8400-e29b-41d4-a716-446655440000"}}\n\n' +
-    '• CATEGORY GROUP\n' +
-    '  Required fields: name (string)\n' +
-    '  - name: Category group name (e.g., "Food & Dining", "Transportation")\n' +
-    '  Create example: {"entityType": "categoryGroup", "operation": "create", "data": {"name": "Food & Dining"}}\n' +
-    '  Update example: {"entityType": "categoryGroup", "operation": "update", "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7", "data": {"name": "Food & Beverages"}}\n\n' +
-    '• PAYEE\n' +
-    '  Required fields: name (string)\n' +
-    '  Optional fields: transferAccount (string)\n' +
-    '  - name: Payee name (e.g., "Whole Foods", "Shell Gas Station")\n' +
-    '  - transferAccount: (Optional) UUID of account for transfer payees (use get-accounts to find account IDs)\n' +
-    '  Create example: {"entityType": "payee", "operation": "create", "data": {"name": "Whole Foods"}}\n' +
-    '  Update example: {"entityType": "payee", "operation": "update", "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7", "data": {"name": "Whole Foods Market"}}\n' +
-    '  Transfer payee example: {"entityType": "payee", "operation": "create", "data": {"name": "Transfer to Savings", "transferAccount": "550e8400-e29b-41d4-a716-446655440000"}}\n\n' +
-    '• RULE\n' +
-    '  Required fields: conditionsOp (string), conditions (array), actions (array)\n' +
-    '  Optional fields: stage (string or null)\n' +
-    '  - conditionsOp: How to combine conditions ("and" or "or")\n' +
-    '  - conditions: Array of condition objects, each with field, op, and value properties\n' +
-    '    - field: "account"|"category"|"date"|"payee"|"amount"|"imported_payee"\n' +
-    '    - op: "is"|"isNot"|"oneOf"|"contains"|"gt"|"gte"|"lt"|"lte"|"isbetween" (and more)\n' +
-    '    - value: string, number, or array depending on operator\n' +
-    '  - actions: Array of action objects, each with field, op, and value properties\n' +
-    '    - field: "account"|"category"|"date"|"payee"|"amount"|"cleared"|"notes"|null\n' +
-    '    - op: "set"|"prepend-notes"|"append-notes"|"set-split-amount"\n' +
-    '    - value: The value to set (string, number, boolean, or null)\n' +
-    '  - stage: (Optional) When to run the rule: "pre" (before user edits) or "post" (after user edits)\n' +
-    '  Create example: {"entityType": "rule", "operation": "create", "data": {"conditionsOp": "and", "conditions": [{"field": "payee", "op": "is", "value": "550e8400-e29b-41d4-a716-446655440000"}], "actions": [{"field": "category", "op": "set", "value": "7c9e6679-7425-40de-944b-e07fc1f90ae7"}]}}\n' +
-    '  Update example: {"entityType": "rule", "operation": "update", "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7", "data": {"conditionsOp": "or", "conditions": [{"field": "payee", "op": "contains", "value": "Amazon"}], "actions": [{"field": "category", "op": "set", "value": "550e8400-e29b-41d4-a716-446655440000"}]}}\n\n' +
-    '• SCHEDULE\n' +
-    '  Required fields: name (string), accountId (string), amount (number), nextDate (string), rule (string)\n' +
-    '  Optional fields: payee (string), category (string), notes (string)\n' +
-    '  - name: Schedule name (e.g., "Monthly Rent", "Weekly Groceries")\n' +
-    '  - accountId: UUID of the account (use get-accounts to find account IDs)\n' +
-    '  - amount: Amount in cents (e.g., -150000 = -$1,500.00). Negative for expenses, positive for income.\n' +
-    '  - nextDate: Next occurrence date in YYYY-MM-DD format\n' +
-    '  - rule: Recurrence rule string (e.g., "monthly" for monthly, "weekly" for weekly, "yearly" for yearly)\n' +
-    '  - payee: (Optional) Payee name or UUID\n' +
-    '  - category: (Optional) Category name or UUID\n' +
-    '  - notes: (Optional) Transaction notes\n' +
-    '  Create example: {"entityType": "schedule", "operation": "create", "data": {"name": "Monthly Rent", "accountId": "550e8400-e29b-41d4-a716-446655440000", "amount": -150000, "nextDate": "2024-02-01", "rule": "monthly", "payee": "Landlord", "category": "Rent"}}\n' +
-    '  Update example: {"entityType": "schedule", "operation": "update", "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7", "data": {"name": "Monthly Rent Payment", "accountId": "550e8400-e29b-41d4-a716-446655440000", "amount": -160000, "nextDate": "2024-03-01", "rule": "monthly"}}\n\n' +
+    'ENTITY TYPES:\n\n' +
+    '• category: Spending/income category\n' +
+    '  Required: name, groupId\n' +
+    '  Example: {"entityType": "category", "operation": "create", "data": {"name": "Groceries", "groupId": "group-id"}}\n\n' +
+    '• categoryGroup: Container for categories\n' +
+    '  Required: name\n' +
+    '  Example: {"entityType": "categoryGroup", "operation": "create", "data": {"name": "Food & Dining"}}\n\n' +
+    '• payee: Merchant/vendor name\n' +
+    '  Required: name\n' +
+    '  Optional: transferAccount (for transfer payees)\n' +
+    '  Example: {"entityType": "payee", "operation": "create", "data": {"name": "Whole Foods"}}\n\n' +
+    '• rule: Auto-categorization rule\n' +
+    '  Required: conditionsOp ("and" or "or"), conditions (array), actions (array)\n' +
+    '  Optional: stage\n' +
+    '  Example: {"entityType": "rule", "operation": "create", "data": {"conditionsOp": "and", "conditions": [{"field": "payee", "op": "is", "value": "payee-id"}], "actions": [{"field": "category", "op": "set", "value": "category-id"}]}}\n\n' +
+    '• schedule: Recurring transaction schedule\n' +
+    '  Required: date (YYYY-MM-DD string or RecurConfig object)\n' +
+    '  Optional: name, account/accountId, amount (cents), amountOp, payee, category, notes, posts_transaction\n' +
+    '  Simple date: {"entityType": "schedule", "operation": "create", "data": {"name": "Monthly Rent", "accountId": "acc-id", "amount": -150000, "date": "2024-02-01"}}\n' +
+    '  Recurring: {"entityType": "schedule", "operation": "create", "data": {"name": "Monthly Rent", "accountId": "acc-id", "amount": -150000, "date": {"frequency": "monthly", "start": "2024-02-01", "endMode": "never"}}}\n\n' +
     'OPERATIONS:\n' +
-    '- CREATE: Create a new entity. Requires entityType, operation="create", and data object.\n' +
-    '- UPDATE: Modify an existing entity. Requires entityType, operation="update", id (UUID), and data object.\n' +
-    '- DELETE: Permanently remove an entity. Requires entityType, operation="delete", and id (UUID). WARNING: Cannot be undone!\n\n' +
+    '- create: Requires entityType, data\n' +
+    '- update: Requires entityType, id (UUID), data\n' +
+    '- delete: Requires entityType, id (UUID) - permanent\n\n' +
     'COMMON USE CASES:\n' +
-    '- Creating a new spending category: entityType="category", operation="create", data with name and groupId\n' +
-    '- Organizing categories into groups: First create categoryGroup, then create categories with that groupId\n' +
-    '- Renaming a payee: entityType="payee", operation="update" with id and new name in data\n' +
-    '- Setting up auto-categorization: entityType="rule", operation="create" with conditions (match payee) and actions (set category)\n' +
-    '- Scheduling recurring bills: entityType="schedule", operation="create" with name, accountId, amount, nextDate, and rule (frequency)\n' +
-    '- Removing outdated rules: entityType="rule", operation="delete" with rule id\n\n' +
-    'NOTES:\n' +
-    '- Use get-grouped-categories to find category group IDs before creating categories\n' +
-    '- Use get-accounts to find account IDs before creating schedules or transfer payees\n' +
-    '- For rules, use UUIDs for payee/category values in conditions and actions (not names)\n' +
-    '- Amounts are always in cents (multiply dollars by 100)\n' +
-    '- Delete operations are permanent and cannot be undone\n\n' +
-    'TYPICAL WORKFLOW:\n' +
-    '1. CATEGORY: Use get-grouped-categories to find groupId, then create category\n' +
-    '2. CATEGORY GROUP: Create group first, then create categories within it\n' +
-    '3. PAYEE: Create payee, then use in manage-transaction or rules\n' +
-    '4. RULE: Use get-payees and get-grouped-categories to find IDs, then create rule for auto-categorization\n' +
-    '5. SCHEDULE: Use get-accounts to find accountId, then create recurring transaction schedule\n\n' +
+    '- Create new spending categories or category groups\n' +
+    '- Add new payees for transactions\n' +
+    '- Set up auto-categorization rules\n' +
+    '- Create recurring transaction schedules\n' +
+    '- Organize budget structure\n' +
+    '- Update entity names or properties\n' +
+    '- Remove unused categories, payees, or rules\n\n' +
     'SEE ALSO:\n' +
-    '- get-grouped-categories: Find category group IDs and category IDs\n' +
-    '- get-accounts: Find account IDs for schedules and transfer payees\n' +
-    '- get-payees: Find payee IDs for rules\n' +
-    '- get-rules: View existing rules before creating new ones\n' +
-    '- get-schedules: View existing schedules\n' +
-    '- manage-transaction: Create transactions using categories and payees created here',
+    '- Use get-grouped-categories to find category/group IDs before creating categories\n' +
+    '- Use get-accounts to find account IDs for schedules\n' +
+    '- Use get-payees to find payee IDs for rules or schedules\n' +
+    '- Use get-rules to view existing rules before creating new ones\n' +
+    '- Use get-schedules to view existing schedules before creating new ones\n\n' +
+    'NOTES:\n' +
+    '- Use get-grouped-categories to find group IDs\n' +
+    '- Use get-accounts to find account IDs\n' +
+    '- Schedule date field: Use YYYY-MM-DD string for single occurrence, or RecurConfig object for recurring schedules\n' +
+    '- Schedule amount: Use integer (cents) or object {num1, num2} for isbetween amountOp\n' +
+    '- Schedule amountOp: "is" (exact), "isapprox" (approximate), or "isbetween" (range)\n' +
+    '- Do NOT provide rule, nextDate, or completed fields for schedules (auto-managed by API)\n' +
+    '- Delete operations are permanent and cannot be undone',
   inputSchema: {
     type: 'object',
     properties: {
@@ -128,7 +96,7 @@ export const schema = {
           '- categoryGroup: Required field is name\n' +
           '- payee: Required field is name, optional field is transferAccount\n' +
           '- rule: Required fields are conditionsOp, conditions, and actions; optional field is stage\n' +
-          '- schedule: Required fields are name, accountId, amount, nextDate, and rule; optional fields are payee, category, and notes\n' +
+          '- schedule: Required field is date (string or RecurConfig). Optional: name, account/accountId, amount, amountOp, payee, category, notes, posts_transaction\n' +
           'See main description for detailed examples and field explanations.',
       },
     },

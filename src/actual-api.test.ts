@@ -58,7 +58,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -80,7 +80,7 @@ describe('Auto-load functionality', () => {
         { id: 'budget-2', cloudFileId: 'specific-budget-id', name: 'Specific Budget' },
         { id: 'budget-3', cloudFileId: 'third-budget', name: 'Third Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -96,7 +96,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'encrypted-budget-id', name: 'Encrypted Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -114,7 +114,7 @@ describe('Auto-load functionality', () => {
         { id: 'budget-1', cloudFileId: 'first-budget', name: 'First Budget' },
         { id: 'budget-2', cloudFileId: 'second-budget', name: 'Second Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -127,7 +127,7 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([{ id: 'local-budget-id', name: 'Local Budget' }]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -141,7 +141,7 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
 
       await expect(actualApi.initActualApi()).rejects.toThrow('No budgets found');
     });
@@ -161,7 +161,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'valid-budget', name: 'Valid Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockRejectedValue(new Error('Budget not found'));
 
       await expect(actualApi.initActualApi()).rejects.toThrow('Budget not found');
@@ -176,7 +176,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -191,7 +191,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -216,7 +216,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
 
@@ -240,7 +240,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
 
@@ -259,7 +259,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
 
@@ -278,7 +278,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockRejectedValue(new Error('Sync failed'));
 
@@ -298,7 +298,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
       vi.mocked(api.shutdown).mockResolvedValue(undefined);
@@ -322,7 +322,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
     });
 
@@ -370,9 +370,9 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
-      vi.mocked(api.deleteTransaction).mockResolvedValue(undefined);
+      vi.mocked(api.deleteTransaction).mockResolvedValue(undefined as any);
     });
 
     it('should call API initialization before deletion', async () => {
@@ -384,7 +384,7 @@ describe('Auto-load functionality', () => {
     it('should call api.deleteTransaction with correct parameters', async () => {
       await actualApi.deleteTransaction('txn-123');
 
-      expect(api.deleteTransaction).toHaveBeenCalledWith({ id: 'txn-123' });
+      expect(api.deleteTransaction).toHaveBeenCalledWith('txn-123');
     });
 
     it('should invalidate transaction cache after deletion', async () => {
@@ -406,7 +406,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' },
       ]);
-      vi.mocked(api.init).mockResolvedValue(undefined);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(cacheService.invalidate).mockClear();
       vi.mocked(api.importTransactions).mockResolvedValue({ added: ['txn-1'], updated: [] });
@@ -421,15 +421,45 @@ describe('Auto-load functionality', () => {
         },
       ]);
 
-      expect(api.importTransactions).toHaveBeenCalledWith('account-123', [
-        expect.objectContaining({
-          account: 'account-123',
-          amount: -1234,
-          date: '2024-01-10',
-        }),
-      ]);
+      expect(api.importTransactions).toHaveBeenCalledWith(
+        'account-123',
+        [
+          expect.objectContaining({
+            account: 'account-123',
+            amount: -1234,
+            date: '2024-01-10',
+          }),
+        ],
+        undefined
+      );
       expect(cacheService.invalidate).toHaveBeenCalledWith('transactions');
       expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
+      expect(result).toEqual({ added: ['txn-1'], updated: [] });
+    });
+
+    it('should pass opts parameter to API', async () => {
+      const result = await actualApi.importTransactions(
+        'account-123',
+        [
+          {
+            date: '2024-01-10',
+            amount: -1234,
+          },
+        ],
+        { defaultCleared: true }
+      );
+
+      expect(api.importTransactions).toHaveBeenCalledWith(
+        'account-123',
+        [
+          expect.objectContaining({
+            account: 'account-123',
+            amount: -1234,
+            date: '2024-01-10',
+          }),
+        ],
+        { defaultCleared: true }
+      );
       expect(result).toEqual({ added: ['txn-1'], updated: [] });
     });
 
@@ -437,7 +467,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.importTransactions).mockResolvedValue({
         added: [],
         updated: [],
-        errors: ['duplicate transaction'],
+        errors: [{ message: 'duplicate transaction' }],
       });
 
       await expect(
@@ -448,6 +478,23 @@ describe('Auto-load functionality', () => {
           },
         ])
       ).rejects.toThrow('importTransactions reported errors: duplicate transaction');
+    });
+
+    it('should handle multiple errors correctly', async () => {
+      vi.mocked(api.importTransactions).mockResolvedValue({
+        added: [],
+        updated: [],
+        errors: [{ message: 'duplicate transaction' }, { message: 'invalid amount' }],
+      });
+
+      await expect(
+        actualApi.importTransactions('account-123', [
+          {
+            date: '2024-01-10',
+            amount: -1234,
+          },
+        ])
+      ).rejects.toThrow('importTransactions reported errors: duplicate transaction; invalid amount');
     });
   });
 });

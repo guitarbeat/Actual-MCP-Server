@@ -5,6 +5,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi } from '../actual-api.js';
 import { error, errorFromCatch, MCPResponse } from '../core/response/index.js';
+import { features } from '../features.js';
 import { logToolExecution } from '../core/performance/performance-logger.js';
 import { metricsTracker } from '../core/performance/metrics-tracker.js';
 
@@ -23,19 +24,17 @@ import * as manageAccount from './manage-account/index.js';
 
 // Budget operation tools
 import * as setBudget from './set-budget/index.js';
-import * as holdBudgetForNextMonth from './budget/hold-budget-for-next-month/index.js';
-import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
-import * as getBudgetMonths from './budgets/get-budget-months/index.js';
-import * as getBudgetMonth from './budgets/get-budget-month/index.js';
-import * as runBankSync from './budgets/run-bank-sync/index.js';
-import * as runImport from './budgets/run-import/index.js';
+import * as manageBudgetHold from './budget/manage-budget-hold/index.js';
+import * as getBudget from './budgets/get-budget/index.js';
+import * as importTransactions from './budgets/import-transactions/index.js';
+import * as getBudgets from './budgets/get-budgets/index.js';
+import * as switchBudget from './budgets/switch-budget/index.js';
 
 // Schedule management tools
 import * as getSchedules from './schedules/get-schedules/index.js';
 
 // Payee tools
 import * as mergePayees from './payees/merge-payees/index.js';
-import * as getPayeeRules from './payees/get-payee-rules/index.js';
 
 // Entity management
 import * as manageEntity from './manage-entity/index.js';
@@ -106,26 +105,26 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: manageAccount.schema, handler: manageAccount.handler, requiresWrite: true, category: 'core' },
   { schema: setBudget.schema, handler: setBudget.handler, requiresWrite: true, category: 'core' },
   { schema: mergePayees.schema, handler: mergePayees.handler, requiresWrite: true, category: 'core' },
-  { schema: runBankSync.schema, handler: runBankSync.handler, requiresWrite: true, category: 'core' },
-  { schema: runImport.schema, handler: runImport.handler, requiresWrite: true, category: 'core' },
+  { schema: importTransactions.schema, handler: importTransactions.handler, requiresWrite: true, category: 'core' },
   { schema: manageEntity.schema, handler: manageEntity.handler, requiresWrite: true, category: 'core' },
 
   // Budget tools (now core)
-  { schema: getBudgetMonths.schema, handler: getBudgetMonths.handler, requiresWrite: false, category: 'core' },
-  { schema: getBudgetMonth.schema, handler: getBudgetMonth.handler, requiresWrite: false, category: 'core' },
+  { schema: getBudget.schema, handler: getBudget.handler, requiresWrite: false, category: 'core' },
   {
-    schema: holdBudgetForNextMonth.schema,
-    handler: holdBudgetForNextMonth.handler,
+    schema: manageBudgetHold.schema,
+    handler: manageBudgetHold.handler,
     requiresWrite: true,
     category: 'core',
   },
-  { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true, category: 'core' },
 
-  // Payee rules (now core)
-  { schema: getPayeeRules.schema, handler: getPayeeRules.handler, requiresWrite: false, category: 'core' },
+  // Budget file management (optional utilities)
+  { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false, category: 'core' },
+  { schema: switchBudget.schema, handler: switchBudget.handler, requiresWrite: true, category: 'core' },
 
-  // Query tool (now core)
-  { schema: runQuery.schema, handler: runQuery.handler, requiresWrite: false, category: 'core' },
+  // Query tool (optional, requires ENABLE_UTILITY_TOOLS=true)
+  ...(features.utilityTools
+    ? [{ schema: runQuery.schema, handler: runQuery.handler, requiresWrite: false, category: 'core' as const }]
+    : []),
 ];
 
 /**

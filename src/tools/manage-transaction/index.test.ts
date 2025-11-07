@@ -45,15 +45,13 @@ describe('manage-transaction handler', () => {
 
     const args: ManageTransactionArgs = {
       operation: 'create',
-      transaction: {
-        account: 'Checking',
-        date: '2025-01-15',
-        amount: 5000,
-        payee: 'Grocery Store',
-        category: 'Food',
-        notes: 'Test transaction',
-        cleared: true,
-      },
+      account: 'Checking',
+      date: '2025-01-15',
+      amount: 5000,
+      payee: 'Grocery Store',
+      category: 'Food',
+      notes: 'Test transaction',
+      cleared: true,
     };
 
     const result = await handler(args);
@@ -93,10 +91,8 @@ describe('manage-transaction handler', () => {
     const args: ManageTransactionArgs = {
       operation: 'update',
       id: 'transaction-123',
-      transaction: {
-        amount: 6000,
-        category: 'Dining',
-      },
+      amount: 6000,
+      category: 'Dining',
     };
 
     const result = await handler(args);
@@ -118,9 +114,7 @@ describe('manage-transaction handler', () => {
 
     const args: ManageTransactionArgs = {
       operation: 'update',
-      transaction: {
-        amount: 6000,
-      },
+      amount: 6000,
     };
 
     const result = await handler(args);
@@ -255,11 +249,9 @@ describe('manage-transaction handler', () => {
 
     const args: ManageTransactionArgs = {
       operation: 'create',
-      transaction: {
-        account: 'Checking',
-        date: '2025-01-15',
-        amount: 5000,
-      },
+      account: 'Checking',
+      date: '2025-01-15',
+      amount: 5000,
     };
 
     const result = await handler(args);
@@ -297,9 +289,7 @@ describe('manage-transaction handler', () => {
     const args: ManageTransactionArgs = {
       operation: 'update',
       id: 'transaction-789',
-      transaction: {
-        amount: 7000,
-      },
+      amount: 7000,
     };
 
     const result = await handler(args);

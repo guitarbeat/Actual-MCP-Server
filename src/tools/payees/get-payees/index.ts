@@ -4,49 +4,97 @@
 
 import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { fetchAllPayees } from '../../../core/data/fetch-payees.js';
+import { getPayeeRules } from '../../../actual-api.js';
 import type { Payee } from '../../../types.js';
 
 export const schema = {
   name: 'get-payees',
   description:
-    'Retrieve a list of all payees with their id, name, categoryId and transferAccountId.\n\n' +
-    'RETURNED DATA:\n' +
-    '- Payee ID (UUID) - Use this when creating transactions or rules\n' +
-    '- Payee name (e.g., "Whole Foods", "Shell Gas Station")\n' +
-    '- Transfer account ID (for transfer payees only)\n\n' +
-    'EXAMPLE:\n' +
-    '- Get all payees: {} or no arguments\n\n' +
+    'Retrieve payees from Actual Budget. If payeeId is provided, returns rules for that payee. If omitted, returns all payees.\n\n' +
+    'PARAMETERS:\n' +
+    '- payeeId: (Optional) Payee UUID. If provided, returns auto-categorization rules for that payee.\n' +
+    '- search: (Optional) Filter payees by name (case-insensitive partial match).\n' +
+    '- limit: (Optional) Maximum number of payees to return.\n\n' +
+    'EXAMPLES:\n' +
+    '- Get all payees: {}\n' +
+    '- Search payees: {"search": "Amazon", "limit": 10}\n' +
+    '- Get rules for payee: {"payeeId": "abc123-def456"}\n\n' +
     'COMMON USE CASES:\n' +
-    '- Finding payee IDs/names before creating transactions with manage-transaction\n' +
-    '- Finding payee IDs for creating auto-categorization rules with manage-entity\n' +
-    '- Filtering transactions by payee name with get-transactions\n' +
-    '- Identifying transfer payees (account-to-account transfers)\n\n' +
+    '- List all payees to find payee IDs\n' +
+    '- Search for specific payees by name\n' +
+    '- View auto-categorization rules for a payee\n' +
+    '- Find payee IDs before merging or managing payees\n' +
+    '- Understand payee structure and organization\n\n' +
     'SEE ALSO:\n' +
-    '- manage-transaction: Create transactions using payee IDs/names from this tool\n' +
-    '- manage-entity: Create new payees or rules using payee IDs from this tool\n' +
-    '- get-transactions: Filter transactions by payee names found here\n' +
-    '- merge-payees: Merge duplicate payees found in this list',
+    '- Use with merge-payees to combine duplicate payees\n' +
+    '- Use with manage-entity to create or update payees\n' +
+    '- Use with get-rules to see all auto-categorization rules\n' +
+    '- Use with get-transactions to filter transactions by payee\n\n' +
+    'RETURNS:\n' +
+    '- If payeeId omitted: Array of payees with id, name, and transfer account\n' +
+    '- If payeeId provided: Array of rules for that payee',
   inputSchema: {
     type: 'object',
-    description:
-      'This tool does not accept any arguments. Returns all payees including their IDs, names, and associated transfer accounts. Use this to find payee IDs before creating transactions or rules.',
-    properties: {},
-    additionalProperties: false,
+    properties: {
+      payeeId: {
+        type: 'string',
+        description:
+          'Payee UUID. If provided, returns auto-categorization rules for this payee. If omitted, returns all payees.',
+      },
+      search: {
+        type: 'string',
+        description: 'Filter payees by name using case-insensitive partial matching.',
+      },
+      limit: {
+        type: 'number',
+        description: 'Maximum number of payees to return. Applied after search filtering.',
+      },
+    },
+    required: [],
   },
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export async function handler(
+  args: Record<string, unknown>
+): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const categories: Payee[] = await fetchAllPayees();
+    if (args.payeeId) {
+      if (typeof args.payeeId !== 'string') {
+        return errorFromCatch('payeeId must be a string');
+      }
+      const rules = await getPayeeRules(args.payeeId as string);
+      return successWithJson(rules);
+    } else {
+      let payees: Payee[] = await fetchAllPayees();
 
-    const structured = categories.map((payee) => ({
-      id: payee.id,
-      name: payee.name,
-      transfer_acct: payee.transfer_acct || '(not a transfer payee)',
-    }));
+      // Filter by search term if provided
+      if (args.search) {
+        if (typeof args.search !== 'string') {
+          return errorFromCatch('search must be a string');
+        }
+        const searchLower = args.search.toLowerCase();
+        payees = payees.filter((payee) => payee.name.toLowerCase().includes(searchLower));
+      }
 
-    return successWithJson(structured);
+      // Apply limit if provided
+      if (args.limit !== undefined) {
+        if (typeof args.limit !== 'number' || args.limit < 1) {
+          return errorFromCatch('limit must be a positive number');
+        }
+        payees = payees.slice(0, args.limit);
+      }
+
+      const structured = payees.map((payee) => ({
+        id: payee.id,
+        name: payee.name,
+        transfer_acct: payee.transfer_acct || '(not a transfer payee)',
+      }));
+      return successWithJson(structured);
+    }
   } catch (err) {
-    return errorFromCatch(err);
+    return errorFromCatch(err, {
+      fallbackMessage: 'Failed to retrieve payees',
+      suggestion: 'Use the get-payees tool to list payees and supply their IDs as arguments.',
+    });
   }
 }
