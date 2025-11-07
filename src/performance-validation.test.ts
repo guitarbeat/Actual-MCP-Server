@@ -15,11 +15,11 @@ import { getInitializationStats, resetInitializationStats } from './actual-api.j
 
 describe('Performance Validation', () => {
   describe('Context Window Token Reduction', () => {
-    it('should have 19 core tools (no optional tools)', () => {
+    it('should have 17 core tools (no optional tools)', () => {
       const coreTools = getAvailableTools(true);
 
-      // All 19 tools are core now (removed get-server-info)
-      expect(coreTools.length).toBe(19);
+      // All 17 tools are core now (removed manage-transaction and manage-account, consolidated into manage-entity)
+      expect(coreTools.length).toBe(17);
     });
 
     it('should calculate token savings from original 37 tools', () => {
@@ -49,8 +49,8 @@ describe('Performance Validation', () => {
       const tools = getAvailableTools(true);
       const toolNames = tools.map((t) => t.schema.name);
 
-      // Should have manage-transaction (consolidated tool)
-      expect(toolNames).toContain('manage-transaction');
+      // Should have manage-entity (consolidated tool for transactions and accounts)
+      expect(toolNames).toContain('manage-entity');
 
       // Should NOT have deprecated transaction tools
       expect(toolNames).not.toContain('create-transaction');
@@ -426,7 +426,7 @@ describe('Performance Validation', () => {
       console.log(`${'='.repeat(60)}\n`);
 
       // Final assertions
-      expect(coreTools.length).toBe(19);
+      expect(coreTools.length).toBe(17);
 
       // Calculate actual reduction from original 37 tools
       const originalToolCount = 37;

@@ -14,7 +14,7 @@ import type { Operation } from '../entity-handlers/base-handler.js';
 /**
  * Entity types supported by the manage-entity tool
  */
-export type EntityType = 'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule';
+export type EntityType = 'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule' | 'transaction' | 'account';
 
 /**
  * Entity-specific error builder for manage-entity tool
@@ -132,6 +132,8 @@ export class EntityErrorBuilder {
       payee: 'get-payees',
       rule: 'get-rules',
       schedule: 'get-schedules',
+      transaction: 'get-transactions',
+      account: 'get-accounts',
     };
 
     return toolMap[entityType];
@@ -150,6 +152,12 @@ export class EntityErrorBuilder {
         return 'Updating';
       case 'delete':
         return 'Deleting';
+      case 'close':
+        return 'Closing';
+      case 'reopen':
+        return 'Reopening';
+      case 'balance':
+        return 'Querying balance for';
     }
   }
 }

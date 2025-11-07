@@ -113,7 +113,7 @@ describe('Integration Tests - MCP Simplification', () => {
       // Verify new consolidated tools are registered
       const tools = getAvailableTools(true);
 
-      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
     });
@@ -136,7 +136,7 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(tools.some((t) => t.schema.name === 'get-grouped-categories')).toBe(true);
 
       // Verify write tools are not available in read-only mode
-      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
     });
   });
 
@@ -199,7 +199,7 @@ describe('Integration Tests - MCP Simplification', () => {
       // Verify tools that use name resolution are registered
       const tools = getAvailableTools(true);
 
-      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
     });
 
@@ -219,15 +219,15 @@ describe('Integration Tests - MCP Simplification', () => {
   });
 
   describe('Production-Ready Tool Set', () => {
-    it('should have 19 core tools by default', async () => {
+    it('should have 17 core tools by default', async () => {
       const tools = getAvailableTools(true);
       const toolNames = tools.map((t) => t.schema.name);
 
-      // Should have exactly 19 core tools (removed get-server-info)
-      expect(tools.length).toBe(19);
+      // Should have exactly 17 core tools (removed manage-transaction and manage-account, consolidated into manage-entity)
+      expect(tools.length).toBe(17);
 
       // New consolidated tools should be available
-      expect(toolNames).toContain('manage-transaction');
+      expect(toolNames).toContain('manage-entity');
       expect(toolNames).toContain('set-budget');
       expect(toolNames).toContain('get-budget');
       expect(toolNames).toContain('manage-budget-hold');
@@ -239,35 +239,15 @@ describe('Integration Tests - MCP Simplification', () => {
 
       // get-server-info removed (not helpful)
 
-      // Removed tools should NOT be present
-      expect(toolNames).not.toContain('create-transaction');
-      expect(toolNames).not.toContain('update-transaction');
-      expect(toolNames).not.toContain('set-budget-amount');
-      expect(toolNames).not.toContain('set-budget-carryover');
-      expect(toolNames).not.toContain('get-account-balance');
-      expect(toolNames).not.toContain('create-account');
-      expect(toolNames).not.toContain('close-account');
-      expect(toolNames).not.toContain('delete-account');
-      expect(toolNames).not.toContain('get-server-info');
-      expect(toolNames).not.toContain('load-budget');
-      expect(toolNames).not.toContain('sync');
-      expect(toolNames).not.toContain('get-id-by-name');
-      expect(toolNames).not.toContain('get-server-version');
-
-      // Consolidated tools should not exist
-      expect(toolNames).not.toContain('get-budget-months');
-      expect(toolNames).not.toContain('get-budget-month');
-      expect(toolNames).not.toContain('hold-budget-for-next-month');
-      expect(toolNames).not.toContain('reset-budget-hold');
-      expect(toolNames).not.toContain('get-payee-rules');
-      expect(toolNames).not.toContain('run-bank-sync');
-      expect(toolNames).not.toContain('run-import');
+      // Deprecated tools removed (consolidated into manage-entity)
+      expect(toolNames).not.toContain('manage-transaction');
+      expect(toolNames).not.toContain('manage-account');
     });
 
     it('should have clean tool descriptions without deprecation notices', async () => {
       const tools = getAvailableTools(true);
 
-      // No tool descriptions should contain DEPRECATED
+      // No tool descriptions should contain DEPRECATED (deprecated tools have been removed)
       tools.forEach((tool) => {
         expect(tool.schema.description || '').not.toContain('DEPRECATED');
         expect(tool.schema.description || '').not.toContain('deprecated');
@@ -282,11 +262,9 @@ describe('Integration Tests - MCP Simplification', () => {
 
       // Core transaction tools
       expect(toolNames).toContain('get-transactions');
-      expect(toolNames).toContain('manage-transaction');
 
       // Core account tools
       expect(toolNames).toContain('get-accounts');
-      expect(toolNames).toContain('manage-account');
 
       // Core category & budget tools
       expect(toolNames).toContain('get-grouped-categories');
@@ -339,7 +317,7 @@ describe('Integration Tests - MCP Simplification', () => {
       // 4. Verify core tools are available
       const tools = getAvailableTools(true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
 

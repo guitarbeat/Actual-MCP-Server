@@ -15,11 +15,11 @@ describe('Tool Registry', () => {
   });
 
   describe('Core tools', () => {
-    it('should include all 19 core tools by default', () => {
+    it('should include all 17 core tools by default', () => {
       const tools = getAvailableTools(true);
 
-      // Should have exactly 19 core tools (removed get-server-info)
-      expect(tools.length).toBe(19);
+      // Should have exactly 17 core tools (removed manage-transaction and manage-account)
+      expect(tools.length).toBe(17);
 
       // Core read tools
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
@@ -35,8 +35,6 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'balance-history')).toBe(true);
 
       // Core write tools
-      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'manage-account')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'merge-payees')).toBe(true);
@@ -60,16 +58,24 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'get-payee-rules')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'run-bank-sync')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'run-import')).toBe(false);
+
+      // Deprecated tools removed
+      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'manage-account')).toBe(false);
     });
 
     it('should not include removed tools', () => {
       const tools = getAvailableTools(true);
 
-      // Removed account management tools (now consolidated into manage-account)
+      // Removed account management tools (now consolidated into manage-entity)
       expect(tools.some((t) => t.schema.name === 'create-account')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'close-account')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'reopen-account')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'delete-account')).toBe(false);
+
+      // Deprecated tools removed (consolidated into manage-entity)
+      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
+      expect(tools.some((t) => t.schema.name === 'manage-account')).toBe(false);
 
       // Removed utility tools
       expect(tools.some((t) => t.schema.name === 'get-server-info')).toBe(false);
@@ -93,40 +99,9 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'get-budget')).toBe(true);
 
       // Write tools should not be present
-      expect(tools.some((t) => t.schema.name === 'manage-transaction')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
       expect(tools.some((t) => t.schema.name === 'manage-budget-hold')).toBe(false);
-    });
-  });
-
-  describe('manage-transaction tool permissions', () => {
-    it('should mark manage-transaction as requiresWrite: true', () => {
-      const tools = getAvailableTools(true);
-      const manageTxTool = tools.find((t) => t.schema.name === 'manage-transaction');
-
-      expect(manageTxTool).toBeDefined();
-      expect(manageTxTool?.requiresWrite).toBe(true);
-    });
-
-    it('should exclude manage-transaction when write is disabled', () => {
-      const tools = getAvailableTools(false);
-      const manageTxTool = tools.find((t) => t.schema.name === 'manage-transaction');
-
-      expect(manageTxTool).toBeUndefined();
-    });
-
-    it('should include delete operation in manage-transaction schema', () => {
-      const tools = getAvailableTools(true);
-      const manageTxTool = tools.find((t) => t.schema.name === 'manage-transaction');
-
-      expect(manageTxTool).toBeDefined();
-      expect(manageTxTool?.schema.description).toContain('delete');
-      expect(manageTxTool?.schema.description).toContain('Delete is permanent');
-
-      // Check that the schema includes delete in the operation enum
-      const inputSchema = manageTxTool?.schema.inputSchema as any;
-      expect(inputSchema.properties.operation.enum).toContain('delete');
     });
   });
 });

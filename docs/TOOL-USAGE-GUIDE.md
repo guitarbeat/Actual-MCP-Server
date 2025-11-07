@@ -22,7 +22,7 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 | Category | Tools | Purpose |
 |----------|-------|---------|
 | **Query Tools** | get-accounts, get-transactions, get-grouped-categories, get-payees, get-rules, get-schedules | Retrieve data |
-| **Management Tools** | manage-transaction, manage-account, manage-entity | Create, update, delete entities |
+| **Management Tools** | manage-entity | Create, update, delete all entities (transactions, accounts, categories, payees, rules, schedules) |
 | **Budget Tools** | set-budget, hold-budget-for-next-month, reset-budget-hold, get-budget-month, get-budget-months | Budget operations |
 | **Analysis Tools** | monthly-summary, spending-by-category, balance-history | Financial insights |
 | **Utility Tools** | merge-payees, get-payee-rules, run-bank-sync, run-import, run-query | Advanced operations |
@@ -31,7 +31,7 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 
 1. **get-accounts** - Start here to find account IDs
 2. **get-transactions** - View transaction history
-3. **manage-transaction** - Create/update/delete transactions
+3. **manage-entity** - Unified tool for all entity operations (transactions, accounts, categories, payees, rules, schedules)
 4. **get-grouped-categories** - Find category IDs
 5. **set-budget** - Set monthly budgets
 6. **spending-by-category** - Analyze spending patterns
@@ -102,7 +102,7 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 
 **Steps**:
 1. Find transaction ID: `get-transactions` with filters
-2. Update transaction: `manage-transaction` with operation="update"
+2. Update transaction: `manage-entity` with entityType="transaction", operation="update"
 3. Verify update: `get-transactions` to confirm changes
 
 **Example**:
@@ -659,27 +659,28 @@ These tools retrieve data without making changes.
 
 These tools create, update, or delete data. Use with caution!
 
-#### manage-transaction
-**Purpose**: Create, update, or delete transactions  
-**Operations**: create, update, delete  
-**When to use**: Record new transactions, fix errors, remove duplicates  
-**Requires**: Account, date, amount for create; ID for update/delete  
-**Warning**: Delete is permanent!
-
-#### manage-account
-**Purpose**: Complete account lifecycle management  
-**Operations**: create, update, delete, close, reopen, balance  
-**When to use**: Add accounts, rename, close old accounts, check balances  
-**Requires**: Varies by operation  
+#### manage-entity
+**Purpose**: Unified CRUD operations for all budget entities  
+**Entity types**: category, categoryGroup, payee, rule, schedule, transaction, account  
+**Operations**: create, update, delete (all entities), close/reopen/balance (accounts only)  
+**When to use**: 
+- Organize budget structure (categories, groups, payees, rules, schedules)
+- Manage transactions (create, update, delete with name resolution)
+- Manage accounts (create, update, delete, close, reopen, query balance)
+**Requires**: Entity-specific data structures  
 **Warning**: Delete is permanent! Use close for accounts with transactions.
 
-#### manage-entity
-**Purpose**: CRUD operations for categories, groups, payees, rules, schedules  
-**Entity types**: category, categoryGroup, payee, rule, schedule  
-**Operations**: create, update, delete  
-**When to use**: Organize budget structure, set up automation  
-**Requires**: Entity-specific data structures  
-**Warning**: Delete is permanent!
+**Transaction Operations:**
+- Supports name resolution for account, payee, and category names
+- Auto-detects dollars vs cents (amounts < 1000 with decimal treated as dollars)
+- Example: `{"entityType": "transaction", "operation": "create", "data": {"account": "Checking", "date": "2024-11-08", "amount": -50.00, "payee": "Grocery Store", "category": "Groceries"}}`
+
+**Account Operations:**
+- Extended operations: `close` (keeps history), `reopen`, `balance` (query balance)
+- Example: `{"entityType": "account", "operation": "create", "data": {"name": "New Account", "type": "checking"}}`
+- Example: `{"entityType": "account", "operation": "balance", "id": "account-id"}`
+
+> ⚠️ **Deprecated**: `manage-transaction` and `manage-account` are deprecated. Use `manage-entity` with `entityType: "transaction"` or `entityType: "account"` instead. The deprecated tools remain available for backward compatibility but will be removed in a future version.
 
 ### Budget Tools (Write Operations)
 

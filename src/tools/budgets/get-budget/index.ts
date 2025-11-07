@@ -78,8 +78,23 @@ export async function handler(
       }
       // Validate month format before calling API
       validateMonthFormat(args.month);
-      const budget = await getBudgetMonth(args.month);
-      return successWithJson(budget);
+
+      try {
+        const budget = await getBudgetMonth(args.month);
+        return successWithJson(budget);
+      } catch (apiError) {
+        // Handle API errors specifically
+        const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
+        // Check if it's a "not found" or similar error
+        if (errorMessage.includes('not found') || errorMessage.includes('Not found')) {
+          return errorFromCatch(`Budget data not found for month ${args.month}`, {
+            fallbackMessage: 'Failed to retrieve budget data',
+            suggestion: 'Use the get-budget tool without a month parameter to list available months.',
+          });
+        }
+        // Re-throw to be caught by outer catch
+        throw apiError;
+      }
     } else {
       const months = await getBudgetMonths();
       return successWithJson(months);
