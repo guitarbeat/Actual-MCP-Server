@@ -773,9 +773,9 @@ src/
 └── types.ts                     # Top-level type exports
 ```
 
-For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+For detailed architecture documentation, see [ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
-For development guidelines and coding standards, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+For development guidelines and coding standards, see [CONTRIBUTING.md](./docs/CONTRIBUTING.md).
 
 ## Documentation
 
@@ -783,10 +783,10 @@ For development guidelines and coding standards, see [CONTRIBUTING.md](./CONTRIB
 - **[Tool Usage Guide](./docs/TOOL-USAGE-GUIDE.md)** - Comprehensive guide to using all MCP tools with examples and workflows
 
 ### For Developers
-- **[Contributing Guide](./CONTRIBUTING.md)** - Development setup, coding standards, and contribution process
+- **[Contributing Guide](./docs/CONTRIBUTING.md)** - Development setup, coding standards, and contribution process
 - **[Tool Description Template](./docs/TOOL-DESCRIPTION-TEMPLATE.md)** - Standard template for creating discoverable tool descriptions
 - **[New Tool PR Checklist](./docs/NEW-TOOL-PR-CHECKLIST.md)** - Quality checklist for adding or updating tools
-- **[Architecture Documentation](./ARCHITECTURE.md)** - System design and architecture details
+- **[Architecture Documentation](./docs/ARCHITECTURE.md)** - System design and architecture details
 - **[Performance Guide](./docs/PERFORMANCE.md)** - Performance optimization patterns and best practices
 - **[Common Patterns](./docs/PATTERNS.md)** - Reusable code patterns and examples
 
@@ -796,7 +796,7 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on:
+Contributions are welcome! Please see our [Contributing Guide](./docs/CONTRIBUTING.md) for details on:
 - Development setup and workflow
 - Coding standards and best practices
 - Tool description requirements

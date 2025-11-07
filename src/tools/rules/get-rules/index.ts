@@ -108,30 +108,38 @@ export async function handler(
   args: Record<string, unknown> = {}
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
+    // Validate payeeId type first if provided
+    if (args.payeeId !== undefined && typeof args.payeeId !== 'string') {
+      return errorFromCatch('payeeId must be a string');
+    }
+
+    // Validate categoryId type if provided
+    if (args.categoryId !== undefined && typeof args.categoryId !== 'string') {
+      return errorFromCatch('categoryId must be a string');
+    }
+
+    // Validate limit type if provided
+    if (args.limit !== undefined) {
+      if (typeof args.limit !== 'number' || args.limit < 1) {
+        return errorFromCatch('limit must be a positive number');
+      }
+    }
+
     let rules: RuleEntity[] = await fetchAllRules();
 
     // Filter by payeeId if provided
     if (args.payeeId) {
-      if (typeof args.payeeId !== 'string') {
-        return errorFromCatch('payeeId must be a string');
-      }
       rules = rules.filter((rule) => ruleMatchesPayee(rule, args.payeeId as string));
     }
 
     // Filter by categoryId if provided
     if (args.categoryId) {
-      if (typeof args.categoryId !== 'string') {
-        return errorFromCatch('categoryId must be a string');
-      }
       rules = rules.filter((rule) => ruleMatchesCategory(rule, args.categoryId as string));
     }
 
     // Apply limit if provided
     if (args.limit !== undefined) {
-      if (typeof args.limit !== 'number' || args.limit < 1) {
-        return errorFromCatch('limit must be a positive number');
-      }
-      rules = rules.slice(0, args.limit);
+      rules = rules.slice(0, args.limit as number);
     }
 
     return successWithJson(rules);

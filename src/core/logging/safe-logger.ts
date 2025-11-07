@@ -12,6 +12,7 @@ const originalConsoleWarn = console.warn;
 
 // Track if we're in stdio mode with MCP logging enabled
 let useMcpLogging = false;
+let mcpServer: Server | null = null;
 
 /**
  * Setup safe logging for stdio mode.
@@ -19,14 +20,17 @@ let useMcpLogging = false;
  *
  * @param server - The MCP server instance
  */
-export function setupSafeLogging(_server: Server): void {
+export function setupSafeLogging(server: Server): void {
   useMcpLogging = true;
+  mcpServer = server;
 
   // Override console methods to use MCP logging
   console.log = (...args: unknown[]): void => {
     const message = formatMessage(args);
     try {
-      server.sendLoggingMessage({ level: 'info', message });
+      if (mcpServer) {
+        mcpServer.sendLoggingMessage({ level: 'info', message });
+      }
     } catch {
       // If MCP logging fails, fall back to original (shouldn't happen in stdio mode)
       originalConsoleLog(...args);
@@ -36,7 +40,9 @@ export function setupSafeLogging(_server: Server): void {
   console.error = (...args: unknown[]): void => {
     const message = formatMessage(args);
     try {
-      server.sendLoggingMessage({ level: 'error', message });
+      if (mcpServer) {
+        mcpServer.sendLoggingMessage({ level: 'error', message });
+      }
     } catch {
       // If MCP logging fails, fall back to original
       originalConsoleError(...args);
@@ -46,7 +52,9 @@ export function setupSafeLogging(_server: Server): void {
   console.warn = (...args: unknown[]): void => {
     const message = formatMessage(args);
     try {
-      server.sendLoggingMessage({ level: 'warning', message });
+      if (mcpServer) {
+        mcpServer.sendLoggingMessage({ level: 'warning', message });
+      }
     } catch {
       // If MCP logging fails, fall back to original
       originalConsoleWarn(...args);
@@ -63,6 +71,7 @@ export function restoreConsoleMethods(): void {
   console.error = originalConsoleError;
   console.warn = originalConsoleWarn;
   useMcpLogging = false;
+  mcpServer = null;
 }
 
 /**
