@@ -16,20 +16,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'node:util';
-import { initActualApi, shutdownActualApi, getInitializationStats } from './actual-api.js';
+import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
-import {
-  logPerformanceSummary,
-  startPeriodicCacheStatsLogging,
-  stopPeriodicCacheStatsLogging,
-  logCacheStats,
-  logInitializationStats,
-} from './core/performance/performance-logger.js';
-import { cacheService } from './core/cache/cache-service.js';
-import { metricsTracker } from './core/performance/metrics-tracker.js';
 import { setupSafeLogging, restoreConsoleMethods } from './core/logging/safe-logger.js';
 
 dotenv.config({ path: '.env' });
@@ -128,9 +119,6 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 // SERVER STARTUP
 // ----------------------------
 
-// Global variable to track periodic logging interval
-let cacheStatsInterval: NodeJS.Timeout | null = null;
-
 // Global variable to track if stdio transport is already connected
 let stdioTransportConnected = false;
 
@@ -196,39 +184,8 @@ async function main(): Promise<void> {
       stdioTransportConnected = true;
     }
 
-    console.error('');
-
     try {
       await initActualApi();
-
-      console.error('');
-
-      // Log performance configuration at startup
-      if (metricsTracker.isEnabled()) {
-        console.error('[PERF] Performance logging: ENABLED');
-        const threshold = process.env.PERFORMANCE_LOG_THRESHOLD_MS || '1000';
-        console.error(`[PERF] Slow operation threshold: ${threshold}ms`);
-      } else {
-        console.error('[PERF] Performance logging: DISABLED');
-      }
-
-      if (cacheService.isEnabled()) {
-        console.error('[CACHE] Cache: ENABLED');
-        const ttl = process.env.CACHE_TTL_SECONDS || '300';
-        const maxEntries = process.env.CACHE_MAX_ENTRIES || '1000';
-        console.error(`[CACHE] TTL: ${ttl}s, Max entries: ${maxEntries}`);
-
-        // Start periodic cache stats logging
-        cacheStatsInterval = startPeriodicCacheStatsLogging();
-        if (cacheStatsInterval) {
-          const interval = process.env.PERFORMANCE_CACHE_STATS_INTERVAL_MS || '300000';
-          console.error(`[CACHE] Periodic stats logging: every ${parseInt(interval, 10) / 1000}s`);
-        }
-      } else {
-        console.error('[CACHE] Cache: DISABLED');
-      }
-
-      console.error('');
     } catch (error) {
       console.error('✗ Failed to initialize Actual Budget API:', error);
       console.error('Server cannot start without Actual Budget connection');
@@ -450,25 +407,6 @@ async function gracefulShutdown(signal: string): Promise<void> {
   }, 5000);
 
   try {
-    // Log final performance summary and cache stats
-    if (metricsTracker.isEnabled()) {
-      console.error('');
-      logPerformanceSummary();
-
-      // Log initialization statistics showing persistent connection benefits
-      console.error('');
-      const initStats = getInitializationStats();
-      logInitializationStats(initStats);
-    }
-
-    if (cacheService.isEnabled()) {
-      console.error('');
-      logCacheStats();
-    }
-
-    // Stop periodic cache stats logging
-    stopPeriodicCacheStatsLogging(cacheStatsInterval);
-
     // Shutdown Actual Budget API connection
     await shutdownActualApi();
 

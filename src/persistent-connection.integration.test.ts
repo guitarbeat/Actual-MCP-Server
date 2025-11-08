@@ -14,17 +14,6 @@ vi.mock('./actual-api.js', async () => {
   };
 });
 
-// Mock performance tracking
-vi.mock('./core/performance/performance-logger.js', () => ({
-  logToolExecution: vi.fn(),
-}));
-
-vi.mock('./core/performance/metrics-tracker.js', () => ({
-  metricsTracker: {
-    record: vi.fn(),
-  },
-}));
-
 // Mock sample tools for testing
 vi.mock('./tools/get-accounts/index.js', () => ({
   schema: {
@@ -250,7 +239,7 @@ describe('Persistent API Connection - Integration Tests', () => {
       // Instead, we'll test the expected behavior by simulating the signal handler
 
       // Simulate what the SIGINT handler should do
-      const mockSigintHandler = async () => {
+      const mockSigintHandler = async (): Promise<void> => {
         // This simulates the gracefulShutdown function in index.ts
         await actualApi.shutdownActualApi();
         server.close();
@@ -268,7 +257,7 @@ describe('Persistent API Connection - Integration Tests', () => {
 
     it('should call shutdownActualApi on SIGTERM', async () => {
       // Simulate what the SIGTERM handler should do
-      const mockSigtermHandler = async () => {
+      const mockSigtermHandler = async (): Promise<void> => {
         // This simulates the gracefulShutdown function in index.ts
         await actualApi.shutdownActualApi();
         server.close();
