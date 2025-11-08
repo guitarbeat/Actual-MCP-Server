@@ -418,7 +418,6 @@ The Actual Budget MCP Server includes built-in performance optimizations to ensu
 - **Intelligent Caching** - Frequently accessed data (accounts, categories, payees) is cached in memory with automatic invalidation
 - **Parallel Data Fetching** - Transaction queries across multiple accounts execute concurrently
 - **Optimized Enrichment** - Lookup tables are reused across transactions to minimize API calls
-- **Performance Monitoring** - Built-in metrics tracking to identify bottlenecks
 
 ### How Persistent Connections Work
 
@@ -446,10 +445,6 @@ CACHE_ENABLED=true                      # Enable/disable caching (default: true)
 CACHE_TTL_SECONDS=300                   # Cache TTL in seconds (default: 300 = 5 minutes)
 CACHE_MAX_ENTRIES=1000                  # Maximum cache entries (default: 1000)
 
-# Performance Monitoring
-PERFORMANCE_LOGGING_ENABLED=true        # Enable performance logging (default: true)
-PERFORMANCE_LOG_THRESHOLD_MS=1000       # Log operations slower than this (default: 1000ms)
-PERFORMANCE_CACHE_STATS_INTERVAL_MS=300000  # Cache stats logging interval (default: 5 minutes)
 ```
 
 ### Cache TTL Recommendations
@@ -489,17 +484,16 @@ Subsequent requests will be 70-90% faster (50-200ms) because they reuse the conn
 If you suspect caching isn't working:
 
 1. Check that `CACHE_ENABLED=true` in your environment
-2. Enable performance logging with `PERFORMANCE_LOGGING_ENABLED=true`
-3. Look for cache statistics in the logs (logged every 5 minutes by default)
-4. Verify cache hit rate is >0% for repeated queries
+2. Run the same tool twice and confirm the second call completes faster (connection reuse + cache hit)
+3. Use `npm run test` to ensure the cache service unit tests pass—these cover hit/miss tracking and TTL handling
 
 #### Slow Query Performance
 
 If queries are slower than expected:
 
 1. Check if caching is enabled (`CACHE_ENABLED=true`)
-2. Review performance logs to identify bottlenecks
-3. For multi-account queries, ensure parallel fetching is working (check logs for concurrent operations)
+2. Instrument a representative tool call with `console.time`/`console.timeEnd` to pinpoint slow phases
+3. For multi-account queries, confirm `Promise.all` calls are executing by logging timestamps before/after the batch fetch
 4. Consider increasing `CACHE_TTL_SECONDS` if your data doesn't change frequently
 
 #### High Memory Usage
@@ -514,10 +508,9 @@ If the server is using too much memory:
 
 To debug cache-related issues:
 
-1. Enable performance logging: `PERFORMANCE_LOGGING_ENABLED=true`
-2. Set a low threshold to see all operations: `PERFORMANCE_LOG_THRESHOLD_MS=0`
-3. Watch for cache hit/miss patterns in the logs
-4. Temporarily disable cache (`CACHE_ENABLED=false`) to compare behavior
+1. Run the same tool twice—warm caches should make the second call faster.
+2. Temporarily log `cacheService.getStats()` in development to inspect hit/miss counts after repeated requests.
+3. Compare behavior with caching disabled (`CACHE_ENABLED=false`) to isolate differences.
 
 #### Cache Invalidation Issues
 
@@ -536,90 +529,11 @@ For debugging or comparison purposes, you can disable performance features:
 # Disable all caching
 CACHE_ENABLED=false
 
-# Disable performance logging
+# Silence startup timing logs (optional)
 PERFORMANCE_LOGGING_ENABLED=false
 ```
 
 Note: The persistent connection cannot be disabled as it's fundamental to the server architecture. When caching is disabled, the server still maintains a persistent connection but doesn't cache data lookups.
-
-### Running Performance Benchmarks
-
-To measure the performance improvements and verify that optimization targets are met, run the benchmark script:
-
-```bash
-npm run benchmark
-```
-
-The benchmark script will:
-
-1. **Test multi-account queries** - Measures performance with and without caching
-2. **Verify cache hit rate** - Ensures cache effectiveness meets the >80% target
-3. **Test enrichment performance** - Validates that transaction enrichment is under 100ms for 1000+ transactions
-4. **Calculate improvement** - Reports the percentage improvement from optimizations
-
-Example output:
-
-```
-🚀 Starting Performance Benchmarks
-
-Configuration:
-  - Target reduction: 50%
-  - Cache hit rate target: 80%
-  - Enrichment target: <100ms for 1000+ transactions
-  - Iterations: 3
-
-📊 Benchmark 1: Multi-account queries (cache disabled)
-  ✓ Multi-account query (no cache): 2450.32ms
-    - accounts: 5
-    - iterations: 3
-    - dateRange: 2024-08-04 to 2024-11-04
-
-📊 Benchmark 2: Multi-account queries (cache enabled)
-  ✓ Multi-account query (with cache): 1180.15ms
-    - iterations: 3
-    - dateRange: 2024-08-04 to 2024-11-04
-
-📈 Performance Improvement Analysis
-  ✓ Performance improvement: 0ms
-    - noCacheDuration: 2450.32ms
-    - withCacheDuration: 1180.15ms
-    - improvement: 51.85%
-    - target: 50%
-    - passed: YES
-
-📊 Benchmark 3: Cache hit rate
-  ✓ Cache hit rate: 0ms
-    - hitRate: 90.00%
-    - target: 80%
-    - hits: 27
-    - misses: 3
-    - passed: YES
-
-📊 Benchmark 4: Transaction enrichment
-  ✓ Transaction enrichment: 45.23ms
-    - transactionCount: 1523
-    - totalDuration: 45.23ms
-    - perTransaction: 0.030ms
-    - target: <100ms for 1000+ transactions
-    - passed: YES
-
-============================================================
-📊 BENCHMARK SUMMARY
-============================================================
-Total Tests: 4
-Passed: 4 ✓
-Failed: 0 ✗
-
-Cache Statistics:
-  Hits: 27
-  Misses: 3
-  Hit Rate: 90.00%
-
-============================================================
-✅ All benchmarks passed!
-```
-
-The benchmark requires a configured Actual Budget connection (via environment variables or local data). If any benchmark fails to meet its target, the script will exit with a non-zero status code.
 
 ## Example Queries
 
@@ -664,22 +578,6 @@ npm run metrics              # Duplication + lint
 
 Pre-commit hooks automatically run quality checks on staged files. See [docs/CODE_QUALITY.md](./docs/CODE_QUALITY.md) for detailed information about code quality metrics and standards.
 
-### Performance Monitoring
-
-The project includes comprehensive performance monitoring tools:
-
-```bash
-# Run optimization benchmarks
-npm run benchmark            # Cache and parallel fetching benchmarks
-
-# Run refactoring performance tests
-npm run perf:monitor         # Test all tools for performance
-npm run perf:baseline        # Save performance baseline
-npm run perf:compare         # Compare with baseline
-```
-
-Performance monitoring ensures no regressions during refactoring and tracks optimization improvements. See [docs/PERFORMANCE.md](./docs/PERFORMANCE.md) for detailed performance documentation.
-
 ### Testing the connection to Actual
 
 To verify the server can connect to your Actual Budget data:
@@ -710,7 +608,6 @@ src/
 │   ├── formatting/               # Date and amount formatting
 │   ├── input/                    # Input validation and parsing
 │   ├── mapping/                  # Entity mappers (categories, transactions)
-│   ├── performance/              # Performance tracking and logging
 │   ├── response/                 # Response and error builders
 │   └── types/                    # Domain types and schemas
 │
@@ -744,7 +641,7 @@ For development guidelines and coding standards, see [CONTRIBUTING.md](./docs/CO
 - **[Tool Description Template](./docs/TOOL-DESCRIPTION-TEMPLATE.md)** - Standard template for creating discoverable tool descriptions
 - **[New Tool PR Checklist](./docs/NEW-TOOL-PR-CHECKLIST.md)** - Quality checklist for adding or updating tools
 - **[Architecture Documentation](./docs/ARCHITECTURE.md)** - System design and architecture details
-- **[Performance Guide](./docs/PERFORMANCE.md)** - Performance optimization patterns and best practices
+- **[Performance Guide](./docs/PERFORMANCE.md)** - Caching and persistent connection best practices
 - **[Common Patterns](./docs/PATTERNS.md)** - Reusable code patterns and examples
 
 ## License
