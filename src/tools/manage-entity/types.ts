@@ -124,7 +124,7 @@ export interface ScheduleData {
   accountId?: string; // Convenience field - maps to account, name or ID
   amount?: number | { num1: number; num2: number }; // Optional, dollars or cents (auto-detected)
   amountOp?: 'is' | 'isapprox' | 'isbetween'; // Optional, controls amount interpretation
-  date: string | RecurConfig; // REQUIRED - date string OR RecurConfig
+  date?: string | RecurConfig; // Optional overall; required specifically during creation
   payee?: string | null; // Optional, name or ID
   category?: string | null; // Optional, name or ID
   notes?: string; // Optional
@@ -260,7 +260,9 @@ export const ScheduleDataSchema = z.object({
     ])
     .optional(),
   amountOp: z.enum(['is', 'isapprox', 'isbetween']).optional(),
-  date: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'), RecurConfigSchema]),
+  date: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'), RecurConfigSchema])
+    .optional(),
   payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
   category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
   notes: z.string().optional(),
