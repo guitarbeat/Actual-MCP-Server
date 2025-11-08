@@ -104,6 +104,22 @@ describe('ScheduleHandler', () => {
         date: '2025-12-01',
       });
     });
+
+    it('should allow partial updates without a date field', async () => {
+      const id = 'schedule-1';
+      const data = {
+        notes: 'Updated notes',
+        amount: 12.34,
+      };
+      vi.mocked(actualApi.updateSchedule).mockResolvedValue(undefined);
+
+      await scheduleHandler.update(id, data);
+
+      expect(actualApi.updateSchedule).toHaveBeenCalledWith(id, {
+        notes: 'Updated notes',
+        amount: 1234,
+      });
+    });
   });
 
   describe('delete', () => {
