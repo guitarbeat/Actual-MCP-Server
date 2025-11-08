@@ -4,8 +4,8 @@
 
 import { success, errorFromCatch, MCPResponse, error } from '../../../core/response/index.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
-import type { ScheduleData } from '../../manage-entity/types.js';
-import { ScheduleDataSchema } from '../../manage-entity/types.js';
+import type { ScheduleUpdateData } from '../../manage-entity/types.js';
+import { ScheduleUpdateDataSchema } from '../../manage-entity/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { z } from 'zod';
 import type { ToolInput } from '../../../types.js';
@@ -14,7 +14,7 @@ const UpdateScheduleSchema = z
   .object({
     id: z.string().uuid('Schedule ID must be a valid UUID'),
   })
-  .merge(ScheduleDataSchema.partial());
+  .merge(ScheduleUpdateDataSchema);
 
 export const schema = {
   name: 'update-schedule',
@@ -59,13 +59,14 @@ export async function handler(args: z.infer<typeof UpdateScheduleSchema>): Promi
   try {
     const validated = UpdateScheduleSchema.parse(args);
     const { id, ...updateData } = validated;
+    const scheduleUpdateData: ScheduleUpdateData = updateData;
 
     if (Object.keys(updateData).length === 0) {
       return error('No fields provided for update', 'Provide at least one field to update');
     }
 
     const handler = new ScheduleHandler();
-    await handler.update(id, updateData as ScheduleData);
+    await handler.update(id, scheduleUpdateData);
     handler.invalidateCache();
     return success(`Successfully updated schedule with id ${id}`);
   } catch (error) {

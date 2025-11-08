@@ -132,6 +132,12 @@ export interface ScheduleData {
   // DO NOT include: rule, next_date, completed (auto-managed by API)
 }
 
+/**
+ * Data that can be provided when updating a schedule.
+ * All fields are optional so callers can send partial updates.
+ */
+export type ScheduleUpdateData = Partial<ScheduleData>;
+
 // ----------------------------
 // Zod Schemas for Validation
 // ----------------------------
@@ -262,6 +268,12 @@ export const ScheduleDataSchema = z.object({
   notes: z.string().optional(),
   posts_transaction: z.boolean().optional(),
 });
+
+/**
+ * Schema for schedule update data validation.
+ * Mirrors ScheduleDataSchema but makes all fields optional for partial updates.
+ */
+export const ScheduleUpdateDataSchema = ScheduleDataSchema.partial();
 
 // ----------------------------
 // Discriminated Union Types
