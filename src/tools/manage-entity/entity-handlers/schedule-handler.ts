@@ -6,8 +6,8 @@ import { cacheService } from '../../../core/cache/cache-service.js';
 import { createSchedule, deleteSchedule, updateSchedule } from '../../../actual-api.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import type { EntityHandler, Operation } from './base-handler.js';
-import type { ScheduleData } from '../types.js';
-import { ScheduleDataSchema } from '../types.js';
+import type { ScheduleData, ScheduleUpdateData } from '../types.js';
+import { ScheduleDataSchema, ScheduleUpdateDataSchema } from '../types.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
@@ -35,7 +35,7 @@ function convertAmountToCents(amount: number): number {
  * Handler for schedule entity operations
  * Implements create, update, and delete operations for schedules
  */
-export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData> {
+export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpdateData> {
   /**
    * Create a new schedule
    * @param data - Schedule creation data
@@ -125,9 +125,9 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleData
    * @param id - The schedule ID
    * @param data - Schedule update data
    */
-  async update(id: string, data: ScheduleData): Promise<void> {
-    // Validate data
-    const validated = ScheduleDataSchema.parse(data);
+  async update(id: string, data: ScheduleUpdateData): Promise<void> {
+    // Validate data allowing partial updates
+    const validated = ScheduleUpdateDataSchema.parse(data);
 
     // Transform data for API: resolve names to IDs and convert amounts
     const apiData: Record<string, unknown> = {};
