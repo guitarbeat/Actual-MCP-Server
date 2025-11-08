@@ -115,6 +115,11 @@ describe('ScheduleHandler', () => {
       });
     });
 
+    it('should allow partial updates without a date field', async () => {
+      const id = 'schedule-1';
+      const data = {
+        notes: 'Updated notes',
+        amount: 12.34,
     it('should update a schedule without a date when none is provided', async () => {
       const id = 'schedule-1';
       const data = {
@@ -127,6 +132,8 @@ describe('ScheduleHandler', () => {
       await scheduleHandler.update(id, data);
 
       expect(actualApi.updateSchedule).toHaveBeenCalledWith(id, {
+        notes: 'Updated notes',
+        amount: 1234,
         name: 'Test Schedule',
         account: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
         amount: 1000,
