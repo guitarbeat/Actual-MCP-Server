@@ -140,10 +140,6 @@ CACHE_ENABLED=true                      # Enable/disable caching (default: true)
 CACHE_TTL_SECONDS=300                   # Cache TTL in seconds (default: 300 = 5 minutes)
 CACHE_MAX_ENTRIES=1000                  # Maximum cache entries (default: 1000)
 
-# Performance Monitoring
-PERFORMANCE_LOGGING_ENABLED=true        # Enable performance logging (default: true)
-PERFORMANCE_LOG_THRESHOLD_MS=1000       # Log operations slower than this (default: 1000ms)
-PERFORMANCE_CACHE_STATS_INTERVAL_MS=300000  # Cache stats logging interval (default: 5 minutes)
 ```
 
 ### Cache TTL Recommendations
@@ -170,93 +166,13 @@ Based on real-world testing, the optimization provides:
 | Cache Operation Overhead | <5ms | 1-3ms |
 | Persistent Connection Overhead | <10MB | 10-20MB |
 
-## Benchmarking
+## Observability Without Built-In Metrics
 
-### Running Benchmarks
+The dedicated performance logging subsystem has been removed. To evaluate behavior in production:
 
-```bash
-# Run optimization benchmarks (includes persistent connection tests)
-npm run benchmark
-
-# Run refactoring performance monitoring
-npm run perf:monitor
-
-# Save performance baseline
-npm run perf:baseline
-
-# Compare with baseline
-npm run perf:compare
-```
-
-### Benchmark Tests
-
-1. **Persistent connection performance** - Measures consecutive tool call improvements
-2. **Multi-account queries (cache disabled)** - Baseline performance
-3. **Multi-account queries (cache enabled)** - Optimized performance
-4. **Cache hit rate** - Verifies cache effectiveness
-5. **Transaction enrichment** - Validates enrichment performance
-
-### Example Output
-
-```
-🚀 Starting Performance Benchmarks
-
-Configuration:
-  - Target reduction: 50%
-  - Cache hit rate target: 80%
-  - Enrichment target: <100ms for 1000+ transactions
-  - Iterations: 3
-
-📊 Benchmark 1: Multi-account queries (cache disabled)
-  ✓ Multi-account query (no cache): 2450.32ms
-    - accounts: 5
-    - iterations: 3
-    - dateRange: 2024-08-04 to 2024-11-04
-
-📊 Benchmark 2: Multi-account queries (cache enabled)
-  ✓ Multi-account query (with cache): 1180.15ms
-    - iterations: 3
-    - dateRange: 2024-08-04 to 2024-11-04
-
-📈 Performance Improvement Analysis
-  ✓ Performance improvement: 0ms
-    - noCacheDuration: 2450.32ms
-    - withCacheDuration: 1180.15ms
-    - improvement: 51.85%
-    - target: 50%
-    - passed: YES
-
-📊 Benchmark 3: Cache hit rate
-  ✓ Cache hit rate: 0ms
-    - hitRate: 90.00%
-    - target: 80%
-    - hits: 27
-    - misses: 3
-    - passed: YES
-
-📊 Benchmark 4: Transaction enrichment
-  ✓ Transaction enrichment: 45.23ms
-    - transactionCount: 1523
-    - totalDuration: 45.23ms
-    - perTransaction: 0.030ms
-    - target: <100ms for 1000+ transactions
-    - passed: YES
-
-============================================================
-📊 BENCHMARK SUMMARY
-============================================================
-Total Tests: 4
-Passed: 4 ✓
-Failed: 0 ✗
-
-Cache Statistics:
-  Hits: 27
-  Misses: 3
-  Hit Rate: 90.00%
-
-============================================================
-✅ All benchmarks passed!
-```
+- Use external profiling or APM tools (e.g., `clinic.js`, Chrome DevTools CPU profiles) while driving the MCP server through scripted tool calls.
+- Capture timestamps around repeated tool invocations to measure warm-cache improvements.
+- Add temporary instrumentation in development by importing `cacheService.getStats()` inside specific tool handlers—remember to remove ad-hoc logging before shipping changes.
 
 ## Troubleshooting
 
@@ -300,8 +216,8 @@ Subsequent requests reuse the connection and are 70-90% faster.
 
 **Solutions:**
 1. Verify `CACHE_ENABLED=true` in environment
-2. Enable performance logging: `PERFORMANCE_LOGGING_ENABLED=true`
-3. Check logs for cache statistics
+2. Run the same tool twice—warm caches should make the second call noticeably faster
+3. In development, temporarily log `cacheService.getStats()` after repeated calls to confirm hits are incrementing
 4. Restart the server to clear any cache corruption
 
 ### Slow Query Performance
@@ -312,9 +228,9 @@ Subsequent requests reuse the connection and are 70-90% faster.
 
 **Solutions:**
 1. Verify caching is enabled
-2. Check if parallel fetching is working (look for concurrent operations in logs)
+2. Confirm parallel fetching is working by instrumenting tool handlers with timestamps around `Promise.all` calls
 3. Increase `CACHE_TTL_SECONDS` if data doesn't change frequently
-4. Review performance logs to identify bottlenecks
+4. Profile a representative workload with external tools (e.g., Node's `--prof`) to pinpoint bottlenecks
 
 ### High Memory Usage
 
@@ -326,7 +242,7 @@ Subsequent requests reuse the connection and are 70-90% faster.
 1. Reduce `CACHE_MAX_ENTRIES` to limit cache size
 2. Reduce `CACHE_TTL_SECONDS` to expire entries more quickly
 3. Disable caching: `CACHE_ENABLED=false`
-4. Monitor cache statistics to see entry count
+4. Add temporary instrumentation around `cacheService.getStats()` to observe entry counts before and after heavy workloads
 
 ### Stale Data
 
@@ -335,7 +251,7 @@ Subsequent requests reuse the connection and are 70-90% faster.
 - Data seems outdated
 
 **Solutions:**
-1. Verify write operations are invalidating cache (check logs)
+1. Ensure write operations call the appropriate invalidation helper for affected entities
 2. Reduce `CACHE_TTL_SECONDS` for more frequent updates
 3. Restart server to clear cache
 4. Temporarily disable cache to verify behavior
@@ -344,70 +260,33 @@ Subsequent requests reuse the connection and are 70-90% faster.
 
 To debug cache-related issues:
 
-```bash
-# Enable detailed logging
-PERFORMANCE_LOGGING_ENABLED=true
-PERFORMANCE_LOG_THRESHOLD_MS=0
-
-# Disable cache to compare behavior
-CACHE_ENABLED=false
-```
+Use targeted instrumentation instead of global logging. For example, wrap a tool handler with high-resolution timers or inspect
+`cacheService.getStats()` before and after a repeated request sequence. Disable caching (`CACHE_ENABLED=false`) to compare cold
+and warm behavior.
 
 ## Implementation Details
 
-### Files Modified
+### Persistent Connection
+- `src/index.ts` – Initializes the MCP server once per process and wires signal handlers for graceful shutdown.
+- `src/actual-api.ts` – Owns the lifecycle of the Actual Budget API client, including download-once semantics when a sync ID is
+  provided.
+- `src/persistent-connection.integration.test.ts` / `src/persistent-connection.benchmark.test.ts` – Verify that repeated tool
+  calls reuse the existing connection.
 
-**Persistent Connection:**
-- `src/index.ts` - Server lifecycle with persistent connection
-- `src/tools/index.ts` - Removed per-request shutdown
-- `src/resources.ts` - Removed per-request shutdown
-- `src/persistent-connection.integration.test.ts` - Integration tests
-- `src/persistent-connection.benchmark.test.ts` - Performance benchmarks
+### Cache Infrastructure
+- `src/core/cache/cache-service.ts` – LRU cache with TTL support and programmatic statistics.
+- `src/core/cache/cache-service.test.ts` – Covers hits, misses, TTL expiry, and cache disabling.
+- `src/core/api/cache-invalidation.test.ts` – Ensures writes clear relevant cached entities.
 
-**Core Infrastructure:**
-- `src/core/cache/cache-service.ts` - Cache service implementation
-- `src/core/cache/cache-service.test.ts` - Cache service tests
-- `src/core/performance/metrics-tracker.ts` - Performance metrics tracking
-- `src/core/performance/metrics-tracker.test.ts` - Metrics tracker tests
-- `src/core/performance/performance-logger.ts` - Performance logging
-
-**Data Fetchers:**
-- `src/core/data/fetch-accounts.ts` - Cache-aware account fetching
-- `src/core/data/fetch-categories.ts` - Cache-aware category fetching
-- `src/core/data/fetch-payees.ts` - Cache-aware payee fetching
-- `src/core/data/fetch-transactions.ts` - Parallel transaction fetching
-
-**Cache Invalidation:**
-- `src/core/api/cache-invalidation.test.ts` - Cache invalidation tests
-- `src/actual-api.ts` - Write operations with cache invalidation
-
-**Tools:**
-- `src/tools/monthly-summary/` - Updated to use optimized fetchers
-- `src/tools/spending-by-category/` - Updated to use optimized fetchers
-- `src/tools/balance-history/` - Updated to use optimized fetchers
+### Data Fetchers and Tools
+- `src/core/data/fetch-*.ts` – Shared fetchers that opt into caching and parallel queries where appropriate.
+- Tool modules under `src/tools/` consume these fetchers so repeated requests benefit from warm caches without additional
+  configuration.
 
 ### Testing
-
-**Unit Tests:**
-- Cache service: 14 tests
-- Metrics tracker: 14 tests
-- Parallel fetching: 24 tests
-- Cache invalidation: 15 tests
-- Data fetchers: 24 tests
-- Tool/resource handlers: Updated to not expect shutdown
-
-**Integration Tests:**
-- Persistent connection lifecycle: 2 tests
-- Consecutive tool calls: 1 test
-- Tool execution with caching: 7 tests
-- Cache invalidation on writes: 15 tests
-- Performance improvements: Benchmark script
-
-**Performance Tests:**
-- Persistent connection benchmarks: 2 tests
-- Cache performance benchmarks: 2 tests
-
-**Total:** 230+ tests passing
+- Run `npm run test` to execute the Vitest suite (unit + integration).
+- Persistent connection behavior is exercised by `src/persistent-connection.integration.test.ts`.
+- Cache behavior is validated in `src/core/cache/cache-service.test.ts` and downstream fetcher tests.
 
 ## Backward Compatibility
 
@@ -430,41 +309,6 @@ Potential areas for further optimization:
 6. **Incremental Updates** - Update cache incrementally instead of full invalidation
 7. **Request Queuing** - Queue requests during reconnection instead of failing
 
-## Refactoring Performance Monitoring
-
-The codebase includes comprehensive performance monitoring for refactoring activities to ensure no performance regressions are introduced.
-
-### Monitoring Tools
-
-**Refactoring Performance Monitor** (`scripts/refactoring-performance-monitor.ts`):
-- Tests all major tools across multiple iterations
-- Compares performance against saved baseline
-- Identifies regressions automatically
-- Generates detailed performance reports
-
-### Usage
-
-```bash
-# Establish baseline before refactoring
-npm run perf:baseline
-
-# Monitor performance during refactoring
-npm run perf:monitor
-
-# Compare with baseline after changes
-npm run perf:compare
-```
-
-### Performance Reports
-
-Performance reports are saved in JSON format and include:
-- Per-tool execution times (avg, min, max)
-- Regression analysis vs baseline
-- Statistical summaries
-- Trend identification
-
-See [Performance Monitoring Guide](../.kiro/specs/code-refactoring/performance-monitoring-guide.md) for detailed information.
-
 ## References
 
 - [Persistent API Connection Requirements](../.kiro/specs/persistent-api-connection/requirements.md)
@@ -475,5 +319,3 @@ See [Performance Monitoring Guide](../.kiro/specs/code-refactoring/performance-m
 - [Performance Optimization Tasks](../.kiro/specs/performance-optimization/tasks.md)
 - [Refactoring Performance Monitoring Guide](../.kiro/specs/code-refactoring/performance-monitoring-guide.md)
 - [Performance Comparison Report](../.kiro/specs/code-refactoring/performance-comparison-report.md)
-- [Benchmark Script](../scripts/benchmark-performance.ts)
-- [Refactoring Performance Monitor](../scripts/refactoring-performance-monitor.ts)

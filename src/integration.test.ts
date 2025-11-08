@@ -52,17 +52,6 @@ vi.mock('fs', () => ({
   },
 }));
 
-// Mock performance tracking
-vi.mock('./core/performance/performance-logger.js', () => ({
-  logToolExecution: vi.fn(),
-}));
-
-vi.mock('./core/performance/metrics-tracker.js', () => ({
-  metricsTracker: {
-    record: vi.fn(),
-  },
-}));
-
 describe('Integration Tests - MCP Simplification', () => {
   let server: Server;
   let callToolHandler: ((request: { params: { name: string; arguments?: unknown } }) => Promise<unknown>) | undefined;

@@ -93,7 +93,6 @@ Server Startup
      │
      ├─> shutdownActualApi() [once]
      │   ├─> Close API connection
-     │   ├─> Log performance summaries
      │   └─> Clean up resources
      │
      ▼
@@ -205,15 +204,10 @@ The server properly cleans up resources on shutdown:
 // SIGINT handler (Ctrl+C)
 process.on('SIGINT', async () => {
   console.error('SIGINT received, shutting down server');
-  
-  // Log final performance summaries
-  if (metricsTracker.isEnabled()) {
-    logPerformanceSummary();
-  }
-  
+
   // Shutdown API connection
   await shutdownActualApi();
-  
+
   server.close();
   process.exit(0);
 });
@@ -345,7 +339,6 @@ Centralized data fetching with caching and parallel execution support.
 - Automatic caching of frequently accessed data
 - Parallel fetching for multi-account queries
 - Consistent error handling
-- Performance metrics tracking
 
 ### Cache Module (`src/core/cache/`)
 
@@ -363,20 +356,6 @@ CACHE_ENABLED=true
 CACHE_TTL_SECONDS=300
 CACHE_MAX_ENTRIES=1000
 ```
-
-### Performance Module (`src/core/performance/`)
-
-Performance monitoring and logging infrastructure.
-
-**Key Files:**
-- `metrics-tracker.ts` - Performance metrics collection
-- `performance-logger.ts` - Centralized performance logging
-
-**Features:**
-- Operation timing
-- Cache statistics
-- Slow operation detection
-- Periodic performance reports
 
 ### Mapping Module (`src/core/mapping/`)
 

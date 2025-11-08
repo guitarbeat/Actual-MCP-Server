@@ -602,36 +602,6 @@ export class Calculator {
 }
 ```
 
-### Performance Monitoring
-
-```typescript
-import { MetricsTracker } from '../../core/performance/metrics-tracker.js';
-
-export async function handler(args: ToolArgs): Promise<CallToolResult> {
-  const metrics = new MetricsTracker('tool-name');
-  
-  try {
-    metrics.start('validation');
-    const input = new InputParser().parse(args);
-    metrics.end('validation');
-    
-    metrics.start('data-fetch');
-    const data = await fetchData(input);
-    metrics.end('data-fetch');
-    
-    metrics.start('processing');
-    const result = processData(data);
-    metrics.end('processing');
-    
-    metrics.logSummary();
-    
-    return success(result);
-  } catch (err) {
-    return errorFromCatch(err);
-  }
-}
-```
-
 ## Anti-Patterns to Avoid
 
 ### ❌ Don't Use `any` Type

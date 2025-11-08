@@ -18,7 +18,6 @@ export * from './types/index.js';
 
 // New barrel exports for DRY improvements
 export * from './cache/index.js';
-export * from './performance/index.js';
 export * from './logging/index.js';
 export * from './utils/index.js';
 export * from './aggregation/index.js';

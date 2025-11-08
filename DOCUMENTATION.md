@@ -19,7 +19,7 @@ This document describes the consolidated documentation structure for the Actual 
 **Contents**:
 - Design principles and patterns
 - API connection architecture
-- Core modules (response, input, formatting, data, cache, performance)
+- Core modules (response, input, formatting, data, cache)
 - Tool architecture and consolidation pattern
 - Type system
 - Error handling
@@ -79,9 +79,8 @@ This document describes the consolidated documentation structure for the Actual 
 - Persistent API connection architecture
 - Caching strategy and configuration
 - Parallel data fetching
-- Performance metrics and monitoring
 - Optimization techniques
-- Benchmarking
+- Troubleshooting guidance without built-in metrics
 
 ### docs/TOOL-USAGE-GUIDE.md
 **Purpose**: Comprehensive tool usage guide for AI agents and developers  
@@ -129,7 +128,7 @@ The following files were removed and their content consolidated:
 - Contributing → CONTRIBUTING.md
 - Architecture → ARCHITECTURE.md
 - Code patterns → docs/PATTERNS.md
-- Performance → docs/PERFORMANCE.md
+- Performance optimization → docs/PERFORMANCE.md
 
 **For AI Agents:**
 - Development rules → AGENTS.md
@@ -145,7 +144,7 @@ When updating documentation:
 2. **Architecture changes** → Update ARCHITECTURE.md
 3. **Contribution process** → Update CONTRIBUTING.md
 4. **New patterns** → Update docs/PATTERNS.md
-5. **Performance features** → Update docs/PERFORMANCE.md
+5. **Performance features** → Update docs/PERFORMANCE.md (persistent connections, caching, parallel fetches)
 6. **Tool consolidation** → Update docs/MIGRATION-GUIDE.md
 7. **Tool workflows** → Update docs/TOOL-USAGE-GUIDE.md
 
