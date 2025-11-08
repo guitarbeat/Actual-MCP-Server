@@ -36,6 +36,16 @@ describe('ScheduleHandler', () => {
       expect(result).toBe(expectedId);
     });
 
+    it('should reject schedule creation when date is missing', async () => {
+      const data = {
+        name: 'Test Schedule',
+        accountId: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
+      };
+
+      await expect(scheduleHandler.create(data)).rejects.toThrow('date field is required for schedule creation');
+      expect(actualApi.createSchedule).not.toHaveBeenCalled();
+    });
+
     it('should surface unsupported feature error when API is unavailable', async () => {
       const data = {
         name: 'Test Schedule',
@@ -102,6 +112,24 @@ describe('ScheduleHandler', () => {
         account: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
         amount: 1000,
         date: '2025-12-01',
+      });
+    });
+
+    it('should update a schedule without a date when none is provided', async () => {
+      const id = 'schedule-1';
+      const data = {
+        name: 'Test Schedule',
+        accountId: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
+        amount: 1000,
+      };
+      vi.mocked(actualApi.updateSchedule).mockResolvedValue(undefined);
+
+      await scheduleHandler.update(id, data);
+
+      expect(actualApi.updateSchedule).toHaveBeenCalledWith(id, {
+        name: 'Test Schedule',
+        account: 'f6a5cc2a-5db0-4439-a738-99a539d5c580',
+        amount: 1000,
       });
     });
   });
