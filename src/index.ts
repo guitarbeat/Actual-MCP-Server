@@ -230,20 +230,9 @@ async function main(): Promise<void> {
 
       console.error('');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      console.error('✗ Failed to initialize Actual Budget API:', errorMessage);
-      if (errorStack) {
-        console.error('Stack trace:', errorStack);
-      }
+      console.error('✗ Failed to initialize Actual Budget API:', error);
       console.error('Server cannot start without Actual Budget connection');
-      // * In stdio mode, don't exit immediately - let the client see the error
-      // * In SSE mode, exit since HTTP server won't work without API connection
-      if (useSse) {
-        process.exit(1);
-      }
-      // In stdio mode, the error is logged and the server will continue
-      // The client will see the error and can handle it appropriately
+      process.exit(1);
     }
   }
 
@@ -545,21 +534,8 @@ main()
   .then(() => {
     // Safe logging is already set up in main() for stdio mode
     // No need to override console methods here
-    // Server will continue running to handle requests
   })
   .catch((error: unknown) => {
-    // * Log error but don't exit immediately in stdio mode
-    // * This allows the MCP client to see the error and handle it gracefully
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Server initialization error:', errorMessage);
-    if (errorStack) {
-      console.error('Stack trace:', errorStack);
-    }
-    // Only exit if not in stdio mode (SSE mode should exit on init failure)
-    if (useSse) {
-      process.exit(1);
-    }
-    // In stdio mode, let the server continue - the error will be visible to the client
-    // and they can decide whether to retry or disconnect
+    console.error('Server error:', error);
+    process.exit(1);
   });
