@@ -5,8 +5,6 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi } from '../actual-api.js';
 import { error, errorFromCatch, MCPResponse } from '../core/response/index.js';
-import { logToolExecution } from '../core/performance/performance-logger.js';
-import { metricsTracker } from '../core/performance/metrics-tracker.js';
 
 import * as balanceHistory from './balance-history/index.js';
 import * as getGroupedCategories from './categories/get-grouped-categories/index.js';
@@ -206,9 +204,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
    * Handler for calling tools
    */
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const startTime = Date.now();
-    let success = true;
-
     try {
       await initActualApi();
       const { name, arguments: args } = request.params;
@@ -217,7 +212,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       const tool = toolRegistry.find((t) => t.schema.name === name);
 
       if (!tool) {
-        success = false;
         return error(
           `Unknown tool '${name}'`,
           'Call list-tools to inspect supported tool names before retrying this request.'
@@ -226,7 +220,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
 
       // Check write permission
       if (tool.requiresWrite && !enableWrite) {
-        success = false;
         return error(
           `Tool '${name}' requires write permission`,
           'Start the server with the --enable-write flag to enable write operations.'
@@ -237,7 +230,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       const result = await tool.handler(args);
       return result;
     } catch (err) {
-      success = false;
       return errorFromCatch(err, {
         fallbackMessage: `Failed to execute tool ${request.params.name}`,
         suggestion:
@@ -246,10 +238,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
         operation: 'tool_execution',
         args: request.params.arguments,
       });
-    } finally {
-      const duration = Date.now() - startTime;
-      metricsTracker.record(request.params.name, duration, success);
-      logToolExecution(request.params.name, duration, success);
     }
   });
 };

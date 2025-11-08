@@ -276,7 +276,6 @@ Place shared functionality in appropriate core modules:
 - **`data/`** - Data fetching with caching
 - **`mapping/`** - Entity mapping and classification
 - **`aggregation/`** - Data aggregation utilities
-- **`performance/`** - Performance monitoring
 - **`cache/`** - Caching service
 - **`types/`** - Type definitions and schemas
 

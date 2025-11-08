@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { setupTools } from './tools/index.js';
-import * as actualApi from './actual-api.js';
 
 // Mock the actual-api module
 vi.mock('./actual-api.js', async () => {
@@ -13,17 +12,6 @@ vi.mock('./actual-api.js', async () => {
     shutdownActualApi: vi.fn().mockResolvedValue(undefined),
   };
 });
-
-// Mock performance tracking
-vi.mock('./core/performance/performance-logger.js', () => ({
-  logToolExecution: vi.fn(),
-}));
-
-vi.mock('./core/performance/metrics-tracker.js', () => ({
-  metricsTracker: {
-    record: vi.fn(),
-  },
-}));
 
 // Mock sample tools with realistic delays
 vi.mock('./tools/get-accounts/index.js', () => ({
