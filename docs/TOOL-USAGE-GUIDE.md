@@ -23,7 +23,7 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 |----------|-------|---------|
 | **Query Tools** | get-accounts, get-transactions, get-grouped-categories, get-payees, get-rules, get-schedules | Retrieve data |
 | **Management Tools** | manage-entity | Create, update, delete all entities (transactions, accounts, categories, payees, rules, schedules) |
-| **Budget Tools** | set-budget, hold-budget-for-next-month, reset-budget-hold, get-budget-month, get-budget-months | Budget operations |
+| **Budget Tools** | set-budget, hold-budget, reset-budget-hold, get-budget-month, get-budget-months | Budget operations |
 | **Analysis Tools** | monthly-summary, spending-by-category, balance-history | Financial insights |
 | **Utility Tools** | merge-payees, get-payee-rules, run-bank-sync, run-import, run-query | Advanced operations |
 
@@ -268,7 +268,7 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 **Goal**: Hold budget for next month or reset holds
 
 **Steps**:
-1. Hold budget: `hold-budget-for-next-month`
+1. Hold budget: `hold-budget`
 2. Or reset hold: `reset-budget-hold`
 3. Verify: `get-budget-month` to check status
 
@@ -276,7 +276,7 @@ This guide provides comprehensive workflow examples, common patterns, troublesho
 ```json
 // Hold budget for next month
 {
-  "tool": "hold-budget-for-next-month",
+  "tool": "hold-budget",
   "args": {
     "month": "2024-01",
     "category": "Emergency Fund",
@@ -692,7 +692,7 @@ These tools manage budget allocations and carryover.
 **Requires**: month (YYYY-MM), category, amount and/or carryover  
 **Note**: Amount in cents, can use category name or ID
 
-#### hold-budget-for-next-month
+#### hold-budget
 **Purpose**: Hold unspent budget for next month  
 **When to use**: Save unspent funds for future use  
 **Requires**: month, category, amount  
