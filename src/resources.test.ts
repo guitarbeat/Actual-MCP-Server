@@ -64,7 +64,9 @@ describe('setupResources', () => {
       resources: Array<{ uri: string; name: string; description?: string }>;
     };
 
-    expect(initActualApi).toHaveBeenCalledTimes(1);
+    // * API is initialized at server startup, not when listing resources
+    // * The ListResourcesRequestSchema handler just returns the resource list directly
+    expect(initActualApi).not.toHaveBeenCalled();
     // Should only return 2 directory resources (no longer fetches accounts/budgets for listing)
     expect(result.resources.length).toBe(2);
     expect(result.resources[0].uri).toBe('actual://accounts');

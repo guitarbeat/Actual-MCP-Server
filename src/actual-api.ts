@@ -140,13 +140,134 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
       throw new Error('No budgets found. Please create a budget in Actual first.');
     }
 
+    // * Log available budgets for debugging
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(`[INIT] Found ${budgets.length} budget(s):`);
+      budgets.forEach((b, i) => {
+        console.error(`  ${i + 1}. Name: "${b.name}", ID: ${b.id}, Sync ID: ${b.cloudFileId || 'N/A'}`);
+      });
+    }
+
     // Use specified budget or the first one
-    const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    const budgetPassword: string | undefined = process.env.ACTUAL_BUDGET_PASSWORD;
-    if (budgetPassword) {
-      await api.downloadBudget(budgetId, { password: budgetPassword });
+    const requestedSyncId = process.env.ACTUAL_BUDGET_SYNC_ID;
+    let budgetId = '';
+    let selectedBudget: BudgetFile | undefined;
+
+    if (requestedSyncId) {
+      // * Try to find budget by sync ID (cloudFileId) first, then by id
+      selectedBudget = budgets.find((b) => b.cloudFileId === requestedSyncId || b.id === requestedSyncId);
+      if (selectedBudget) {
+        budgetId = selectedBudget.cloudFileId || selectedBudget.id || requestedSyncId;
+        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+          console.error(
+            `[INIT] Found budget matching ACTUAL_BUDGET_SYNC_ID "${requestedSyncId}": "${selectedBudget.name}"`
+          );
+        }
+      } else {
+        // * Budget not found, but we'll try using the sync ID directly
+        budgetId = requestedSyncId;
+        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+          console.error(
+            `[INIT] Warning: Budget with sync ID "${requestedSyncId}" not found in list. Will attempt download anyway.`
+          );
+        }
+      }
     } else {
-      await api.downloadBudget(budgetId);
+      // * Use first budget if no sync ID specified
+      selectedBudget = budgets[0];
+      budgetId = selectedBudget.cloudFileId || selectedBudget.id || '';
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        console.error(`[INIT] No ACTUAL_BUDGET_SYNC_ID specified, using first budget: "${selectedBudget.name}"`);
+      }
+    }
+
+    if (!budgetId) {
+      throw new Error('Could not determine budget ID to download.');
+    }
+
+    const budgetPassword: string | undefined = process.env.ACTUAL_BUDGET_PASSWORD;
+
+    // * Log budget download attempt for debugging
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(
+        `[INIT] Attempting to download budget: ${budgetId}${budgetPassword ? ' (with password)' : ' (no password)'}`
+      );
+      if (selectedBudget) {
+        console.error(
+          `[INIT] Budget details: Name="${selectedBudget.name}", ID=${selectedBudget.id}, SyncID=${selectedBudget.cloudFileId || 'N/A'}`
+        );
+      }
+    }
+
+    try {
+      if (budgetPassword) {
+        await api.downloadBudget(budgetId, { password: budgetPassword });
+      } else {
+        await api.downloadBudget(budgetId);
+      }
+    } catch (downloadError) {
+      // * Extract detailed error information for better error messages
+      let detailedErrorInfo = '';
+      if (downloadError && typeof downloadError === 'object') {
+        const errorObj = downloadError as Record<string, unknown>;
+        const errorDetails: string[] = [];
+
+        if (errorObj.message) errorDetails.push(`message: ${errorObj.message}`);
+        if (errorObj.code) errorDetails.push(`code: ${errorObj.code}`);
+        if (errorObj.status) errorDetails.push(`status: ${errorObj.status}`);
+        if (errorObj.statusCode) errorDetails.push(`statusCode: ${errorObj.statusCode}`);
+        if (errorObj.statusText) errorDetails.push(`statusText: ${errorObj.statusText}`);
+        if (errorObj.response) {
+          try {
+            errorDetails.push(`response: ${JSON.stringify(errorObj.response)}`);
+          } catch {
+            errorDetails.push('response: [could not stringify]');
+          }
+        }
+
+        // * Get all property names
+        const allProps = Object.getOwnPropertyNames(downloadError);
+        if (allProps.length > 0) {
+          errorDetails.push(`properties: ${allProps.join(', ')}`);
+        }
+
+        if (errorDetails.length > 0) {
+          detailedErrorInfo = `\nError details: ${errorDetails.join(', ')}`;
+        }
+      }
+
+      // * Log detailed error information before rethrowing
+      console.error('[INIT] Budget download failed:', {
+        budgetId,
+        hasPassword: !!budgetPassword,
+        error: downloadError,
+        errorType: typeof downloadError,
+        errorConstructor: downloadError?.constructor?.name,
+        errorKeys: downloadError && typeof downloadError === 'object' ? Object.keys(downloadError) : [],
+        errorString: String(downloadError),
+        errorJson:
+          downloadError && typeof downloadError === 'object'
+            ? JSON.stringify(downloadError, Object.getOwnPropertyNames(downloadError))
+            : null,
+      });
+
+      // * Create a more informative error
+      const errorMessage =
+        downloadError instanceof Error ? downloadError.message || 'Unknown error' : String(downloadError);
+
+      const enhancedError = new Error(
+        `Failed to download budget "${budgetId}". ${errorMessage}${detailedErrorInfo}\n` +
+          `Budget ID: ${budgetId}\n` +
+          `Password provided: ${budgetPassword ? 'Yes' : 'No'}\n` +
+          `If the budget is encrypted, you may need to set ACTUAL_BUDGET_PASSWORD in your environment.`
+      );
+
+      // * Preserve stack trace
+      if (downloadError instanceof Error && downloadError.stack) {
+        enhancedError.stack = downloadError.stack;
+      }
+
+      throw enhancedError;
     }
 
     // Find the budget name for logging
@@ -171,7 +292,77 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     setupAutoSync();
   } catch (error) {
     console.error('Failed to initialize Actual Budget API:', error);
-    initializationError = error instanceof Error ? error : new Error(String(error));
+
+    // * Log full error details for debugging
+    if (error && typeof error === 'object') {
+      console.error('Error details:', {
+        constructor: error.constructor?.name,
+        keys: Object.keys(error),
+        ownPropertyNames: Object.getOwnPropertyNames(error),
+        stringValue: String(error),
+        jsonAttempt: (() => {
+          try {
+            return JSON.stringify(error, Object.getOwnPropertyNames(error));
+          } catch {
+            return 'Could not stringify error';
+          }
+        })(),
+      });
+    }
+
+    // * Extract detailed error information for better error messages
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message || 'Unknown error';
+      // * Check for additional properties that might contain error info
+      if (!errorMessage || errorMessage === 'Unknown error') {
+        const errorAny = error as unknown as Record<string, unknown>;
+        if (errorAny.code) errorMessage = `Error code: ${errorAny.code}`;
+        else if (errorAny.status) errorMessage = `HTTP status: ${errorAny.status}`;
+        else if (errorAny.statusCode) errorMessage = `HTTP status code: ${errorAny.statusCode}`;
+        else if (errorAny.statusText) errorMessage = `HTTP status text: ${errorAny.statusText}`;
+        else if (errorAny.response) {
+          try {
+            errorMessage = `API response: ${JSON.stringify(errorAny.response)}`;
+          } catch {
+            errorMessage = 'API response error (could not stringify)';
+          }
+        }
+      }
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error !== null && error !== undefined) {
+      // * Try to extract additional error information
+      const errorObj = error as Record<string, unknown>;
+      if (errorObj.message) {
+        errorMessage = String(errorObj.message);
+      } else if (errorObj.error) {
+        errorMessage = String(errorObj.error);
+      } else if (errorObj.code) {
+        errorMessage = `Error code: ${errorObj.code}`;
+      } else if (errorObj.status) {
+        errorMessage = `HTTP status: ${errorObj.status}`;
+      } else if (errorObj.statusCode) {
+        errorMessage = `HTTP status code: ${errorObj.statusCode}`;
+      } else if (errorObj.statusText) {
+        errorMessage = `HTTP status text: ${errorObj.statusText}`;
+      } else {
+        try {
+          errorMessage = JSON.stringify(error, Object.getOwnPropertyNames(error));
+        } catch {
+          errorMessage = String(error);
+        }
+      }
+    }
+
+    // * Create error with detailed message
+    initializationError = error instanceof Error ? new Error(errorMessage) : new Error(errorMessage);
+
+    // * Preserve original error properties if available
+    if (error instanceof Error && error.stack) {
+      initializationError.stack = error.stack;
+    }
+
     throw initializationError;
   } finally {
     initializing = false;
