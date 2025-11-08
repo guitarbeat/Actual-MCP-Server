@@ -218,19 +218,7 @@ The server provides **17 core tools** optimized for conversational budget manage
 
 #### Optional Tools
 
-Advanced users can enable additional tools via environment variables:
-
-**Budget File Management** (set `ENABLE_BUDGET_MANAGEMENT=true`):
-- `get-budgets`, `load-budget`, `download-budget`, `sync`
-- `get-budget-months`, `get-budget-month`
-
-**Advanced Account Operations** (set `ENABLE_ADVANCED_ACCOUNT_OPS=true`):
-- `create-account`, `close-account`, `reopen-account`, `delete-account`
-
-**Utility Tools** (set `ENABLE_UTILITY_TOOLS=true`):
-- `get-id-by-name`, `run-query`, `get-server-version`
-
-> **Note:** These tools are disabled by default to reduce context window consumption. Most users won't need them since the server auto-loads your budget on startup.
+All tools listed above are available by default. Previous versions of the server used environment variables such as `ENABLE_BUDGET_MANAGEMENT` and `ENABLE_ADVANCED_ACCOUNT_OPS` to unlock additional functionality, but those feature flags are no longer required. The documentation now keeps the "Optional" label only to highlight groups of tools that many users may not need during a typical budgeting session.
 
 ### Prompts
 
