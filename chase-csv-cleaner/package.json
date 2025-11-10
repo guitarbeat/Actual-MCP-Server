@@ -1,0 +1,32 @@
+{
+  "name": "chase-csv-cleaner",
+  "version": "1.0.0",
+  "description": "Transform Chase CSV exports for Actual Budget import",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "csv-import": "tsx src/main.ts",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  },
+  "keywords": [
+    "chase",
+    "csv",
+    "actual-budget",
+    "finance",
+    "banking"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "csv-parse": "^5.5.6",
+    "csv-stringify": "^6.4.6",
+    "date-fns": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4"
+  }
+}
