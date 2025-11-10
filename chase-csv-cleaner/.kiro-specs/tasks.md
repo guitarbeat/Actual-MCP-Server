@@ -1,0 +1,213 @@
+# Implementation Plan
+
+- [x] 1. Set up project structure and dependencies
+  - Create TypeScript project with proper configuration
+  - Install required dependencies: csv-parse, csv-stringify, date-fns
+  - Set up environment configuration for LLM API access
+  - _Requirements: 1.1, 4.1, 4.2, 4.3, 4.4, 4.5_
+
+- [x] 2. Implement CSV Parser
+  - [x] 2.1 Create ChaseTransaction interface and types
+    - Define TypeScript interfaces for Chase CSV structure
+    - Create type definitions for transaction details, types, and fields
+    - _Requirements: 1.1, 1.2_
+  
+  - [x] 2.2 Implement CSV file reading and parsing
+    - Write function to read Chase CSV file
+    - Parse CSV rows into ChaseTransaction objects
+    - Validate CSV structure and required columns
+    - _Requirements: 1.1, 4.1, 4.2_
+  
+  - [x] 2.3 Add date parsing and sorting
+    - Parse MM/DD/YYYY dates from Chase format
+    - Sort transactions chronologically (oldest first)
+    - Handle invalid date formats gracefully
+    - _Requirements: 1.3, 7.2_
+  
+  - [x] 2.4 Implement error handling for malformed CSV
+    - Handle missing columns
+    - Skip invalid rows with logging
+    - Validate amount and balance fields
+    - _Requirements: 1.1, 4.2_
+
+- [x] 3. Implement Payee Cleaner
+  - [x] 3.1 Create payee extraction logic
+    - Extract primary payee name from description field
+    - Remove excessive whitespace and normalize formatting
+    - Handle empty or very long payee names
+    - _Requirements: 2.1, 2.2, 2.3_
+  
+  - [x] 3.2 Implement reference ID extraction
+    - Identify and extract PPD ID, WEB ID, CTX ID
+    - Move reference IDs to notes field
+    - Remove payment processing keywords (PAYMENT, AUTOPAY, etc.)
+    - _Requirements: 2.4, 2.5, 2.3.3_
+  
+  - [x] 3.3 Add special case handling for Zelle and transfers
+    - Extract sender/recipient names from Zelle transactions
+    - Format account transfer descriptions
+    - Remove Zelle reference codes while preserving names
+    - _Requirements: 2.1.1, 2.1.2, 2.1.3, 2.1.4_
+  
+  - [x] 3.4 Handle recurring payment merchants
+    - Clean up Robinhood Card, APPLECARD GSBANK, GRANDE COMMUNICA, BILTPYMTS names
+    - Extract merchant name only, remove payment details
+    - Preserve reference numbers in notes
+    - _Requirements: 2.2.1, 2.2.2, 2.2.3_
+
+- [x] 4. Implement LLM Categorization Engine
+  - [x] 4.1 Set up LLM client and API integration
+    - Configure OpenAI or similar LLM API client
+    - Implement API key management and authentication
+    - Add retry logic with exponential backoff
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  
+  - [x] 4.2 Create category taxonomy and validation
+    - Define complete category taxonomy (Income, Housing, Utilities, etc.)
+    - Implement category validation function
+    - Create fallback to "Uncategorized" for invalid responses
+    - _Requirements: 5.5_
+  
+  - [x] 4.3 Implement pattern-based pre-categorization
+    - Add rule-based categorization for known payees
+    - Implement BILTPYMTS amount-based logic (>= $1000 = Rent, < $1000 = Utilities)
+    - Handle account transfers, fees, and refunds
+    - _Requirements: 5.1.1, 5.1.2, 5.1.3, 5.1.4, 5.2.1, 5.2.2, 5.2.6, 5.2.7_
+  
+  - [x] 4.4 Build LLM prompt and categorization function
+    - Create prompt template with transaction details
+    - Include special rules for BILTPYMTS and other multi-purpose payees
+    - Parse LLM response and extract category
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  
+  - [x] 4.5 Implement caching for consistent categorization
+    - Cache category suggestions for identical payees
+    - Ensure consistent categorization across similar transactions
+    - _Requirements: 5.4_
+  
+  - [x] 4.6 Add batch processing for LLM calls
+    - Process transactions in batches (10-20 at a time)
+    - Implement rate limiting and delays
+    - Add progress reporting for long operations
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+
+- [x] 5. Implement Balance Calculator
+  - [x] 5.1 Create starting balance calculation logic
+    - Find earliest transaction by date
+    - Calculate starting balance: earliest_balance - earliest_amount
+    - Handle edge cases (single transaction, empty list)
+    - _Requirements: 6.1_
+  
+  - [x] 5.2 Generate starting balance entry
+    - Create special transaction entry for starting balance
+    - Set date to one day before earliest transaction
+    - Format as "Starting Balance" with appropriate category
+    - _Requirements: 6.2, 6.3_
+
+- [x] 6. Implement Transaction Processor
+  - [x] 6.1 Create ProcessedTransaction interface
+    - Define output transaction structure
+    - Include date, payee, category, notes, amount fields
+    - _Requirements: 1.1, 7.1_
+  
+  - [x] 6.2 Build transaction processing orchestration
+    - Convert date format from MM/DD/YYYY to YYYY-MM-DD
+    - Call Payee Cleaner for each transaction
+    - Call LLM Categorization Engine for category
+    - Combine original description with notes
+    - _Requirements: 1.3, 2.1, 2.2, 2.3, 5.1, 5.2_
+  
+  - [x] 6.3 Implement main processing loop
+    - Process all transactions sequentially
+    - Handle errors gracefully without stopping entire process
+    - Log warnings for skipped transactions
+    - _Requirements: 1.1, 1.2, 1.5_
+
+- [x] 7. Implement CSV Formatter
+  - [x] 7.1 Create CSV output formatting function
+    - Generate header row: Date,Payee,Category,Notes,Amount
+    - Format starting balance as first row
+    - Add all processed transactions in chronological order
+    - _Requirements: 7.1, 7.2, 7.3_
+  
+  - [x] 7.2 Handle CSV field quoting and escaping
+    - Properly quote fields containing commas
+    - Escape special characters
+    - Handle newlines in description fields
+    - _Requirements: 4.3, 4.4, 4.5, 7.5_
+  
+  - [x] 7.3 Write output file with proper encoding
+    - Write CSV to file with UTF-8 encoding
+    - Generate descriptive filename (ChaseChecking_Cleaned_YYYY-MM-DD.csv)
+    - Handle file write errors
+    - _Requirements: 7.4_
+
+- [x] 8. Create main application entry point
+  - [x] 8.1 Build CLI interface
+    - Accept input file path as argument
+    - Accept output file path (optional, with default)
+    - Add configuration options (LLM model, API key, etc.)
+    - _Requirements: 1.1, 7.4_
+  
+  - [x] 8.2 Implement end-to-end processing flow
+    - Parse Chase CSV
+    - Calculate starting balance
+    - Process all transactions (clean payees, categorize)
+    - Format and write cleaned CSV
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 6.1, 6.2, 6.3, 6.4, 7.1, 7.2, 7.3, 7.4, 7.5_
+  
+  - [x] 8.3 Add progress reporting and logging
+    - Display progress during processing
+    - Log warnings and errors
+    - Show summary statistics (transactions processed, categories assigned)
+    - _Requirements: 1.1, 1.2_
+
+- [-] 9. Add error handling and validation
+  - [x] 9.1 Implement comprehensive error handling
+    - Handle file not found errors
+    - Handle LLM API errors with fallback
+    - Handle CSV parsing errors
+    - Validate output before writing
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+  
+  - [x] 9.2 Add data validation
+    - Validate transaction amounts
+    - Check for required fields
+    - Warn on suspicious data (negative balances, etc.)
+    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+
+- [ ]* 10. Testing and validation
+  - [ ]* 10.1 Write unit tests for core functions
+    - Test CSV parser with valid and invalid data
+    - Test payee cleaner with various description formats
+    - Test balance calculator with different scenarios
+    - Test CSV formatter output
+    - _Requirements: All_
+  
+  - [ ]* 10.2 Test LLM categorization
+    - Test with sample transactions
+    - Verify BILTPYMTS amount-based logic
+    - Check category consistency
+    - Test fallback behavior
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  
+  - [ ]* 10.3 Perform end-to-end testing
+    - Process complete ChaseChecking.CSV file
+    - Verify output format
+    - Import into Actual Budget and validate
+    - Check for data loss or corruption
+    - _Requirements: All_
+
+- [ ]* 11. Documentation
+  - [ ]* 11.1 Write README with usage instructions
+    - Document installation steps
+    - Provide usage examples
+    - List configuration options
+    - Include troubleshooting guide
+    - _Requirements: All_
+  
+  - [ ]* 11.2 Add code documentation
+    - Document all public functions and interfaces
+    - Add inline comments for complex logic
+    - Document category taxonomy
+    - _Requirements: All_
