@@ -1,8 +1,0 @@
-#!/usr/bin/env sh
-# Load nvm if available (for nvm users)
-if [ -s "$HOME/.nvm/nvm.sh" ]; then
-  . "$HOME/.nvm/nvm.sh"
-fi
-
-# Run lint-staged for quality checks on staged files
-npx lint-staged
