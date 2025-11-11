@@ -10,29 +10,22 @@ import type { Payee } from '../../../types.js';
 export const schema = {
   name: 'get-payees',
   description:
-    'Retrieve payees from Actual Budget. If payeeId is provided, returns rules for that payee. If omitted, returns all payees.\n\n' +
-    'PARAMETERS:\n' +
-    '- payeeId: (Optional) Payee UUID. If provided, returns auto-categorization rules for that payee.\n' +
-    '- search: (Optional) Filter payees by name (case-insensitive partial match).\n' +
-    '- limit: (Optional) Maximum number of payees to return.\n\n' +
+    'List all merchants and payees, or search for specific ones. Use this when you need to find payee names or IDs.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "what payees do I have?"\n' +
+    '- User wants to "list all merchants"\n' +
+    '- User asks "find payees with Amazon in the name"\n' +
+    '- You need to find a payee ID for merge-payees or other tools\n' +
+    '- User wants to see "auto-categorization rules for [payee]"\n\n' +
+    'OPTIONAL:\n' +
+    '- search: Partial payee name to search (e.g., "Amazon")\n' +
+    '- limit: Max results to return\n' +
+    '- payeeId: Get auto-categorization rules for specific payee\n\n' +
     'EXAMPLES:\n' +
-    '- Get all payees: {}\n' +
-    '- Search payees: {"search": "Amazon", "limit": 10}\n' +
-    '- Get rules for payee: {"payeeId": "abc123-def456"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- List all payees to find payee IDs\n' +
-    '- Search for specific payees by name\n' +
-    '- View auto-categorization rules for a payee\n' +
-    '- Find payee IDs before merging or managing payees\n' +
-    '- Understand payee structure and organization\n\n' +
-    'SEE ALSO:\n' +
-    '- Use with merge-payees to combine duplicate payees\n' +
-    '- Use with create-payee, update-payee, delete-payee to manage payees\n' +
-    '- Use with get-rules to see all auto-categorization rules\n' +
-    '- Use with get-transactions to filter transactions by payee\n\n' +
-    'RETURNS:\n' +
-    '- If payeeId omitted: Array of payees with id, name, and transfer account\n' +
-    '- If payeeId provided: Array of rules for that payee',
+    '- "Show all payees": {}\n' +
+    '- "Find Amazon payees": {"search": "Amazon", "limit": 10}\n' +
+    '- "Get rules for payee": {"payeeId": "abc-123"}\n\n' +
+    'RETURNS: Payee IDs, names, and transfer account info (or rules if payeeId provided)',
   inputSchema: {
     type: 'object',
     properties: {

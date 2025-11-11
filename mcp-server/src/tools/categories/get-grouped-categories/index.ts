@@ -10,23 +10,16 @@ import { GetGroupedCategoriesArgsSchema, type GetGroupedCategoriesArgs } from '.
 export const schema = {
   name: 'get-grouped-categories',
   description:
-    'Retrieve all category groups with their categories.\n\n' +
+    'List all budget categories organized by groups. Use this when the user asks about categories or you need to find a category name.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "what categories do I have?"\n' +
+    '- User wants to see "all categories" or "category list"\n' +
+    '- You need to find the correct category name for set-budget or other tools\n' +
+    '- User asks about "category structure" or "category groups"\n' +
+    '- Before creating a new category, to see existing ones\n\n' +
     'EXAMPLE:\n' +
-    '- Get all: {}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- List all available categories and category groups\n' +
-    '- Find category IDs for setting budgets or filtering transactions\n' +
-    '- Find category group IDs for creating new categories\n' +
-    '- Understand category structure and organization\n' +
-    '- Get category metadata before using in other operations\n\n' +
-    'SEE ALSO:\n' +
-    '- Use with set-budget to set budget amounts for categories\n' +
-    '- Use with create-category, update-category, delete-category to manage categories\n' +
-    '- Use with create-category-group, update-category-group, delete-category-group to manage groups\n' +
-    '- Use with get-transactions or spending-by-category to filter by category\n\n' +
-    'RETURNS:\n' +
-    '- Category group ID, name, type\n' +
-    '- Categories within each group with IDs and names',
+    '- "Show all categories": {}\n\n' +
+    'RETURNS: Category groups with nested categories (IDs and names)',
   inputSchema: {
     type: 'object',
     description:

@@ -19,31 +19,24 @@ const UpdateAccountSchema = z.object({
 export const schema = {
   name: 'update-account',
   description:
-    'Update an existing account in Actual Budget.\n\n' +
+    'Modify account properties like name, type, or budget status. Use this when the user wants to change account details.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "rename my checking account"\n' +
+    '- User wants to "change account type"\n' +
+    '- User says "move account off-budget" or "make it on-budget"\n' +
+    '- User needs to "update account information"\n\n' +
     'REQUIRED:\n' +
-    '- id: Account ID (UUID)\n\n' +
-    'OPTIONAL (at least one required):\n' +
+    '- id: Account ID (get from get-accounts first)\n' +
+    '- At least one field to update\n\n' +
+    'OPTIONAL:\n' +
     '- name: New account name\n' +
-    '- type: New account type\n' +
-    '- offbudget: Whether account is off-budget\n\n' +
+    '- type: checking, savings, credit, investment, mortgage, debt, or other\n' +
+    '- offbudget: true/false\n\n' +
     'EXAMPLES:\n' +
-    '- Rename account: {"id": "account-id", "name": "New Account Name"}\n' +
-    '- Change type: {"id": "account-id", "type": "savings"}\n' +
-    '- Move to off-budget: {"id": "account-id", "offbudget": true}\n' +
-    '- Multiple fields: {"id": "account-id", "name": "Updated Name", "offbudget": false}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Rename accounts\n' +
-    '- Change account types\n' +
-    '- Move accounts between on-budget and off-budget\n' +
-    '- Correct account information\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to find account IDs\n' +
-    '- Use create-account to add new accounts\n' +
-    '- Use delete-account to remove accounts\n' +
-    '- Use close-account to close accounts\n\n' +
-    'NOTES:\n' +
-    '- Only provided fields will be updated\n' +
-    '- Account type must be one of: checking, savings, credit, investment, mortgage, debt, other',
+    '- "Rename account": {"id": "abc-123", "name": "New Name"}\n' +
+    '- "Change to savings": {"id": "abc-123", "type": "savings"}\n' +
+    '- "Move off-budget": {"id": "abc-123", "offbudget": true}\n\n' +
+    'NOTES: Use get-accounts to find the account ID first',
   inputSchema: zodToJsonSchema(UpdateAccountSchema) as ToolInput,
 };
 

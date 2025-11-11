@@ -14,38 +14,28 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 export const schema = {
   name: 'get-transactions',
   description:
-    'Retrieve transactions from Actual Budget with flexible filtering options.\n\n' +
+    'Query and filter transaction history from a specific account. Use this when the user asks to see, find, list, or show transactions.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "show me transactions from my checking account"\n' +
+    '- User wants to find specific purchases or payments\n' +
+    '- User asks about spending at a specific merchant (use payeeName filter)\n' +
+    '- User wants to see recent activity in an account\n' +
+    '- User asks about transactions in a category (use categoryName filter)\n' +
+    '- User wants to find large expenses or income deposits (use minAmount/maxAmount)\n\n' +
     'REQUIRED:\n' +
-    '- accountId: Account name or ID (supports partial matching, e.g., "Chase" matches "Chase Checking")\n\n' +
+    '- accountId: Account name (e.g., "Checking") or partial match (e.g., "Chase" matches "Chase Checking")\n\n' +
     'OPTIONAL FILTERS:\n' +
-    '- startDate/endDate: Date range in YYYY-MM-DD format (defaults to last 3 months if omitted)\n' +
-    '- minAmount/maxAmount: Amount range in dollars (negative for expenses, positive for income)\n' +
-    '- categoryName/payeeName: Text filter with partial, case-insensitive matching\n' +
-    '- limit: Maximum number of results to return\n\n' +
+    '- startDate/endDate: YYYY-MM-DD format (defaults to last 3 months)\n' +
+    '- minAmount/maxAmount: Dollar amounts (negative = expenses, positive = income)\n' +
+    '- categoryName: Partial category name (e.g., "groc" matches "Groceries")\n' +
+    '- payeeName: Partial merchant name (e.g., "amazon" matches "Amazon.com")\n' +
+    '- limit: Max results to return\n\n' +
     'EXAMPLES:\n' +
-    '- Recent transactions: {"accountId": "Checking", "startDate": "2024-01-01", "endDate": "2024-01-31"}\n' +
-    '- Large expenses: {"accountId": "Credit Card", "minAmount": 100}\n' +
-    '- By payee: {"accountId": "Checking", "payeeName": "Amazon"}\n' +
-    '- By category: {"accountId": "Checking", "categoryName": "Groceries"}\n' +
-    '- Last 10 transactions: {"accountId": "Checking", "limit": 10}\n' +
-    '- Income only: {"accountId": "Checking", "minAmount": 0.01}\n' +
-    '- Expenses over $50: {"accountId": "Checking", "maxAmount": -50}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- View recent transactions for an account\n' +
-    '- Find specific transactions by payee or category name\n' +
-    '- Filter transactions by amount range\n' +
-    '- Get transaction details for reconciliation\n' +
-    '- Search for transactions matching specific criteria\n' +
-    '- Find large purchases or income deposits\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to find account names/IDs before filtering transactions\n' +
-    '- Use spending-by-category for spending analysis by category groups\n' +
-    '- Use monthly-summary for high-level monthly financial overview\n\n' +
-    'NOTES:\n' +
-    '- Filter amounts in dollars, returned amounts in cents\n' +
-    '- Defaults to last 3 months if no date range specified\n' +
-    '- Account names support partial matching (case-insensitive)\n' +
-    '- Category and payee filters use partial, case-insensitive matching',
+    '- "Show recent checking transactions": {"accountId": "Checking"}\n' +
+    '- "Find Amazon purchases": {"accountId": "Credit Card", "payeeName": "Amazon"}\n' +
+    '- "Show grocery spending": {"accountId": "Checking", "categoryName": "Groceries"}\n' +
+    '- "Find expenses over $100": {"accountId": "Checking", "maxAmount": -100}\n' +
+    '- "Last 10 transactions": {"accountId": "Checking", "limit": 10}',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 

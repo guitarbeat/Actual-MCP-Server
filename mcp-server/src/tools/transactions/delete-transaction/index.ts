@@ -16,22 +16,20 @@ const DeleteTransactionSchema = z.object({
 export const schema = {
   name: 'delete-transaction',
   description:
-    'Delete a transaction from Actual Budget.\n\n' +
+    'Remove a transaction permanently. Use this when the user wants to delete a duplicate or incorrect transaction.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "delete that transaction"\n' +
+    '- User wants to "remove the duplicate"\n' +
+    '- User says "that transaction was a mistake"\n' +
+    '- User wants to "get rid of" a transaction\n' +
+    '- User needs to clean up incorrect entries\n\n' +
     'REQUIRED:\n' +
-    '- id: Transaction ID (UUID)\n\n' +
+    '- id: Transaction ID (get from get-transactions first)\n\n' +
     'EXAMPLE:\n' +
-    '{"id": "transaction-id"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Remove duplicate transactions\n' +
-    '- Delete incorrect transactions\n' +
-    '- Clean up test transactions\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-transactions to find transaction IDs\n' +
-    '- Use create-transaction to add new transactions\n' +
-    '- Use update-transaction to modify transactions\n\n' +
+    '- "Delete transaction": {"id": "abc-123"}\n\n' +
     'NOTES:\n' +
-    '- ⚠️ WARNING: Deletion is permanent and cannot be undone\n' +
-    '- Use get-transactions to find transaction IDs',
+    '- ⚠️ PERMANENT: Cannot be undone\n' +
+    '- Use get-transactions to find the transaction ID first',
   inputSchema: zodToJsonSchema(DeleteTransactionSchema) as ToolInput,
 };
 

@@ -21,28 +21,22 @@ const GetAccountBalanceSchema = z.object({
 export const schema = {
   name: 'get-account-balance',
   description:
-    'Get the current balance of an account in Actual Budget.\n\n' +
+    'Check the current or historical balance of a specific account. Use this when the user asks about a single account balance.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "what\'s my checking balance?"\n' +
+    '- User wants to know "how much is in [account]?"\n' +
+    '- User asks "what was my balance on [date]?"\n' +
+    '- User needs a specific account balance (not all accounts)\n\n' +
     'REQUIRED:\n' +
-    '- id: Account name or ID (supports partial matching, e.g., "Chase" matches "Chase Checking")\n\n' +
+    '- id: Account name (e.g., "Checking") or partial match\n\n' +
     'OPTIONAL:\n' +
-    '- date: Date to query balance at (YYYY-MM-DD format). If omitted, returns current balance.\n\n' +
+    '- date: YYYY-MM-DD format for historical balance (omit for current)\n\n' +
     'EXAMPLES:\n' +
-    '- Current balance: {"id": "Chase Checking"}\n' +
-    '- Balance at date: {"id": "d8cf12e1-f551-4468-982f-72908d132a10", "date": "2024-12-31"}\n' +
-    '- Using account name: {"id": "🏦 Chase Checking"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Check current account balance\n' +
-    '- Query historical balance at specific date\n' +
-    '- Verify account balances\n' +
-    '- Get balance for reconciliation\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to find account names/IDs and see all balances\n' +
-    '- Use balance-history to see balance changes over time\n' +
-    '- Use get-transactions to see transactions affecting balance\n\n' +
+    '- "Current balance": {"id": "Checking"}\n' +
+    '- "Balance on Dec 31": {"id": "Checking", "date": "2024-12-31"}\n\n' +
     'NOTES:\n' +
-    '- Balance is returned in cents\n' +
-    '- Date format: YYYY-MM-DD (e.g., "2024-12-31")\n' +
-    '- Supports name resolution for account (partial matching)',
+    '- For all account balances, use get-accounts instead\n' +
+    '- Supports partial name matching',
   inputSchema: zodToJsonSchema(GetAccountBalanceSchema) as ToolInput,
 };
 

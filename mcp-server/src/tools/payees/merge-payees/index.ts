@@ -8,24 +8,22 @@ import { mergePayees } from '../../../actual-api.js';
 export const schema = {
   name: 'merge-payees',
   description:
-    'Merge multiple payees into a single target payee. Source payees are deleted and their transactions reassigned.\n\n' +
+    'Combine duplicate payees into one. Use this when the user wants to clean up duplicate merchant names.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "merge Amazon and Amazon.com"\n' +
+    '- User wants to "combine duplicate payees"\n' +
+    '- User says "consolidate [payee variations]"\n' +
+    '- User wants to "clean up payee list"\n' +
+    '- User needs to standardize merchant names\n\n' +
     'REQUIRED:\n' +
-    '- targetPayeeId: Payee ID to keep\n' +
-    '- sourcePayeeIds: Array of payee IDs to merge and delete\n\n' +
+    '- targetPayeeId: Payee ID to keep (get from get-payees)\n' +
+    '- sourcePayeeIds: Array of payee IDs to merge into target (will be deleted)\n\n' +
     'EXAMPLE:\n' +
-    '{"targetPayeeId": "abc123", "sourcePayeeIds": ["def456", "ghi789"]}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Consolidate duplicate payees (e.g., "Amazon" and "Amazon.com")\n' +
-    '- Clean up payee list by merging variations\n' +
-    '- Standardize payee names across transactions\n' +
-    '- Reduce payee clutter in reports\n' +
-    '- Merge payees after correcting spelling or formatting\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-payees to find payee IDs before merging\n' +
-    '- Use get-transactions to see transactions affected by merge\n\n' +
+    '- "Merge duplicates": {"targetPayeeId": "abc-123", "sourcePayeeIds": ["def-456", "ghi-789"]}\n\n' +
     'NOTES:\n' +
-    '- WARNING: Source payees are permanently deleted\n' +
-    '- Use get-payees to find payee IDs',
+    '- ⚠️ Source payees are permanently deleted\n' +
+    '- All transactions from source payees move to target\n' +
+    '- Use get-payees first to find payee IDs',
   inputSchema: {
     type: 'object',
     properties: {

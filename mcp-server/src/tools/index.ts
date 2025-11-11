@@ -81,7 +81,7 @@ export interface ToolDefinition {
 /**
  * Tool category for feature flag filtering
  */
-type ToolCategory = 'core';
+type ToolCategory = 'core' | 'nini';
 
 /**
  * Extended tool definition with category for feature flag filtering
@@ -128,11 +128,11 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: deleteTransaction.schema, handler: deleteTransaction.handler, requiresWrite: true, category: 'core' },
 
   // Account CRUD tools
-  { schema: createAccount.schema, handler: createAccount.handler, requiresWrite: true, category: 'core' },
+  { schema: createAccount.schema, handler: createAccount.handler, requiresWrite: true, category: 'nini' },
   { schema: updateAccount.schema, handler: updateAccount.handler, requiresWrite: true, category: 'core' },
-  { schema: deleteAccount.schema, handler: deleteAccount.handler, requiresWrite: true, category: 'core' },
-  { schema: closeAccount.schema, handler: closeAccount.handler, requiresWrite: true, category: 'core' },
-  { schema: reopenAccount.schema, handler: reopenAccount.handler, requiresWrite: true, category: 'core' },
+  { schema: deleteAccount.schema, handler: deleteAccount.handler, requiresWrite: true, category: 'nini' },
+  { schema: closeAccount.schema, handler: closeAccount.handler, requiresWrite: true, category: 'nini' },
+  { schema: reopenAccount.schema, handler: reopenAccount.handler, requiresWrite: true, category: 'nini' },
   { schema: getAccountBalance.schema, handler: getAccountBalance.handler, requiresWrite: false, category: 'core' },
 
   // Category CRUD tools
@@ -155,30 +155,34 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: updateRule.schema, handler: updateRule.handler, requiresWrite: true, category: 'core' },
   { schema: deleteRule.schema, handler: deleteRule.handler, requiresWrite: true, category: 'core' },
 
-  // Budget tools (now core)
+  // Budget tools
   { schema: getBudget.schema, handler: getBudget.handler, requiresWrite: false, category: 'core' },
-  { schema: holdBudget.schema, handler: holdBudget.handler, requiresWrite: true, category: 'core' },
-  { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true, category: 'core' },
+  { schema: holdBudget.schema, handler: holdBudget.handler, requiresWrite: true, category: 'nini' },
+  { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true, category: 'nini' },
 
-  // Budget file management
-  { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false, category: 'core' },
-  { schema: switchBudget.schema, handler: switchBudget.handler, requiresWrite: true, category: 'core' },
+  // Budget file management (nini-only features for advanced users)
+  { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false, category: 'nini' },
+  { schema: switchBudget.schema, handler: switchBudget.handler, requiresWrite: true, category: 'nini' },
 ];
 
 /**
  * Get available tools based on write permission and feature flags
  * @param enableWrite - Whether write operations are enabled
+ * @param enableNini - Whether nini (advanced) features are enabled
  * @returns Array of tool definitions available for the current permission level and enabled features
  */
-export function getAvailableTools(enableWrite: boolean): ToolDefinition[] {
-  // Filter tools based on write permission only
+export function getAvailableTools(enableWrite: boolean, enableNini: boolean): ToolDefinition[] {
   return toolRegistry.filter((tool) => {
     // Filter by write permission
     if (tool.requiresWrite && !enableWrite) {
       return false;
     }
 
-    // All tools are core now
+    // Filter by nini category
+    if (tool.category === 'nini' && !enableNini) {
+      return false;
+    }
+
     return true;
   });
 }
@@ -187,9 +191,10 @@ export function getAvailableTools(enableWrite: boolean): ToolDefinition[] {
  * Setup MCP tool handlers on the server
  * @param server - The MCP server instance
  * @param enableWrite - Whether write operations are enabled
+ * @param enableNini - Whether nini (advanced) features are enabled
  */
-export const setupTools = (server: Server, enableWrite: boolean): void => {
-  const availableTools = getAvailableTools(enableWrite);
+export const setupTools = (server: Server, enableWrite: boolean, enableNini: boolean = false): void => {
+  const availableTools = getAvailableTools(enableWrite, enableNini);
 
   /**
    * Handler for listing available tools

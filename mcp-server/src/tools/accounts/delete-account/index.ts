@@ -15,23 +15,20 @@ const DeleteAccountSchema = z.object({
 export const schema = {
   name: 'delete-account',
   description:
-    'Delete an account from Actual Budget.\n\n' +
+    'Permanently remove an account. Use this when the user wants to delete a test or duplicate account.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "delete that account"\n' +
+    '- User wants to "remove test account"\n' +
+    '- User needs to "clean up duplicate accounts"\n' +
+    '- User says "get rid of [account]"\n\n' +
     'REQUIRED:\n' +
-    '- id: Account ID (UUID)\n\n' +
+    '- id: Account ID (get from get-accounts first)\n\n' +
     'EXAMPLE:\n' +
-    '{"id": "account-id"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Remove test accounts\n' +
-    '- Delete duplicate accounts\n' +
-    '- Clean up unused accounts\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to find account IDs\n' +
-    '- Use close-account to close accounts (keeps history)\n' +
-    '- Use create-account to add new accounts\n\n' +
+    '- "Delete account": {"id": "abc-123"}\n\n' +
     'NOTES:\n' +
-    '- ⚠️ WARNING: Deletion is permanent and cannot be undone\n' +
-    '- Consider using close-account instead if you want to keep transaction history\n' +
-    '- Use get-accounts to find account IDs',
+    '- ⚠️ PERMANENT: Cannot be undone\n' +
+    '- Consider close-account instead to keep transaction history\n' +
+    '- Use get-accounts to find the account ID first',
   inputSchema: zodToJsonSchema(DeleteAccountSchema) as ToolInput,
 };
 

@@ -10,28 +10,22 @@ import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/ru
 export const schema = {
   name: 'get-rules',
   description:
-    'Retrieve all auto-categorization rules with optional filtering.\n\n' +
-    'OPTIONAL FILTERS:\n' +
-    '- payeeId: Filter rules that match a specific payee\n' +
-    '- categoryId: Filter rules that match a specific category\n' +
-    '- limit: Maximum number of rules to return\n\n' +
+    'List auto-categorization rules that automatically assign categories to transactions. Use this when the user asks about rules or automatic categorization.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "what rules do I have?"\n' +
+    '- User wants to see "auto-categorization rules"\n' +
+    '- User asks "how are transactions automatically categorized?"\n' +
+    '- User wants to find "rules for [payee/category]"\n' +
+    '- User needs to understand why transactions are auto-categorized\n\n' +
+    'OPTIONAL:\n' +
+    '- payeeId: Filter to rules for specific payee\n' +
+    '- categoryId: Filter to rules for specific category\n' +
+    '- limit: Max results to return\n\n' +
     'EXAMPLES:\n' +
-    '- Get all: {}\n' +
-    '- Filter by payee: {"payeeId": "abc123", "limit": 10}\n' +
-    '- Filter by category: {"categoryId": "def456"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- View all auto-categorization rules\n' +
-    '- Find rules that apply to specific payees\n' +
-    '- Find rules that categorize to specific categories\n' +
-    '- Understand how transactions are automatically categorized\n' +
-    '- Review rule conditions and actions\n\n' +
-    'SEE ALSO:\n' +
-    '- Use with create-rule, update-rule, delete-rule to manage rules\n' +
-    '- Use with get-payees to find payee IDs for filtering\n' +
-    '- Use with get-grouped-categories to find category IDs for filtering\n\n' +
-    'RETURNS:\n' +
-    '- Rule ID, conditions, actions, stage\n' +
-    '- Rules automatically categorize transactions',
+    '- "Show all rules": {}\n' +
+    '- "Rules for payee": {"payeeId": "abc-123"}\n' +
+    '- "Rules for category": {"categoryId": "def-456"}\n\n' +
+    'RETURNS: Rule IDs, conditions, actions, and stage',
   inputSchema: {
     type: 'object',
     properties: {
