@@ -23,31 +23,27 @@ const CreateAccountSchema = z.object({
 export const schema = {
   name: 'create-account',
   description:
-    'Create a new account in Actual Budget.\n\n' +
+    'Add a new account to the budget. Use this when the user wants to set up a new bank account, credit card, or investment account.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "add a new checking account"\n' +
+    '- User wants to "create an account for [bank name]"\n' +
+    '- User says "set up my credit card"\n' +
+    '- User wants to "add a savings account"\n' +
+    '- User needs to track a new financial account\n\n' +
     'REQUIRED:\n' +
-    '- name: Account name\n' +
-    '- type: Account type (checking, savings, credit, investment, mortgage, debt, other)\n\n' +
+    '- name: Account name (e.g., "Chase Checking")\n' +
+    '- type: checking, savings, credit, investment, mortgage, debt, or other\n\n' +
     'OPTIONAL:\n' +
-    '- offbudget: Whether account is off-budget (default: false)\n' +
-    '- initialBalance: Initial balance in cents (default: 0)\n\n' +
+    '- offbudget: Set true for tracking-only accounts (default: false)\n' +
+    '- initialBalance: Starting balance in cents (default: 0)\n\n' +
     'EXAMPLES:\n' +
-    '- Checking account: {"name": "Chase Checking", "type": "checking"}\n' +
-    '- Savings with balance: {"name": "High Yield Savings", "type": "savings", "initialBalance": 1000000}\n' +
-    '- Credit card: {"name": "Amazon Card", "type": "credit"}\n' +
-    '- Off-budget investment: {"name": "401k", "type": "investment", "offbudget": true}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Add new bank accounts\n' +
-    '- Create investment accounts\n' +
-    '- Set up credit card accounts\n' +
-    '- Initialize accounts with starting balances\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to list all accounts\n' +
-    '- Use update-account to modify account properties\n' +
-    '- Use delete-account to remove accounts\n' +
-    '- Use close-account to close accounts (keeps history)\n\n' +
+    '- "Add checking account": {"name": "Chase Checking", "type": "checking"}\n' +
+    '- "Create savings with $10k": {"name": "High Yield Savings", "type": "savings", "initialBalance": 1000000}\n' +
+    '- "Add credit card": {"name": "Amazon Card", "type": "credit"}\n' +
+    '- "Track 401k off-budget": {"name": "401k", "type": "investment", "offbudget": true}\n\n' +
     'NOTES:\n' +
-    '- Initial balance is in cents (e.g., 100000 = $1,000.00)\n' +
-    '- Off-budget accounts are excluded from budget calculations',
+    '- Initial balance in cents (100000 = $1,000)\n' +
+    '- Off-budget accounts don\'t affect budget calculations',
   inputSchema: zodToJsonSchema(CreateAccountSchema) as ToolInput,
 };
 

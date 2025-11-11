@@ -11,29 +11,21 @@ import { GetAccountsReportGenerator } from './report-generator.js';
 export const schema = {
   name: 'get-accounts',
   description:
-    'Retrieve all accounts with current balances and metadata.\n\n' +
+    'List all accounts with current balances. Use this when the user asks about accounts, balances, or needs to find an account name.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "what accounts do I have?"\n' +
+    '- User wants to see "account balances" or "current balance"\n' +
+    '- User asks "how much is in my checking account?"\n' +
+    '- You need to find the correct account name for another tool\n' +
+    '- User wants to see "all my accounts"\n\n' +
     'OPTIONAL FILTERS:\n' +
-    '- accountId: Filter by account name or ID (supports exact and partial name matching)\n' +
-    '- includeClosed: Include closed accounts (default: false)\n\n' +
+    '- accountId: Partial account name to search (e.g., "Chase" finds "Chase Checking")\n' +
+    '- includeClosed: Set true to include closed accounts (default: false)\n\n' +
     'EXAMPLES:\n' +
-    '- All accounts: {}\n' +
-    '- Find account by partial name: {"accountId": "Chase"}\n' +
-    '- Find account by exact name: {"accountId": "Chase Checking"}\n' +
-    '- Include closed: {"includeClosed": true}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- List all accounts to find account IDs for other tools\n' +
-    '- Check current account balances\n' +
-    '- Find account by name before using in other operations\n' +
-    '- View account types and status\n' +
-    '- Get account metadata for transaction operations\n\n' +
-    'SEE ALSO:\n' +
-    '- Use with get-transactions, balance-history, or monthly-summary (requires accountId)\n' +
-    '- Use with create-account, update-account, delete-account to manage accounts\n' +
-    '- Use with create-transaction to add transactions\n\n' +
-    'RETURNS:\n' +
-    '- Account ID, name, balance, type, status\n' +
-    '- Use account IDs with other tools\n' +
-    '- Partial name matches return all matching accounts',
+    '- "Show all accounts": {}\n' +
+    '- "Find Chase accounts": {"accountId": "Chase"}\n' +
+    '- "Include closed accounts": {"includeClosed": true}\n\n' +
+    'RETURNS: Account names, balances, types, and status',
   inputSchema: zodToJsonSchema(GetAccountsArgsSchema) as ToolInput,
 };
 

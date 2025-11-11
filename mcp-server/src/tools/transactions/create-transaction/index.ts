@@ -32,37 +32,31 @@ const CreateTransactionSchema = z.object({
 export const schema = {
   name: 'create-transaction',
   description:
-    'Create a new transaction in Actual Budget.\n\n' +
+    'Add a new transaction to an account. Use this when the user wants to manually record a purchase, payment, or income.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "add a transaction for $50 at Whole Foods"\n' +
+    '- User wants to "record a purchase" or "log an expense"\n' +
+    '- User says "I spent $X on [something]"\n' +
+    '- User wants to "add income" or "record a payment"\n' +
+    '- User needs to "split a transaction" across categories\n' +
+    '- User wants to manually enter a transaction not from bank import\n\n' +
     'REQUIRED:\n' +
-    '- account: Account name or ID (supports partial matching, e.g., "Chase" matches "Chase Checking")\n' +
-    '- date: Transaction date in YYYY-MM-DD format\n' +
-    '- amount: Transaction amount (dollars or cents, auto-detected)\n\n' +
+    '- account: Account name (e.g., "Checking")\n' +
+    '- date: YYYY-MM-DD format (e.g., "2025-01-15")\n' +
+    '- amount: Dollar amount (negative for expenses, positive for income)\n\n' +
     'OPTIONAL:\n' +
-    '- payee: Payee name or ID\n' +
-    '- category: Category name or ID\n' +
-    '- notes: Transaction notes\n' +
-    '- cleared: Whether transaction is cleared (default: false)\n' +
-    '- subtransactions: Array of split transaction parts\n\n' +
+    '- payee: Merchant or person name\n' +
+    '- category: Category name\n' +
+    '- notes: Additional details\n' +
+    '- cleared: true/false (default: false)\n' +
+    '- subtransactions: For split transactions\n\n' +
     'EXAMPLES:\n' +
-    '- Simple expense: {"account": "Checking", "date": "2025-01-15", "amount": -50.00, "payee": "Grocery Store", "category": "Groceries"}\n' +
-    '- Income: {"account": "Checking", "date": "2025-01-15", "amount": 2000.00, "payee": "Employer", "category": "Income"}\n' +
-    '- Split transaction: {"account": "Checking", "date": "2025-01-15", "amount": -100.00, "subtransactions": [{"amount": -60, "category": "Groceries"}, {"amount": -40, "category": "Gas"}]}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Manually add transactions not imported from bank\n' +
-    '- Create split transactions\n' +
-    '- Add income transactions\n' +
-    '- Record one-time expenses\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to find account names/IDs\n' +
-    '- Use get-grouped-categories to find category names/IDs\n' +
-    '- Use get-payees to find payee names/IDs\n' +
-    '- Use update-transaction to modify transactions\n' +
-    '- Use delete-transaction to remove transactions\n\n' +
+    '- "Add $50 grocery purchase": {"account": "Checking", "date": "2025-01-15", "amount": -50, "payee": "Whole Foods", "category": "Groceries"}\n' +
+    '- "Record paycheck": {"account": "Checking", "date": "2025-01-15", "amount": 2000, "payee": "Employer", "category": "Income"}\n' +
+    '- "Split transaction": {"account": "Checking", "date": "2025-01-15", "amount": -100, "subtransactions": [{"amount": -60, "category": "Groceries"}, {"amount": -40, "category": "Gas"}]}\n\n' +
     'NOTES:\n' +
-    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -30 → -$30.00, -30.50 → -$30.50)\n' +
-    '- Amounts >= 1000 treated as cents (e.g., -5000 → -$50.00)\n' +
-    '- Supports name resolution for account, payee, and category (partial matching)\n' +
-    '- Transactions are automatically processed by rules and duplicate detection',
+    '- Amounts < 1000 treated as dollars (-50 = -$50)\n' +
+    '- Negative amounts = expenses, positive = income',
   inputSchema: zodToJsonSchema(CreateTransactionSchema) as ToolInput,
 };
 

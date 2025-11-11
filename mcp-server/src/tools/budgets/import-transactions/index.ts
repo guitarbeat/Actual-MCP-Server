@@ -16,26 +16,23 @@ const METHOD_NOT_FUNCTION_FRAGMENT = 'is not a function';
 export const schema = {
   name: 'import-transactions',
   description:
-    'Sync transactions from connected bank accounts. Use to update your budget with new transactions from bank connections.\n\n' +
-    'OPERATION:\n\n' +
-    '• BANK SYNC: Import from connected bank accounts\n' +
-    '  Required: source="bank"\n' +
-    '  Optional: accountId (sync specific account, omit for all)\n' +
-    '  Example: {"source": "bank"}\n' +
-    '  Example: {"source": "bank", "accountId": "abc123"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Sync all accounts from connected banks\n' +
-    '- Sync specific account from bank connection\n' +
-    '- Update budget with latest transactions\n' +
-    '- Refresh transaction data after bank activity\n' +
-    '- Import transactions automatically\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to find account IDs for syncing specific accounts\n' +
-    '- Use get-transactions to view imported transactions\n' +
-    '- Use create-transaction to manually add transactions not from bank\n\n' +
+    'Sync transactions from connected bank accounts to update your budget. Use this when the user wants to refresh bank data.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "sync my bank accounts"\n' +
+    '- User wants to "import new transactions"\n' +
+    '- User asks to "update from bank"\n' +
+    '- User says "refresh transactions"\n' +
+    '- User wants to "pull latest bank data"\n\n' +
+    'REQUIRED:\n' +
+    '- source: Must be "bank"\n\n' +
+    'OPTIONAL:\n' +
+    '- accountId: Specific account ID (omit to sync all accounts)\n\n' +
+    'EXAMPLES:\n' +
+    '- "Sync all accounts": {"source": "bank"}\n' +
+    '- "Sync one account": {"source": "bank", "accountId": "abc-123"}\n\n' +
     'NOTES:\n' +
-    '- Bank sync requires configured bank connections\n' +
-    '- To import transactions from CSV/OFX/QIF files, use the Actual Budget UI (file import is not available via API for existing budgets)',
+    '- Requires configured bank connections\n' +
+    '- CSV/file imports must be done through Actual Budget UI',
   inputSchema: {
     type: 'object',
     properties: {
