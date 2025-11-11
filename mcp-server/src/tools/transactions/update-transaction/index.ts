@@ -27,37 +27,31 @@ const UpdateTransactionSchema = z.object({
 export const schema = {
   name: 'update-transaction',
   description:
-    'Update an existing transaction in Actual Budget.\n\n' +
+    'Modify an existing transaction. Use this when the user wants to fix or change transaction details.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "change that transaction to $60"\n' +
+    '- User wants to "fix the amount" or "correct the category"\n' +
+    '- User says "update the transaction to [category]"\n' +
+    '- User wants to "mark as cleared" or "add notes"\n' +
+    '- User needs to "recategorize" a transaction\n' +
+    '- User says "that should be [different amount/category/payee]"\n\n' +
     'REQUIRED:\n' +
-    '- id: Transaction ID (UUID)\n\n' +
-    'OPTIONAL (at least one required):\n' +
-    '- account: Account name or ID\n' +
-    '- date: Transaction date in YYYY-MM-DD format\n' +
-    '- amount: Transaction amount (dollars or cents, auto-detected)\n' +
-    '- payee: Payee name or ID (set to empty string to clear)\n' +
-    '- category: Category name or ID (set to empty string to clear)\n' +
-    '- notes: Transaction notes\n' +
-    '- cleared: Whether transaction is cleared\n\n' +
+    '- id: Transaction ID (get from get-transactions first)\n' +
+    '- At least one field to update\n\n' +
+    'OPTIONAL:\n' +
+    '- amount: New dollar amount\n' +
+    '- category: New category name\n' +
+    '- payee: New payee name (empty string to clear)\n' +
+    '- date: New date (YYYY-MM-DD)\n' +
+    '- notes: New notes\n' +
+    '- cleared: true/false\n\n' +
     'EXAMPLES:\n' +
-    '- Update amount: {"id": "transaction-id", "amount": -60.00}\n' +
-    '- Update category: {"id": "transaction-id", "category": "Groceries"}\n' +
-    '- Clear payee: {"id": "transaction-id", "payee": ""}\n' +
-    '- Multiple fields: {"id": "transaction-id", "amount": -75.00, "notes": "Updated amount"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Correct transaction amounts\n' +
-    '- Reassign categories\n' +
-    '- Update payee information\n' +
-    '- Mark transactions as cleared\n' +
-    '- Add or update notes\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-transactions to find transaction IDs\n' +
-    '- Use create-transaction to add new transactions\n' +
-    '- Use delete-transaction to remove transactions\n\n' +
+    '- "Change amount to $60": {"id": "abc-123", "amount": -60}\n' +
+    '- "Fix category": {"id": "abc-123", "category": "Groceries"}\n' +
+    '- "Update multiple fields": {"id": "abc-123", "amount": -75, "notes": "Corrected amount"}\n\n' +
     'NOTES:\n' +
-    '- Only provided fields will be updated\n' +
-    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -30 → -$30.00, -30.50 → -$30.50)\n' +
-    '- Amounts >= 1000 treated as cents (e.g., -5000 → -$50.00)\n' +
-    '- Supports name resolution for account, payee, and category',
+    '- Use get-transactions to find the transaction ID first\n' +
+    '- Only fields you provide will be changed',
   inputSchema: zodToJsonSchema(UpdateTransactionSchema) as ToolInput,
 };
 

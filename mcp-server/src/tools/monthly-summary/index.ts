@@ -15,28 +15,22 @@ import type { ToolInput } from '../../types.js';
 export const schema = {
   name: 'monthly-summary',
   description:
-    'Generate monthly financial summary showing income, expenses, savings, and savings rates.\n\n' +
+    'Generate high-level financial overview showing income, expenses, savings, and savings rate trends. Use this when the user asks about overall financial health or monthly summaries.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "how am I doing financially?"\n' +
+    '- User wants to see "monthly summary" or "financial overview"\n' +
+    '- User asks about "savings rate" or "how much am I saving?"\n' +
+    '- User wants to compare "income vs expenses"\n' +
+    '- User asks "show me the last few months"\n' +
+    '- User wants to track financial progress over time\n\n' +
     'OPTIONAL PARAMETERS:\n' +
-    '- months: Number of months to analyze (default: 3)\n' +
-    '- accountId: Filter to specific account (omit for all accounts)\n\n' +
+    '- months: Number of months to analyze (default: 3, common: 6, 12)\n' +
+    '- accountId: Specific account name or omit for all accounts\n\n' +
     'EXAMPLES:\n' +
-    '- Last 3 months: {}\n' +
-    '- Last year: {"months": 12}\n' +
-    '- Specific account: {"months": 6, "accountId": "Checking"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Get high-level financial overview across multiple months\n' +
-    '- Track savings rate trends over time\n' +
-    '- Compare income vs expenses month-over-month\n' +
-    '- Analyze financial health and progress\n' +
-    '- Generate monthly financial reports\n\n' +
-    'SEE ALSO:\n' +
-    '- Use spending-by-category for detailed category breakdowns\n' +
-    '- Use get-transactions for specific transaction details\n' +
-    '- Use balance-history to track account balance changes\n\n' +
-    'RETURNS:\n' +
-    '- Monthly income, expenses, savings\n' +
-    '- Average monthly amounts\n' +
-    '- Savings rates (traditional and total including investments)',
+    '- "Show financial summary": {}\n' +
+    '- "Last year overview": {"months": 12}\n' +
+    '- "Checking account summary": {"accountId": "Checking", "months": 6}\n\n' +
+    'RETURNS: Monthly income, expenses, savings, averages, and savings rates',
   inputSchema: zodToJsonSchema(MonthlySummaryArgsSchema) as ToolInput,
 };
 

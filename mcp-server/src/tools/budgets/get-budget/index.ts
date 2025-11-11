@@ -6,28 +6,21 @@ import { successWithJson, errorFromCatch } from '../../../core/response/index.js
 import { getBudgetMonths, getBudgetMonth } from '../../../actual-api.js';
 
 export const schema = {
-  name: 'get-budget',
+  name: 'get-budget-month',
   description:
-    'Retrieve budget data for Actual Budget. If month is provided, returns detailed budget for that month. If omitted, returns list of available months.\n\n' +
-    'PARAMETERS:\n' +
-    '- month: (Optional) Month in YYYY-MM format. If provided, returns detailed budget data for that month.\n\n' +
+    'View budget details for a specific month showing budgeted amounts vs actual spending. Use this when the user asks about budget for a particular month.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "show me my January budget"\n' +
+    '- User wants to see "budget vs actual for [month]"\n' +
+    '- User asks "what months have budget data?"\n' +
+    '- User wants to "check budget performance"\n' +
+    '- User needs to see "remaining budget" for categories\n\n' +
+    'OPTIONAL:\n' +
+    '- month: YYYY-MM format (e.g., "2024-01"). Omit to list available months.\n\n' +
     'EXAMPLES:\n' +
-    '- List available months: {}\n' +
-    '- Get budget for specific month: {"month": "2024-01"}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- View budget amounts and spending for a specific month\n' +
-    '- Check budget vs actual spending by category\n' +
-    '- List all months with budget data\n' +
-    '- Review budget balances and remaining amounts\n' +
-    '- Analyze budget performance\n\n' +
-    'SEE ALSO:\n' +
-    '- Use with set-budget to set budget amounts for categories\n' +
-    '- Use with hold-budget to hold budget for next month\n' +
-    '- Use with reset-budget-hold to clear budget holds\n' +
-    '- Use with spending-by-category to compare actual spending to budgets\n\n' +
-    'RETURNS:\n' +
-    '- If month omitted: Array of month strings in YYYY-MM format\n' +
-    '- If month provided: Detailed budget data including category budgets, spending, and balances',
+    '- "Show available months": {}\n' +
+    '- "January 2024 budget": {"month": "2024-01"}\n\n' +
+    'RETURNS: If month provided: detailed budget data with spending. If omitted: list of available months.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -90,7 +83,7 @@ export async function handler(
         if (errorMessage.includes('not found') || errorMessage.includes('Not found')) {
           return errorFromCatch(`Budget data not found for month ${args.month}`, {
             fallbackMessage: 'Failed to retrieve budget data',
-            suggestion: 'Use the get-budget tool without a month parameter to list available months.',
+            suggestion: 'Use the get-budget-month tool without a month parameter to list available months.',
           });
         }
         // Re-throw to be caught by outer catch
@@ -104,7 +97,7 @@ export async function handler(
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to retrieve budget data',
       suggestion:
-        'Use the get-budget tool to list available months, then provide the month in YYYY-MM format (e.g., 2024-08).',
+        'Use the get-budget-month tool to list available months, then provide the month in YYYY-MM format (e.g., 2024-08).',
     });
   }
 }

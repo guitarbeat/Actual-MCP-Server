@@ -13,26 +13,20 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 export const schema = {
   name: 'balance-history',
   description:
-    'Get account balance history showing monthly balance changes.\n\n' +
+    'Track how an account balance has changed over time with monthly snapshots. Use this when the user asks about balance trends or account growth.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User asks "how has my balance changed?"\n' +
+    '- User wants to see "balance history" or "balance over time"\n' +
+    '- User asks "is my account growing or shrinking?"\n' +
+    '- User wants to track "account trends"\n' +
+    '- User asks "show me balance for the last X months"\n\n' +
     'REQUIRED:\n' +
-    '- accountId: Account name or ID\n' +
-    '- months: Number of months (e.g., 3, 6, 12)\n\n' +
+    '- accountId: Account name (e.g., "Checking", "Savings")\n' +
+    '- months: Number of months to look back (e.g., 3, 6, 12)\n\n' +
     'EXAMPLES:\n' +
-    '- Last 6 months: {"accountId": "Checking", "months": 6}\n' +
-    '- Last year: {"accountId": "Savings", "months": 12}\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Track account balance trends over time\n' +
-    '- Analyze balance changes month-over-month\n' +
-    '- Review account growth or decline patterns\n' +
-    '- Generate balance history reports\n' +
-    '- Understand account activity patterns\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-accounts to find account IDs\n' +
-    '- Use get-transactions to see transaction details affecting balances\n' +
-    '- Use monthly-summary for high-level financial overview\n\n' +
-    'RETURNS:\n' +
-    '- Monthly balance snapshots\n' +
-    '- Balance changes over time',
+    '- "Show checking balance history": {"accountId": "Checking", "months": 6}\n' +
+    '- "Savings growth last year": {"accountId": "Savings", "months": 12}\n\n' +
+    'RETURNS: Monthly balance snapshots showing growth or decline patterns',
   inputSchema: zodToJsonSchema(BalanceHistoryArgsSchema) as ToolInput,
 };
 

@@ -6,9 +6,9 @@ import { successWithJson, errorFromCatch } from '../../../core/response/index.js
 import { getBudgets } from '../../../actual-api.js';
 
 export const schema = {
-  name: 'get-budgets',
+  name: 'get-budget-files',
   description:
-    'List all available budget files (local and remote). Use to see available budgets before switching.\n\n' +
+    'List all available budget files (local and remote). Use to see available budget files before switching.\n\n' +
     'EXAMPLE:\n' +
     '- Get all: {}\n\n' +
     'COMMON USE CASES:\n' +
@@ -19,7 +19,7 @@ export const schema = {
     '- Identify local vs remote budgets\n\n' +
     'SEE ALSO:\n' +
     '- Use with switch-budget to change the active budget\n' +
-    '- Use with get-budget to view budget data after switching\n\n' +
+    '- Use with get-budget-month to view budget data after switching\n\n' +
     'RETURNS:\n' +
     '- Array of budget files with name, cloudFileId, groupId, encryption status\n' +
     '- Local budgets have an id field\n' +

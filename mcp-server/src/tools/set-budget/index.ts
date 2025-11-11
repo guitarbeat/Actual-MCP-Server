@@ -12,38 +12,25 @@ import { SetBudgetArgsSchema, type SetBudgetArgs } from './types.js';
 export const schema = {
   name: 'set-budget',
   description:
-    'Set budget amount and/or carryover for a category in a specific month.\n\n' +
+    'Set or update the budget amount for a category in a specific month. Use this when the user wants to create or change a budget.\n\n' +
+    'WHEN TO USE:\n' +
+    '- User says "set my groceries budget to $500"\n' +
+    '- User wants to "update budget" or "change budget"\n' +
+    '- User asks to "budget $X for [category]"\n' +
+    '- User wants to "enable carryover" or "rollover unused budget"\n' +
+    '- User is setting up budgets for a new month\n\n' +
     'REQUIRED:\n' +
-    '- month: Month in YYYY-MM format (e.g., "2024-01")\n' +
-    '- category: Category name or ID (supports partial name matching, case-sensitive)\n' +
-    '- At least one of: amount or carryover\n\n' +
+    '- month: YYYY-MM format (e.g., "2024-01" for January)\n' +
+    '- category: Category name (e.g., "Groceries")\n' +
+    '- amount: Dollar amount (e.g., 500 for $500) OR carryover: true/false\n\n' +
     'EXAMPLES:\n' +
-    '- Set amount: {"month": "2024-01", "category": "Groceries", "amount": 500}\n' +
-    '- Set amount (cents): {"month": "2024-01", "category": "Groceries", "amount": 50000}\n' +
-    '- Set carryover: {"month": "2024-01", "category": "Groceries", "carryover": true}\n' +
-    '- Set both: {"month": "2024-01", "category": "Groceries", "amount": 500, "carryover": true}\n' +
-    '- Disable carryover: {"month": "2024-01", "category": "Groceries", "carryover": false}\n' +
-    '- Multiple months: Set budget for each month separately\n\n' +
-    'COMMON USE CASES:\n' +
-    '- Set monthly budget amounts for categories\n' +
-    '- Enable or disable budget carryover (rollover unused amounts)\n' +
-    '- Adjust budgets month-over-month\n' +
-    '- Set up initial budgets for new categories\n' +
-    '- Modify budgets based on spending patterns\n' +
-    '- Copy budgets from previous months\n\n' +
-    'SEE ALSO:\n' +
-    '- Use get-grouped-categories to find category names/IDs\n' +
-    '- Use get-budget to view current budget amounts and spending\n' +
-    '- Use spending-by-category to see actual spending vs budgets\n' +
-    '- Use hold-budget to hold budget for next month\n' +
-    '- Use reset-budget-hold to clear budget holds\n\n' +
+    '- "Set groceries to $500": {"month": "2024-01", "category": "Groceries", "amount": 500}\n' +
+    '- "Enable carryover": {"month": "2024-01", "category": "Groceries", "carryover": true}\n' +
+    '- "Set budget with carryover": {"month": "2024-01", "category": "Groceries", "amount": 500, "carryover": true}\n\n' +
     'NOTES:\n' +
-    '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., 500 → $500.00, 500.50 → $500.50)\n' +
-    '- Amounts >= 1000 treated as cents (e.g., 50000 → $500.00)\n' +
-    '- Month format: YYYY-MM (e.g., "2024-01" for January 2024)\n' +
-    '- Category names are case-sensitive for partial matching\n' +
-    '- Carryover enables unused budget to roll over to next month\n' +
-    '- Budget amounts must be non-negative',
+    '- Amounts < 1000 treated as dollars (500 = $500)\n' +
+    '- Amounts >= 1000 treated as cents (50000 = $500)\n' +
+    '- Use get-grouped-categories first if you need to find the exact category name',
   inputSchema: {
     type: 'object',
     properties: {

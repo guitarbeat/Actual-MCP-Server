@@ -31,6 +31,7 @@ const {
     sse: useSse,
     'enable-write': enableWrite,
     'enable-bearer': enableBearer,
+    'enable-nini': enableNini,
     port,
     'test-resources': testResources,
     'test-custom': testCustom,
@@ -40,6 +41,7 @@ const {
     sse: { type: 'boolean', default: false },
     'enable-write': { type: 'boolean', default: false },
     'enable-bearer': { type: 'boolean', default: false },
+    'enable-nini': { type: 'boolean', default: false },
     port: { type: 'string' },
     'test-resources': { type: 'boolean', default: false },
     'test-custom': { type: 'boolean', default: false },
@@ -390,7 +392,7 @@ async function main(): Promise<void> {
 
 // Setup handlers on the server instance BEFORE main() runs
 setupResources(server);
-setupTools(server, enableWrite);
+setupTools(server, enableWrite, enableNini);
 setupPrompts(server);
 
 /**
