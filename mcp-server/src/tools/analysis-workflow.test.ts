@@ -212,7 +212,7 @@ describe('Analysis Tools Workflow Testing', () => {
       const { schema } = await import('./monthly-summary/index.js');
 
       // Descriptions are now shortened - check for essential info instead
-      expect(schema.description).toContain('monthly financial summary');
+      expect(schema.description).toContain('monthly summary');
       expect(schema.description).toContain('income');
       expect(schema.description).toContain('expenses');
     });

@@ -16,14 +16,14 @@ import { getInitializationStats, resetInitializationStats } from './actual-api.j
 describe('Performance Validation', () => {
   describe('Context Window Token Reduction', () => {
     it('should have 37 core tools (no optional tools)', () => {
-      const coreTools = getAvailableTools(true);
+      const coreTools = getAvailableTools(true, true);
 
       // All 37 tools are core now (removed run-query - not supported on latest server)
       expect(coreTools.length).toBe(37);
     });
 
     it('should calculate token savings from original 37 tools', () => {
-      const coreTools = getAvailableTools(true);
+      const coreTools = getAvailableTools(true, true);
 
       // Calculate token savings from original 37 tools
       const TOKENS_PER_TOOL = 150; // Estimated average tokens per tool schema
@@ -45,7 +45,7 @@ describe('Performance Validation', () => {
     });
 
     it('should have CRUD transaction tools', () => {
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
       const toolNames = tools.map((t) => t.schema.name);
 
       // Should have CRUD tools for transactions
@@ -58,7 +58,7 @@ describe('Performance Validation', () => {
     });
 
     it('should have consolidated budget tools', () => {
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
       const toolNames = tools.map((t) => t.schema.name);
 
       // Should have set-budget (consolidated tool)
@@ -316,7 +316,7 @@ describe('Performance Validation', () => {
 
       // Simulate tool lookups
       for (let i = 0; i < iterations; i++) {
-        const tools = getAvailableTools(true);
+        const tools = getAvailableTools(true, true);
         // Simulate finding a tool
         tools.find((t) => t.schema.name === 'get-transactions');
       }
@@ -364,11 +364,11 @@ describe('Performance Validation', () => {
       // Get tool counts
       process.env.ENABLE_BUDGET_MANAGEMENT = 'false';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'false';
-      const coreTools = getAvailableTools(true);
+      const coreTools = getAvailableTools(true, true);
 
       process.env.ENABLE_BUDGET_MANAGEMENT = 'true';
       process.env.ENABLE_ADVANCED_ACCOUNT_OPS = 'true';
-      const allTools = getAvailableTools(true);
+      const allTools = getAvailableTools(true, true);
 
       process.env = originalEnv;
 

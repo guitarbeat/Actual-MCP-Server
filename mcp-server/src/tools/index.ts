@@ -6,6 +6,10 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { initActualApi } from '../actual-api.js';
 import { error, errorFromCatch, MCPResponse } from '../core/response/index.js';
 
+// CRUD Factory
+import { createCRUDTools } from './crud-factory.js';
+import { entityConfigurations } from './crud-factory-config.js';
+
 import * as balanceHistory from './balance-history/index.js';
 import * as getGroupedCategories from './categories/get-grouped-categories/index.js';
 import * as getAccounts from './get-accounts/index.js';
@@ -32,33 +36,10 @@ import * as createTransaction from './transactions/create-transaction/index.js';
 import * as updateTransaction from './transactions/update-transaction/index.js';
 import * as deleteTransaction from './transactions/delete-transaction/index.js';
 
-// Account CRUD tools
-import * as createAccount from './accounts/create-account/index.js';
-import * as updateAccount from './accounts/update-account/index.js';
-import * as deleteAccount from './accounts/delete-account/index.js';
+// Account tools (non-CRUD)
 import * as closeAccount from './accounts/close-account/index.js';
 import * as reopenAccount from './accounts/reopen-account/index.js';
 import * as getAccountBalance from './accounts/get-account-balance/index.js';
-
-// Category CRUD tools
-import * as createCategory from './categories/create-category/index.js';
-import * as updateCategory from './categories/update-category/index.js';
-import * as deleteCategory from './categories/delete-category/index.js';
-
-// Category Group CRUD tools
-import * as createCategoryGroup from './category-groups/create-category-group/index.js';
-import * as updateCategoryGroup from './category-groups/update-category-group/index.js';
-import * as deleteCategoryGroup from './category-groups/delete-category-group/index.js';
-
-// Payee CRUD tools
-import * as createPayee from './payees/create-payee/index.js';
-import * as updatePayee from './payees/update-payee/index.js';
-import * as deletePayee from './payees/delete-payee/index.js';
-
-// Rule CRUD tools
-import * as createRule from './rules/create-rule/index.js';
-import * as updateRule from './rules/update-rule/index.js';
-import * as deleteRule from './rules/delete-rule/index.js';
 
 /**
  * Tool definition interface for registry-based tool management
@@ -97,6 +78,13 @@ interface CategorizedToolDefinition {
   category: ToolCategory;
 }
 
+// Generate CRUD tools using factory for all entity types
+const categoryCRUDTools = createCRUDTools(entityConfigurations.category);
+const payeeCRUDTools = createCRUDTools(entityConfigurations.payee);
+const accountCRUDTools = createCRUDTools(entityConfigurations.account);
+const ruleCRUDTools = createCRUDTools(entityConfigurations.rule);
+const categoryGroupCRUDTools = createCRUDTools(entityConfigurations.categoryGroup);
+
 /**
  * Centralized tool registry with metadata
  * All tools are registered here with their schema, handler, permission requirements, and category
@@ -127,33 +115,17 @@ const toolRegistry: CategorizedToolDefinition[] = [
   { schema: updateTransaction.schema, handler: updateTransaction.handler, requiresWrite: true, category: 'core' },
   { schema: deleteTransaction.schema, handler: deleteTransaction.handler, requiresWrite: true, category: 'core' },
 
-  // Account CRUD tools
-  { schema: createAccount.schema, handler: createAccount.handler, requiresWrite: true, category: 'nini' },
-  { schema: updateAccount.schema, handler: updateAccount.handler, requiresWrite: true, category: 'core' },
-  { schema: deleteAccount.schema, handler: deleteAccount.handler, requiresWrite: true, category: 'nini' },
+  // Account tools (non-CRUD)
   { schema: closeAccount.schema, handler: closeAccount.handler, requiresWrite: true, category: 'nini' },
   { schema: reopenAccount.schema, handler: reopenAccount.handler, requiresWrite: true, category: 'nini' },
   { schema: getAccountBalance.schema, handler: getAccountBalance.handler, requiresWrite: false, category: 'core' },
 
-  // Category CRUD tools
-  { schema: createCategory.schema, handler: createCategory.handler, requiresWrite: true, category: 'core' },
-  { schema: updateCategory.schema, handler: updateCategory.handler, requiresWrite: true, category: 'core' },
-  { schema: deleteCategory.schema, handler: deleteCategory.handler, requiresWrite: true, category: 'core' },
-
-  // Category Group CRUD tools
-  { schema: createCategoryGroup.schema, handler: createCategoryGroup.handler, requiresWrite: true, category: 'core' },
-  { schema: updateCategoryGroup.schema, handler: updateCategoryGroup.handler, requiresWrite: true, category: 'core' },
-  { schema: deleteCategoryGroup.schema, handler: deleteCategoryGroup.handler, requiresWrite: true, category: 'core' },
-
-  // Payee CRUD tools
-  { schema: createPayee.schema, handler: createPayee.handler, requiresWrite: true, category: 'core' },
-  { schema: updatePayee.schema, handler: updatePayee.handler, requiresWrite: true, category: 'core' },
-  { schema: deletePayee.schema, handler: deletePayee.handler, requiresWrite: true, category: 'core' },
-
-  // Rule CRUD tools
-  { schema: createRule.schema, handler: createRule.handler, requiresWrite: true, category: 'core' },
-  { schema: updateRule.schema, handler: updateRule.handler, requiresWrite: true, category: 'core' },
-  { schema: deleteRule.schema, handler: deleteRule.handler, requiresWrite: true, category: 'core' },
+  // Factory-generated CRUD tools for all entity types
+  ...categoryCRUDTools,
+  ...payeeCRUDTools,
+  ...accountCRUDTools,
+  ...ruleCRUDTools,
+  ...categoryGroupCRUDTools,
 
   // Budget tools
   { schema: getBudget.schema, handler: getBudget.handler, requiresWrite: false, category: 'core' },
