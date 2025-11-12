@@ -100,7 +100,7 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(callToolHandler).toBeDefined();
 
       // Verify new CRUD tools are registered
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
 
       expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'create-account')).toBe(true);
@@ -188,7 +188,7 @@ describe('Integration Tests - MCP Simplification', () => {
       setupTools(server, true);
 
       // Verify tools that use name resolution are registered
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
 
       expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(true);
@@ -211,7 +211,7 @@ describe('Integration Tests - MCP Simplification', () => {
 
   describe('Production-Ready Tool Set', () => {
     it('should have 37 core tools by default', async () => {
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
       const toolNames = tools.map((t) => t.schema.name);
 
       // Should have exactly 37 core tools (removed 4 schedule tools, run-query was conditional so didn't affect count)
@@ -222,13 +222,13 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(toolNames).toContain('create-account');
       expect(toolNames).toContain('create-category');
       expect(toolNames).toContain('set-budget');
-      expect(toolNames).toContain('get-budget');
+      expect(toolNames).toContain('get-budget-month');
       expect(toolNames).toContain('hold-budget');
       expect(toolNames).toContain('reset-budget-hold');
       expect(toolNames).toContain('import-transactions');
 
       // Budget file management tools
-      expect(toolNames).toContain('get-budgets');
+      expect(toolNames).toContain('get-budget-files');
       expect(toolNames).toContain('switch-budget');
 
       // Deprecated tools removed (replaced by CRUD tools)
@@ -244,7 +244,7 @@ describe('Integration Tests - MCP Simplification', () => {
     });
 
     it('should have clean tool descriptions without deprecation notices', async () => {
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
 
       // No tool descriptions should contain DEPRECATED (deprecated tools have been removed)
       tools.forEach((tool) => {
@@ -256,7 +256,7 @@ describe('Integration Tests - MCP Simplification', () => {
     it('should verify all core tools are production-ready', async () => {
       process.env.ENABLE_UTILITY_TOOLS = 'false';
 
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
       const toolNames = tools.map((t) => t.schema.name);
 
       // Core transaction tools
@@ -268,7 +268,7 @@ describe('Integration Tests - MCP Simplification', () => {
       // Core category & budget tools
       expect(toolNames).toContain('get-grouped-categories');
       expect(toolNames).toContain('set-budget');
-      expect(toolNames).toContain('get-budget');
+      expect(toolNames).toContain('get-budget-month');
       expect(toolNames).toContain('hold-budget');
       expect(toolNames).toContain('reset-budget-hold');
 
@@ -314,7 +314,7 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(callToolHandler).toBeDefined();
 
       // 4. Verify core tools are available
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'create-transaction')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'create-account')).toBe(true);
@@ -322,7 +322,7 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
 
       // 5. Verify removed tools are not available
-      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'get-budget-files')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
 
       // run-query was removed - not supported on latest server

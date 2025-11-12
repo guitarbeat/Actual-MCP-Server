@@ -110,8 +110,122 @@ src/
 │   ├── input/        # Validation
 │   └── formatting/   # Date/amount formatting
 ├── tools/            # MCP tools
+│   ├── crud-factory.ts        # Generic CRUD tool generator
+│   ├── crud-factory-config.ts # Entity configurations
+│   └── manage-entity/         # Entity handlers
 └── index.ts          # Server entry point
 ```
+
+### CRUD Factory Pattern
+
+The server uses a generic factory pattern to eliminate code duplication across CRUD operations. Instead of maintaining ~30 separate tool files, entity configurations are defined once and tools are generated automatically.
+
+**Benefits:**
+- **DRY Principle**: Single source of truth for CRUD logic
+- **Type Safety**: Full TypeScript inference from Zod schemas
+- **Consistency**: Uniform error handling and response formats
+- **Maintainability**: Changes to CRUD logic apply to all entities
+- **Extensibility**: Add new entity types with minimal code
+
+**Architecture:**
+
+```
+Entity Configuration → CRUD Factory → Tool Definitions → Tool Registry
+```
+
+1. **Entity Configuration** (`crud-factory-config.ts`): Define schemas, descriptions, and handlers
+2. **CRUD Factory** (`crud-factory.ts`): Generate create/update/delete tool definitions
+3. **Tool Registry** (`tools/index.ts`): Register generated tools with MCP server
+4. **Entity Handlers** (`manage-entity/entity-handlers/`): Implement business logic
+
+**Adding a New Entity Type:**
+
+```typescript
+// 1. Define schemas in crud-factory-config.ts
+const CreateWidgetSchema = z.object({
+  name: z.string().min(1),
+  type: z.enum(['foo', 'bar']),
+});
+
+const UpdateWidgetSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).optional(),
+  type: z.enum(['foo', 'bar']).optional(),
+});
+
+const DeleteWidgetSchema = z.object({
+  id: z.string().uuid(),
+});
+
+// 2. Add entity configuration
+export const entityConfigurations = {
+  // ... existing entities
+  widget: {
+    entityName: 'widget',
+    displayName: 'widget',
+    handlerClass: WidgetHandler,
+    create: {
+      schema: CreateWidgetSchema,
+      description: 'Create a new widget...',
+      requiresWrite: true,
+      category: 'core',
+    },
+    update: {
+      schema: UpdateWidgetSchema,
+      description: 'Update an existing widget...',
+      requiresWrite: true,
+      category: 'core',
+    },
+    delete: {
+      schema: DeleteWidgetSchema,
+      description: 'Delete a widget...',
+      requiresWrite: true,
+      category: 'core',
+    },
+  },
+};
+
+// 3. Generate tools in tools/index.ts
+const widgetCRUDTools = createCRUDTools(entityConfigurations.widget);
+
+// 4. Add to tool registry
+const toolRegistry: CategorizedToolDefinition[] = [
+  ...widgetCRUDTools,
+  // ... other tools
+];
+```
+
+**Entity Configuration Structure:**
+
+```typescript
+interface EntityCRUDConfig {
+  entityName: string;           // Tool name prefix (e.g., "category" → "create-category")
+  displayName: string;          // Human-readable name for messages
+  handlerClass: EntityHandler;  // Handler class constructor
+  create: {
+    schema: z.ZodType;          // Zod schema for input validation
+    description: string;        // LLM-friendly tool description
+    requiresWrite: boolean;     // Permission requirement
+    category: 'core' | 'nini';  // Feature flag category
+  };
+  update: { /* same structure */ };
+  delete: { /* same structure */ };
+}
+```
+
+**Generated Tools:**
+
+For each entity configuration, the factory generates three tools:
+- `create-{entityName}`: Create new entity
+- `update-{entityName}`: Update existing entity
+- `delete-{entityName}`: Delete entity
+
+Each tool includes:
+- JSON schema from Zod definition
+- Input validation
+- Handler execution
+- Cache invalidation
+- Consistent error handling
 
 ## Performance
 

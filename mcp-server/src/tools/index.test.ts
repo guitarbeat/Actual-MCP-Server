@@ -16,7 +16,7 @@ describe('Tool Registry', () => {
 
   describe('Core tools', () => {
     it('should include all 37 core tools by default', () => {
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true); // Enable write and nini
 
       // Should have exactly 37 core tools (removed 4 schedule tools, run-query was conditional so didn't affect count)
       expect(tools.length).toBe(37);
@@ -72,10 +72,10 @@ describe('Tool Registry', () => {
       expect(tools.some((t) => t.schema.name === 'import-transactions')).toBe(true);
 
       // Budget tools
-      expect(tools.some((t) => t.schema.name === 'get-budget')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'get-budget-month')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'hold-budget')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'reset-budget-hold')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'get-budgets')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'get-budget-files')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'switch-budget')).toBe(true);
 
       // Deprecated tools removed
@@ -91,7 +91,7 @@ describe('Tool Registry', () => {
     });
 
     it('should not include removed tools', () => {
-      const tools = getAvailableTools(true);
+      const tools = getAvailableTools(true, true);
 
       // Deprecated consolidated tool removed
       expect(tools.some((t) => t.schema.name === 'manage-entity')).toBe(false);
@@ -112,12 +112,12 @@ describe('Tool Registry', () => {
     it('should exclude write tools when write is disabled', () => {
       process.env.ENABLE_UTILITY_TOOLS = 'false';
 
-      const tools = getAvailableTools(false); // Write disabled
+      const tools = getAvailableTools(false, true); // Write disabled, nini enabled
 
       // Read-only tools should be present
       expect(tools.some((t) => t.schema.name === 'get-transactions')).toBe(true);
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);
-      expect(tools.some((t) => t.schema.name === 'get-budget')).toBe(true);
+      expect(tools.some((t) => t.schema.name === 'get-budget-month')).toBe(true);
 
       // Write tools should not be present
       expect(tools.some((t) => t.schema.name === 'set-budget')).toBe(false);
