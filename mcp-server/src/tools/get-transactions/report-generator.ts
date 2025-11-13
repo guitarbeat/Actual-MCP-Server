@@ -16,6 +16,7 @@ interface ReportMetadata {
   appliedFilters: string[];
   filteredCount: number;
   totalFetched: number;
+  accountSummary?: { accountName: string; count: number }[];
 }
 
 export class GetTransactionsReportGenerator {
@@ -42,6 +43,15 @@ export class GetTransactionsReportGenerator {
       filtersList,
       '',
     ];
+
+    // Add account summary if searching across all accounts
+    if (metadata.accountSummary && metadata.accountSummary.length > 0) {
+      sections.push('**Transactions by account:**');
+      metadata.accountSummary.forEach(({ accountName, count }) => {
+        sections.push(`- ${accountName}: ${count} transaction${count !== 1 ? 's' : ''}`);
+      });
+      sections.push('');
+    }
 
     // Add prominent empty state message if no transactions found
     if (mappedTransactions.length === 0) {

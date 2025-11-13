@@ -8,7 +8,7 @@ export class GetTransactionsInputParser {
       throw new Error('Arguments must be an object');
     }
     const argsObj = args as Record<string, unknown>;
-    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit } = argsObj;
+    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit, excludeTransfers } = argsObj;
     if (!accountId || typeof accountId !== 'string') {
       throw new Error('accountId is required and must be a string');
     }
@@ -21,6 +21,7 @@ export class GetTransactionsInputParser {
       categoryName: typeof categoryName === 'string' ? categoryName : undefined,
       payeeName: typeof payeeName === 'string' ? payeeName : undefined,
       limit: typeof limit === 'number' ? limit : undefined,
+      excludeTransfers: typeof excludeTransfers === 'boolean' ? excludeTransfers : undefined,
     };
   }
 }
