@@ -13,7 +13,7 @@ export const GetTransactionsArgsSchema = z.object({
   accountId: z
     .string()
     .describe(
-      'Account name or ID to retrieve transactions from. Use get-accounts tool to find available account IDs. Accepts both human-readable names (e.g., "Checking") or UUIDs.'
+      'Account name or ID to retrieve transactions from. Use get-accounts tool to find available account IDs. Accepts both human-readable names (e.g., "Checking"), UUIDs, or "all" to search across all accounts.'
     ),
   startDate: z
     .string()
@@ -56,6 +56,12 @@ export const GetTransactionsArgsSchema = z.object({
     .optional()
     .describe(
       'Maximum number of transactions to return. Useful for limiting results when you only need a sample or the most recent transactions. Applied after all other filters.'
+    ),
+  excludeTransfers: z
+    .boolean()
+    .optional()
+    .describe(
+      'Exclude transfer transactions between accounts. Set to true to only show actual income/expense transactions. Useful when searching for uncategorized transactions that need attention.'
     ),
 });
 
