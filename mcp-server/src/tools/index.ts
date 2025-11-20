@@ -50,7 +50,7 @@ export interface ToolDefinition {
       [key: string]: unknown;
     };
   };
-  handler: (args: any) => Promise<MCPResponse>;
+  handler: (args: Record<string, unknown>) => Promise<MCPResponse>;
   requiresWrite: boolean;
 }
 
@@ -66,9 +66,14 @@ interface CategorizedToolDefinition {
   schema: {
     name: string;
     description?: string;
-    inputSchema: any;
+    inputSchema: {
+      type: string;
+      properties?: Record<string, unknown>;
+      required?: string[];
+      [key: string]: unknown;
+    };
   };
-  handler: (args: any) => Promise<MCPResponse>;
+  handler: (args: Record<string, unknown>) => Promise<MCPResponse>;
   requiresWrite: boolean;
   category: ToolCategory;
 }
@@ -238,7 +243,10 @@ const toolRegistry: CategorizedToolDefinition[] = [
 ];
 
 /**
- * Get available tools based on write permission and feature flags
+ * Get available tools based on write permission and feature flags.
+ * Filters the tool registry to return only tools that match the current permission level
+ * and enabled feature flags.
+ *
  * @param enableWrite - Whether write operations are enabled
  * @param enableNini - Whether nini (advanced) features are enabled
  * @returns Array of tool definitions available for the current permission level and enabled features
@@ -260,10 +268,13 @@ export function getAvailableTools(enableWrite: boolean, enableNini: boolean): To
 }
 
 /**
- * Setup MCP tool handlers on the server
- * @param server - The MCP server instance
- * @param enableWrite - Whether write operations are enabled
- * @param enableNini - Whether nini (advanced) features are enabled
+ * Setup MCP tool handlers on the server.
+ * Registers list-tools and call-tool request handlers with the MCP server,
+ * filtering available tools based on permissions and feature flags.
+ *
+ * @param server - The MCP server instance to register handlers on
+ * @param enableWrite - Whether write operations are enabled (filters write-only tools)
+ * @param enableNini - Whether nini (advanced) features are enabled (filters nini-category tools)
  */
 export const setupTools = (server: Server, enableWrite: boolean, enableNini = false): void => {
   const availableTools = getAvailableTools(enableWrite, enableNini);
@@ -300,6 +311,14 @@ export const setupTools = (server: Server, enableWrite: boolean, enableNini = fa
         return error(
           `Tool '${name}' requires write permission`,
           'Start the server with the --enable-write flag to enable write operations.'
+        );
+      }
+
+      // Check nini category permission
+      if (tool.category === 'nini' && !enableNini) {
+        return error(
+          `Tool '${name}' requires nini features to be enabled`,
+          'Start the server with the --enable-nini flag to enable advanced features.'
         );
       }
 

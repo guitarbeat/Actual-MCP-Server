@@ -4,7 +4,15 @@
 
 import type { ContentItem, ErrorContext, ErrorPayload, MCPResponse } from './types.js';
 
+/**
+ * Default error suggestion when no specific suggestion can be inferred
+ */
 const DEFAULT_SUGGESTION = 'Check the Actual Budget server logs and verify the provided arguments before retrying.';
+
+/**
+ * Log level prefix for error messages
+ */
+const ERROR_LOG_PREFIX = '[ERROR]';
 
 const suggestionMatchers: Array<{ test: RegExp; suggestion: string }> = [
   {
@@ -68,9 +76,11 @@ const suggestionMatchers: Array<{ test: RegExp; suggestion: string }> = [
 ];
 
 /**
- * Infer a helpful suggestion based on the error message
- * @param message - The error message
- * @returns A contextual suggestion or default suggestion
+ * Infer a helpful suggestion based on the error message.
+ * Matches error messages against known patterns to provide contextual suggestions.
+ *
+ * @param message - The error message to analyze
+ * @returns A contextual suggestion if a pattern matches, otherwise the default suggestion
  */
 function inferSuggestion(message: string): string {
   const match = suggestionMatchers.find(({ test }) => test.test(message));
@@ -78,8 +88,9 @@ function inferSuggestion(message: string): string {
 }
 
 /**
- * Create a successful plain text response
- * @param text - The text message
+ * Create a successful plain text response.
+ *
+ * @param text - The text message to include in the response
  * @returns A success response object with text content
  */
 export function success(text: string): MCPResponse {
@@ -89,9 +100,10 @@ export function success(text: string): MCPResponse {
 }
 
 /**
- * Create a success response with structured content
- * @param content - A content item
- * @returns A success response object with provided content
+ * Create a success response with structured content.
+ *
+ * @param content - A content item (text, image, audio, etc.)
+ * @returns A success response object with the provided content
  */
 export function successWithContent(content: ContentItem): MCPResponse {
   return {
@@ -100,9 +112,11 @@ export function successWithContent(content: ContentItem): MCPResponse {
 }
 
 /**
- * Create a success response with JSON data
+ * Create a success response with JSON data.
+ * Serializes the provided data to JSON and wraps it in a text content item.
+ *
  * @param data - Any data object that can be JSON-stringified
- * @returns A success response with JSON data wrapped as text
+ * @returns A success response with JSON data wrapped as text content
  */
 export function successWithJson<T>(data: T): MCPResponse {
   return {
@@ -116,10 +130,11 @@ export function successWithJson<T>(data: T): MCPResponse {
 }
 
 /**
- * Create an error response
- * @param message - The error message
+ * Create an error response with a message and suggestion.
+ *
+ * @param message - The error message describing what went wrong
  * @param suggestion - A helpful suggestion for resolving the error
- * @returns An error response object
+ * @returns An error response object with structured error payload
  */
 export function error(message: string, suggestion: string): MCPResponse {
   const payload: ErrorPayload = {
@@ -140,10 +155,13 @@ export function error(message: string, suggestion: string): MCPResponse {
 }
 
 /**
- * Create an error response from an Error object or any thrown value
- * @param err - The error object or value
- * @param context - Optional context for error handling
- * @returns An error response object
+ * Create an error response from an Error object or any thrown value.
+ * Extracts error messages, infers helpful suggestions, and logs error context
+ * for debugging purposes.
+ *
+ * @param err - The error object or value that was thrown
+ * @param context - Optional context for error handling (operation, tool, args)
+ * @returns An error response object with message and suggestion
  */
 export function errorFromCatch(err: unknown, context: ErrorContext = {}): MCPResponse {
   let resolvedMessage: string | undefined;
@@ -186,9 +204,11 @@ export function errorFromCatch(err: unknown, context: ErrorContext = {}): MCPRes
 }
 
 /**
- * Log error with relevant context for troubleshooting
- * @param err - The error object or value
- * @param context - Error context including operation details
+ * Log error with relevant context for troubleshooting.
+ * Formats error messages and includes operation context for easier debugging.
+ *
+ * @param err - The error object or value that was thrown
+ * @param context - Error context including operation, tool, and args
  */
 function logErrorWithContext(err: unknown, context: ErrorContext): void {
   const timestamp = new Date().toISOString();
@@ -229,10 +249,10 @@ function logErrorWithContext(err: unknown, context: ErrorContext): void {
 
   const contextStr = contextParts.length > 0 ? ` [${contextParts.join(', ')}]` : '';
 
-  console.error(`[ERROR] ${timestamp}${contextStr}: ${errorMessage}`);
+  console.error(`${ERROR_LOG_PREFIX} ${timestamp}${contextStr}: ${errorMessage}`);
 
   // Include stack trace for Error objects to aid debugging
   if (errorStack && process.env.NODE_ENV !== 'production') {
-    console.error(`[ERROR] Stack trace:\n${errorStack}`);
+    console.error(`${ERROR_LOG_PREFIX} Stack trace:\n${errorStack}`);
   }
 }
