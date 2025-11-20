@@ -25,6 +25,8 @@ ACTUAL_BUDGET_SYNC_ID=your-budget-id
 - **Auto-loading** - Budget loads automatically on startup
 - **Persistent connection** - 70-90% faster consecutive requests
 - **Intelligent caching** - Frequently accessed data cached in memory
+- **Type-safe** - Full TypeScript type safety with proper error handling
+- **Consistent error handling** - Standardized error messages with helpful suggestions
 
 ## Core Tools
 
@@ -212,9 +214,10 @@ CACHE_TTL_SECONDS=300         # Cache TTL (5 minutes)
 src/
 ├── core/              # Shared functionality
 │   ├── data/         # Data fetchers with caching
-│   ├── response/     # Response builders
+│   ├── response/     # Response builders with error handling
 │   ├── input/        # Validation
-│   └── formatting/   # Date/amount formatting
+│   ├── formatting/   # Date/amount formatting
+│   └── logging/      # Safe logging utilities
 ├── tools/            # MCP tools
 │   ├── crud-factory.ts        # Generic CRUD tool generator
 │   ├── crud-factory-config.ts # Entity configurations
@@ -229,8 +232,8 @@ The server uses a generic factory pattern to eliminate code duplication across C
 **Benefits:**
 
 - **DRY Principle**: Single source of truth for CRUD logic
-- **Type Safety**: Full TypeScript inference from Zod schemas
-- **Consistency**: Uniform error handling and response formats
+- **Type Safety**: Full TypeScript inference from Zod schemas with `Record<string, unknown>` for handler arguments
+- **Consistency**: Uniform error handling and response formats with contextual error messages
 - **Maintainability**: Changes to CRUD logic apply to all entities
 - **Extensibility**: Add new entity types with minimal code
 
@@ -335,10 +338,20 @@ For each entity configuration, the factory generates three tools:
 Each tool includes:
 
 - JSON schema from Zod definition
-- Input validation
-- Handler execution
+- Input validation with type-safe handlers
+- Handler execution with proper error context
 - Cache invalidation
-- Consistent error handling
+- Consistent error handling with operation, tool, and args context
+
+## Code Quality
+
+The codebase follows best practices for maintainability and reliability:
+
+- **Type Safety**: All tool handlers use `Record<string, unknown>` instead of `any` for better type checking
+- **Error Handling**: Consistent error context (operation, tool, args) for easier debugging
+- **Documentation**: Comprehensive JSDoc comments for all public APIs
+- **Logging**: Structured logging with consistent formatting and context
+- **Validation**: Strong input validation using Zod schemas with `z.unknown()` for flexible data fields
 
 ## Performance
 

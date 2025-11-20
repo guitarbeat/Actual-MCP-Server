@@ -23,7 +23,7 @@ export interface CategorizedToolDefinition {
     description?: string;
     inputSchema: ToolInput;
   };
-  handler: (args: any) => Promise<MCPResponse>;
+  handler: (args: Record<string, unknown>) => Promise<MCPResponse>;
   requiresWrite: boolean;
   category: ToolCategory;
 }
@@ -218,7 +218,7 @@ export function createCRUDTools<
       description: createConfig.description,
       inputSchema: zodToJsonSchema(createConfig.schema) as ToolInput,
     },
-    handler: async (args: any): Promise<MCPResponse> => {
+    handler: async (args: Record<string, unknown>): Promise<MCPResponse> => {
       try {
         const validated = createConfig.schema.parse(args);
         const handler = new handlerClass();
@@ -226,8 +226,8 @@ export function createCRUDTools<
         handler.invalidateCache();
 
         // Extract name from validated data if available for better success message
-        const name = (validated as any).name;
-        const successMessage = name
+        const name = (validated as Record<string, unknown>).name;
+        const successMessage = name && typeof name === 'string'
           ? `Successfully created ${displayName} "${name}" with id ${entityId}`
           : `Successfully created ${displayName} with id ${entityId}`;
 
@@ -235,6 +235,9 @@ export function createCRUDTools<
       } catch (err) {
         return errorFromCatch(err, {
           fallbackMessage: `Failed to create ${displayName}`,
+          operation: 'create',
+          tool: `create-${entityName}`,
+          args,
         });
       }
     },
@@ -249,10 +252,11 @@ export function createCRUDTools<
       description: updateConfig.description,
       inputSchema: zodToJsonSchema(updateConfig.schema) as ToolInput,
     },
-    handler: async (args: any): Promise<MCPResponse> => {
+    handler: async (args: Record<string, unknown>): Promise<MCPResponse> => {
       try {
         const validated = updateConfig.schema.parse(args);
-        const { id, ...updateData } = validated as any;
+        const validatedRecord = validated as Record<string, unknown>;
+        const { id, ...updateData } = validatedRecord;
 
         // Check if at least one field is provided for update
         if (Object.keys(updateData).length === 0) {
@@ -260,12 +264,15 @@ export function createCRUDTools<
         }
 
         const handler = new handlerClass();
-        await handler.update(id, updateData);
+        await handler.update(id as string, updateData);
         handler.invalidateCache();
-        return success(`Successfully updated ${displayName} with id ${id}`);
+        return success(`Successfully updated ${displayName} with id ${id as string}`);
       } catch (err) {
         return errorFromCatch(err, {
           fallbackMessage: `Failed to update ${displayName}`,
+          operation: 'update',
+          tool: `update-${entityName}`,
+          args,
         });
       }
     },
@@ -280,18 +287,22 @@ export function createCRUDTools<
       description: deleteConfig.description,
       inputSchema: zodToJsonSchema(deleteConfig.schema) as ToolInput,
     },
-    handler: async (args: any): Promise<MCPResponse> => {
+    handler: async (args: Record<string, unknown>): Promise<MCPResponse> => {
       try {
         const validated = deleteConfig.schema.parse(args);
-        const { id } = validated as any;
-
+        const validatedRecord = validated as Record<string, unknown>;
+        const { id } = validatedRecord;
+        
         const handler = new handlerClass();
-        await handler.delete(id);
+        await handler.delete(id as string);
         handler.invalidateCache();
-        return success(`Successfully deleted ${displayName} with id ${id}`);
+        return success(`Successfully deleted ${displayName} with id ${id as string}`);
       } catch (err) {
         return errorFromCatch(err, {
           fallbackMessage: `Failed to delete ${displayName}`,
+          operation: 'delete',
+          tool: `delete-${entityName}`,
+          args,
         });
       }
     },

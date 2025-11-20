@@ -350,13 +350,15 @@ export interface ManageEntityArgs {
 }
 
 /**
- * Schema for manage-entity arguments validation
+ * Schema for manage-entity arguments validation.
+ * The data field uses z.unknown() instead of z.any() for better type safety,
+ * as it can contain different entity-specific data structures.
  */
 export const schema = z.object({
   entityType: z.enum(['category', 'categoryGroup', 'payee', 'rule', 'schedule']),
   operation: z.enum(['create', 'update', 'delete']),
   id: z.string().uuid('Entity ID must be a valid UUID').optional(),
-  data: z.any().optional(),
+  data: z.unknown().optional(),
 });
 
 /**

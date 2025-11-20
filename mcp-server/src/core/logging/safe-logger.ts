@@ -13,7 +13,9 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
-// Store original console methods
+/**
+ * Store original console methods before overriding
+ */
 const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;
@@ -33,9 +35,12 @@ const performanceMetrics: Map<string, { start: number; end?: number; duration?: 
 
 /**
  * Setup safe logging for stdio mode.
+ * Overrides console methods to route logs through MCP logging protocol,
+ * preventing JSON-RPC corruption from direct console output.
+ *
  * Must be called BEFORE any initialization code that might log.
  *
- * @param server - The MCP server instance
+ * @param server - The MCP server instance to use for logging
  */
 export function setupSafeLogging(server: Server): void {
   useMcpLogging = true;
@@ -81,7 +86,8 @@ export function setupSafeLogging(server: Server): void {
 
 /**
  * Restore original console methods.
- * Useful when switching transports or shutting down.
+ * Reverts console.log, console.error, and console.warn to their original implementations.
+ * Useful when switching transports or shutting down the server.
  */
 export function restoreConsoleMethods(): void {
   console.log = originalConsoleLog;
@@ -169,18 +175,21 @@ function formatStructuredMessage(level: string, args: unknown[]): string {
 
 /**
  * Format console arguments into a single message string.
+ * Handles various argument types including Error objects, plain objects, and primitives.
  *
- * @param args - Console arguments
- * @returns Formatted message string
+ * @param args - Console arguments to format
+ * @returns Formatted message string with all arguments joined by spaces
  */
 function formatMessage(args: unknown[]): string {
   return args
     .map((arg) => {
       if (arg instanceof Error) {
-        return `${arg.message}${arg.stack ? `\n${arg.stack}` : ''}`;
+        // Include stack trace for Error objects
+        return `${arg.message}${arg.stack ? '\n' + arg.stack : ''}`;
       }
       if (typeof arg === 'object' && arg !== null) {
         try {
+          // Attempt to stringify objects, fall back to String() if circular reference
           return JSON.stringify(arg, null, 2);
         } catch {
           return String(arg);
@@ -242,8 +251,9 @@ export function endPerformanceTracking(operationId: string, operationName?: stri
 
 /**
  * Check if MCP logging is currently enabled.
+ * Returns true if console methods have been overridden to use MCP logging.
  *
- * @returns True if MCP logging is active
+ * @returns True if MCP logging is active, false otherwise
  */
 export function isMcpLoggingEnabled(): boolean {
   return useMcpLogging;
