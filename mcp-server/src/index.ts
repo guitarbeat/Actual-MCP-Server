@@ -204,8 +204,25 @@ async function main(): Promise<void> {
     try {
       await initActualApi();
     } catch (error) {
-      console.error('✗ Failed to initialize Actual Budget API:', error);
-      console.error('Server cannot start without Actual Budget connection');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStr = errorMessage.toLowerCase();
+
+      // * Migration errors are already handled in initActualApi with detailed guidance
+      // * For other errors, provide general guidance
+      if (
+        !errorStr.includes('out of sync') &&
+        !errorStr.includes('out-of-sync') &&
+        !errorStr.includes('migration')
+      ) {
+        console.error('✗ Failed to initialize Actual Budget API:', error);
+        console.error('Server cannot start without Actual Budget connection');
+        console.error('');
+        console.error('Common causes:');
+        console.error('  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD');
+        console.error('  - Actual Budget server is not running or not accessible');
+        console.error('  - Network connectivity issues');
+        console.error('  - Invalid ACTUAL_BUDGET_SYNC_ID');
+      }
       process.exit(1);
     }
   }

@@ -170,7 +170,30 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     // Setup auto-sync if configured
     setupAutoSync();
   } catch (error) {
-    console.error('Failed to initialize Actual Budget API:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStr = errorMessage.toLowerCase();
+
+    // * Check for database migration errors
+    if (
+      errorStr.includes('out of sync') ||
+      errorStr.includes('out-of-sync') ||
+      errorStr.includes('migration') ||
+      errorStr.includes('database is out of sync')
+    ) {
+      console.error('✗ Database migration error detected');
+      console.error('  Error:', errorMessage);
+      console.error('');
+      console.error('  This is an Actual Budget server issue, not an MCP server issue.');
+      console.error('  Solutions:');
+      console.error('  1. Update Actual Budget server to the latest version');
+      console.error('  2. Restart the Actual Budget service - migrations will auto-apply');
+      console.error('  3. If the issue persists, check Actual Budget server logs');
+      console.error('');
+      console.error('  See docs/easypanel-deployment.md for more details.');
+    } else {
+      console.error('Failed to initialize Actual Budget API:', error);
+    }
+
     initializationError = error instanceof Error ? error : new Error(String(error));
     throw initializationError;
   } finally {
