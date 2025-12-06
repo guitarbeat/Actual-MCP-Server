@@ -1,6 +1,6 @@
 /**
  * Property-based tests for ProtocolDetector
- * 
+ *
  * Feature: dual-transport-support, Property 10: Correct routing by method and path
  * Validates: Requirements 4.1, 4.2, 4.3, 4.5
  */
@@ -27,7 +27,7 @@ describe('ProtocolDetector', () => {
     /**
      * Feature: dual-transport-support, Property 10: Correct routing by method and path
      * Validates: Requirements 4.1, 4.2, 4.3, 4.5
-     * 
+     *
      * Property: For any request, the server SHALL route GET /sse to SSE handler,
      * POST /mcp to Streamable handler, and POST /messages to SSE message handler
      */
@@ -129,10 +129,11 @@ describe('ProtocolDetector', () => {
           fc.constantFrom('/unknown', '/api', '/health', '/'), // Various paths
           (method, path) => {
             // Skip valid combinations
+            const pathStr = path as string;
             if (
-              (method === 'GET' && path === '/sse') ||
-              (method === 'POST' && path === '/messages') ||
-              ((method === 'GET' || method === 'POST' || method === 'DELETE') && path === '/mcp')
+              (method === 'GET' && pathStr === '/sse') ||
+              (method === 'POST' && pathStr === '/messages') ||
+              ((method === 'GET' || method === 'POST' || method === 'DELETE') && pathStr === '/mcp')
             ) {
               return; // Skip valid combinations
             }

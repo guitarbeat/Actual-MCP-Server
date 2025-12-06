@@ -1,6 +1,7 @@
 # MCP SDK Transport Research
 
 ## Current SDK Version
+
 - `@modelcontextprotocol/sdk`: ^1.12.0
 
 ## Available Transports in SDK
@@ -29,6 +30,7 @@ Located at: `@modelcontextprotocol/sdk/dist/esm/server/streamableHttp.js`
 ### StreamableHTTPServerTransport Features
 
 **Key Capabilities:**
+
 - Implements MCP Streamable HTTP transport specification
 - Supports both SSE streaming and direct HTTP responses
 - Session management (stateful and stateless modes)
@@ -50,6 +52,7 @@ Located at: `@modelcontextprotocol/sdk/dist/esm/server/streamableHttp.js`
    - Simpler for single-request scenarios
 
 **Request Handling:**
+
 - GET requests: Establish SSE stream
 - POST requests: Send JSON-RPC messages
 - DELETE requests: Terminate sessions
@@ -60,11 +63,13 @@ Located at: `@modelcontextprotocol/sdk/dist/esm/server/streamableHttp.js`
 **Use SDK's StreamableHTTPServerTransport** ✅
 
 Import statement:
+
 ```typescript
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 ```
 
 Configuration options:
+
 ```typescript
 interface StreamableHTTPServerTransportOptions {
   sessionIdGenerator: (() => string) | undefined;
@@ -101,14 +106,14 @@ const transport = new StreamableHTTPServerTransport({
 
 ### Comparison with SSE Transport
 
-| Feature | SSEServerTransport | StreamableHTTPServerTransport |
-|---------|-------------------|------------------------------|
-| Protocol | HTTP+SSE (legacy) | Streamable HTTP (modern) |
-| Endpoints | GET /sse + POST /messages | GET/POST/DELETE /mcp |
-| Session Management | Manual | Built-in |
-| Resumability | No | Yes (with event store) |
-| DNS Protection | No | Yes (optional) |
-| Stateless Mode | No | Yes |
+| Feature            | SSEServerTransport        | StreamableHTTPServerTransport |
+| ------------------ | ------------------------- | ----------------------------- |
+| Protocol           | HTTP+SSE (legacy)         | Streamable HTTP (modern)      |
+| Endpoints          | GET /sse + POST /messages | GET/POST/DELETE /mcp          |
+| Session Management | Manual                    | Built-in                      |
+| Resumability       | No                        | Yes (with event store)        |
+| DNS Protection     | No                        | Yes (optional)                |
+| Stateless Mode     | No                        | Yes                           |
 
 ## Conclusion
 

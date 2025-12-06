@@ -13,8 +13,9 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import dotenv from 'dotenv';
-import express, { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
@@ -51,10 +52,10 @@ const {
   allowPositionals: true,
 });
 
-// Factory function to create a new MCP server instance
-// This is needed because each SSE connection requires its own server instance
-// Based on the working implementation, creating a new server per connection avoids conflicts
-// Initialize the MCP server
+// * Initialize the MCP server
+// * Note: According to MCP SDK best practices, a single server instance can handle
+// * multiple transport connections. Each transport gets its own session, but they
+// * all connect to the same server instance.
 const server = new Server(
   {
     name: 'Actual Budget',
@@ -204,14 +205,33 @@ async function main(): Promise<void> {
     try {
       await initActualApi();
     } catch (error) {
-      console.error('✗ Failed to initialize Actual Budget API:', error);
-      console.error('Server cannot start without Actual Budget connection');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStr = errorMessage.toLowerCase();
+
+      // * Migration errors are already handled in initActualApi with detailed guidance
+      // * For other errors, provide general guidance
+      if (!errorStr.includes('out of sync') && !errorStr.includes('out-of-sync') && !errorStr.includes('migration')) {
+        console.error('✗ Failed to initialize Actual Budget API:', error);
+        console.error('Server cannot start without Actual Budget connection');
+        console.error('');
+        console.error('Common causes:');
+        console.error('  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD');
+        console.error('  - Actual Budget server is not running or not accessible');
+        console.error('  - Network connectivity issues');
+        console.error('  - Invalid ACTUAL_BUDGET_SYNC_ID');
+      }
       process.exit(1);
     }
   }
 
   if (useSse) {
-    const app = express();
+    // * Use SDK's createMcpExpressApp for DNS rebinding protection and modern setup
+    // * Note: We bind to '0.0.0.0' for production deployments, so DNS rebinding protection
+    // * is handled via bearer authentication instead of host header validation
+    const app = createMcpExpressApp({
+      host: '0.0.0.0', // Allow binding to all interfaces for production
+      // DNS rebinding protection is handled via bearer authentication
+    });
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
     app.use((req: Request, res: Response, next: NextFunction) => {
@@ -228,10 +248,9 @@ async function main(): Promise<void> {
 
       next();
     });
-
-    app.use(express.json());
-    let transport: SSEServerTransport | null = null;
-    let transportReady = false;
+    // * Store SSE transports by session ID for proper session isolation
+    // * Each SSE connection gets its own transport instance
+    const sseTransports: Map<string, SSEServerTransport> = new Map();
 
     // * Favicon route - simple SVG favicon
     app.get('/favicon.ico', (req: Request, res: Response) => {
@@ -304,10 +323,6 @@ async function main(): Promise<void> {
     // If you need stateless HTTP transport, use /sse endpoint with SSE transport
 
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
-      // Store original console methods before overriding
-      const originalConsoleError = console.error;
-      const originalConsoleLog = console.log;
-
       const clientIp = req.ip || req.socket.remoteAddress;
       const sessionId = `sse-${randomUUID()}`;
 
@@ -316,46 +331,33 @@ async function main(): Promise<void> {
         `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
       );
 
-      transport = new SSEServerTransport('/messages', res);
-      transportReady = false;
+      // * Create a new SSE transport for this connection
+      // * Each SSE connection gets its own transport instance for proper session isolation
+      const transport = new SSEServerTransport('/messages', res);
+
+      // * Get the actual session ID from the transport
+      // * SSEServerTransport generates its own session ID internally
+      const actualSessionId = (transport as any).sessionId || sessionId;
+
+      // * Store transport by session ID
+      sseTransports.set(actualSessionId, transport);
+
+      // * Set up cleanup handler
+      transport.onclose = () => {
+        console.error(`[SSE] Transport closed for session ${sessionId}, cleaning up`);
+        sseTransports.delete(sessionId);
+      };
 
       console.error(`[SSE] Creating transport (session: ${sessionId})...`);
       server
         .connect(transport)
         .then(() => {
-          transportReady = true;
-          originalConsoleError(`[SSE] ✅ Transport connected successfully (session: ${sessionId})`);
-          // Override console methods to send via MCP logging
-          // Only override if transport is still ready
-          console.log = (message: string) => {
-            if (transportReady && transport) {
-              try {
-                server.sendLoggingMessage({ level: 'info', data: message });
-              } catch {
-                // If connection closed, use original console
-                originalConsoleLog(message);
-              }
-            } else {
-              originalConsoleLog(message);
-            }
-          };
-          console.error = (message: string) => {
-            if (transportReady && transport) {
-              try {
-                server.sendLoggingMessage({ level: 'error', data: message });
-              } catch {
-                // If connection closed, use original console
-                originalConsoleError(message);
-              }
-            } else {
-              originalConsoleError(message);
-            }
-          };
+          console.error(`[SSE] ✅ Transport connected successfully (session: ${sessionId})`);
         })
         .catch((error) => {
-          transportReady = false;
-          originalConsoleError('[SSE] ❌ Error connecting SSE transport:', error);
-          originalConsoleError('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
+          console.error('[SSE] ❌ Error connecting SSE transport:', error);
+          console.error('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
+          sseTransports.delete(sessionId);
           if (!res.headersSent) {
             res.status(500).json({ error: 'Failed to establish SSE connection' });
           }
@@ -363,31 +365,69 @@ async function main(): Promise<void> {
 
       // Clean up transport when connection closes
       res.on('close', () => {
-        // Mark as not ready first, then restore console methods
-        transportReady = false;
-        console.error = originalConsoleError;
-        console.log = originalConsoleLog;
-        originalConsoleError(`[SSE] Connection closed (session: ${sessionId})`);
-        if (transport) {
+        console.error(`[SSE] Connection closed (session: ${sessionId})`);
+        if (sseTransports.has(sessionId)) {
           try {
-            transport.close();
+            const t = sseTransports.get(sessionId);
+            if (t) {
+              t.close();
+            }
           } catch (_e) {
             // Ignore cleanup errors
           }
-          transport = null;
+          sseTransports.delete(sessionId);
         }
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
-      if (transport && transportReady) {
-        await transport.handlePostMessage(req, res, req.body);
-      } else {
-        res.status(503).json({
-          error: 'Transport not ready',
-          message: transport
-            ? 'Transport is initializing, please wait'
-            : 'Transport not initialized. Connect to /sse first.',
+      // * Extract session ID from request (SSE transport includes it in the request)
+      // * The SDK's SSEServerTransport handles session ID extraction internally
+      // * We need to get it from the transport that was created for this session
+      const sessionId = req.query.sessionId as string | undefined;
+
+      if (!sessionId) {
+        // * Try to find transport by checking all active transports
+        // * This is a fallback - ideally the client should include sessionId
+        const transportsArray = Array.from(sseTransports.entries());
+        if (transportsArray.length === 1) {
+          // * Only one active transport - use it
+          const [, transport] = transportsArray[0];
+          await transport.handlePostMessage(req, res, req.body);
+          return;
+        } else if (transportsArray.length === 0) {
+          res.status(503).json({
+            error: 'Transport not initialized',
+            message: 'No active SSE connections. Connect to /sse first.',
+          });
+          return;
+        } else {
+          res.status(400).json({
+            error: 'Session ID required',
+            message: 'Multiple active sessions detected. Please include sessionId parameter.',
+          });
+          return;
+        }
+      }
+
+      const transport = sseTransports.get(sessionId);
+      if (!transport) {
+        res.status(404).json({
+          error: 'Session not found',
+          message: `No active transport found for session: ${sessionId}`,
         });
+        return;
+      }
+
+      try {
+        await transport.handlePostMessage(req, res, req.body);
+      } catch (error) {
+        console.error(`[SSE] Error handling message for session ${sessionId}:`, error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: 'Internal server error',
+            message: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
       }
     });
 
@@ -398,15 +438,16 @@ async function main(): Promise<void> {
     // Handle all HTTP methods for /mcp endpoint (GET, POST, DELETE)
     app.all('/mcp', bearerAuth, async (req: Request, res: Response) => {
       const clientIp = req.ip || req.socket.remoteAddress;
-      const sessionId = req.headers['x-session-id'] || 'unknown';
-      
+      // * Use MCP standard header for session ID
+      const sessionId = req.headers['mcp-session-id'] || req.headers['x-session-id'] || 'unknown';
+
       console.error(`[MCP] ${req.method} request from ${clientIp} (session: ${sessionId})`);
-      
+
       try {
         await streamableHandler.handleRequest(req, res, req.body);
       } catch (error) {
         console.error(`[MCP] Error handling request (session: ${sessionId}):`, error);
-        
+
         if (!res.headersSent) {
           // Determine appropriate error code
           let errorCode = -32004; // Internal error
@@ -415,7 +456,7 @@ async function main(): Promise<void> {
 
           if (error instanceof Error) {
             errorMessage = error.message;
-            
+
             // Map specific errors to MCP error codes
             if (error.message.includes('session')) {
               errorCode = -32001; // Invalid session

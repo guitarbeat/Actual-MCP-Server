@@ -12,11 +12,7 @@ console.log('═'.repeat(60));
 
 // Check environment variables
 console.log('\n📋 Environment Variables:');
-const requiredVars = [
-  'ACTUAL_SERVER_URL',
-  'ACTUAL_PASSWORD',
-  'ACTUAL_BUDGET_SYNC_ID',
-] as const;
+const requiredVars = ['ACTUAL_SERVER_URL', 'ACTUAL_PASSWORD', 'ACTUAL_BUDGET_SYNC_ID'] as const;
 
 const optionalVars = ['BEARER_TOKEN', 'PORT', 'DEBUG_PERFORMANCE'] as const;
 
@@ -61,10 +57,10 @@ console.log('\n🟢 Node.js Version:');
 const nodeVersion = process.version;
 const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0], 10);
 console.log(`  Version: ${nodeVersion}`);
-if (majorVersion >= 20) {
-  console.log(`  ✅ Node.js version is compatible (>= 20.0.0)`);
+if (majorVersion >= 22) {
+  console.log(`  ✅ Node.js version is compatible (>= 22.0.0)`);
 } else {
-  console.log(`  ❌ Node.js version too old (requires >= 20.0.0)`);
+  console.log(`  ❌ Node.js version too old (requires >= 22.0.0)`);
 }
 
 // Check port
@@ -141,8 +137,8 @@ if (!allRequiredPresent) {
 if (!existsSync(buildPath)) {
   console.log('  2. Run "npm run build" to create build artifacts');
 }
-if (majorVersion < 20) {
-  console.log('  3. Ensure Node.js >= 20.0.0 is available');
+if (majorVersion < 22) {
+  console.log('  3. Ensure Node.js >= 22.0.0 is available');
 }
 console.log('  4. Check Easy Panel logs for runtime errors');
 console.log('  5. Verify port is exposed and accessible');

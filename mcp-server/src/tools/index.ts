@@ -165,7 +165,7 @@ export function getAvailableTools(enableWrite: boolean, enableNini: boolean): To
  * @param enableWrite - Whether write operations are enabled
  * @param enableNini - Whether nini (advanced) features are enabled
  */
-export const setupTools = (server: Server, enableWrite: boolean, enableNini: boolean = false): void => {
+export const setupTools = (server: Server, enableWrite: boolean, enableNini = false): void => {
   const availableTools = getAvailableTools(enableWrite, enableNini);
 
   /**

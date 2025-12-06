@@ -1,6 +1,6 @@
 /**
  * Property-based tests for StreamableHTTPHandler
- * 
+ *
  * Feature: dual-transport-support, Property 1: Streamable HTTP uses chunked transfer encoding
  * Validates: Requirements 1.2
  */
@@ -13,22 +13,22 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Writable } from 'node:stream';
 
 // Mock ServerResponse for testing
-class MockServerResponse extends Writable implements Partial<ServerResponse> {
+class MockServerResponse extends Writable {
   statusCode = 200;
   headersSent = false;
   private headers: Map<string, string | string[] | number> = new Map();
   private chunks: Buffer[] = [];
 
-  setHeader(name: string, value: string | string[] | number): this {
+  setHeader(name: string, value: string | string[] | number): ServerResponse {
     this.headers.set(name.toLowerCase(), value);
-    return this;
+    return this as unknown as ServerResponse;
   }
 
   getHeader(name: string): string | string[] | number | undefined {
     return this.headers.get(name.toLowerCase());
   }
 
-  writeHead(statusCode: number, headers?: Record<string, string | string[]>): this {
+  writeHead(statusCode: number, headers?: Record<string, string | string[]>): ServerResponse {
     this.statusCode = statusCode;
     this.headersSent = true;
     if (headers) {
@@ -36,7 +36,7 @@ class MockServerResponse extends Writable implements Partial<ServerResponse> {
         this.setHeader(key, value);
       });
     }
-    return this;
+    return this as unknown as ServerResponse;
   }
 
   _write(chunk: Buffer | string, encoding: string, callback: (error?: Error | null) => void): void {
@@ -51,7 +51,7 @@ class MockServerResponse extends Writable implements Partial<ServerResponse> {
   end(chunk?: unknown, encoding?: unknown, callback?: unknown): this {
     if (chunk) {
       if (typeof chunk === 'string') {
-        this.chunks.push(Buffer.from(chunk, encoding as BufferEncoding || 'utf8'));
+        this.chunks.push(Buffer.from(chunk, (encoding as BufferEncoding) || 'utf8'));
       } else if (Buffer.isBuffer(chunk)) {
         this.chunks.push(chunk);
       }
@@ -84,36 +84,18 @@ function createMockRequest(method: string, url: string, body?: unknown): Incomin
 }
 
 describe('StreamableHTTPHandler', () => {
-  let server: Server;
-  let handler: StreamableHTTPHandler;
-
   beforeEach(() => {
-    // Create a minimal MCP server for testing
-    server = new Server(
-      {
-        name: 'Test Server',
-        version: '1.0.0',
-      },
-      {
-        capabilities: {
-          resources: {},
-          tools: {},
-          prompts: {},
-        },
-      }
-    );
-
-    handler = new StreamableHTTPHandler(server);
+    // Test handlers create their own server instances
   });
 
   describe('Property 1: Streamable HTTP uses chunked transfer encoding', () => {
     /**
      * Feature: dual-transport-support, Property 1: Streamable HTTP uses chunked transfer encoding
      * Validates: Requirements 1.2
-     * 
+     *
      * Property: For any valid MCP message sent to POST /mcp, the response SHALL use
      * HTTP chunked transfer encoding (Transfer-Encoding: chunked header present)
-     * 
+     *
      * Note: The SDK's StreamableHTTPServerTransport handles chunked encoding internally.
      * We verify the handler correctly delegates to the transport.
      */
@@ -135,7 +117,7 @@ describe('StreamableHTTPHandler', () => {
 
               // Handler should be created successfully
               expect(testHandler).toBeDefined();
-              expect(testHandler.isTransportConnected()).toBe(false);
+              expect(testHandler.getActiveSessionCount()).toBe(0);
             }
 
             // All handlers should be distinct
@@ -161,17 +143,17 @@ describe('StreamableHTTPHandler', () => {
             const mockReq = createMockRequest(method, '/mcp');
 
             // Initially not connected
-            expect(testHandler.isTransportConnected()).toBe(false);
+            expect(testHandler.getActiveSessionCount()).toBe(0);
 
             // Handle request (this will connect the transport)
             await testHandler.handleRequest(mockReq, mockRes);
 
             // Should be connected after handling request
-            expect(testHandler.isTransportConnected()).toBe(true);
+            expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
 
             // Cleanup
             await testHandler.cleanup();
-            expect(testHandler.isTransportConnected()).toBe(false);
+            expect(testHandler.getActiveSessionCount()).toBe(0);
           }
         ),
         { numRuns: 100 }
@@ -196,7 +178,7 @@ describe('StreamableHTTPHandler', () => {
               await testHandler.handleRequest(mockReq, mockRes);
 
               // Should remain connected after first request
-              expect(testHandler.isTransportConnected()).toBe(true);
+              expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
             }
 
             // Cleanup
@@ -223,7 +205,7 @@ describe('StreamableHTTPHandler', () => {
             const mockReq = createMockRequest('POST', '/mcp');
             await testHandler.handleRequest(mockReq, mockRes);
 
-            expect(testHandler.isTransportConnected()).toBe(true);
+            expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
 
             // Call cleanup multiple times (should be idempotent)
             for (let i = 0; i < numCleanups; i++) {
@@ -231,7 +213,7 @@ describe('StreamableHTTPHandler', () => {
             }
 
             // Should be disconnected after cleanup
-            expect(testHandler.isTransportConnected()).toBe(false);
+            expect(testHandler.getActiveSessionCount()).toBe(0);
           }
         ),
         { numRuns: 100 }
@@ -249,9 +231,14 @@ describe('StreamableHTTPHandler', () => {
             );
             const testHandler = new StreamableHTTPHandler(testServer);
 
-            const transport = testHandler.getTransport();
-            expect(transport).toBeDefined();
-            expect(typeof transport.handleRequest).toBe('function');
+            // * getTransport() now requires a sessionId
+            // * For this test, we'll verify the method exists and works with a session
+            const testSessionId = 'test-session-id';
+            const transport = testHandler.getTransport(testSessionId);
+            // Transport will be undefined if session doesn't exist (expected for new handler)
+            expect(transport).toBeUndefined();
+            // Verify method exists
+            expect(typeof testHandler.getTransport).toBe('function');
           }
         ),
         { numRuns: 100 }
@@ -271,7 +258,7 @@ describe('StreamableHTTPHandler', () => {
 
             // Create a mock response that will track if error response was sent
             const mockRes = new MockServerResponse() as unknown as ServerResponse;
-            
+
             // Create an invalid request (missing required properties)
             const invalidReq = {
               method: undefined,
