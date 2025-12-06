@@ -12,24 +12,24 @@ import { ServerResponse } from 'node:http';
 import { Writable } from 'node:stream';
 
 // Mock ServerResponse for testing
-class MockServerResponse extends Writable implements Partial<ServerResponse> {
+class MockServerResponse extends Writable {
   statusCode = 200;
   headersSent = false;
   private headers: Map<string, string | string[]> = new Map();
 
-  setHeader(name: string, value: string | string[]): this {
+  setHeader(name: string, value: string | string[]): ServerResponse {
     this.headers.set(name, value);
-    return this;
+    return this as unknown as ServerResponse;
   }
 
   getHeader(name: string): string | string[] | undefined {
     return this.headers.get(name);
   }
 
-  writeHead(statusCode: number): this {
+  writeHead(statusCode: number): ServerResponse {
     this.statusCode = statusCode;
     this.headersSent = true;
-    return this;
+    return this as unknown as ServerResponse;
   }
 
   _write(chunk: unknown, encoding: string, callback: (error?: Error | null) => void): void {

@@ -118,7 +118,7 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(callToolHandler).toBeDefined();
 
       // Simulate multiple tool calls
-      const tools = getAvailableTools(false);
+      const tools = getAvailableTools(false, false);
 
       // Verify read-only tools are available
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);

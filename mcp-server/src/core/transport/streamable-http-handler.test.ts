@@ -13,22 +13,22 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Writable } from 'node:stream';
 
 // Mock ServerResponse for testing
-class MockServerResponse extends Writable implements Partial<ServerResponse> {
+class MockServerResponse extends Writable {
   statusCode = 200;
   headersSent = false;
   private headers: Map<string, string | string[] | number> = new Map();
   private chunks: Buffer[] = [];
 
-  setHeader(name: string, value: string | string[] | number): this {
+  setHeader(name: string, value: string | string[] | number): ServerResponse {
     this.headers.set(name.toLowerCase(), value);
-    return this;
+    return this as unknown as ServerResponse;
   }
 
   getHeader(name: string): string | string[] | number | undefined {
     return this.headers.get(name.toLowerCase());
   }
 
-  writeHead(statusCode: number, headers?: Record<string, string | string[]>): this {
+  writeHead(statusCode: number, headers?: Record<string, string | string[]>): ServerResponse {
     this.statusCode = statusCode;
     this.headersSent = true;
     if (headers) {
@@ -36,7 +36,7 @@ class MockServerResponse extends Writable implements Partial<ServerResponse> {
         this.setHeader(key, value);
       });
     }
-    return this;
+    return this as unknown as ServerResponse;
   }
 
   _write(chunk: Buffer | string, encoding: string, callback: (error?: Error | null) => void): void {
