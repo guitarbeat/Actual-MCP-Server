@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import api from '@actual-app/api';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from '../../actual-api.js';
 import { cacheService } from '../cache/cache-service.js';
-import api from '@actual-app/api';
 
 // Mock the @actual-app/api module
 vi.mock('@actual-app/api', () => ({
@@ -36,7 +36,11 @@ describe('Cache Invalidation Tests', () => {
 
     // Mock successful API initialization
     vi.mocked(api.getBudgets).mockResolvedValue([
-      { id: 'test-budget', cloudFileId: 'test-cloud-id', name: 'Test Budget' } as any,
+      {
+        id: 'test-budget',
+        cloudFileId: 'test-cloud-id',
+        name: 'Test Budget',
+      } as any,
     ]);
     vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
   });
@@ -141,7 +145,9 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate categories cache after deleteCategory', async () => {
       // Setup
-      vi.mocked(api.deleteCategory).mockResolvedValue({ error: undefined } as any);
+      vi.mocked(api.deleteCategory).mockResolvedValue({
+        error: undefined,
+      } as any);
       cacheService.set('categories:all', [{ id: 'category-1' }]);
 
       // Execute

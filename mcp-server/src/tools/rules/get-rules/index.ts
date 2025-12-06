@@ -2,10 +2,10 @@
 // GET RULES TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
+import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
 // import type { Rule } from '../../../types.js';
 import { fetchAllRules } from '../../../core/data/fetch-rules.js';
-import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 
 export const schema = {
   name: 'get-rules',

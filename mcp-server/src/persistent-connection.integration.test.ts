@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { setupTools } from './tools/index.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from './actual-api.js';
+import { setupTools } from './tools/index.js';
 
 // Mock the actual-api module
 vi.mock('./actual-api.js', async () => {
@@ -86,7 +86,7 @@ describe('Persistent API Connection - Integration Tests', () => {
       if (!signalHandlers.has(signal)) {
         signalHandlers.set(signal, []);
       }
-      signalHandlers.get(signal)!.push(handler);
+      signalHandlers.get(signal)?.push(handler);
       return process;
     }) as typeof process.on;
 
@@ -107,24 +107,30 @@ describe('Persistent API Connection - Integration Tests', () => {
       expect(callToolHandler).toBeDefined();
 
       // Execute 5 consecutive tool calls
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      await callToolHandler!({
-        params: { name: 'get-transactions', arguments: { accountId: 'test-account-1' } },
+      await callToolHandler?.({
+        params: {
+          name: 'get-transactions',
+          arguments: { accountId: 'test-account-1' },
+        },
       });
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-grouped-categories', arguments: {} },
       });
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      await callToolHandler!({
-        params: { name: 'get-transactions', arguments: { accountId: 'test-account-2' } },
+      await callToolHandler?.({
+        params: {
+          name: 'get-transactions',
+          arguments: { accountId: 'test-account-2' },
+        },
       });
 
       // Verify shutdownActualApi was NOT called during any of the tool executions
@@ -137,15 +143,18 @@ describe('Persistent API Connection - Integration Tests', () => {
       expect(callToolHandler).toBeDefined();
 
       // Execute 3 consecutive tool calls and verify all succeed
-      const result1 = await callToolHandler!({
+      const result1 = await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      const result2 = await callToolHandler!({
-        params: { name: 'get-transactions', arguments: { accountId: 'test-account' } },
+      const result2 = await callToolHandler?.({
+        params: {
+          name: 'get-transactions',
+          arguments: { accountId: 'test-account' },
+        },
       });
 
-      const result3 = await callToolHandler!({
+      const result3 = await callToolHandler?.({
         params: { name: 'get-grouped-categories', arguments: {} },
       });
 
@@ -172,7 +181,7 @@ describe('Persistent API Connection - Integration Tests', () => {
       ];
 
       for (const operation of operations) {
-        const result = await callToolHandler!({
+        const result = await callToolHandler?.({
           params: operation,
         });
 
@@ -199,12 +208,15 @@ describe('Persistent API Connection - Integration Tests', () => {
 
       // Execute some operations
       expect(callToolHandler).toBeDefined();
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      await callToolHandler!({
-        params: { name: 'get-transactions', arguments: { accountId: 'test-account' } },
+      await callToolHandler?.({
+        params: {
+          name: 'get-transactions',
+          arguments: { accountId: 'test-account' },
+        },
       });
 
       // Verify shutdownActualApi was NOT called during operation
@@ -217,16 +229,19 @@ describe('Persistent API Connection - Integration Tests', () => {
       expect(callToolHandler).toBeDefined();
 
       // Execute multiple operations
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-grouped-categories', arguments: {} },
       });
 
-      await callToolHandler!({
-        params: { name: 'get-transactions', arguments: { accountId: 'test-account' } },
+      await callToolHandler?.({
+        params: {
+          name: 'get-transactions',
+          arguments: { accountId: 'test-account' },
+        },
       });
 
       // Verify shutdownActualApi was NOT called during any operation
@@ -286,15 +301,15 @@ describe('Persistent API Connection - Integration Tests', () => {
       // 3. Execute multiple operations during server lifetime
       expect(callToolHandler).toBeDefined();
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-transactions', arguments: { accountId: 'acc-1' } },
       });
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-grouped-categories', arguments: {} },
       });
 

@@ -1,4 +1,4 @@
-import type { Transaction, MonthData } from '../../core/types/index.js';
+import type { MonthData, Transaction } from '../../core/types/index.js';
 
 export class MonthlySummaryTransactionAggregator {
   aggregate(

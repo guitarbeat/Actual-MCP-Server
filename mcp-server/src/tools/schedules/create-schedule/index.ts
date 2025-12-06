@@ -2,12 +2,12 @@
 // CREATE SCHEDULE TOOL
 // ----------------------------
 
-import { success, errorFromCatch, MCPResponse } from '../../../core/response/index.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import type { ToolInput } from '../../../types.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
 import type { ScheduleData } from '../../manage-entity/types.js';
 import { ScheduleDataSchema } from '../../manage-entity/types.js';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { ToolInput } from '../../../types.js';
 
 export const schema = {
   name: 'create-schedule',

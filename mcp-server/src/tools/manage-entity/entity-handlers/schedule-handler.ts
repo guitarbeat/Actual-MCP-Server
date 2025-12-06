@@ -2,13 +2,13 @@
 // SCHEDULE ENTITY HANDLER
 // ----------------------------
 
-import { cacheService } from '../../../core/cache/cache-service.js';
 import { createSchedule, deleteSchedule, updateSchedule } from '../../../actual-api.js';
+import { cacheService } from '../../../core/cache/cache-service.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
-import type { EntityHandler, Operation } from './base-handler.js';
+import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { ScheduleData, ScheduleUpdateData } from '../types.js';
 import { ScheduleDataSchema, ScheduleUpdateDataSchema } from '../types.js';
-import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
+import type { EntityHandler, Operation } from './base-handler.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
 

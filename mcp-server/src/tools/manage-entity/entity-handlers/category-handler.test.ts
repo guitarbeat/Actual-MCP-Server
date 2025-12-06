@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CategoryHandler } from './category-handler.js';
+import { randomUUID } from 'node:crypto';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from '../../../actual-api.js';
-import { randomUUID } from 'crypto';
+import { CategoryHandler } from './category-handler.js';
 
 vi.mock('../../../actual-api.js');
 
@@ -23,7 +23,10 @@ describe('CategoryHandler', () => {
 
       const result = await categoryHandler.create(data);
 
-      expect(actualApi.createCategory).toHaveBeenCalledWith({ name: 'Groceries', group_id: groupId });
+      expect(actualApi.createCategory).toHaveBeenCalledWith({
+        name: 'Groceries',
+        group_id: groupId,
+      });
       expect(result).toBe(expectedId);
     });
   });
@@ -36,7 +39,10 @@ describe('CategoryHandler', () => {
 
       await categoryHandler.update(id, data);
 
-      expect(actualApi.updateCategory).toHaveBeenCalledWith(id, { name: 'Groceries', group_id: groupId });
+      expect(actualApi.updateCategory).toHaveBeenCalledWith(id, {
+        name: 'Groceries',
+        group_id: groupId,
+      });
     });
   });
 

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handler } from './index.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TextContentItem } from '../../../core/response/types.js';
+import { handler } from './index.js';
 
 vi.mock('../../../actual-api.js', () => ({
   getSchedules: vi.fn(),

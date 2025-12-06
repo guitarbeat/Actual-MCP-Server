@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handler } from './index.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BalanceHistoryArgs } from '../../core/types/index.js';
+import { handler } from './index.js';
 
 // Mock all dependencies
 vi.mock('../../actual-api.js', async () => {
@@ -40,16 +40,28 @@ vi.mock('../../core/utils/account-selector.js', () => ({
   resolveAccountSelection: vi.fn(),
 }));
 
-import { initActualApi, getAccountBalance } from '../../actual-api.js';
-import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
-import { fetchTransactionsForAccount, fetchAllTransactions } from '../../core/data/fetch-transactions.js';
-import { resolveAccountSelection } from '../../core/utils/account-selector.js';
+import { getAccountBalance, initActualApi } from '../../actual-api.js';
 import { cacheService } from '../../core/cache/cache-service.js';
+import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
+import { fetchAllTransactions, fetchTransactionsForAccount } from '../../core/data/fetch-transactions.js';
+import { resolveAccountSelection } from '../../core/utils/account-selector.js';
 
 describe('balance-history tool integration', () => {
   const mockAccounts = [
-    { id: 'acc1', name: 'Checking', type: 'checking', offbudget: false, closed: false },
-    { id: 'acc2', name: 'Savings', type: 'savings', offbudget: false, closed: false },
+    {
+      id: 'acc1',
+      name: 'Checking',
+      type: 'checking',
+      offbudget: false,
+      closed: false,
+    },
+    {
+      id: 'acc2',
+      name: 'Savings',
+      type: 'savings',
+      offbudget: false,
+      closed: false,
+    },
   ];
 
   const mockTransactions = [
@@ -89,7 +101,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should execute successfully and return markdown report', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
 
       const result = await handler(args);
 
@@ -102,7 +118,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should use cached data fetchers', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
 
       await handler(args);
 
@@ -112,7 +132,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should handle account-specific queries', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
 
       const result = await handler(args);
 
@@ -122,7 +146,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should fetch balances in parallel for multiple accounts', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
       vi.mocked(resolveAccountSelection).mockResolvedValue({
         accountId: undefined,
         account: undefined,
@@ -144,7 +172,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should execute successfully without cache', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
 
       const result = await handler(args);
 
@@ -153,7 +185,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should call API directly when cache is disabled', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
 
       await handler(args);
 
@@ -170,7 +206,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should maintain consistent response structure', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 6, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 6,
+        includeOffBudget: false,
+      };
 
       const result = await handler(args);
 
@@ -182,7 +222,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should include balance history in report', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
 
       const result = await handler(args);
       const content0 = result.content[0];
@@ -193,7 +237,11 @@ describe('balance-history tool integration', () => {
     });
 
     it('should handle single account balance history', async () => {
-      const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
+      const args: BalanceHistoryArgs = {
+        accountId: 'Checking',
+        months: 3,
+        includeOffBudget: false,
+      };
 
       const result = await handler(args);
       const content0 = result.content[0];

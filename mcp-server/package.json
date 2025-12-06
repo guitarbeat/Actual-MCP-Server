@@ -36,6 +36,7 @@
     "quality": "npm run lint && npm run format:check && npm run type-check",
     "validate-tool-names": "tsx scripts/validate-tool-names.ts",
     "check-deployment": "tsx scripts/check-deployment.ts",
+    "auto-fix": "bash scripts/auto-fix-all.sh",
     "prepare": "husky",
     "prepublishOnly": "npm run build"
   },

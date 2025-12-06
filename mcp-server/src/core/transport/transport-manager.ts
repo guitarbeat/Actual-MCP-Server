@@ -5,10 +5,10 @@
  * Provides connection tracking, cleanup, and lifecycle management.
  */
 
+import { randomUUID } from 'node:crypto';
+import type { ServerResponse } from 'node:http';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
 
 /**
  * Transport type enumeration

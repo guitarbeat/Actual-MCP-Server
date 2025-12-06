@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { RuleHandler } from './rule-handler.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from '../../../actual-api.js';
+import { RuleHandler } from './rule-handler.js';
 
 vi.mock('../../../actual-api.js');
 
@@ -20,7 +20,11 @@ describe('RuleHandler', () => {
         conditionsOp: 'and' as const,
       };
       const expectedId = 'new-rule-id';
-      vi.mocked(actualApi.createRule).mockResolvedValue({ id: expectedId, ...data, stage: null } as any);
+      vi.mocked(actualApi.createRule).mockResolvedValue({
+        id: expectedId,
+        ...data,
+        stage: null,
+      } as any);
 
       const result = await ruleHandler.create(data);
 
@@ -37,7 +41,11 @@ describe('RuleHandler', () => {
         actions: [{ field: 'category' as const, op: 'set' as const, value: 'test' }],
         conditionsOp: 'and' as const,
       };
-      vi.mocked(actualApi.updateRule).mockResolvedValue({ id, ...data, stage: null } as any);
+      vi.mocked(actualApi.updateRule).mockResolvedValue({
+        id,
+        ...data,
+        stage: null,
+      } as any);
 
       await ruleHandler.update(id, data);
 
