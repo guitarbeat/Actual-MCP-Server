@@ -2,7 +2,7 @@
 # Use this if Nixpacks doesn't auto-detect Node.js version correctly
 
 # ---- Builder Stage ----
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ COPY . ./
 RUN npm run build
 
 # ---- Release Stage ----
-FROM node:20-alpine AS release
+FROM node:22-alpine AS release
 
 WORKDIR /app
 
