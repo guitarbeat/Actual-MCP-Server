@@ -1,6 +1,6 @@
 /**
  * Property-based tests for StreamableHTTPHandler
- * 
+ *
  * Feature: dual-transport-support, Property 1: Streamable HTTP uses chunked transfer encoding
  * Validates: Requirements 1.2
  */
@@ -51,7 +51,7 @@ class MockServerResponse extends Writable {
   end(chunk?: unknown, encoding?: unknown, callback?: unknown): this {
     if (chunk) {
       if (typeof chunk === 'string') {
-        this.chunks.push(Buffer.from(chunk, encoding as BufferEncoding || 'utf8'));
+        this.chunks.push(Buffer.from(chunk, (encoding as BufferEncoding) || 'utf8'));
       } else if (Buffer.isBuffer(chunk)) {
         this.chunks.push(chunk);
       }
@@ -84,36 +84,18 @@ function createMockRequest(method: string, url: string, body?: unknown): Incomin
 }
 
 describe('StreamableHTTPHandler', () => {
-  let server: Server;
-  let handler: StreamableHTTPHandler;
-
   beforeEach(() => {
-    // Create a minimal MCP server for testing
-    server = new Server(
-      {
-        name: 'Test Server',
-        version: '1.0.0',
-      },
-      {
-        capabilities: {
-          resources: {},
-          tools: {},
-          prompts: {},
-        },
-      }
-    );
-
-    handler = new StreamableHTTPHandler(server);
+    // Test handlers create their own server instances
   });
 
   describe('Property 1: Streamable HTTP uses chunked transfer encoding', () => {
     /**
      * Feature: dual-transport-support, Property 1: Streamable HTTP uses chunked transfer encoding
      * Validates: Requirements 1.2
-     * 
+     *
      * Property: For any valid MCP message sent to POST /mcp, the response SHALL use
      * HTTP chunked transfer encoding (Transfer-Encoding: chunked header present)
-     * 
+     *
      * Note: The SDK's StreamableHTTPServerTransport handles chunked encoding internally.
      * We verify the handler correctly delegates to the transport.
      */
@@ -276,7 +258,7 @@ describe('StreamableHTTPHandler', () => {
 
             // Create a mock response that will track if error response was sent
             const mockRes = new MockServerResponse() as unknown as ServerResponse;
-            
+
             // Create an invalid request (missing required properties)
             const invalidReq = {
               method: undefined,

@@ -14,6 +14,7 @@ All sessions use prefixed UUIDs for easy identification:
 - **Streamable HTTP**: `http-{uuid}` - e.g., `http-7a3b9c1d-4e2f-8a6b-9d1c-3f5e7b8a9c2d`
 
 This ensures:
+
 - ✅ Unique session IDs across all transport types
 - ✅ Easy debugging by identifying transport type from session ID
 - ✅ Consistent session tracking in logs
@@ -24,8 +25,8 @@ The `TransportManager` maintains a unified view of all active sessions:
 
 ```typescript
 interface TransportConnection {
-  id: string;              // Prefixed UUID
-  type: TransportType;     // SSE or STREAMABLE_HTTP
+  id: string; // Prefixed UUID
+  type: TransportType; // SSE or STREAMABLE_HTTP
   createdAt: Date;
   lastActivity: Date;
   isActive: boolean;
@@ -37,14 +38,14 @@ interface TransportConnection {
 
 ### HTTP-Level Errors
 
-| Status Code | Error Type | MCP Code | Description |
-|-------------|-----------|----------|-------------|
-| 401 | Authentication Error | -32000 | Missing or invalid bearer token |
-| 400 | Invalid Session | -32001 | Session ID not found or invalid |
-| 404 | Method Not Found | -32002 | Unknown endpoint or method |
-| 400 | Invalid Parameters | -32003 | Missing or invalid request parameters |
-| 500 | Internal Error | -32004 | Server-side exception |
-| 400 | Parse Error | -32005 | Invalid JSON in request body |
+| Status Code | Error Type           | MCP Code | Description                           |
+| ----------- | -------------------- | -------- | ------------------------------------- |
+| 401         | Authentication Error | -32000   | Missing or invalid bearer token       |
+| 400         | Invalid Session      | -32001   | Session ID not found or invalid       |
+| 404         | Method Not Found     | -32002   | Unknown endpoint or method            |
+| 400         | Invalid Parameters   | -32003   | Missing or invalid request parameters |
+| 500         | Internal Error       | -32004   | Server-side exception                 |
+| 400         | Parse Error          | -32005   | Invalid JSON in request body          |
 
 ### Authentication Error Responses
 
@@ -78,11 +79,13 @@ All errors follow a consistent JSON structure:
 ### Transport-Specific Error Handling
 
 **SSE Transport:**
+
 - Errors logged with session context
 - Connection closed gracefully
 - Console methods restored on cleanup
 
 **Streamable HTTP Transport:**
+
 - Errors caught and mapped to appropriate MCP error codes
 - Session ID included in error response when available
 - Graceful fallback if response headers already sent
@@ -142,6 +145,7 @@ if (error.message.includes('session')) {
 ## Testing
 
 Error handling is validated through:
+
 - 26 property-based tests with 2,600+ iterations
 - Authentication middleware tests
 - Protocol detection tests
@@ -150,6 +154,7 @@ Error handling is validated through:
 ## Future Enhancements
 
 Potential improvements:
+
 - Rate limiting per session
 - Session expiration and cleanup
 - Detailed error metrics and monitoring

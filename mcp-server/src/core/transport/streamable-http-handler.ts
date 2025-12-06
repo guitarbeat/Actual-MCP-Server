@@ -1,6 +1,6 @@
 /**
  * Streamable HTTP Handler
- * 
+ *
  * Handles Streamable HTTP transport requests using the MCP SDK's StreamableHTTPServerTransport.
  * Manages per-session transport instances for proper session isolation.
  */
@@ -25,13 +25,13 @@ export class StreamableHTTPHandler {
 
   /**
    * Handle an incoming Streamable HTTP request
-   * 
+   *
    * This method:
    * 1. Checks for existing session transport or creates a new one for initialize requests
    * 2. Connects the transport to the MCP server
    * 3. Processes the request through the transport
    * 4. Manages session lifecycle and cleanup
-   * 
+   *
    * Follows MCP SDK best practices: one transport per session.
    */
   async handleRequest(req: IncomingMessage, res: ServerResponse, parsedBody?: unknown): Promise<void> {
@@ -153,7 +153,7 @@ export class StreamableHTTPHandler {
    * Stream a response back to the client
    * Note: This is handled internally by the transport
    */
-  streamResponse(response: unknown): void {
+  streamResponse(_response: unknown): void {
     // The StreamableHTTPServerTransport handles response streaming internally
     // This method is here for interface compatibility
     console.log('[StreamableHTTPHandler] Streaming response');

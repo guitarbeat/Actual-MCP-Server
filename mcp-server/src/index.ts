@@ -210,11 +210,7 @@ async function main(): Promise<void> {
 
       // * Migration errors are already handled in initActualApi with detailed guidance
       // * For other errors, provide general guidance
-      if (
-        !errorStr.includes('out of sync') &&
-        !errorStr.includes('out-of-sync') &&
-        !errorStr.includes('migration')
-      ) {
+      if (!errorStr.includes('out of sync') && !errorStr.includes('out-of-sync') && !errorStr.includes('migration')) {
         console.error('✗ Failed to initialize Actual Budget API:', error);
         console.error('Server cannot start without Actual Budget connection');
         console.error('');
@@ -429,7 +425,7 @@ async function main(): Promise<void> {
         await streamableHandler.handleRequest(req, res, req.body);
       } catch (error) {
         console.error(`[MCP] Error handling request (session: ${sessionId}):`, error);
-        
+
         if (!res.headersSent) {
           // Determine appropriate error code
           let errorCode = -32004; // Internal error
@@ -438,7 +434,7 @@ async function main(): Promise<void> {
 
           if (error instanceof Error) {
             errorMessage = error.message;
-            
+
             // Map specific errors to MCP error codes
             if (error.message.includes('session')) {
               errorCode = -32001; // Invalid session

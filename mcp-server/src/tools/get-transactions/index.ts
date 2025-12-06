@@ -44,21 +44,22 @@ export const schema = {
 export async function handler(args: GetTransactionsArgs): Promise<CallToolResult> {
   try {
     const input = new GetTransactionsInputParser().parse(args);
-    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit, excludeTransfers } = input;
+    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit, excludeTransfers } =
+      input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
     let resolvedAccountId: string;
     let transactions: any[];
-    
+
     // Handle "all" accounts
     if (accountId.toLowerCase() === 'all') {
       const { fetchAllAccounts } = await import('../../core/data/fetch-accounts.js');
       const accounts = await fetchAllAccounts();
-      const onBudgetAccounts = accounts.filter(acc => !acc.offbudget && !acc.closed);
-      
+      const onBudgetAccounts = accounts.filter((acc) => !acc.offbudget && !acc.closed);
+
       // Fetch transactions from all on-budget accounts
       const allTransactions = await Promise.all(
-        onBudgetAccounts.map(acc => 
+        onBudgetAccounts.map((acc) =>
           new GetTransactionsDataFetcher().fetch(acc.id, start, end, { accountIdIsResolved: true })
         )
       );
@@ -71,7 +72,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
         accountIdIsResolved: true,
       });
     }
-    
+
     let filtered = [...transactions];
 
     if (minAmount !== undefined) {
@@ -125,7 +126,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     let accountSummary: { accountName: string; count: number }[] | undefined;
     if (accountId.toLowerCase() === 'all') {
       const accountCounts = new Map<string, number>();
-      filtered.forEach(t => {
+      filtered.forEach((t) => {
         const name = t.account_name || t.account || 'Unknown';
         accountCounts.set(name, (accountCounts.get(name) || 0) + 1);
       });

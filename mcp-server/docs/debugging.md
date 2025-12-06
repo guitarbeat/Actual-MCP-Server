@@ -7,16 +7,19 @@ A comprehensive guide to debugging the Actual Budget MCP Server.
 The MCP ecosystem provides several tools for debugging at different levels:
 
 ### MCP Inspector
+
 - **Interactive debugging interface** - Test tools, resources, and prompts directly
 - **Direct server testing** - Bypass client applications for isolated testing
 - **Real-time message inspection** - See all MCP protocol messages
 
 ### Claude Desktop Developer Tools
+
 - **Integration testing** - Test server behavior in production environment
 - **Log collection** - Access detailed server logs
 - **Chrome DevTools integration** - Inspect client-side behavior
 
 ### Server Logging
+
 - **Structured logging** - Consistent log format with context
 - **Error tracking** - Comprehensive error logging with stack traces
 - **Performance monitoring** - Track operation timing and resource usage
@@ -36,6 +39,7 @@ npm run inspector:custom
 ```
 
 The inspector will start:
+
 - **Client UI**: http://localhost:6274
 - **Proxy Server**: http://localhost:6277
 
@@ -53,6 +57,7 @@ tail -n 20 -F ~/Library/Logs/Claude/mcp*.log
 #### Server Logs (Stdio Mode)
 
 In stdio mode, logs are automatically sent via MCP logging protocol. They appear in:
+
 - Claude Desktop logs
 - Inspector console
 - Any MCP client that supports logging
@@ -84,6 +89,7 @@ The Claude.app interface provides basic server status:
 Access Chrome's developer tools inside Claude Desktop:
 
 1. Create `developer_settings.json`:
+
    ```bash
    echo '{"allowDevTools": true}' > ~/Library/Application\ Support/Claude/developer_settings.json
    ```
@@ -157,6 +163,7 @@ To provide your own variables, specify an `env` key in `claude_desktop_config.js
 Common initialization problems:
 
 #### Path Issues
+
 - ❌ Incorrect server executable path
 - ❌ Missing required files
 - ❌ Permission problems
@@ -164,6 +171,7 @@ Common initialization problems:
 **Solution**: Use absolute paths and verify file permissions
 
 #### Configuration Errors
+
 - ❌ Invalid JSON syntax
 - ❌ Missing required fields
 - ❌ Type mismatches
@@ -171,6 +179,7 @@ Common initialization problems:
 **Solution**: Validate JSON and check required environment variables
 
 #### Environment Problems
+
 - ❌ Missing environment variables
 - ❌ Incorrect variable values
 - ❌ Permission restrictions
@@ -182,16 +191,19 @@ Common initialization problems:
 When servers fail to connect:
 
 1. **Check Claude Desktop logs**
+
    ```bash
    tail -F ~/Library/Logs/Claude/mcp*.log
    ```
 
 2. **Verify server process is running**
+
    ```bash
    ps aux | grep "node.*build/index.js"
    ```
 
 3. **Test standalone with Inspector**
+
    ```bash
    npm run inspector
    ```
@@ -209,6 +221,7 @@ The server uses structured logging with the following features:
 #### Stdio Transport (Default)
 
 In stdio mode, all logs go through MCP logging protocol:
+
 - Logs to `stderr` are captured automatically
 - Logs are sent via `sendLoggingMessage()` to the client
 - Prevents interference with JSON-RPC protocol on `stdout`
@@ -216,6 +229,7 @@ In stdio mode, all logs go through MCP logging protocol:
 #### HTTP/SSE Transport
 
 In HTTP/SSE mode:
+
 - Logs go to `stderr` (can be captured)
 - Also sent via MCP logging when transport is connected
 
@@ -230,6 +244,7 @@ The server uses standard log levels:
 #### Structured Logging Format
 
 Logs include:
+
 - **Timestamp**: ISO 8601 format
 - **Context**: Operation, tool, arguments
 - **Level**: info, warning, or error
@@ -251,24 +266,28 @@ Error: Connection timeout
 The server logs the following events:
 
 #### Initialization
+
 - API connection attempts
 - Budget loading
 - Configuration validation
 - Auto-sync setup
 
 #### Resource Access
+
 - Account fetching
 - Transaction queries
 - Category lookups
 - Payee resolutions
 
 #### Tool Execution
+
 - Tool invocations
 - Parameter validation
 - Execution results
 - Performance metrics
 
 #### Error Conditions
+
 - Connection failures
 - Authentication errors
 - Validation failures
@@ -283,6 +302,7 @@ DEBUG_PERFORMANCE=true
 ```
 
 This logs:
+
 - Operation timing
 - Cache hit/miss rates
 - API call counts
@@ -293,16 +313,19 @@ This logs:
 ### Development Cycle
 
 #### 1. Initial Development
+
 - Use **Inspector** for basic testing
 - Implement core functionality
 - Add logging points at key operations
 
 #### 2. Integration Testing
+
 - Test in **Claude Desktop**
 - Monitor logs for errors
 - Check error handling paths
 
 #### 3. Production Debugging
+
 - Review Claude Desktop logs
 - Use Inspector to reproduce issues
 - Check environment configuration
@@ -332,18 +355,21 @@ When encountering issues:
 ### Logging Strategy
 
 #### Structured Logging
+
 - ✅ Use consistent formats
 - ✅ Include context (tool, operation, args)
 - ✅ Add timestamps
 - ✅ Track request IDs (when available)
 
 #### Error Handling
+
 - ✅ Log stack traces
 - ✅ Include error context
 - ✅ Track error patterns
 - ✅ Monitor recovery attempts
 
 #### Performance Tracking
+
 - ✅ Log operation timing
 - ✅ Monitor resource usage
 - ✅ Track message sizes
@@ -354,12 +380,14 @@ When encountering issues:
 When debugging:
 
 #### Sensitive Data
+
 - ⚠️ Sanitize logs before sharing
 - ⚠️ Protect credentials
 - ⚠️ Mask personal information
 - ⚠️ Don't commit `.env` files
 
 #### Access Control
+
 - ✅ Verify permissions
 - ✅ Check authentication
 - ✅ Monitor access patterns
@@ -370,12 +398,14 @@ When debugging:
 When encountering issues:
 
 ### First Steps
+
 1. Check server logs
 2. Test with Inspector
 3. Review configuration
 4. Verify environment
 
 ### Support Channels
+
 - **GitHub Issues**: Report bugs and request features
 - **GitHub Discussions**: Ask questions and share solutions
 
@@ -393,22 +423,26 @@ When reporting issues, include:
 ### Problem: Server fails to connect to Actual Budget
 
 1. **Check logs**:
+
    ```bash
    tail -F ~/Library/Logs/Claude/mcp*.log
    ```
 
 2. **Test with Inspector**:
+
    ```bash
    npm run inspector
    ```
 
 3. **Verify environment**:
+
    ```bash
    cat .env
    # Check ACTUAL_SERVER_URL, ACTUAL_PASSWORD, ACTUAL_BUDGET_SYNC_ID
    ```
 
 4. **Test connection manually**:
+
    ```bash
    curl https://actual.alw.lol/api/health
    ```
@@ -419,6 +453,7 @@ When reporting issues, include:
 ### Problem: Tool returns unexpected results
 
 1. **Enable debug logging**:
+
    ```bash
    DEBUG_PERFORMANCE=true npm run inspector
    ```

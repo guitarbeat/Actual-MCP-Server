@@ -1,11 +1,11 @@
 /**
  * Property-based tests for TransportManager
- * 
+ *
  * Feature: dual-transport-support, Property 12: Transports share MCP server instance
  * Validates: Requirements 5.2
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { TransportManager, TransportType } from './transport-manager.js';
 import { ServerResponse } from 'node:http';
@@ -46,9 +46,9 @@ describe('TransportManager', () => {
     /**
      * Feature: dual-transport-support, Property 12: Transports share MCP server instance
      * Validates: Requirements 5.2
-     * 
+     *
      * Property: For any transport handler created, it SHALL connect to the same shared MCP server instance
-     * 
+     *
      * This test verifies that:
      * 1. Multiple SSE transports can be created
      * 2. Multiple Streamable HTTP transports can be created
@@ -189,7 +189,7 @@ describe('TransportManager', () => {
           fc.integer({ min: 1, max: 10 }), // Number of connections
           (numConnections) => {
             const manager = new TransportManager();
-            
+
             // Create connections
             for (let i = 0; i < numConnections; i++) {
               const mockRes = new MockServerResponse() as unknown as ServerResponse;

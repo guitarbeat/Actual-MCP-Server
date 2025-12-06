@@ -150,18 +150,18 @@ function main(): void {
   const crudConfigPath = join(process.cwd(), 'src', 'tools', 'crud-factory-config.ts');
   if (existsSync(crudConfigPath)) {
     const content = readFileSync(crudConfigPath, 'utf-8');
-    
+
     // Remove comments to avoid false positives
     const withoutComments = content
       .replace(/\/\*[\s\S]*?\*\//g, '') // Remove block comments
       .replace(/\/\/.*$/gm, ''); // Remove line comments
-    
+
     // Match entityName: 'name' patterns that are NOT in comments
     // Look for the pattern: entityName: 'value' (with proper spacing)
     const entityNamePattern = /\bentityName:\s*['"]([^'"]+)['"]/g;
     let match;
     const foundEntityNames = new Set<string>();
-    
+
     while ((match = entityNamePattern.exec(withoutComments)) !== null) {
       const entityName = match[1];
       // Skip if it's in an example comment (widget is only in examples)
@@ -170,14 +170,10 @@ function main(): void {
       }
       foundEntityNames.add(entityName);
     }
-    
+
     // Generate CRUD tool names for each entity
     for (const entityName of foundEntityNames) {
-      const crudNames = [
-        `create-${entityName}`,
-        `update-${entityName}`,
-        `delete-${entityName}`,
-      ];
+      const crudNames = [`create-${entityName}`, `update-${entityName}`, `delete-${entityName}`];
 
       for (const toolName of crudNames) {
         const issue = validateToolName(toolName, crudConfigPath);
