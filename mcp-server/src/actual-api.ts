@@ -142,7 +142,9 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
 
     // Use specified budget or the first one
     const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    const budgetPassword: string | undefined = process.env.ACTUAL_BUDGET_PASSWORD;
+    // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
+    const budgetPassword: string | undefined =
+      process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
     if (budgetPassword) {
       await api.downloadBudget(budgetId, { password: budgetPassword });
     } else {
