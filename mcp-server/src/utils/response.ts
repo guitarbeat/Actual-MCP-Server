@@ -3,35 +3,34 @@
 // Re-exports from core/response for backward compatibility
 // ----------------------------
 
+export type {
+  ApiErrorOptions,
+  ContentItem,
+  ErrorContext,
+  ErrorPayload,
+  MCPResponse,
+  NotFoundErrorOptions,
+  PermissionErrorOptions,
+  TextContentItem,
+  ValidationErrorOptions,
+} from '../core/response/index.js';
 export {
+  apiError,
+  error,
+  errorFromCatch,
+  invalidStringArrayArgument,
+  missingBooleanArgument,
+  missingMonthArgument,
+  missingNumberArgument,
+  missingStringArgument,
+  missingStringArrayArgument,
+  notFoundError,
+  permissionError,
   success,
   successWithContent,
   successWithJson,
-  error,
-  errorFromCatch,
-  validationError,
-  notFoundError,
-  apiError,
-  permissionError,
   unsupportedFeatureError,
-  missingStringArgument,
-  missingNumberArgument,
-  missingBooleanArgument,
-  missingMonthArgument,
-  missingStringArrayArgument,
-  invalidStringArrayArgument,
-} from '../core/response/index.js';
-
-export type {
-  MCPResponse,
-  ContentItem,
-  TextContentItem,
-  ErrorPayload,
-  ErrorContext,
-  ValidationErrorOptions,
-  NotFoundErrorOptions,
-  ApiErrorOptions,
-  PermissionErrorOptions,
+  validationError,
 } from '../core/response/index.js';
 
 // Legacy type aliases for backward compatibility

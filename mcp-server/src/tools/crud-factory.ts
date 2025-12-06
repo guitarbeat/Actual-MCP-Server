@@ -3,11 +3,11 @@
 // Generic factory for generating CRUD tool definitions from entity configurations
 // ----------------------------
 
-import { z } from 'zod';
+import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { success, errorFromCatch, error, MCPResponse } from '../core/response/index.js';
-import type { EntityHandler } from './manage-entity/entity-handlers/base-handler.js';
+import { error, errorFromCatch, type MCPResponse, success } from '../core/response/index.js';
 import type { ToolInput } from '../types.js';
+import type { EntityHandler } from './manage-entity/entity-handlers/base-handler.js';
 
 /**
  * Tool category for feature flag filtering

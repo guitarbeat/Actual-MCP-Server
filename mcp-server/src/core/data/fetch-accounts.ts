@@ -1,6 +1,6 @@
 import { getAccounts } from '../../actual-api.js';
-import type { Account } from '../types/domain.js';
 import { cacheService } from '../cache/cache-service.js';
+import type { Account } from '../types/domain.js';
 
 // Cache TTL: 5 minutes (300 seconds)
 const CACHE_TTL_MS = 5 * 60 * 1000;

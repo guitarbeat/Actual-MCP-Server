@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { GetAccountsReportGenerator } from './report-generator.js';
+import { describe, expect, it } from 'vitest';
 import type { AccountWithBalance } from './data-fetcher.js';
+import { GetAccountsReportGenerator } from './report-generator.js';
 
 describe('GetAccountsReportGenerator', () => {
   const generator = new GetAccountsReportGenerator();

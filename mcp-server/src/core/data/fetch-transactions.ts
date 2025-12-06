@@ -1,10 +1,10 @@
+import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
 import { getTransactions } from '../../actual-api.js';
-import { fetchAllPayees } from './fetch-payees.js';
-import { fetchAllCategories } from './fetch-categories.js';
 import { GroupAggregator } from '../aggregation/group-by.js';
-import type { Account, Transaction, Payee, Category } from '../types/domain.js';
-import { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
+import type { Account, Category, Payee, Transaction } from '../types/domain.js';
 import { nameResolver } from '../utils/name-resolver.js';
+import { fetchAllCategories } from './fetch-categories.js';
+import { fetchAllPayees } from './fetch-payees.js';
 
 const groupAggregator = new GroupAggregator();
 
@@ -159,12 +159,19 @@ export async function fetchAllOnBudgetTransactionsParallel(
   // # Reason: Use Promise.allSettled to handle partial failures gracefully
   const results = await Promise.allSettled(
     onBudgetAccounts.map((account) =>
-      getTransactions(account.id, start, end).then((txs) => ({ account, transactions: txs }))
+      getTransactions(account.id, start, end).then((txs) => ({
+        account,
+        transactions: txs,
+      }))
     )
   );
 
   const transactions: TransactionEntity[] = [];
-  const errors: Array<{ accountId: string; accountName: string; error: string }> = [];
+  const errors: Array<{
+    accountId: string;
+    accountName: string;
+    error: string;
+  }> = [];
 
   for (const result of results) {
     if (result.status === 'fulfilled') {
@@ -206,11 +213,20 @@ export async function fetchAllTransactions(accounts: Account[], start: string, e
 
   // # Reason: Use Promise.allSettled to handle partial failures gracefully
   const results = await Promise.allSettled(
-    accounts.map((account) => getTransactions(account.id, start, end).then((txs) => ({ account, transactions: txs })))
+    accounts.map((account) =>
+      getTransactions(account.id, start, end).then((txs) => ({
+        account,
+        transactions: txs,
+      }))
+    )
   );
 
   const transactions: TransactionEntity[] = [];
-  const errors: Array<{ accountId: string; accountName: string; error: string }> = [];
+  const errors: Array<{
+    accountId: string;
+    accountName: string;
+    error: string;
+  }> = [];
 
   for (const result of results) {
     if (result.status === 'fulfilled') {

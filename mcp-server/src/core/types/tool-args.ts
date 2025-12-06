@@ -3,32 +3,32 @@
 // Type definitions for tool arguments (inferred from Zod schemas)
 // ----------------------------
 
-import { z } from 'zod';
-import {
-  GetTransactionsArgsSchema,
-  SpendingByCategoryArgsSchema,
-  MonthlySummaryArgsSchema,
+import type { z } from 'zod';
+import type {
   BalanceHistoryArgsSchema,
-  FinancialInsightsArgsSchema,
   BudgetReviewArgsSchema,
-  UpdateTransactionArgsSchema,
-  CreateTransactionArgsSchema,
-  SetBudgetAmountArgsSchema,
-  ResetBudgetHoldArgsSchema,
-  SetBudgetCarryoverArgsSchema,
-  HoldBudgetForNextMonthArgsSchema,
   CreateCategoryArgsSchema,
-  UpdateCategoryArgsSchema,
-  DeleteCategoryArgsSchema,
   CreateCategoryGroupArgsSchema,
-  UpdateCategoryGroupArgsSchema,
-  DeleteCategoryGroupArgsSchema,
-  GetGroupedCategoriesArgsSchema,
-  GetAccountsArgsSchema,
   CreateScheduleArgsSchema,
-  UpdateScheduleArgsSchema,
+  CreateTransactionArgsSchema,
+  DeleteCategoryArgsSchema,
+  DeleteCategoryGroupArgsSchema,
   DeleteScheduleArgsSchema,
+  FinancialInsightsArgsSchema,
+  GetAccountsArgsSchema,
+  GetGroupedCategoriesArgsSchema,
   GetSchedulesArgsSchema,
+  GetTransactionsArgsSchema,
+  HoldBudgetForNextMonthArgsSchema,
+  MonthlySummaryArgsSchema,
+  ResetBudgetHoldArgsSchema,
+  SetBudgetAmountArgsSchema,
+  SetBudgetCarryoverArgsSchema,
+  SpendingByCategoryArgsSchema,
+  UpdateCategoryArgsSchema,
+  UpdateCategoryGroupArgsSchema,
+  UpdateScheduleArgsSchema,
+  UpdateTransactionArgsSchema,
 } from './schemas.js';
 
 // ----------------------------

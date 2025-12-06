@@ -1,6 +1,7 @@
 // Generates the markdown report for balance-history tool
-import { formatAmount } from '../../utils.js';
+
 import type { Account } from '../../core/types/index.js';
+import { formatAmount } from '../../utils.js';
 import type { MonthBalance } from './balance-calculator.js';
 
 export class BalanceHistoryReportGenerator {

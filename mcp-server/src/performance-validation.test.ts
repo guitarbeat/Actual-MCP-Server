@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getAvailableTools } from './tools/index.js';
-import { NameResolver } from './core/utils/name-resolver.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getInitializationStats, resetInitializationStats } from './actual-api.js';
+import { NameResolver } from './core/utils/name-resolver.js';
+import { getAvailableTools } from './tools/index.js';
 
 /**
  * Performance validation tests for MCP simplification improvements
@@ -84,8 +84,20 @@ describe('Performance Validation', () => {
       vi.spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts').mockImplementation(async () => {
         fetchCallCount++;
         return [
-          { id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false },
-          { id: 'account-2', name: 'Savings', type: 'savings', closed: false, offbudget: false },
+          {
+            id: 'account-1',
+            name: 'Checking',
+            type: 'checking',
+            closed: false,
+            offbudget: false,
+          },
+          {
+            id: 'account-2',
+            name: 'Savings',
+            type: 'savings',
+            closed: false,
+            offbudget: false,
+          },
         ];
       });
 
@@ -136,8 +148,20 @@ describe('Performance Validation', () => {
       vi.spyOn(await import('./core/data/fetch-categories.js'), 'fetchAllCategories').mockImplementation(async () => {
         fetchCallCount++;
         return [
-          { id: 'cat-1', name: 'Groceries', group_id: 'group-1', hidden: false, is_income: false },
-          { id: 'cat-2', name: 'Rent', group_id: 'group-1', hidden: false, is_income: false },
+          {
+            id: 'cat-1',
+            name: 'Groceries',
+            group_id: 'group-1',
+            hidden: false,
+            is_income: false,
+          },
+          {
+            id: 'cat-2',
+            name: 'Rent',
+            group_id: 'group-1',
+            hidden: false,
+            is_income: false,
+          },
         ];
       });
 
@@ -175,7 +199,15 @@ describe('Performance Validation', () => {
 
       vi.spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts').mockImplementation(async () => {
         fetchCallCount++;
-        return [{ id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false }];
+        return [
+          {
+            id: 'account-1',
+            name: 'Checking',
+            type: 'checking',
+            closed: false,
+            offbudget: false,
+          },
+        ];
       });
 
       // First resolution
@@ -201,7 +233,15 @@ describe('Performance Validation', () => {
         .spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts')
         .mockImplementation(async () => {
           cachedFetchCount++;
-          return [{ id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false }];
+          return [
+            {
+              id: 'account-1',
+              name: 'Checking',
+              type: 'checking',
+              closed: false,
+              offbudget: false,
+            },
+          ];
         });
 
       for (let i = 0; i < iterations; i++) {
@@ -218,7 +258,15 @@ describe('Performance Validation', () => {
         .spyOn(await import('./core/data/fetch-accounts.js'), 'fetchAllAccounts')
         .mockImplementation(async () => {
           uncachedFetchCount++;
-          return [{ id: 'account-1', name: 'Checking', type: 'checking', closed: false, offbudget: false }];
+          return [
+            {
+              id: 'account-1',
+              name: 'Checking',
+              type: 'checking',
+              closed: false,
+              offbudget: false,
+            },
+          ];
         });
 
       for (let i = 0; i < iterations; i++) {

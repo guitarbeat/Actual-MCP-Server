@@ -2,15 +2,15 @@
 // ENTITY HANDLER REGISTRY
 // ----------------------------
 
-import type { EntityHandler } from './base-handler.js';
 import type { EntityType } from '../types.js';
-import { CategoryHandler } from './category-handler.js';
+import { AccountHandler } from './account-handler.js';
+import type { EntityHandler } from './base-handler.js';
 import { CategoryGroupHandler } from './category-group-handler.js';
+import { CategoryHandler } from './category-handler.js';
 import { PayeeHandler } from './payee-handler.js';
 import { RuleHandler } from './rule-handler.js';
 import { ScheduleHandler } from './schedule-handler.js';
 import { TransactionHandler } from './transaction-handler.js';
-import { AccountHandler } from './account-handler.js';
 
 /**
  * Registry of entity handlers

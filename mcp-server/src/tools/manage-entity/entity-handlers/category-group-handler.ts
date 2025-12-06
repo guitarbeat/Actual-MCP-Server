@@ -2,12 +2,12 @@
 // CATEGORY GROUP ENTITY HANDLER
 // ----------------------------
 
-import { cacheService } from '../../../core/cache/cache-service.js';
 import { createCategoryGroup, deleteCategoryGroup, updateCategoryGroup } from '../../../actual-api.js';
-import type { EntityHandler, Operation } from './base-handler.js';
+import { cacheService } from '../../../core/cache/cache-service.js';
+import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { CategoryGroupData } from '../types.js';
 import { CategoryGroupDataSchema } from '../types.js';
-import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
+import type { EntityHandler, Operation } from './base-handler.js';
 
 /**
  * Handler for category group entity operations

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { CategoryGroupInfo, Transaction } from '../types/domain.js';
 import { TransactionGrouper } from './transaction-grouper.js';
-import type { Transaction, CategoryGroupInfo } from '../types/domain.js';
 
 describe('TransactionGrouper', () => {
   const grouper = new TransactionGrouper();
@@ -96,7 +96,7 @@ describe('TransactionGrouper', () => {
     expect(result).toHaveProperty('cat4');
     expect(result).not.toHaveProperty('cat3'); // Income excluded
 
-    expect(result['cat1']).toEqual({
+    expect(result.cat1).toEqual({
       id: 'cat1',
       name: 'Food',
       group: 'Living',
@@ -105,7 +105,7 @@ describe('TransactionGrouper', () => {
       transactions: 2,
     });
 
-    expect(result['cat2']).toEqual({
+    expect(result.cat2).toEqual({
       id: 'cat2',
       name: 'Rent',
       group: 'Living',
@@ -114,7 +114,7 @@ describe('TransactionGrouper', () => {
       transactions: 1,
     });
 
-    expect(result['cat4']).toEqual({
+    expect(result.cat4).toEqual({
       id: 'cat4',
       name: 'Utilities',
       group: 'Living',
@@ -132,7 +132,7 @@ describe('TransactionGrouper', () => {
     expect(result).toHaveProperty('cat3'); // Income included
     expect(result).toHaveProperty('cat4');
 
-    expect(result['cat3']).toEqual({
+    expect(result.cat3).toEqual({
       id: 'cat3',
       name: 'Salary',
       group: 'Income',
@@ -180,7 +180,7 @@ describe('TransactionGrouper', () => {
     );
 
     expect(result).toHaveProperty('unknown');
-    expect(result['unknown']).toEqual({
+    expect(result.unknown).toEqual({
       id: 'unknown',
       name: 'Unknown Category',
       group: 'Unknown Group',
@@ -223,7 +223,7 @@ describe('TransactionGrouper', () => {
 
     const result = grouper.groupByCategory(sameCategory, mockGetCategoryName, mockGetGroupInfo, false);
 
-    expect(result['cat1']).toEqual({
+    expect(result.cat1).toEqual({
       id: 'cat1',
       name: 'Food',
       group: 'Living',
@@ -253,7 +253,7 @@ describe('TransactionGrouper', () => {
 
     const result = grouper.groupByCategory(positiveTransactions, mockGetCategoryName, mockGetGroupInfo, false);
 
-    expect(result['cat1']).toEqual({
+    expect(result.cat1).toEqual({
       id: 'cat1',
       name: 'Food',
       group: 'Living',

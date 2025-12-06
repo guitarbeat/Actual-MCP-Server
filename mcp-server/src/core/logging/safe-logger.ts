@@ -9,9 +9,9 @@
  * - Error stack trace capture
  */
 
-import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 // Store original console methods
 const originalConsoleLog = console.log;
@@ -177,7 +177,7 @@ function formatMessage(args: unknown[]): string {
   return args
     .map((arg) => {
       if (arg instanceof Error) {
-        return `${arg.message}${arg.stack ? '\n' + arg.stack : ''}`;
+        return `${arg.message}${arg.stack ? `\n${arg.stack}` : ''}`;
       }
       if (typeof arg === 'object' && arg !== null) {
         try {
