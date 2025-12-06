@@ -168,51 +168,82 @@ app.post('/messages', (req, res) => {
 - ✅ No race conditions
 - ✅ Automatic cleanup on connection close
 
-## Potential Bug #3: Request ID Race Condition (Documented, Not Active)
+## Bug Fix #3: Request ID Race Condition (Fixed)
 
 ### Issue
 
-The `currentRequestId` variable in `safe-logger.ts` is a module-level variable that could be overwritten by concurrent requests. This follows the same pattern as the transport bugs.
+The `currentRequestId` variable in `safe-logger.ts` was a module-level variable that could be overwritten by concurrent requests. This followed the same pattern as the transport bugs.
 
 ### Root Cause
 
-Module-level variable (`let currentRequestId: string | null = null;`) is shared across all requests. If `setRequestId()` or `generateRequestId()` are called from concurrent requests, they will overwrite each other's values.
+Module-level variable (`let currentRequestId: string | null = null;`) was shared across all requests. If `setRequestId()` or `generateRequestId()` were called from concurrent requests, they would overwrite each other's values.
 
-### Current Status
+### Fix
 
-**Not an active bug** - These functions are exported but not currently used anywhere in the codebase. However, this is a latent bug that would manifest if someone starts using request ID tracking.
+Refactored to use `AsyncLocalStorage` from Node.js `async_hooks` module:
 
-### Fix Recommendation
+1. **AsyncLocalStorage**: Provides thread-safe, per-async-context storage
+2. **Context Isolation**: Each async operation gets its own request ID context
+3. **Helper Functions**: Added `withRequestId()` and `withRequestIdAsync()` for proper async context management
 
-If request ID tracking is needed in the future, use one of these approaches:
+### Code Changes
 
-1. **AsyncLocalStorage** (Node.js 12.17.0+):
-   ```typescript
-   import { AsyncLocalStorage } from 'async_hooks';
-   const requestIdStorage = new AsyncLocalStorage<string>();
-   
-   export function setRequestId(requestId: string | null): void {
-     requestIdStorage.enterWith(requestId);
-   }
-   
-   function getRequestId(): string | null {
-     return requestIdStorage.getStore() || null;
-   }
-   ```
+**Before:**
 
-2. **Per-request context**: Pass request ID as a parameter to logging functions instead of using global state.
+```typescript
+let currentRequestId: string | null = null;
 
-3. **Request-scoped logger**: Create a logger instance per request/session.
+export function setRequestId(requestId: string | null): void {
+  currentRequestId = requestId;
+}
 
-### Code Location
+export function generateRequestId(): string {
+  const requestId = randomUUID();
+  currentRequestId = requestId;
+  return requestId;
+}
+```
 
-- `./mcp-server/src/core/logging/safe-logger.ts` lines 25, 97-110
+**After:**
+
+```typescript
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+const requestIdStorage = new AsyncLocalStorage<string | null>();
+
+export function setRequestId(requestId: string | null): void {
+  requestIdStorage.enterWith(requestId);
+}
+
+export function generateRequestId(): string {
+  const requestId = randomUUID();
+  requestIdStorage.enterWith(requestId);
+  return requestId;
+}
+
+export function withRequestId<T>(requestId: string | null, fn: () => T): T {
+  return requestIdStorage.run(requestId, fn);
+}
+
+export async function withRequestIdAsync<T>(
+  requestId: string | null,
+  fn: () => Promise<T>
+): Promise<T> {
+  return requestIdStorage.run(requestId, fn);
+}
+```
 
 ### Impact
 
-- ⚠️ Latent bug - not currently causing issues
-- ⚠️ Would cause incorrect request ID tracking if used with concurrent requests
-- ✅ Documented with warnings in code comments
+- ✅ Thread-safe request ID tracking
+- ✅ No race conditions with concurrent requests
+- ✅ Proper async context isolation
+- ✅ Backward compatible API
+- ✅ Ready for use if request ID tracking is needed
+
+### Code Location
+
+- `./mcp-server/src/core/logging/safe-logger.ts`
 
 ## Other Improvements
 
