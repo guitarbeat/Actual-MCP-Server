@@ -330,7 +330,7 @@ async function main(): Promise<void> {
           console.log = (message: string) => {
             if (transportReady && transport) {
               try {
-                server.sendLoggingMessage({ level: 'info', message });
+                server.sendLoggingMessage({ level: 'info', data: message });
               } catch {
                 // If connection closed, use original console
                 originalConsoleLog(message);
@@ -342,7 +342,7 @@ async function main(): Promise<void> {
           console.error = (message: string) => {
             if (transportReady && transport) {
               try {
-                server.sendLoggingMessage({ level: 'error', message });
+                server.sendLoggingMessage({ level: 'error', data: message });
               } catch {
                 // If connection closed, use original console
                 originalConsoleError(message);
