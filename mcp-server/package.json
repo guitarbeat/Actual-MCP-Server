@@ -21,7 +21,8 @@
     "build": "tsc -p tsconfig.build.json && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
     "start": "tsx src/index.ts",
-    "inspector": "dotenv -e .env -- sh -c 'npx @modelcontextprotocol/inspector -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL -e ACTUAL_PASSWORD=$ACTUAL_PASSWORD -e ACTUAL_BUDGET_SYNC_ID=$ACTUAL_BUDGET_SYNC_ID node build/index.js'",
+    "inspector": "npm run build && dotenv -e .env -- sh -c 'npx @modelcontextprotocol/inspector -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL -e ACTUAL_PASSWORD=$ACTUAL_PASSWORD -e ACTUAL_BUDGET_SYNC_ID=$ACTUAL_BUDGET_SYNC_ID node build/index.js'",
+    "inspector:custom": "npm run build && npx @modelcontextprotocol/inspector node build/index.js",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
@@ -33,6 +34,8 @@
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
     "quality": "npm run lint && npm run format:check && npm run type-check",
+    "validate-tool-names": "tsx scripts/validate-tool-names.ts",
+    "check-deployment": "tsx scripts/check-deployment.ts",
     "prepare": "husky",
     "prepublishOnly": "npm run build"
   },

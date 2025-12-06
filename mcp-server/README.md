@@ -114,6 +114,73 @@ npm test         # Run tests
 npm run quality  # Lint + format + type-check
 ```
 
+## MCP Inspector
+
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a debugging tool that provides a web UI to interact with your MCP server. It's useful for testing tools, resources, and prompts during development.
+
+### Quick Start
+
+The easiest way to use the inspector is with the provided npm script:
+
+```bash
+npm run inspector
+```
+
+This will:
+1. Build the project (if needed)
+2. Load environment variables from `.env` file
+3. Start the MCP Inspector with your server
+
+The inspector runs two services:
+- **MCP Inspector Client UI** (default port 6274) - Open this in your browser
+- **MCP Proxy Server** (default port 6277) - Handles communication between client and server
+
+### Custom Usage
+
+For more control, you can use the inspector directly:
+
+```bash
+# Build first
+npm run build
+
+# Pass environment variables from .env file
+npm run inspector
+
+# Or pass environment variables directly
+npx @modelcontextprotocol/inspector \
+  -e ACTUAL_SERVER_URL=https://your-server.com \
+  -e ACTUAL_PASSWORD=your-password \
+  -e ACTUAL_BUDGET_SYNC_ID=your-budget-id \
+  node build/index.js
+
+# Pass both environment variables and server arguments
+npx @modelcontextprotocol/inspector \
+  -e ACTUAL_SERVER_URL=https://your-server.com \
+  -e ACTUAL_PASSWORD=your-password \
+  node build/index.js --enable-write
+
+# Use -- to separate inspector flags from server arguments
+npx @modelcontextprotocol/inspector \
+  -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL \
+  -- node build/index.js -e server-flag
+```
+
+### Custom Ports
+
+You can customize the ports if needed:
+
+```bash
+CLIENT_PORT=8080 SERVER_PORT=9000 npm run inspector
+```
+
+Or with direct npx:
+
+```bash
+CLIENT_PORT=8080 SERVER_PORT=9000 npx @modelcontextprotocol/inspector node build/index.js
+```
+
+For more details, see the [MCP Inspector documentation](https://modelcontextprotocol.io/docs/tools/inspector).
+
 ## Configuration
 
 ```bash
@@ -261,6 +328,16 @@ Each tool includes:
 - **Intelligent caching**: 60-80% cache hit rate
 - **Parallel fetching**: 50% faster multi-account queries
 - **Name resolution**: Cached for instant lookups
+
+## Deployment & Debugging
+
+- **Easy Panel Deployment:** See [Easy Panel Deployment Guide](./docs/easypanel-deployment.md)
+- **General Debugging:** See [Debugging Guide](./docs/debugging.md)
+
+Quick tips:
+- Use `npm run inspector` to test the server interactively
+- Enable performance tracking: `DEBUG_PERFORMANCE=true npm run inspector`
+- View Claude Desktop logs: `tail -F ~/Library/Logs/Claude/mcp*.log`
 
 ## License
 
