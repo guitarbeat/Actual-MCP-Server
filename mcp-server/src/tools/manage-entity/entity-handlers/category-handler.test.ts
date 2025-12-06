@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CategoryHandler } from './category-handler.js';
 import * as actualApi from '../../../actual-api.js';
-import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import { randomUUID } from 'crypto';
 
 vi.mock('../../../actual-api.js');

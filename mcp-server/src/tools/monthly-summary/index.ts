@@ -51,14 +51,14 @@ export async function handler(args: MonthlySummaryArgs): Promise<CallToolResult>
       investmentSavingsCategories
     );
     const averages = new MonthlySummaryCalculator().calculateAverages(sortedMonths);
-    const reportData = new MonthlySummaryReportDataBuilder().build(
+    const reportData = new MonthlySummaryReportDataBuilder().build({
       start,
       end,
-      input.accountId,
+      accountId: input.accountId,
       accounts,
       sortedMonths,
-      averages
-    );
+      averages,
+    });
     const markdown = new MonthlySummaryReportGenerator().generate(reportData);
 
     return successWithContent({ type: 'text', text: markdown });

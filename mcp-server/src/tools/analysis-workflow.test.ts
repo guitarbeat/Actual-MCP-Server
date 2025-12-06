@@ -93,8 +93,9 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await monthlySummaryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Monthly Financial Summary');
-      expect(result.content[0].text).toContain('Period:');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Monthly Financial Summary');
+      expect(content0.type === 'text' && content0.text).toContain('Period:');
     });
 
     it('should handle single month analysis', async () => {
@@ -102,7 +103,8 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await monthlySummaryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Monthly Financial Summary');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Monthly Financial Summary');
     });
 
     it('should handle 12 month (annual) analysis', async () => {
@@ -110,7 +112,8 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await monthlySummaryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Monthly Financial Summary');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Monthly Financial Summary');
     });
 
     it('should handle account-specific summary', async () => {
@@ -118,7 +121,8 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await monthlySummaryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Checking');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Checking');
     });
   });
 
@@ -131,8 +135,9 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await spendingByCategoryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Spending by Category');
-      expect(result.content[0].text).toContain('Period:');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Spending by Category');
+      expect(content0.type === 'text' && content0.text).toContain('Period:');
     });
 
     it('should handle account-specific analysis', async () => {
@@ -144,7 +149,8 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await spendingByCategoryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Checking');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Checking');
     });
 
     it('should handle includeIncome filter', async () => {
@@ -156,7 +162,8 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await spendingByCategoryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Spending by Category');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Spending by Category');
     });
 
     it('should handle combined filters', async () => {
@@ -169,7 +176,8 @@ describe('Analysis Tools Workflow Testing', () => {
       const result = await spendingByCategoryHandler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Checking');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Checking');
     });
   });
 
@@ -181,7 +189,8 @@ describe('Analysis Tools Workflow Testing', () => {
         accountId: 'Checking',
       });
       expect(summaryResult.isError).toBeFalsy();
-      expect(summaryResult.content[0].text).toContain('Monthly Financial Summary');
+      const summaryContent0 = summaryResult.content[0];
+      expect(summaryContent0.type === 'text' && summaryContent0.text).toContain('Monthly Financial Summary');
 
       // Then drill down with spending-by-category
       const spendingResult = await spendingByCategoryHandler({
@@ -190,7 +199,8 @@ describe('Analysis Tools Workflow Testing', () => {
         accountId: 'Checking',
       });
       expect(spendingResult.isError).toBeFalsy();
-      expect(spendingResult.content[0].text).toContain('Spending by Category');
+      const spendingContent0 = spendingResult.content[0];
+      expect(spendingContent0.type === 'text' && spendingContent0.text).toContain('Spending by Category');
     });
 
     it('should handle workflow with all accounts', async () => {

@@ -1,25 +1,41 @@
 # Dockerfile for Actual Budget MCP Server
 # Use this if Nixpacks doesn't auto-detect Node.js version correctly
 
-FROM node:20-alpine
+# ---- Builder Stage ----
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production=false
+# Install all dependencies (including dev dependencies for build)
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Copy source files
-COPY . .
+COPY . ./
 
 # Build the application
 RUN npm run build
+
+# ---- Release Stage ----
+FROM node:22-alpine AS release
+
+WORKDIR /app
+
+# Copy package files
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
+
+# Copy built application
+COPY --from=builder /app/build ./build
+
+# Install only production dependencies
+ENV NODE_ENV=production
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 # Expose port
 EXPOSE 3000
 
 # Start the server
-CMD ["node", "build/index.js", "--sse", "--enable-write"]
+ENTRYPOINT ["node", "build/index.js", "--sse", "--enable-write"]

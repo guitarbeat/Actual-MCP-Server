@@ -5,19 +5,19 @@
 
 /**
  * @fileoverview Entity configurations for CRUD tool generation
- * 
+ *
  * This file contains all entity configurations used by the CRUD factory to generate
  * create, update, and delete tools. Each configuration defines:
  * - Zod schemas for input validation
  * - Tool descriptions for LLMs
  * - Entity handler class
  * - Permission and feature flag metadata
- * 
+ *
  * To add a new entity type:
  * 1. Define Zod schemas for create, update, and delete operations
  * 2. Add entity configuration to `entityConfigurations` object
  * 3. Generate tools in `tools/index.ts` using `createCRUDTools()`
- * 
+ *
  * @example Adding a new entity
  * ```typescript
  * // 1. Define schemas
@@ -25,7 +25,7 @@
  *   name: z.string().min(1),
  *   type: z.enum(['foo', 'bar']),
  * });
- * 
+ *
  * // 2. Add to entityConfigurations
  * export const entityConfigurations = {
  *   // ... existing entities
@@ -42,7 +42,7 @@
  *     // ... update and delete configs
  *   },
  * };
- * 
+ *
  * // 3. Generate tools in tools/index.ts
  * const widgetTools = createCRUDTools(entityConfigurations.widget);
  * ```
@@ -158,27 +158,27 @@ const DeleteCategoryGroupSchema = z.object({
 
 /**
  * CRUD configurations for all entity types
- * 
+ *
  * This object contains configurations for generating CRUD tools for each entity type
  * in the Actual Budget MCP server. Each configuration includes:
  * - Entity metadata (name, display name, handler class)
  * - Create operation (schema, description, permissions)
  * - Update operation (schema, description, permissions)
  * - Delete operation (schema, description, permissions)
- * 
+ *
  * The factory uses these configurations to generate tool definitions that are
  * registered with the MCP server and exposed to LLMs.
- * 
+ *
  * @example Using entity configurations
  * ```typescript
  * import { createCRUDTools } from './crud-factory.js';
  * import { entityConfigurations } from './crud-factory-config.js';
- * 
+ *
  * // Generate tools for all entities
  * const categoryTools = createCRUDTools(entityConfigurations.category);
  * const payeeTools = createCRUDTools(entityConfigurations.payee);
  * const accountTools = createCRUDTools(entityConfigurations.account);
- * 
+ *
  * // Add to tool registry
  * const toolRegistry = [
  *   ...categoryTools,
@@ -187,16 +187,16 @@ const DeleteCategoryGroupSchema = z.object({
  *   // ... other tools
  * ];
  * ```
- * 
+ *
  * @see {@link EntityCRUDConfig} for configuration structure
  * @see {@link createCRUDTools} for tool generation
  */
 export const entityConfigurations = {
   /**
    * Category entity configuration
-   * 
+   *
    * Generates tools: create-category, update-category, delete-category
-   * 
+   *
    * Categories are used to organize budget transactions into spending groups.
    * Each category belongs to a category group and can have a monthly budget amount.
    */
@@ -286,7 +286,12 @@ export const entityConfigurations = {
       requiresWrite: true,
       category: 'core' as const,
     },
-  } satisfies EntityCRUDConfig<typeof CreateCategorySchema, typeof UpdateCategorySchema, typeof DeleteCategorySchema, CategoryHandler>,
+  } satisfies EntityCRUDConfig<
+    typeof CreateCategorySchema,
+    typeof UpdateCategorySchema,
+    typeof DeleteCategorySchema,
+    CategoryHandler
+  >,
 
   payee: {
     entityName: 'payee',
@@ -368,7 +373,12 @@ export const entityConfigurations = {
       requiresWrite: true,
       category: 'core' as const,
     },
-  } satisfies EntityCRUDConfig<typeof CreatePayeeSchema, typeof UpdatePayeeSchema, typeof DeletePayeeSchema, PayeeHandler>,
+  } satisfies EntityCRUDConfig<
+    typeof CreatePayeeSchema,
+    typeof UpdatePayeeSchema,
+    typeof DeletePayeeSchema,
+    PayeeHandler
+  >,
 
   account: {
     entityName: 'account',
@@ -397,7 +407,7 @@ export const entityConfigurations = {
         '- "Track 401k off-budget": {"name": "401k", "type": "investment", "offbudget": true}\n\n' +
         'NOTES:\n' +
         '- Initial balance in cents (100000 = $1,000)\n' +
-        '- Off-budget accounts don\'t affect budget calculations',
+        "- Off-budget accounts don't affect budget calculations",
       requiresWrite: true,
       category: 'nini' as const,
     },
@@ -445,7 +455,12 @@ export const entityConfigurations = {
       requiresWrite: true,
       category: 'nini' as const,
     },
-  } satisfies EntityCRUDConfig<typeof CreateAccountSchema, typeof UpdateAccountSchema, typeof DeleteAccountSchema, AccountHandler>,
+  } satisfies EntityCRUDConfig<
+    typeof CreateAccountSchema,
+    typeof UpdateAccountSchema,
+    typeof DeleteAccountSchema,
+    AccountHandler
+  >,
 
   rule: {
     entityName: 'rule',
@@ -615,5 +630,10 @@ export const entityConfigurations = {
       requiresWrite: true,
       category: 'core' as const,
     },
-  } satisfies EntityCRUDConfig<typeof CreateCategoryGroupSchema, typeof UpdateCategoryGroupSchema, typeof DeleteCategoryGroupSchema, CategoryGroupHandler>,
+  } satisfies EntityCRUDConfig<
+    typeof CreateCategoryGroupSchema,
+    typeof UpdateCategoryGroupSchema,
+    typeof DeleteCategoryGroupSchema,
+    CategoryGroupHandler
+  >,
 };

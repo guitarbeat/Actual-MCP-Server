@@ -87,14 +87,37 @@ export function notFoundError(entityType: string, entityId: string, options: Not
 }
 
 /**
- * Create an API error response with detailed context and troubleshooting steps
- * @param message - The API error message
- * @param err - The original error object
- * @param options - Additional context for the API error
- * @returns An API error response
+ * Get troubleshooting suggestion based on error type
+ * @param errorStr - Lowercase error message
+ * @returns Specific troubleshooting suggestion
  */
-export function apiError(message: string, err: unknown, options: ApiErrorOptions = {}): MCPResponse {
-  const errorDetails = err instanceof Error ? err.message : String(err);
+function getTroubleshootingSuggestion(errorStr: string): string {
+  if (errorStr.includes('connection') || errorStr.includes('econnrefused') || errorStr.includes('network')) {
+    return 'Connection failed: Verify ACTUAL_SERVER_URL is correct and the Actual Budget server is running. Check network connectivity and firewall settings.';
+  }
+  if (errorStr.includes('auth') || errorStr.includes('password') || errorStr.includes('unauthorized')) {
+    return 'Authentication failed: Verify ACTUAL_PASSWORD is correct and matches your Actual Budget server password. Check that the server requires authentication.';
+  }
+  if (errorStr.includes('timeout')) {
+    return 'Request timed out: The Actual Budget server may be overloaded or unresponsive. Try again in a moment or check server performance.';
+  }
+  if (errorStr.includes('not found') || errorStr.includes('404')) {
+    return 'Resource not found: The requested entity may have been deleted or the ID is invalid. Use listing tools to verify the resource exists.';
+  }
+  if (errorStr.includes('permission') || errorStr.includes('forbidden') || errorStr.includes('403')) {
+    return 'Permission denied: This operation may require write access. Ensure the server is started with --enable-write flag if modifying data.';
+  }
+  return 'Verify the Actual Budget server is running and accessible. Check server logs for more details.';
+}
+
+/**
+ * Build detailed error message with context
+ * @param message - Base error message
+ * @param errorDetails - Error details string
+ * @param options - Additional context options
+ * @returns Detailed error message
+ */
+function buildDetailedMessage(message: string, errorDetails: string, options: ApiErrorOptions): string {
   let detailedMessage = `${message}: ${errorDetails}`;
 
   if (options.operation) {
@@ -108,26 +131,21 @@ export function apiError(message: string, err: unknown, options: ApiErrorOptions
     detailedMessage += ` (context: ${contextStr})`;
   }
 
-  // Provide more specific troubleshooting suggestions based on error type
-  let suggestion = 'Verify the Actual Budget server is running and accessible. Check server logs for more details.';
+  return detailedMessage;
+}
 
+/**
+ * Create an API error response with detailed context and troubleshooting steps
+ * @param message - The API error message
+ * @param err - The original error object
+ * @param options - Additional context for the API error
+ * @returns An API error response
+ */
+export function apiError(message: string, err: unknown, options: ApiErrorOptions = {}): MCPResponse {
+  const errorDetails = err instanceof Error ? err.message : String(err);
+  const detailedMessage = buildDetailedMessage(message, errorDetails, options);
   const errorStr = errorDetails.toLowerCase();
-  if (errorStr.includes('connection') || errorStr.includes('econnrefused') || errorStr.includes('network')) {
-    suggestion =
-      'Connection failed: Verify ACTUAL_SERVER_URL is correct and the Actual Budget server is running. Check network connectivity and firewall settings.';
-  } else if (errorStr.includes('auth') || errorStr.includes('password') || errorStr.includes('unauthorized')) {
-    suggestion =
-      'Authentication failed: Verify ACTUAL_PASSWORD is correct and matches your Actual Budget server password. Check that the server requires authentication.';
-  } else if (errorStr.includes('timeout')) {
-    suggestion =
-      'Request timed out: The Actual Budget server may be overloaded or unresponsive. Try again in a moment or check server performance.';
-  } else if (errorStr.includes('not found') || errorStr.includes('404')) {
-    suggestion =
-      'Resource not found: The requested entity may have been deleted or the ID is invalid. Use listing tools to verify the resource exists.';
-  } else if (errorStr.includes('permission') || errorStr.includes('forbidden') || errorStr.includes('403')) {
-    suggestion =
-      'Permission denied: This operation may require write access. Ensure the server is started with --enable-write flag if modifying data.';
-  }
+  const suggestion = getTroubleshootingSuggestion(errorStr);
 
   return error(detailedMessage, suggestion);
 }

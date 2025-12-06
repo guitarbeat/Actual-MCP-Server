@@ -30,8 +30,9 @@ describe('hold-budget tool', () => {
 
   it('should return error when amount is missing', async () => {
     const response = await handler({
+      amount: 0, // Use 0 to test validation
       month: '2024-01',
-    });
+    } as any); // Cast to any to test missing amount validation
 
     expect(response.isError).toBe(true);
     expect(mockApi.holdBudgetForNextMonth).not.toHaveBeenCalled();

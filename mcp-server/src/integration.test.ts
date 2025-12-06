@@ -9,7 +9,9 @@ vi.mock('@actual-app/api', () => ({
   default: {
     init: vi.fn().mockResolvedValue(undefined),
     downloadBudget: vi.fn().mockResolvedValue(undefined),
-    getBudgets: vi.fn().mockResolvedValue([{ id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' }]),
+    getBudgets: vi
+      .fn()
+      .mockResolvedValue([{ id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' } as any]),
     shutdown: vi.fn().mockResolvedValue(undefined),
     sync: vi.fn().mockResolvedValue(undefined),
     getAccounts: vi.fn().mockResolvedValue([
@@ -118,7 +120,7 @@ describe('Integration Tests - MCP Simplification', () => {
       expect(callToolHandler).toBeDefined();
 
       // Simulate multiple tool calls
-      const tools = getAvailableTools(false);
+      const tools = getAvailableTools(false, false);
 
       // Verify read-only tools are available
       expect(tools.some((t) => t.schema.name === 'get-accounts')).toBe(true);

@@ -25,14 +25,18 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./mcp-server
         run: npm ci
 
       - name: Build TypeScript
+        working-directory: ./mcp-server
         run: npm run build
 
       - name: Run tests with coverage
+        working-directory: ./mcp-server
         run: npm run test:coverage
 
       - name: Upload coverage reports
@@ -41,8 +45,8 @@ jobs:
         with:
           name: coverage-reports
           path: |
-            coverage/
-            coverage.json
+            mcp-server/coverage/
+            mcp-server/coverage.json
           retention-days: 7
 
   type-check:
@@ -59,12 +63,15 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./mcp-server
         run: npm ci
 
       - name: Type check
-        run: npx tsc --noEmit
+        working-directory: ./mcp-server
+        run: npm run type-check
 
   coverage-report:
     name: Coverage Report
@@ -85,8 +92,8 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
         if: always()
         with:
-          json-summary-path: ./coverage/coverage-summary.json
-          json-final-path: ./coverage/coverage-final.json
+          json-summary-path: ./mcp-server/coverage/coverage-summary.json
+          json-final-path: ./mcp-server/coverage/coverage-final.json
 
   lint:
     name: Lint
@@ -102,9 +109,12 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./mcp-server
         run: npm ci
 
       - name: Run quality checks
+        working-directory: ./mcp-server
         run: npm run quality

@@ -1,6 +1,6 @@
 /**
  * Protocol Detector
- * 
+ *
  * Detects which MCP transport protocol a client is using based on HTTP request characteristics.
  * Routes requests to the appropriate transport handler.
  */
@@ -24,7 +24,7 @@ export interface ProtocolDetectionResult {
 export class ProtocolDetector {
   /**
    * Detect transport type from HTTP request
-   * 
+   *
    * Rules:
    * - GET /sse -> SSE Transport
    * - POST /messages -> SSE Message Handler
@@ -62,7 +62,7 @@ export class ProtocolDetector {
 
   /**
    * Validate that the request is compatible with the detected transport
-   * 
+   *
    * Checks:
    * - Method is supported for the endpoint
    * - Required headers are present (if applicable)
