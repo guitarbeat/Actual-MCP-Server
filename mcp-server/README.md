@@ -329,6 +329,15 @@ Each tool includes:
 - **Parallel fetching**: 50% faster multi-account queries
 - **Name resolution**: Cached for instant lookups
 
+## Debugging
+
+For comprehensive debugging guidance, see the [Debugging Guide](./docs/debugging.md).
+
+Quick debugging tips:
+- Use `npm run inspector` to test the server interactively
+- Enable performance tracking: `DEBUG_PERFORMANCE=true npm run inspector`
+- View Claude Desktop logs: `tail -F ~/Library/Logs/Claude/mcp*.log`
+
 ## License
 
 MIT
