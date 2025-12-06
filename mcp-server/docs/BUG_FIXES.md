@@ -144,7 +144,7 @@ app.get('/sse', (req, res) => {
   const sessionId = `sse-${randomUUID()}`;
   const transport = new SSEServerTransport('/messages', res);
   sseTransports.set(sessionId, transport);
-  
+
   transport.onclose = () => {
     sseTransports.delete(sessionId);
   };
@@ -225,10 +225,7 @@ export function withRequestId<T>(requestId: string | null, fn: () => T): T {
   return requestIdStorage.run(requestId, fn);
 }
 
-export async function withRequestIdAsync<T>(
-  requestId: string | null,
-  fn: () => Promise<T>
-): Promise<T> {
+export async function withRequestIdAsync<T>(requestId: string | null, fn: () => Promise<T>): Promise<T> {
   return requestIdStorage.run(requestId, fn);
 }
 ```
