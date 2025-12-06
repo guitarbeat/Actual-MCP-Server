@@ -24,7 +24,7 @@ for (const varName of requiredVars) {
     // Mask sensitive values
     const displayValue =
       varName === 'ACTUAL_PASSWORD' || varName === 'BEARER_TOKEN'
-        ? '*'.repeat(Math.min(value.length, 20)) + '...'
+        ? `${'*'.repeat(Math.min(value.length, 20))}...`
         : value;
     console.log(`  ✅ ${varName}: ${displayValue}`);
   } else {
@@ -109,7 +109,7 @@ if (actualUrl) {
 }
 
 // Summary
-console.log('\n' + '═'.repeat(60));
+console.log(`\n${'═'.repeat(60)}`);
 console.log('\n📊 Summary:');
 
 if (allRequiredPresent) {

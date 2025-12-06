@@ -3,16 +3,16 @@
 // ----------------------------
 
 import {
-  createAccount,
-  updateAccount,
-  deleteAccount,
   closeAccount,
-  reopenAccount,
+  createAccount,
+  deleteAccount,
   getAccountBalance,
+  reopenAccount,
+  updateAccount,
 } from '../../../actual-api.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
-import type { EntityHandler, Operation } from './base-handler.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
+import type { EntityHandler, Operation } from './base-handler.js';
 
 /**
  * Account type enum

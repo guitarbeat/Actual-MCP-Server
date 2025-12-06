@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { randomUUID } from 'node:crypto';
+import { parseArgs } from 'node:util';
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 /**
  * MCP Server for Actual Budget
  *
@@ -13,18 +16,15 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import dotenv from 'dotenv';
-import { NextFunction, Request, Response } from 'express';
-import { randomUUID } from 'node:crypto';
-import { parseArgs } from 'node:util';
+import type { NextFunction, Request, Response } from 'express';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
+import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
+import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
-import { setupSafeLogging, restoreConsoleMethods } from './core/logging/safe-logger.js';
-import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
 
 dotenv.config({ path: '.env' });
 
@@ -253,7 +253,7 @@ async function main(): Promise<void> {
     const sseTransports: Map<string, SSEServerTransport> = new Map();
 
     // * Favicon route - simple SVG favicon
-    app.get('/favicon.ico', (req: Request, res: Response) => {
+    app.get('/favicon.ico', (_req: Request, res: Response) => {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
         <rect width="100" height="100" fill="#2563eb" rx="10"/>
         <text x="50" y="65" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">$</text>
@@ -264,7 +264,7 @@ async function main(): Promise<void> {
     });
 
     // * Root route - basic server info
-    app.get('/', (req: Request, res: Response) => {
+    app.get('/', (_req: Request, res: Response) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.send(`

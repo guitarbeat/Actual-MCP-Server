@@ -49,13 +49,13 @@
  */
 
 import { z } from 'zod';
+import type { EntityCRUDConfig } from './crud-factory.js';
+import { AccountHandler } from './manage-entity/entity-handlers/account-handler.js';
+import { CategoryGroupHandler } from './manage-entity/entity-handlers/category-group-handler.js';
 import { CategoryHandler } from './manage-entity/entity-handlers/category-handler.js';
 import { PayeeHandler } from './manage-entity/entity-handlers/payee-handler.js';
-import { AccountHandler } from './manage-entity/entity-handlers/account-handler.js';
 import { RuleHandler } from './manage-entity/entity-handlers/rule-handler.js';
-import { CategoryGroupHandler } from './manage-entity/entity-handlers/category-group-handler.js';
 import { RuleDataSchema } from './manage-entity/types.js';
-import type { EntityCRUDConfig } from './crud-factory.js';
 
 // ----------------------------
 // CATEGORY SCHEMAS

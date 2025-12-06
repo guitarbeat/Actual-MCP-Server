@@ -5,11 +5,11 @@
  * Manages per-session transport instances for proper session isolation.
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { randomUUID } from 'node:crypto';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import type { IncomingMessage, ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
 
 /**
  * Streamable HTTP Handler class

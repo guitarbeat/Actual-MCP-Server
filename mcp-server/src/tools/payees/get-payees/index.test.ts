@@ -33,9 +33,21 @@ describe('get-payees tool', () => {
       expect(response.isError).toBeUndefined();
       const data = JSON.parse((response.content?.[0] as { text: string }).text);
       expect(data).toHaveLength(3);
-      expect(data[0]).toEqual({ id: 'payee-1', name: 'Amazon', transfer_acct: '(not a transfer payee)' });
-      expect(data[1]).toEqual({ id: 'payee-2', name: 'Grocery Store', transfer_acct: 'acc-123' });
-      expect(data[2]).toEqual({ id: 'payee-3', name: 'Transfer', transfer_acct: 'acc-456' });
+      expect(data[0]).toEqual({
+        id: 'payee-1',
+        name: 'Amazon',
+        transfer_acct: '(not a transfer payee)',
+      });
+      expect(data[1]).toEqual({
+        id: 'payee-2',
+        name: 'Grocery Store',
+        transfer_acct: 'acc-123',
+      });
+      expect(data[2]).toEqual({
+        id: 'payee-3',
+        name: 'Transfer',
+        transfer_acct: 'acc-456',
+      });
     });
 
     it('should filter payees by search term', async () => {

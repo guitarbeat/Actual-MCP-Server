@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { setupResources, RESOURCE_TEMPLATES } from './resources.js';
 import {
   ListResourcesRequestSchema,
   ListResourceTemplatesRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { RESOURCE_TEMPLATES, setupResources } from './resources.js';
 
 vi.mock('./actual-api.js', () => ({
   initActualApi: vi.fn(),
@@ -42,7 +42,10 @@ describe('setupResources', () => {
     setupResources(server);
 
     const handler = getRequestHandler(server, ListResourceTemplatesRequestSchema);
-    const result = (await handler({ method: 'resources/templates/list', params: {} })) as {
+    const result = (await handler({
+      method: 'resources/templates/list',
+      params: {},
+    })) as {
       resourceTemplates: typeof RESOURCE_TEMPLATES;
     };
 
@@ -60,7 +63,10 @@ describe('setupResources', () => {
     setupResources(server);
 
     const handler = getRequestHandler(server, ListResourcesRequestSchema);
-    const result = (await handler({ method: 'resources/list', params: {} })) as {
+    const result = (await handler({
+      method: 'resources/list',
+      params: {},
+    })) as {
       resources: Array<{ uri: string; name: string; description?: string }>;
     };
 

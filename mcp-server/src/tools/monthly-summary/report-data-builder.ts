@@ -1,4 +1,4 @@
-import type { MonthData, Account, MonthlySummaryReportData } from '../../core/types/index.js';
+import type { Account, MonthData, MonthlySummaryReportData } from '../../core/types/index.js';
 
 interface BuildOptions {
   start: string;

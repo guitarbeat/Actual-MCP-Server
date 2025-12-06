@@ -5,12 +5,12 @@
  * Validates: Requirements 1.2
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import * as fc from 'fast-check';
-import { StreamableHTTPHandler } from './streamable-http-handler.js';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Writable } from 'node:stream';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import * as fc from 'fast-check';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { StreamableHTTPHandler } from './streamable-http-handler.js';
 
 // Mock ServerResponse for testing
 class MockServerResponse extends Writable {

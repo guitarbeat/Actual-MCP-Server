@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { MonthlySummaryTransactionAggregator } from './transaction-aggregator.js';
+import { describe, expect, it } from 'vitest';
 import type { Transaction } from '../../core/types/index.js';
+import { MonthlySummaryTransactionAggregator } from './transaction-aggregator.js';
 
 describe('MonthlySummaryTransactionAggregator', () => {
   it('aggregates income and expenses while skipping transfers', () => {

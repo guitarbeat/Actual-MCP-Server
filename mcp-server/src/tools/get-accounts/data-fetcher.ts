@@ -5,8 +5,8 @@
 
 import { getAccountBalance } from '../../actual-api.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
-import { nameResolver } from '../../core/utils/name-resolver.js';
 import type { Account } from '../../core/types/domain.js';
+import { nameResolver } from '../../core/utils/name-resolver.js';
 
 export interface AccountWithBalance extends Account {
   balance: number;

@@ -1,20 +1,24 @@
-import { describe, it, expect } from 'vitest';
-import { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import { describe, expect, it } from 'vitest';
 import {
-  validationError,
-  notFoundError,
   apiError,
-  permissionError,
-  missingStringArgument,
-  missingNumberArgument,
+  invalidStringArrayArgument,
   missingBooleanArgument,
   missingMonthArgument,
+  missingNumberArgument,
+  missingStringArgument,
   missingStringArrayArgument,
-  invalidStringArrayArgument,
+  notFoundError,
+  permissionError,
+  validationError,
 } from './error-builder.js';
 
 // Helper to extract text from response
-function getPayload(result: CallToolResult): { error: boolean; message: string; suggestion: string } {
+function getPayload(result: CallToolResult): {
+  error: boolean;
+  message: string;
+  suggestion: string;
+} {
   const textContent = result.content[0] as TextContent;
   return JSON.parse(textContent.text);
 }
@@ -39,7 +43,10 @@ describe('Error Builder', () => {
     });
 
     it('should include received value in message', () => {
-      const result = validationError('Invalid type', { field: 'amount', value: 'abc' });
+      const result = validationError('Invalid type', {
+        field: 'amount',
+        value: 'abc',
+      });
 
       const payload = getPayload(result);
       expect(payload.message).toContain('"abc"');
@@ -99,7 +106,9 @@ describe('Error Builder', () => {
 
     it('should include operation name when provided', () => {
       const err = new Error('Invalid response');
-      const result = apiError('API call failed', err, { operation: 'getTransactions' });
+      const result = apiError('API call failed', err, {
+        operation: 'getTransactions',
+      });
 
       const payload = getPayload(result);
       expect(payload.message).toContain("API operation 'getTransactions' failed");

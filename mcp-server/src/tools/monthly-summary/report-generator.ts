@@ -1,5 +1,5 @@
+import type { MonthData, MonthlySummaryReportData } from '../../core/types/index.js';
 import { formatAmount } from '../../utils.js';
-import type { MonthlySummaryReportData, MonthData } from '../../core/types/index.js';
 
 export class MonthlySummaryReportGenerator {
   generate(data: MonthlySummaryReportData): string {
@@ -44,7 +44,7 @@ export class MonthlySummaryReportGenerator {
       const savingsFormatted: string = formatAmount(traditionalSavings);
       const totalSavingsFormatted: string = formatAmount(totalSavings);
 
-      const savingsRate: string = month.income > 0 ? ((totalSavings / month.income) * 100).toFixed(1) + '%' : 'N/A';
+      const savingsRate: string = month.income > 0 ? `${((totalSavings / month.income) * 100).toFixed(1)}%` : 'N/A';
 
       markdown += `| ${monthName} ${month.year} | ${income} | ${expenses} | ${investments} | ${savingsFormatted} | ${totalSavingsFormatted} | ${savingsRate} |\n`;
     });

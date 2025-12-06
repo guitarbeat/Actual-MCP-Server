@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTools } from './tools/index.js';
 
 // Mock the actual-api module
@@ -101,15 +101,18 @@ describe('Persistent API Connection - Performance Benchmarks', () => {
       // Measure time for 3 consecutive tool calls
       const startTime = Date.now();
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      await callToolHandler!({
-        params: { name: 'get-transactions', arguments: { accountId: 'test-account' } },
+      await callToolHandler?.({
+        params: {
+          name: 'get-transactions',
+          arguments: { accountId: 'test-account' },
+        },
       });
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-grouped-categories', arguments: {} },
       });
 
@@ -135,15 +138,18 @@ describe('Persistent API Connection - Performance Benchmarks', () => {
       // Measure actual time with persistent connection
       const startTime = Date.now();
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 
-      await callToolHandler!({
-        params: { name: 'get-transactions', arguments: { accountId: 'test-account' } },
+      await callToolHandler?.({
+        params: {
+          name: 'get-transactions',
+          arguments: { accountId: 'test-account' },
+        },
       });
 
-      await callToolHandler!({
+      await callToolHandler?.({
         params: { name: 'get-grouped-categories', arguments: {} },
       });
 
@@ -170,7 +176,7 @@ describe('Persistent API Connection - Performance Benchmarks', () => {
       for (let i = 0; i < 5; i++) {
         const startTime = Date.now();
 
-        await callToolHandler!({
+        await callToolHandler?.({
           params: { name: 'get-accounts', arguments: {} },
         });
 
@@ -180,7 +186,7 @@ describe('Persistent API Connection - Performance Benchmarks', () => {
 
       // Calculate average and standard deviation
       const avgDuration = callDurations.reduce((sum, d) => sum + d, 0) / callDurations.length;
-      const variance = callDurations.reduce((sum, d) => sum + Math.pow(d - avgDuration, 2), 0) / callDurations.length;
+      const variance = callDurations.reduce((sum, d) => sum + (d - avgDuration) ** 2, 0) / callDurations.length;
       const stdDev = Math.sqrt(variance);
 
       console.log(`[BENCHMARK] 5 consecutive calls - Avg: ${avgDuration.toFixed(2)}ms, StdDev: ${stdDev.toFixed(2)}ms`);
@@ -205,7 +211,7 @@ describe('Persistent API Connection - Performance Benchmarks', () => {
         const startTime = Date.now();
 
         for (let i = 0; i < count; i++) {
-          await callToolHandler!({
+          await callToolHandler?.({
             params: { name: 'get-accounts', arguments: {} },
           });
         }
@@ -252,7 +258,7 @@ describe('Persistent API Connection - Performance Benchmarks', () => {
       for (const tool of tools) {
         const startTime = Date.now();
 
-        await callToolHandler!({
+        await callToolHandler?.({
           params: tool,
         });
 

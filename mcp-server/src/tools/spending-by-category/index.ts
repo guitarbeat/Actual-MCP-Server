@@ -1,16 +1,16 @@
 // Orchestrator for spending-by-category tool
-import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { SpendingByCategoryInputParser } from './input-parser.js';
-import { SpendingByCategoryDataFetcher } from './data-fetcher.js';
-import { CategoryMapper } from '../../core/mapping/category-mapper.js';
-import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.js';
-import { GroupAggregator } from '../../core/aggregation/group-by.js';
-import { SpendingByCategoryReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../core/response/index.js';
-import type { SpendingByCategoryInput } from './input-parser.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { SpendingByCategoryArgsSchema, type SpendingByCategoryArgs, type Account } from '../../core/types/index.js';
+import { GroupAggregator } from '../../core/aggregation/group-by.js';
+import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.js';
+import { CategoryMapper } from '../../core/mapping/category-mapper.js';
+import { errorFromCatch, success } from '../../core/response/index.js';
+import { type Account, type SpendingByCategoryArgs, SpendingByCategoryArgsSchema } from '../../core/types/index.js';
 import type { ToolInput } from '../../types.js';
+import { SpendingByCategoryDataFetcher } from './data-fetcher.js';
+import type { SpendingByCategoryInput } from './input-parser.js';
+import { SpendingByCategoryInputParser } from './input-parser.js';
+import { SpendingByCategoryReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'spending-by-category',

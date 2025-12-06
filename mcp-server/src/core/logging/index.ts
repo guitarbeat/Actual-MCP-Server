@@ -3,11 +3,11 @@
  * Provides centralized exports for safe logging functionality
  */
 export {
-  setupSafeLogging,
-  restoreConsoleMethods,
-  isMcpLoggingEnabled,
-  setRequestId,
   generateRequestId,
+  isMcpLoggingEnabled,
+  restoreConsoleMethods,
+  setRequestId,
+  setupSafeLogging,
   withRequestId,
   withRequestIdAsync,
 } from './safe-logger.js';
