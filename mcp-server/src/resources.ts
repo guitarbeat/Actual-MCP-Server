@@ -303,7 +303,7 @@ To view transactions for this account, use the get-transactions tool.`;
 
         try {
           const budgetData = await getBudgetMonth(month);
-          const formattedBudget = formatBudgetMonth(budgetData, month);
+          const formattedBudget = formatBudgetMonth(budgetData as BudgetMonthData, month);
 
           return {
             contents: [
@@ -344,10 +344,40 @@ To view transactions for this account, use the get-transactions tool.`;
   });
 };
 
+interface CategoryData {
+  name: string;
+  received?: number;
+  budgeted?: number;
+  spent?: number;
+  balance?: number;
+  carryover?: boolean;
+}
+
+interface CategoryGroupData {
+  name: string;
+  is_income?: boolean;
+  budgeted?: number;
+  spent?: number;
+  balance?: number;
+  categories?: CategoryData[];
+}
+
+interface BudgetMonthData {
+  totalIncome?: number;
+  totalBudgeted?: number;
+  totalSpent?: number;
+  totalBalance?: number;
+  toBudget?: number;
+  fromLastMonth?: number;
+  lastMonthOverspent?: number;
+  forNextMonth?: number;
+  categoryGroups?: CategoryGroupData[];
+}
+
 /**
- * Format budget month data as markdown
+ * Format budget summary section
  */
-function formatBudgetMonth(budgetData: any, month: string): string {
+function formatBudgetSummary(data: BudgetMonthData): string {
   const {
     totalIncome = 0,
     totalBudgeted = 0,
@@ -357,13 +387,9 @@ function formatBudgetMonth(budgetData: any, month: string): string {
     fromLastMonth = 0,
     lastMonthOverspent = 0,
     forNextMonth = 0,
-    categoryGroups = [],
-  } = budgetData;
+  } = data;
 
-  let markdown = `# Budget: ${month}\n\n`;
-
-  // Summary section
-  markdown += `## Summary\n\n`;
+  let markdown = `## Summary\n\n`;
   markdown += `| Metric | Amount |\n`;
   markdown += `|--------|--------|\n`;
   markdown += `| Total Income | ${formatAmount(totalIncome)} |\n`;
@@ -381,44 +407,73 @@ function formatBudgetMonth(budgetData: any, month: string): string {
     markdown += `| Held for Next Month | ${formatAmount(forNextMonth)} |\n`;
   }
   markdown += `\n`;
+  return markdown;
+}
 
-  // Category groups section
-  if (categoryGroups && categoryGroups.length > 0) {
-    markdown += `## Category Groups\n\n`;
-
-    for (const group of categoryGroups) {
-      if (group.is_income) {
-        // Income categories
-        markdown += `### ${group.name}\n\n`;
-        if (group.categories && group.categories.length > 0) {
-          markdown += `| Category | Received |\n`;
-          markdown += `|----------|----------|\n`;
-          for (const category of group.categories) {
-            const received = category.received || 0;
-            markdown += `| ${category.name} | ${formatAmount(received)} |\n`;
-          }
-          markdown += `\n`;
-        }
-      } else {
-        // Expense categories
-        markdown += `### ${group.name}\n\n`;
-        markdown += `**Group Total**: Budgeted ${formatAmount(group.budgeted || 0)}, Spent ${formatAmount(Math.abs(group.spent || 0))}, Balance ${formatAmount(group.balance || 0)}\n\n`;
-
-        if (group.categories && group.categories.length > 0) {
-          markdown += `| Category | Budgeted | Spent | Balance |\n`;
-          markdown += `|----------|----------|-------|----------|\n`;
-          for (const category of group.categories) {
-            const budgeted = category.budgeted || 0;
-            const spent = Math.abs(category.spent || 0);
-            const balance = category.balance || 0;
-            const carryover = category.carryover ? ' ✓' : '';
-            markdown += `| ${category.name} | ${formatAmount(budgeted)} | ${formatAmount(spent)} | ${formatAmount(balance)}${carryover} |\n`;
-          }
-          markdown += `\n`;
-        }
-      }
+/**
+ * Format income category group
+ */
+function formatIncomeGroup(group: CategoryGroupData): string {
+  let markdown = `### ${group.name}\n\n`;
+  if (group.categories && group.categories.length > 0) {
+    markdown += `| Category | Received |\n`;
+    markdown += `|----------|----------|\n`;
+    for (const category of group.categories) {
+      const received = category.received || 0;
+      markdown += `| ${category.name} | ${formatAmount(received)} |\n`;
     }
+    markdown += `\n`;
+  }
+  return markdown;
+}
+
+/**
+ * Format expense category group
+ */
+function formatExpenseGroup(group: CategoryGroupData): string {
+  let markdown = `### ${group.name}\n\n`;
+  markdown += `**Group Total**: Budgeted ${formatAmount(group.budgeted || 0)}, Spent ${formatAmount(Math.abs(group.spent || 0))}, Balance ${formatAmount(group.balance || 0)}\n\n`;
+
+  if (group.categories && group.categories.length > 0) {
+    markdown += `| Category | Budgeted | Spent | Balance |\n`;
+    markdown += `|----------|----------|-------|----------|\n`;
+    for (const category of group.categories) {
+      const budgeted = category.budgeted || 0;
+      const spent = Math.abs(category.spent || 0);
+      const balance = category.balance || 0;
+      const carryover = category.carryover ? ' ✓' : '';
+      markdown += `| ${category.name} | ${formatAmount(budgeted)} | ${formatAmount(spent)} | ${formatAmount(balance)}${carryover} |\n`;
+    }
+    markdown += `\n`;
+  }
+  return markdown;
+}
+
+/**
+ * Format category groups section
+ */
+function formatCategoryGroups(categoryGroups: BudgetMonthData['categoryGroups']): string {
+  if (!categoryGroups || categoryGroups.length === 0) {
+    return '';
   }
 
+  let markdown = `## Category Groups\n\n`;
+  for (const group of categoryGroups) {
+    if (group.is_income) {
+      markdown += formatIncomeGroup(group);
+    } else {
+      markdown += formatExpenseGroup(group);
+    }
+  }
+  return markdown;
+}
+
+/**
+ * Format budget month data as markdown
+ */
+function formatBudgetMonth(budgetData: BudgetMonthData, month: string): string {
+  let markdown = `# Budget: ${month}\n\n`;
+  markdown += formatBudgetSummary(budgetData);
+  markdown += formatCategoryGroups(budgetData.categoryGroups);
   return markdown;
 }

@@ -86,10 +86,11 @@ async function checkConnectionHealth(): Promise<boolean> {
 }
 
 /**
- * Initialize the Actual Budget API
- * @param forceReconnect - If true, force reconnection even if already initialized
+ * Handle early return cases for initialization
+ * @param forceReconnect - Whether to force reconnection
+ * @returns True if initialization should be skipped
  */
-export async function initActualApi(forceReconnect = false): Promise<void> {
+async function handleInitializationEarlyReturns(forceReconnect: boolean): Promise<boolean> {
   if (initialized && !forceReconnect) {
     // Log when initialization is skipped due to existing connection
     initializationSkipCount++;
@@ -99,7 +100,7 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
         `[PERF] ⚡ Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`
       );
     }
-    return;
+    return true;
   }
 
   // If forcing reconnect, reset initialization state
@@ -109,6 +110,7 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
       console.error('[CONNECTION] Forcing reconnection...');
     }
   }
+
   if (initializing) {
     // * Wait for initialization to complete if already in progress
     // * This prevents race conditions when multiple requests trigger initialization simultaneously
@@ -117,6 +119,114 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     if (initializationError) throw initializationError;
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Initialize API connection and download budget
+ */
+async function initializeApiConnection(): Promise<void> {
+  const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  // * Removed JSON log to stdout - this was being interpreted as JSON-RPC in stdio mode
+  // * Configuration details are logged via MCP logging if needed
+  await api.init({
+    dataDir,
+    serverURL: process.env.ACTUAL_SERVER_URL,
+    password: process.env.ACTUAL_PASSWORD,
+  });
+}
+
+/**
+ * Download and load budget during initialization
+ * @returns Object with budgetId and budgets array
+ */
+async function downloadAndLoadBudget(): Promise<{ budgetId: string; budgets: BudgetFile[] }> {
+  const budgets: BudgetFile[] = await api.getBudgets();
+  if (!budgets || budgets.length === 0) {
+    throw new Error('No budgets found. Please create a budget in Actual first.');
+  }
+
+  // Use specified budget or the first one
+  const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
+  // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
+  const budgetPassword: string | undefined =
+    process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
+  if (budgetPassword) {
+    await api.downloadBudget(budgetId, { password: budgetPassword });
+  } else {
+    await api.downloadBudget(budgetId);
+  }
+
+  return { budgetId, budgets };
+}
+
+/**
+ * Log successful initialization
+ * @param startTime - Start time of initialization
+ * @param budgets - Budget files array
+ * @param budgetId - Budget ID that was loaded
+ */
+function logSuccessfulInitialization(startTime: number, budgets: BudgetFile[], budgetId: string): void {
+  // Track initialization time for performance logging
+  initializationTime = Date.now() - startTime;
+  if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+    console.error(`[PERF] 🔌 API initialized in ${initializationTime}ms`);
+  }
+
+  // Find the budget name for logging
+  const loadedBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId);
+  const budgetName = loadedBudget?.name || budgetId;
+  console.error(`✓ Budget loaded: ${budgetName}`);
+  if (process.env.ACTUAL_BUDGET_SYNC_ID) {
+    console.error(`  Using ACTUAL_BUDGET_SYNC_ID: ${budgetId}`);
+  }
+}
+
+/**
+ * Handle initialization errors with specific migration error handling
+ * @param error - The error that occurred
+ */
+function handleInitializationError(error: unknown): never {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorStr = errorMessage.toLowerCase();
+
+  // * Check for database migration errors
+  if (
+    errorStr.includes('out of sync') ||
+    errorStr.includes('out-of-sync') ||
+    errorStr.includes('migration') ||
+    errorStr.includes('database is out of sync')
+  ) {
+    console.error('✗ Database migration error detected');
+    console.error('  Error:', errorMessage);
+    console.error('');
+    console.error('  This is an Actual Budget server issue, not an MCP server issue.');
+    console.error('  Solutions:');
+    console.error('  1. Update Actual Budget server to the latest version');
+    console.error('  2. Restart the Actual Budget service - migrations will auto-apply');
+    console.error('  3. If the issue persists, check Actual Budget server logs');
+    console.error('');
+    console.error('  See docs/easypanel-deployment.md for more details.');
+  } else {
+    console.error('Failed to initialize Actual Budget API:', error);
+  }
+
+  initializationError = error instanceof Error ? error : new Error(String(error));
+  throw initializationError;
+}
+
+/**
+ * Initialize the Actual Budget API
+ * @param forceReconnect - If true, force reconnection even if already initialized
+ */
+export async function initActualApi(forceReconnect = false): Promise<void> {
+  if (await handleInitializationEarlyReturns(forceReconnect)) {
     return;
   }
 
@@ -125,81 +235,13 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
 
   initializationError = null;
   try {
-    const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-    // * Removed JSON log to stdout - this was being interpreted as JSON-RPC in stdio mode
-    // * Configuration details are logged via MCP logging if needed
-    await api.init({
-      dataDir,
-      serverURL: process.env.ACTUAL_SERVER_URL,
-      password: process.env.ACTUAL_PASSWORD,
-    });
-
-    const budgets: BudgetFile[] = await api.getBudgets();
-    if (!budgets || budgets.length === 0) {
-      throw new Error('No budgets found. Please create a budget in Actual first.');
-    }
-
-    // Use specified budget or the first one
-    const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
-    const budgetPassword: string | undefined =
-      process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
-    if (budgetPassword) {
-      await api.downloadBudget(budgetId, { password: budgetPassword });
-    } else {
-      await api.downloadBudget(budgetId);
-    }
-
-    // Find the budget name for logging
-    const loadedBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId);
-    const budgetName = loadedBudget?.name || budgetId;
-
+    await initializeApiConnection();
+    const { budgetId, budgets } = await downloadAndLoadBudget();
     initialized = true;
-
-    // Track initialization time for performance logging
-    initializationTime = Date.now() - startTime;
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error(`[PERF] 🔌 API initialized in ${initializationTime}ms`);
-    }
-
-    // Log successful budget load
-    console.error(`✓ Budget loaded: ${budgetName}`);
-    if (process.env.ACTUAL_BUDGET_SYNC_ID) {
-      console.error(`  Using ACTUAL_BUDGET_SYNC_ID: ${budgetId}`);
-    }
-
-    // Setup auto-sync if configured
+    logSuccessfulInitialization(startTime, budgets, budgetId);
     setupAutoSync();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStr = errorMessage.toLowerCase();
-
-    // * Check for database migration errors
-    if (
-      errorStr.includes('out of sync') ||
-      errorStr.includes('out-of-sync') ||
-      errorStr.includes('migration') ||
-      errorStr.includes('database is out of sync')
-    ) {
-      console.error('✗ Database migration error detected');
-      console.error('  Error:', errorMessage);
-      console.error('');
-      console.error('  This is an Actual Budget server issue, not an MCP server issue.');
-      console.error('  Solutions:');
-      console.error('  1. Update Actual Budget server to the latest version');
-      console.error('  2. Restart the Actual Budget service - migrations will auto-apply');
-      console.error('  3. If the issue persists, check Actual Budget server logs');
-      console.error('');
-      console.error('  See docs/easypanel-deployment.md for more details.');
-    } else {
-      console.error('Failed to initialize Actual Budget API:', error);
-    }
-
-    initializationError = error instanceof Error ? error : new Error(String(error));
-    throw initializationError;
+    handleInitializationError(error);
   } finally {
     initializing = false;
   }
@@ -288,6 +330,76 @@ export function resetInitializationStats(): void {
 }
 
 /**
+ * Ensure connection is healthy and initialized
+ */
+async function ensureConnectionHealthy(): Promise<void> {
+  if (initializing) {
+    // If already initializing, wait for it to complete
+    while (initializing) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (initializationError) {
+      throw initializationError;
+    }
+    return;
+  }
+
+  const isHealthy = await checkConnectionHealth();
+  if (!isHealthy) {
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error('[CONNECTION] Connection unhealthy, attempting reconnect');
+    }
+    initialized = false;
+    await initActualApi(true);
+  } else if (!initialized) {
+    // Ensure initialization (in case initialized flag is false but connection works)
+    await initActualApi();
+  }
+}
+
+/**
+ * Check if error is a connection error
+ * @param errorMessage - Lowercase error message
+ * @returns True if it's a connection error
+ */
+function isConnectionError(errorMessage: string): boolean {
+  return (
+    errorMessage.includes('not connected') ||
+    errorMessage.includes('connection') ||
+    errorMessage.includes('econnrefused') ||
+    errorMessage.includes('network') ||
+    errorMessage.includes('timeout') ||
+    errorMessage.includes('unknown operator') // Some API errors indicate connection issues
+  );
+}
+
+/**
+ * Handle connection error retry logic
+ * @param error - The error that occurred
+ * @param attempt - Current attempt number
+ * @param maxRetries - Maximum number of retries
+ * @returns True if should retry
+ */
+async function handleConnectionErrorRetry(error: Error, attempt: number, maxRetries: number): Promise<boolean> {
+  const errorMessage = error.message.toLowerCase();
+  if (!isConnectionError(errorMessage) || attempt >= maxRetries) {
+    return false;
+  }
+
+  if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+    console.error(
+      `[CONNECTION] Connection error detected, reconnecting (attempt ${attempt + 1}/${maxRetries + 1}): ${errorMessage}`
+    );
+  }
+
+  // Reset connection state and retry
+  initialized = false;
+  checkingHealth = false;
+  await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1))); // Exponential backoff
+  return true;
+}
+
+/**
  * Ensure the Actual Budget API connection is healthy
  * Automatically reconnects if connection is lost
  * @param operation - Function to execute after ensuring connection
@@ -299,65 +411,14 @@ async function ensureConnection<T>(operation: () => Promise<T>): Promise<T> {
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      // Skip health check if we're already initializing to avoid recursion
-      if (!initializing) {
-        const isHealthy = await checkConnectionHealth();
-
-        if (!isHealthy) {
-          if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-            console.error(
-              `[CONNECTION] Connection unhealthy, attempting reconnect (attempt ${attempt + 1}/${maxRetries + 1})`
-            );
-          }
-
-          // Force reconnection
-          initialized = false;
-          await initActualApi(true);
-        } else if (!initialized) {
-          // Ensure initialization (in case initialized flag is false but connection works)
-          await initActualApi();
-        }
-      } else {
-        // If already initializing, wait for it to complete
-        while (initializing) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-        if (initializationError) {
-          throw initializationError;
-        }
-      }
-
-      // Try the operation
+      await ensureConnectionHealthy();
       return await operation();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      const errorMessage = lastError.message.toLowerCase();
-
-      // Check if this is a connection error
-      const isConnectionError =
-        errorMessage.includes('not connected') ||
-        errorMessage.includes('connection') ||
-        errorMessage.includes('econnrefused') ||
-        errorMessage.includes('network') ||
-        errorMessage.includes('timeout') ||
-        errorMessage.includes('unknown operator'); // Some API errors indicate connection issues
-
-      if (isConnectionError && attempt < maxRetries) {
-        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-          console.error(
-            `[CONNECTION] Connection error detected, reconnecting (attempt ${attempt + 1}/${maxRetries + 1}): ${errorMessage}`
-          );
-        }
-
-        // Reset connection state and retry
-        initialized = false;
-        checkingHealth = false;
-        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1))); // Exponential backoff
-        continue;
+      const shouldRetry = await handleConnectionErrorRetry(lastError, attempt, maxRetries);
+      if (!shouldRetry) {
+        throw lastError;
       }
-
-      // Not a connection error or max retries reached
-      throw lastError;
     }
   }
 
