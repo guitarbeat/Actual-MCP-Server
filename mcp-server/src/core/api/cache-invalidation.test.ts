@@ -100,7 +100,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate accounts cache after reopenAccount', async () => {
       // Setup
-      vi.mocked(api.reopenAccount).mockResolvedValue({});
+      vi.mocked(api.reopenAccount).mockResolvedValue(undefined);
       cacheService.set('accounts:all', [{ id: 'account-1' }]);
 
       // Execute
@@ -128,7 +128,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate categories cache after updateCategory', async () => {
       // Setup
-      vi.mocked(api.updateCategory).mockResolvedValue({});
+      vi.mocked(api.updateCategory).mockResolvedValue({} as any);
       cacheService.set('categories:all', [{ id: 'category-1' }]);
 
       // Execute
@@ -141,7 +141,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate categories cache after deleteCategory', async () => {
       // Setup
-      vi.mocked(api.deleteCategory).mockResolvedValue({});
+      vi.mocked(api.deleteCategory).mockResolvedValue({ error: undefined } as any);
       cacheService.set('categories:all', [{ id: 'category-1' }]);
 
       // Execute
@@ -182,7 +182,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate categoryGroups cache after deleteCategoryGroup', async () => {
       // Setup
-      vi.mocked(api.deleteCategoryGroup).mockResolvedValue({});
+      vi.mocked(api.deleteCategoryGroup).mockResolvedValue(undefined);
       cacheService.set('categoryGroups:all', [{ id: 'group-1' }]);
 
       // Execute
@@ -210,7 +210,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate payees cache after updatePayee', async () => {
       // Setup
-      vi.mocked(api.updatePayee).mockResolvedValue({});
+      vi.mocked(api.updatePayee).mockResolvedValue(undefined);
       cacheService.set('payees:all', [{ id: 'payee-1' }]);
 
       // Execute
@@ -223,7 +223,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate payees cache after deletePayee', async () => {
       // Setup
-      vi.mocked(api.deletePayee).mockResolvedValue({});
+      vi.mocked(api.deletePayee).mockResolvedValue(undefined);
       cacheService.set('payees:all', [{ id: 'payee-1' }]);
 
       // Execute

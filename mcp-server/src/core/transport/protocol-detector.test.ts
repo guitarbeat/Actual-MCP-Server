@@ -129,10 +129,11 @@ describe('ProtocolDetector', () => {
           fc.constantFrom('/unknown', '/api', '/health', '/'), // Various paths
           (method, path) => {
             // Skip valid combinations
+            const pathStr = path as string;
             if (
-              (method === 'GET' && path === '/sse') ||
-              (method === 'POST' && path === '/messages') ||
-              ((method === 'GET' || method === 'POST' || method === 'DELETE') && path === '/mcp')
+              (method === 'GET' && pathStr === '/sse') ||
+              (method === 'POST' && pathStr === '/messages') ||
+              ((method === 'GET' || method === 'POST' || method === 'DELETE') && pathStr === '/mcp')
             ) {
               return; // Skip valid combinations
             }
