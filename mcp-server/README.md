@@ -10,6 +10,7 @@ npm run build
 ```
 
 Configure environment:
+
 ```bash
 ACTUAL_SERVER_URL=https://your-server.com
 ACTUAL_PASSWORD=your-password
@@ -28,25 +29,30 @@ ACTUAL_BUDGET_SYNC_ID=your-budget-id
 ## Core Tools
 
 ### Transactions & Accounts
+
 - `manage-entity` - Unified CRUD for all entities (transactions, accounts, categories, payees, rules, schedules)
 - `get-transactions` - Query transaction history
 - `get-accounts` - List accounts with balances
 
 ### Budget & Categories
+
 - `get-grouped-categories` - View category structure
 - `set-budget` - Set monthly budget amounts
 
 ### Financial Insights
+
 - `spending-by-category` - Spending breakdown
 - `monthly-summary` - Income, expenses, savings
 - `balance-history` - Account balance trends
 
 ### Entity Management
+
 - `get-payees` - List payees
 - `get-rules` - List transaction rules
 - `get-schedules` - List recurring schedules
 
 ### Advanced
+
 - `merge-payees` - Consolidate duplicates
 - `run-bank-sync` - Sync with bank
 - `run-import` - Import transactions
@@ -86,13 +92,16 @@ node build/index.js --sse --enable-write --enable-bearer
 **Available endpoints:**
 
 **Legacy SSE Transport:**
+
 - `GET /sse` - Establish SSE connection
 - `POST /messages` - Send messages
 
 **Modern Streamable HTTP Transport:**
+
 - `GET/POST/DELETE /mcp` - Streamable HTTP endpoint
 
 **Environment variables:**
+
 ```bash
 BEARER_TOKEN=your-secret-token  # Required when --enable-bearer is used
 PORT=3000                        # Optional, defaults to 3000
@@ -127,11 +136,13 @@ npm run inspector
 ```
 
 This will:
+
 1. Build the project (if needed)
 2. Load environment variables from `.env` file
 3. Start the MCP Inspector with your server
 
 The inspector runs two services:
+
 - **MCP Inspector Client UI** (default port 6274) - Open this in your browser
 - **MCP Proxy Server** (default port 6277) - Handles communication between client and server
 
@@ -216,6 +227,7 @@ src/
 The server uses a generic factory pattern to eliminate code duplication across CRUD operations. Instead of maintaining ~30 separate tool files, entity configurations are defined once and tools are generated automatically.
 
 **Benefits:**
+
 - **DRY Principle**: Single source of truth for CRUD logic
 - **Type Safety**: Full TypeScript inference from Zod schemas
 - **Consistency**: Uniform error handling and response formats
@@ -294,28 +306,34 @@ const toolRegistry: CategorizedToolDefinition[] = [
 
 ```typescript
 interface EntityCRUDConfig {
-  entityName: string;           // Tool name prefix (e.g., "category" → "create-category")
-  displayName: string;          // Human-readable name for messages
-  handlerClass: EntityHandler;  // Handler class constructor
+  entityName: string; // Tool name prefix (e.g., "category" → "create-category")
+  displayName: string; // Human-readable name for messages
+  handlerClass: EntityHandler; // Handler class constructor
   create: {
-    schema: z.ZodType;          // Zod schema for input validation
-    description: string;        // LLM-friendly tool description
-    requiresWrite: boolean;     // Permission requirement
-    category: 'core' | 'nini';  // Feature flag category
+    schema: z.ZodType; // Zod schema for input validation
+    description: string; // LLM-friendly tool description
+    requiresWrite: boolean; // Permission requirement
+    category: 'core' | 'nini'; // Feature flag category
   };
-  update: { /* same structure */ };
-  delete: { /* same structure */ };
+  update: {
+    /* same structure */
+  };
+  delete: {
+    /* same structure */
+  };
 }
 ```
 
 **Generated Tools:**
 
 For each entity configuration, the factory generates three tools:
+
 - `create-{entityName}`: Create new entity
 - `update-{entityName}`: Update existing entity
 - `delete-{entityName}`: Delete entity
 
 Each tool includes:
+
 - JSON schema from Zod definition
 - Input validation
 - Handler execution
@@ -335,6 +353,7 @@ Each tool includes:
 - **General Debugging:** See [Debugging Guide](./docs/debugging.md)
 
 Quick tips:
+
 - Use `npm run inspector` to test the server interactively
 - Enable performance tracking: `DEBUG_PERFORMANCE=true npm run inspector`
 - View Claude Desktop logs: `tail -F ~/Library/Logs/Claude/mcp*.log`

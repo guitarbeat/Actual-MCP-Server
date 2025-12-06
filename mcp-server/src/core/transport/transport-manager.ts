@@ -1,6 +1,6 @@
 /**
  * Transport Manager
- * 
+ *
  * Manages MCP transport connections for both SSE and Streamable HTTP transports.
  * Provides connection tracking, cleanup, and lifecycle management.
  */

@@ -7,16 +7,19 @@ This document summarizes the modernization efforts to align with the latest MCP 
 ## Package Updates
 
 ### @modelcontextprotocol/sdk
+
 - **Previous**: `^1.12.0`
 - **Current**: `^1.24.3`
 - **Status**: ✅ Updated and tested
 
 ### @actual-app/api
+
 - **Previous**: `25.9.0`
 - **Current**: `^25.12.0`
 - **Status**: ✅ Updated and tested
 
 ### express
+
 - **Previous**: `^5.1.0`
 - **Current**: `^5.2.1`
 - **Status**: ✅ Updated
@@ -26,12 +29,14 @@ This document summarizes the modernization efforts to align with the latest MCP 
 ### 1. Express Setup Modernization
 
 **Before:**
+
 ```typescript
 const app = express();
 app.use(express.json());
 ```
 
 **After:**
+
 ```typescript
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 
@@ -42,6 +47,7 @@ const app = createMcpExpressApp({
 ```
 
 **Benefits:**
+
 - ✅ Automatic DNS rebinding protection for localhost hosts
 - ✅ Pre-configured Express setup following MCP SDK best practices
 - ✅ Better security defaults
@@ -61,12 +67,14 @@ Fixed multiple TypeScript errors introduced by API updates:
 ### 3. API Compatibility
 
 #### Actual Budget API Changes
+
 - BudgetFile type now requires additional properties (`groupId`, `encryptKeyId`, etc.)
 - `getCategories()` returns union type (categories + category groups)
 - `getAccountBalance()` now expects Date objects instead of strings
 - Various create/update methods have stricter type requirements
 
 #### MCP SDK Changes
+
 - Response content types are now discriminated unions requiring type guards
 - Express helpers available via `createMcpExpressApp()`
 - Improved session management in StreamableHTTPServerTransport
@@ -76,12 +84,14 @@ Fixed multiple TypeScript errors introduced by API updates:
 ### Why We're Still Using `Server` Instead of `McpServer`
 
 The SDK provides two server classes:
+
 - `Server`: Low-level, full control
 - `McpServer`: High-level wrapper with simpler APIs
 
 **Current Choice:** `Server`
 
 **Reasoning:**
+
 - ✅ We already have a working implementation with `Server`
 - ✅ `McpServer` is a wrapper around `Server` - no functional difference
 - ✅ Our custom `StreamableHTTPHandler` works well with `Server`
@@ -93,6 +103,7 @@ The SDK provides two server classes:
 ### Transport Strategy
 
 **Current:** Dual transport support
+
 - ✅ Streamable HTTP (modern, recommended)
 - ✅ SSE (legacy, for backwards compatibility)
 - ✅ Stdio (for local development)

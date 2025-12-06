@@ -874,7 +874,7 @@ export async function runBankSync(accountId?: string): Promise<unknown> {
 /**
  * Run import (ensures API is initialized)
  */
-export async function runImport(file: string, importType?: string): Promise<unknown> {
+export async function runImport(file: string, _importType?: string): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.runImport === 'function') {
       // * API signature changed - runImport now takes a function callback
@@ -888,7 +888,7 @@ export async function runImport(file: string, importType?: string): Promise<unkn
 /**
  * Batch budget updates (ensures API is initialized)
  */
-export async function batchBudgetUpdates(updates: Array<Record<string, unknown>>): Promise<unknown> {
+export async function batchBudgetUpdates(_updates: Array<Record<string, unknown>>): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.batchBudgetUpdates === 'function') {
       // * API signature changed - batchBudgetUpdates now takes a function

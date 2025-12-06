@@ -18,6 +18,7 @@ APT Packages: (leave empty)
 ### How It Works
 
 Nixpacks will auto-detect Node.js version from:
+
 - ✅ `.nvmrc` file (created - specifies Node.js 22)
 - ✅ `.node-version` file (created - specifies Node.js 22)
 - ✅ `package.json` engines field (`"node": ">=22.0.0"`)
@@ -51,6 +52,7 @@ PORT=3000
 ```
 
 **Important:**
+
 - No quotes around values
 - No trailing spaces
 - Exact variable names (case-sensitive)
@@ -77,6 +79,7 @@ Dockerfile explicitly uses Node.js 22.
 ## Verification
 
 After deployment, check logs for:
+
 - ✅ Node.js version should be 22.x
 - ✅ Build completes successfully
 - ✅ Server starts without "Cannot find module" errors

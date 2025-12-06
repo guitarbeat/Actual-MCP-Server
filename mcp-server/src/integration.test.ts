@@ -9,7 +9,9 @@ vi.mock('@actual-app/api', () => ({
   default: {
     init: vi.fn().mockResolvedValue(undefined),
     downloadBudget: vi.fn().mockResolvedValue(undefined),
-    getBudgets: vi.fn().mockResolvedValue([{ id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' } as any]),
+    getBudgets: vi
+      .fn()
+      .mockResolvedValue([{ id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' } as any]),
     shutdown: vi.fn().mockResolvedValue(undefined),
     sync: vi.fn().mockResolvedValue(undefined),
     getAccounts: vi.fn().mockResolvedValue([
