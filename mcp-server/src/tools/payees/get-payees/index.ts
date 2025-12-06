@@ -2,9 +2,9 @@
 // GET PAYEES TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
-import { fetchAllPayees } from '../../../core/data/fetch-payees.js';
 import { getPayeeRules } from '../../../actual-api.js';
+import { fetchAllPayees } from '../../../core/data/fetch-payees.js';
+import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 import type { Payee } from '../../../types.js';
 
 export const schema = {

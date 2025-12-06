@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CategoryGroupHandler } from './category-group-handler.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from '../../../actual-api.js';
+import { CategoryGroupHandler } from './category-group-handler.js';
 
 vi.mock('../../../actual-api.js');
 

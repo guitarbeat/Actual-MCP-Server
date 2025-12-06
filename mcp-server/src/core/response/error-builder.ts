@@ -2,14 +2,14 @@
 // SPECIALIZED ERROR BUILDERS
 // ----------------------------
 
-import { MCPResponse } from './types.js';
 import { error } from './response-builder.js';
 import type {
-  ValidationErrorOptions,
-  NotFoundErrorOptions,
   ApiErrorOptions,
+  MCPResponse,
+  NotFoundErrorOptions,
   PermissionErrorOptions,
   UnsupportedFeatureOptions,
+  ValidationErrorOptions,
 } from './types.js';
 
 /**

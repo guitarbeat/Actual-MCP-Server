@@ -2,13 +2,13 @@
 // IMPORT TRANSACTIONS TOOL
 // ----------------------------
 
-import {
-  successWithJson,
-  errorFromCatch,
-  validationError,
-  unsupportedFeatureError,
-} from '../../../core/response/index.js';
 import { runBankSync } from '../../../actual-api.js';
+import {
+  errorFromCatch,
+  successWithJson,
+  unsupportedFeatureError,
+  validationError,
+} from '../../../core/response/index.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
 const METHOD_NOT_FUNCTION_FRAGMENT = 'is not a function';
@@ -57,7 +57,10 @@ export async function handler(
     const { source, accountId } = args;
 
     if (!source || source !== 'bank') {
-      return validationError('source must be "bank"', { field: 'source', expected: '"bank"' });
+      return validationError('source must be "bank"', {
+        field: 'source',
+        expected: '"bank"',
+      });
     }
 
     const accountIdStr = accountId && typeof accountId === 'string' ? accountId : undefined;

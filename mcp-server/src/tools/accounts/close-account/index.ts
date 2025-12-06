@@ -2,12 +2,12 @@
 // CLOSE ACCOUNT TOOL
 // ----------------------------
 
-import { success, errorFromCatch, MCPResponse } from '../../../core/response/index.js';
-import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
-import type { CloseAccountData } from '../../manage-entity/entity-handlers/account-handler.js';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../types.js';
+import type { CloseAccountData } from '../../manage-entity/entity-handlers/account-handler.js';
+import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
 
 const CloseAccountSchema = z.object({
   id: z.string().uuid('Account ID must be a valid UUID'),

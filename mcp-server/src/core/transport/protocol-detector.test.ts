@@ -5,11 +5,11 @@
  * Validates: Requirements 4.1, 4.2, 4.3, 4.5
  */
 
-import { describe, it, expect } from 'vitest';
+import type { IncomingMessage } from 'node:http';
 import * as fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 import { ProtocolDetector } from './protocol-detector.js';
 import { TransportType } from './transport-manager.js';
-import type { IncomingMessage } from 'node:http';
 
 // Mock IncomingMessage for testing
 function createMockRequest(method: string, url: string): IncomingMessage {
@@ -281,9 +281,21 @@ describe('ProtocolDetector', () => {
           fc.constantFrom(
             { method: 'GET', path: '/sse', expected: TransportType.SSE },
             { method: 'POST', path: '/messages', expected: TransportType.SSE },
-            { method: 'POST', path: '/mcp', expected: TransportType.STREAMABLE_HTTP },
-            { method: 'GET', path: '/mcp', expected: TransportType.STREAMABLE_HTTP },
-            { method: 'DELETE', path: '/mcp', expected: TransportType.STREAMABLE_HTTP }
+            {
+              method: 'POST',
+              path: '/mcp',
+              expected: TransportType.STREAMABLE_HTTP,
+            },
+            {
+              method: 'GET',
+              path: '/mcp',
+              expected: TransportType.STREAMABLE_HTTP,
+            },
+            {
+              method: 'DELETE',
+              path: '/mcp',
+              expected: TransportType.STREAMABLE_HTTP,
+            }
           ),
           fc.integer({ min: 2, max: 10 }), // Number of times to call
           (testCase, numCalls) => {

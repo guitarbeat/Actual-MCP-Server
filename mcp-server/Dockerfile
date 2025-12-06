@@ -31,8 +31,9 @@ COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/build ./build
 
 # Install only production dependencies
+# Skip lifecycle scripts (like 'prepare' which runs husky) since we don't need git hooks in Docker
 ENV NODE_ENV=production
-RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --ignore-scripts
 
 # Expose port
 EXPOSE 3000

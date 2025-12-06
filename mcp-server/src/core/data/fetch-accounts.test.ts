@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAllAccounts } from './fetch-accounts.js';
 
 // CRITICAL: Mock before imports
@@ -70,7 +70,15 @@ describe('fetchAllAccounts', () => {
   });
 
   it('should use cache on repeated calls (cache hit)', async () => {
-    const mockAccounts = [{ id: '1', name: 'Test Account', type: 'checking', offbudget: false, closed: false }];
+    const mockAccounts = [
+      {
+        id: '1',
+        name: 'Test Account',
+        type: 'checking',
+        offbudget: false,
+        closed: false,
+      },
+    ];
 
     // First call - cache miss, fetches from API
     vi.mocked(cacheService.getOrFetch).mockResolvedValueOnce(mockAccounts);
@@ -86,7 +94,15 @@ describe('fetchAllAccounts', () => {
   });
 
   it('should fetch from API on first call (cache miss)', async () => {
-    const mockAccounts = [{ id: '1', name: 'Test Account', type: 'checking', offbudget: false, closed: false }];
+    const mockAccounts = [
+      {
+        id: '1',
+        name: 'Test Account',
+        type: 'checking',
+        offbudget: false,
+        closed: false,
+      },
+    ];
     vi.mocked(getAccounts).mockResolvedValue(mockAccounts);
     vi.mocked(cacheService.getOrFetch).mockImplementation(async (_key, fetchFn) => {
       return fetchFn();
@@ -100,7 +116,15 @@ describe('fetchAllAccounts', () => {
   });
 
   it('should use correct TTL (5 minutes)', async () => {
-    const mockAccounts = [{ id: '1', name: 'Test Account', type: 'checking', offbudget: false, closed: false }];
+    const mockAccounts = [
+      {
+        id: '1',
+        name: 'Test Account',
+        type: 'checking',
+        offbudget: false,
+        closed: false,
+      },
+    ];
     vi.mocked(cacheService.getOrFetch).mockResolvedValue(mockAccounts);
 
     await fetchAllAccounts();

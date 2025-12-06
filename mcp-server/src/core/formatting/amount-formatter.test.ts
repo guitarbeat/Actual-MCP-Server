@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { formatAmount } from './amount-formatter.js';
+import { describe, expect, it } from 'vitest';
 import * as utils from '../../utils.js';
+import { formatAmount } from './amount-formatter.js';
 
 describe('amount-formatter', () => {
   describe('formatAmount', () => {

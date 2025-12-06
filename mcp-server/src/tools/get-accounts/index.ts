@@ -1,11 +1,11 @@
 // Orchestrator for get-accounts tool
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { successWithJson, errorFromCatch } from '../../core/response/index.js';
-import { GetAccountsArgsSchema, type GetAccountsArgs } from '../../core/types/index.js';
-import { type ToolInput } from '../../types.js';
-import { GetAccountsInputParser } from './input-parser.js';
+import { errorFromCatch, successWithJson } from '../../core/response/index.js';
+import { type GetAccountsArgs, GetAccountsArgsSchema } from '../../core/types/index.js';
+import type { ToolInput } from '../../types.js';
 import { GetAccountsDataFetcher } from './data-fetcher.js';
+import { GetAccountsInputParser } from './input-parser.js';
 import { GetAccountsReportGenerator } from './report-generator.js';
 
 export const schema = {

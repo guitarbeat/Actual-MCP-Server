@@ -2,10 +2,10 @@
 // GET GROUPED CATEGORY TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { fetchAllCategoryGroups } from '../../../core/data/fetch-categories.js';
+import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 import type { CategoryGroup } from '../../../core/types/domain.js';
-import { GetGroupedCategoriesArgsSchema, type GetGroupedCategoriesArgs } from '../../../core/types/index.js';
+import { type GetGroupedCategoriesArgs, GetGroupedCategoriesArgsSchema } from '../../../core/types/index.js';
 
 export const schema = {
   name: 'get-grouped-categories',

@@ -1,15 +1,15 @@
 // Orchestrator for get-transactions tool
-import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { GetTransactionsInputParser } from './input-parser.js';
-import { GetTransactionsDataFetcher } from './data-fetcher.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
-import { GetTransactionsReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../core/response/index.js';
-import { getDateRange } from '../../utils.js';
-import { GetTransactionsArgsSchema, type GetTransactionsArgs } from '../../core/types/index.js';
+import { errorFromCatch, success } from '../../core/response/index.js';
+import { type GetTransactionsArgs, GetTransactionsArgsSchema } from '../../core/types/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import type { ToolInput } from '../../types.js';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { getDateRange } from '../../utils.js';
+import { GetTransactionsDataFetcher } from './data-fetcher.js';
+import { GetTransactionsInputParser } from './input-parser.js';
+import { GetTransactionsReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'get-transactions',
@@ -60,7 +60,9 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       // Fetch transactions from all on-budget accounts
       const allTransactions = await Promise.all(
         onBudgetAccounts.map((acc) =>
-          new GetTransactionsDataFetcher().fetch(acc.id, start, end, { accountIdIsResolved: true })
+          new GetTransactionsDataFetcher().fetch(acc.id, start, end, {
+            accountIdIsResolved: true,
+          })
         )
       );
       transactions = allTransactions.flat();

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MonthlySummaryArgs, SpendingByCategoryArgs } from '../core/types/index.js';
 import { handler as monthlySummaryHandler } from './monthly-summary/index.js';
 import { handler as spendingByCategoryHandler } from './spending-by-category/index.js';
-import type { MonthlySummaryArgs, SpendingByCategoryArgs } from '../core/types/index.js';
 
 // Mock all dependencies
 vi.mock('../actual-api.js', () => ({
@@ -20,15 +20,36 @@ vi.mock('../core/cache/cache-service.js', () => ({
   },
 }));
 
-import { getAccounts, getTransactions, getCategories, getCategoryGroups, getPayees } from '../actual-api.js';
+import { getAccounts, getCategories, getCategoryGroups, getPayees, getTransactions } from '../actual-api.js';
 import { cacheService } from '../core/cache/cache-service.js';
 
 /* eslint-disable max-lines-per-function */
 describe('Analysis Tools Workflow Testing', () => {
   const mockAccounts = [
-    { id: 'acc1', name: 'Checking', type: 'checking', offbudget: false, closed: false, balance: 500000 },
-    { id: 'acc2', name: 'Savings', type: 'savings', offbudget: false, closed: false, balance: 1000000 },
-    { id: 'acc3', name: 'Credit Card', type: 'credit', offbudget: false, closed: false, balance: -25000 },
+    {
+      id: 'acc1',
+      name: 'Checking',
+      type: 'checking',
+      offbudget: false,
+      closed: false,
+      balance: 500000,
+    },
+    {
+      id: 'acc2',
+      name: 'Savings',
+      type: 'savings',
+      offbudget: false,
+      closed: false,
+      balance: 1000000,
+    },
+    {
+      id: 'acc3',
+      name: 'Credit Card',
+      type: 'credit',
+      offbudget: false,
+      closed: false,
+      balance: -25000,
+    },
   ];
 
   const mockCategoryGroups = [
@@ -38,10 +59,34 @@ describe('Analysis Tools Workflow Testing', () => {
   ];
 
   const mockCategories = [
-    { id: 'cat1', name: 'Groceries', group_id: 'grp1', is_income: false, hidden: false },
-    { id: 'cat2', name: 'Restaurants', group_id: 'grp1', is_income: false, hidden: false },
-    { id: 'cat3', name: 'Gas', group_id: 'grp2', is_income: false, hidden: false },
-    { id: 'cat4', name: 'Salary', group_id: 'grp3', is_income: true, hidden: false },
+    {
+      id: 'cat1',
+      name: 'Groceries',
+      group_id: 'grp1',
+      is_income: false,
+      hidden: false,
+    },
+    {
+      id: 'cat2',
+      name: 'Restaurants',
+      group_id: 'grp1',
+      is_income: false,
+      hidden: false,
+    },
+    {
+      id: 'cat3',
+      name: 'Gas',
+      group_id: 'grp2',
+      is_income: false,
+      hidden: false,
+    },
+    {
+      id: 'cat4',
+      name: 'Salary',
+      group_id: 'grp3',
+      is_income: true,
+      hidden: false,
+    },
   ];
 
   const mockPayees = [
@@ -61,9 +106,33 @@ describe('Analysis Tools Workflow Testing', () => {
       payee: 'p1',
       notes: 'Groceries',
     },
-    { id: 'tx2', account: 'acc1', date: '2024-01-20', amount: -3000, category: 'cat2', payee: 'p2', notes: 'Dinner' },
-    { id: 'tx3', account: 'acc1', date: '2024-01-25', amount: -4000, category: 'cat3', payee: 'p3', notes: 'Gas' },
-    { id: 'tx4', account: 'acc1', date: '2024-01-30', amount: 100000, category: 'cat4', payee: 'p4', notes: 'Salary' },
+    {
+      id: 'tx2',
+      account: 'acc1',
+      date: '2024-01-20',
+      amount: -3000,
+      category: 'cat2',
+      payee: 'p2',
+      notes: 'Dinner',
+    },
+    {
+      id: 'tx3',
+      account: 'acc1',
+      date: '2024-01-25',
+      amount: -4000,
+      category: 'cat3',
+      payee: 'p3',
+      notes: 'Gas',
+    },
+    {
+      id: 'tx4',
+      account: 'acc1',
+      date: '2024-01-30',
+      amount: 100000,
+      category: 'cat4',
+      payee: 'p4',
+      notes: 'Salary',
+    },
     {
       id: 'tx5',
       account: 'acc2',
@@ -73,7 +142,15 @@ describe('Analysis Tools Workflow Testing', () => {
       payee: 'p1',
       notes: 'Groceries',
     },
-    { id: 'tx6', account: 'acc3', date: '2024-02-15', amount: -2500, category: 'cat2', payee: 'p2', notes: 'Lunch' },
+    {
+      id: 'tx6',
+      account: 'acc3',
+      date: '2024-02-15',
+      amount: -2500,
+      category: 'cat2',
+      payee: 'p2',
+      notes: 'Lunch',
+    },
   ];
 
   beforeEach(() => {

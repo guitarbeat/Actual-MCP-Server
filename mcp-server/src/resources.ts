@@ -2,23 +2,23 @@
 // RESOURCES
 // ----------------------------
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   ListResourcesRequestSchema,
-  ReadResourceRequestSchema,
   ListResourceTemplatesRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import {
+  getAccountBalance,
+  getAccounts,
+  getBudgetMonth,
+  getBudgetMonths,
+  getTransactions,
+  initActualApi,
+} from './actual-api.js';
 // Import types from core/types
 import type { Account, Transaction } from './core/types/index.js';
 import { formatAmount, formatDate, getDateRange } from './utils.js';
-import {
-  initActualApi,
-  getBudgetMonths,
-  getBudgetMonth,
-  getAccounts,
-  getAccountBalance,
-  getTransactions,
-} from './actual-api.js';
 
 /**
  * Filter budget months to show only relevant months:

@@ -1,7 +1,7 @@
 // Fetches accounts, categories, groups, and transactions for spending-by-category tool
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { fetchAllCategories, fetchAllCategoryGroups } from '../../core/data/fetch-categories.js';
-import { fetchTransactionsForAccount, fetchAllOnBudgetTransactions } from '../../core/data/fetch-transactions.js';
+import { fetchAllOnBudgetTransactions, fetchTransactionsForAccount } from '../../core/data/fetch-transactions.js';
 import type { Account, Category, CategoryGroup, Transaction } from '../../core/types/domain.js';
 import { resolveAccountSelection } from '../../core/utils/account-selector.js';
 

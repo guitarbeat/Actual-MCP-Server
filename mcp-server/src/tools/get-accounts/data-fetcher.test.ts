@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GetAccountsDataFetcher } from './data-fetcher.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAccountBalance } from '../../actual-api.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
+import { GetAccountsDataFetcher } from './data-fetcher.js';
 
 vi.mock('../../actual-api.js', () => ({
   getAccountBalance: vi.fn(),

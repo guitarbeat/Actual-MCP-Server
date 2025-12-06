@@ -1,17 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { setupTools, getAvailableTools } from './tools/index.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from './actual-api.js';
+import { getAvailableTools, setupTools } from './tools/index.js';
 
 // Mock the @actual-app/api module
 vi.mock('@actual-app/api', () => ({
   default: {
     init: vi.fn().mockResolvedValue(undefined),
     downloadBudget: vi.fn().mockResolvedValue(undefined),
-    getBudgets: vi
-      .fn()
-      .mockResolvedValue([{ id: 'budget-1', cloudFileId: 'test-sync-id', name: 'Test Budget' } as any]),
+    getBudgets: vi.fn().mockResolvedValue([
+      {
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      } as any,
+    ]),
     shutdown: vi.fn().mockResolvedValue(undefined),
     sync: vi.fn().mockResolvedValue(undefined),
     getAccounts: vi.fn().mockResolvedValue([
@@ -150,7 +154,7 @@ describe('Integration Tests - MCP Simplification', () => {
       setupTools(server, false);
       expect(callToolHandler).toBeDefined();
 
-      const result = await callToolHandler!({
+      const result = await callToolHandler?.({
         params: { name: 'get-accounts', arguments: {} },
       });
 

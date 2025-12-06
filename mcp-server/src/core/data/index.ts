@@ -7,10 +7,10 @@ export { fetchAllCategories, fetchAllCategoryGroups } from './fetch-categories.j
 export { fetchAllPayees } from './fetch-payees.js';
 export { fetchAllRules } from './fetch-rules.js';
 export {
-  fetchTransactionsForAccount,
-  fetchAllOnBudgetTransactionsParallel,
-  fetchAllOnBudgetTransactions,
-  fetchAllTransactions,
   enrichTransactionsBatch,
+  fetchAllOnBudgetTransactions,
+  fetchAllOnBudgetTransactionsParallel,
+  fetchAllTransactions,
+  fetchTransactionsForAccount,
   type TransactionLookups,
 } from './fetch-transactions.js';

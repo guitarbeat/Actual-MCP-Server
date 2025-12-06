@@ -1,17 +1,17 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import api from '@actual-app/api';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import type { BudgetFile } from './core/types/index.js';
-import {
+import type {
   APIAccountEntity,
   APICategoryEntity,
   APICategoryGroupEntity,
   APIPayeeEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
-import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
+import type { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
 import { cacheService } from './core/cache/cache-service.js';
+import type { BudgetFile } from './core/types/index.js';
 
 type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
@@ -146,7 +146,10 @@ async function initializeApiConnection(): Promise<void> {
  * Download and load budget during initialization
  * @returns Object with budgetId and budgets array
  */
-async function downloadAndLoadBudget(): Promise<{ budgetId: string; budgets: BudgetFile[] }> {
+async function downloadAndLoadBudget(): Promise<{
+  budgetId: string;
+  budgets: BudgetFile[];
+}> {
   const budgets: BudgetFile[] = await api.getBudgets();
   if (!budgets || budgets.length === 0) {
     throw new Error('No budgets found. Please create a budget in Actual first.');
@@ -266,7 +269,7 @@ function setupAutoSync(): void {
   const minutes = parseInt(intervalMinutes, 10);
 
   // Support disabling with interval=0
-  if (isNaN(minutes) || minutes <= 0) {
+  if (Number.isNaN(minutes) || minutes <= 0) {
     return;
   }
 
@@ -660,7 +663,11 @@ export async function importTransactions(
     }>;
   }>,
   opts?: ImportTransactionsOpts
-): Promise<{ errors?: Array<{ message: string }>; added: string[]; updated: string[] }> {
+): Promise<{
+  errors?: Array<{ message: string }>;
+  added: string[];
+  updated: string[];
+}> {
   return ensureConnection(async () => {
     const transactionsWithAccount = transactions.map((transaction) => ({
       account: accountId,
@@ -851,7 +858,7 @@ export async function deleteSchedule(id: string): Promise<unknown> {
  */
 export async function getSchedules(): Promise<unknown[]> {
   return ensureConnection(async () => {
-    return extendedApi.getSchedules!();
+    return extendedApi.getSchedules?.();
   });
 }
 

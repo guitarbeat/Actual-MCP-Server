@@ -41,7 +41,7 @@ export class BalanceHistoryCalculator {
       if (!accountGroups.has(accountName)) {
         accountGroups.set(accountName, []);
       }
-      accountGroups.get(accountName)!.push(month);
+      accountGroups.get(accountName)?.push(month);
     });
 
     // Calculate changes for each account separately

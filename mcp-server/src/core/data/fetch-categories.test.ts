@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAllCategories, fetchAllCategoryGroups } from './fetch-categories.js';
 
 // CRITICAL: Mock before imports
@@ -103,8 +103,20 @@ describe('fetchAllCategoryGroups', () => {
 
   it('should return category groups from API', async () => {
     const mockCategoryGroups = [
-      { id: 'g1', name: 'Living', is_income: false, hidden: false, categories: [] },
-      { id: 'g2', name: 'Income', is_income: true, hidden: false, categories: [] },
+      {
+        id: 'g1',
+        name: 'Living',
+        is_income: false,
+        hidden: false,
+        categories: [],
+      },
+      {
+        id: 'g2',
+        name: 'Income',
+        is_income: true,
+        hidden: false,
+        categories: [],
+      },
     ];
     vi.mocked(getCategoryGroups).mockResolvedValue(mockCategoryGroups);
     vi.mocked(cacheService.getOrFetch).mockImplementation(async (_key, fetchFn) => {
@@ -138,7 +150,15 @@ describe('fetchAllCategoryGroups', () => {
   });
 
   it('should use cache on repeated calls (cache hit)', async () => {
-    const mockCategoryGroups = [{ id: 'g1', name: 'Living', is_income: false, hidden: false, categories: [] }];
+    const mockCategoryGroups = [
+      {
+        id: 'g1',
+        name: 'Living',
+        is_income: false,
+        hidden: false,
+        categories: [],
+      },
+    ];
 
     vi.mocked(cacheService.getOrFetch).mockResolvedValueOnce(mockCategoryGroups);
     const result1 = await fetchAllCategoryGroups();
@@ -152,7 +172,15 @@ describe('fetchAllCategoryGroups', () => {
   });
 
   it('should fetch from API on first call (cache miss)', async () => {
-    const mockCategoryGroups = [{ id: 'g1', name: 'Living', is_income: false, hidden: false, categories: [] }];
+    const mockCategoryGroups = [
+      {
+        id: 'g1',
+        name: 'Living',
+        is_income: false,
+        hidden: false,
+        categories: [],
+      },
+    ];
     vi.mocked(getCategoryGroups).mockResolvedValue(mockCategoryGroups);
     vi.mocked(cacheService.getOrFetch).mockImplementation(async (_key, fetchFn) => {
       return fetchFn();
@@ -166,7 +194,15 @@ describe('fetchAllCategoryGroups', () => {
   });
 
   it('should use correct TTL (5 minutes)', async () => {
-    const mockCategoryGroups = [{ id: 'g1', name: 'Living', is_income: false, hidden: false, categories: [] }];
+    const mockCategoryGroups = [
+      {
+        id: 'g1',
+        name: 'Living',
+        is_income: false,
+        hidden: false,
+        categories: [],
+      },
+    ];
     vi.mocked(cacheService.getOrFetch).mockResolvedValue(mockCategoryGroups);
 
     await fetchAllCategoryGroups();

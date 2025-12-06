@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Account } from '../types/domain.js';
 
 vi.mock('../../actual-api.js', () => ({
@@ -19,17 +19,17 @@ vi.mock('../utils/name-resolver.js', () => ({
   },
 }));
 
-import {
-  fetchTransactionsForAccount,
-  fetchAllOnBudgetTransactions,
-  fetchAllTransactions,
-  fetchAllOnBudgetTransactionsParallel,
-  enrichTransactionsBatch,
-} from './fetch-transactions.js';
 import { getTransactions } from '../../actual-api.js';
-import { fetchAllPayees } from './fetch-payees.js';
-import { fetchAllCategories } from './fetch-categories.js';
 import { nameResolver } from '../utils/name-resolver.js';
+import { fetchAllCategories } from './fetch-categories.js';
+import { fetchAllPayees } from './fetch-payees.js';
+import {
+  enrichTransactionsBatch,
+  fetchAllOnBudgetTransactions,
+  fetchAllOnBudgetTransactionsParallel,
+  fetchAllTransactions,
+  fetchTransactionsForAccount,
+} from './fetch-transactions.js';
 
 describe('fetchTransactionsForAccount', () => {
   beforeEach(() => {
@@ -226,8 +226,24 @@ describe('fetchAllOnBudgetTransactions', () => {
       { id: 'acc2', name: 'Savings', offbudget: false, closed: false },
     ];
 
-    const mockTransactions1 = [{ id: '1', account: 'acc1', date: '2023-01-01', amount: -100, payee: 'p1' }];
-    const mockTransactions2 = [{ id: '2', account: 'acc2', date: '2023-01-01', amount: -50, category: 'c1' }];
+    const mockTransactions1 = [
+      {
+        id: '1',
+        account: 'acc1',
+        date: '2023-01-01',
+        amount: -100,
+        payee: 'p1',
+      },
+    ];
+    const mockTransactions2 = [
+      {
+        id: '2',
+        account: 'acc2',
+        date: '2023-01-01',
+        amount: -50,
+        category: 'c1',
+      },
+    ];
 
     vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions1).mockResolvedValueOnce(mockTransactions2);
     vi.mocked(fetchAllPayees).mockResolvedValue([{ id: 'p1', name: 'Store' }]);
@@ -364,8 +380,24 @@ describe('fetchAllTransactions', () => {
       { id: 'acc2', name: 'Savings' },
     ];
 
-    const mockTransactions1 = [{ id: '1', account: 'acc1', date: '2023-01-01', amount: -100, payee: 'p1' }];
-    const mockTransactions2 = [{ id: '2', account: 'acc2', date: '2023-01-01', amount: -50, category: 'c1' }];
+    const mockTransactions1 = [
+      {
+        id: '1',
+        account: 'acc1',
+        date: '2023-01-01',
+        amount: -100,
+        payee: 'p1',
+      },
+    ];
+    const mockTransactions2 = [
+      {
+        id: '2',
+        account: 'acc2',
+        date: '2023-01-01',
+        amount: -50,
+        category: 'c1',
+      },
+    ];
 
     vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions1).mockResolvedValueOnce(mockTransactions2);
     vi.mocked(fetchAllPayees).mockResolvedValue([{ id: 'p1', name: 'Store' }]);
@@ -434,8 +466,22 @@ describe('enrichTransactionsBatch', () => {
 
   it('should enrich transactions with pre-fetched lookups without additional API calls', async () => {
     const mockTransactions = [
-      { id: '1', account: 'acc1', date: '2023-01-01', amount: -100, payee: 'p1', category: 'c1' },
-      { id: '2', account: 'acc1', date: '2023-01-02', amount: -50, payee: 'p2', category: 'c2' },
+      {
+        id: '1',
+        account: 'acc1',
+        date: '2023-01-01',
+        amount: -100,
+        payee: 'p1',
+        category: 'c1',
+      },
+      {
+        id: '2',
+        account: 'acc1',
+        date: '2023-01-02',
+        amount: -50,
+        payee: 'p2',
+        category: 'c2',
+      },
     ];
 
     const preFetchedLookups = {
@@ -452,8 +498,16 @@ describe('enrichTransactionsBatch', () => {
     const result = await enrichTransactionsBatch(mockTransactions, preFetchedLookups);
 
     expect(result).toEqual([
-      { ...mockTransactions[0], payee_name: 'Store', category_name: 'Groceries' },
-      { ...mockTransactions[1], payee_name: 'Gas Station', category_name: 'Fuel' },
+      {
+        ...mockTransactions[0],
+        payee_name: 'Store',
+        category_name: 'Groceries',
+      },
+      {
+        ...mockTransactions[1],
+        payee_name: 'Gas Station',
+        category_name: 'Fuel',
+      },
     ]);
     expect(fetchAllPayees).not.toHaveBeenCalled();
     expect(fetchAllCategories).not.toHaveBeenCalled();
@@ -515,8 +569,20 @@ describe('enrichTransactionsBatch', () => {
 
   it('should fetch lookups once when not provided', async () => {
     const mockTransactions = [
-      { id: '1', account: 'acc1', date: '2023-01-01', amount: -100, payee: 'p1' },
-      { id: '2', account: 'acc1', date: '2023-01-02', amount: -50, category: 'c1' },
+      {
+        id: '1',
+        account: 'acc1',
+        date: '2023-01-01',
+        amount: -100,
+        payee: 'p1',
+      },
+      {
+        id: '2',
+        account: 'acc1',
+        date: '2023-01-02',
+        amount: -50,
+        category: 'c1',
+      },
     ];
 
     vi.mocked(fetchAllPayees).mockResolvedValue([{ id: 'p1', name: 'Store' }]);
@@ -542,8 +608,20 @@ describe('enrichTransactionsBatch', () => {
 
   it('should only fetch payees when transactions have payee IDs', async () => {
     const mockTransactions = [
-      { id: '1', account: 'acc1', date: '2023-01-01', amount: -100, payee: 'p1' },
-      { id: '2', account: 'acc1', date: '2023-01-02', amount: -50, payee: 'p2' },
+      {
+        id: '1',
+        account: 'acc1',
+        date: '2023-01-01',
+        amount: -100,
+        payee: 'p1',
+      },
+      {
+        id: '2',
+        account: 'acc1',
+        date: '2023-01-02',
+        amount: -50,
+        payee: 'p2',
+      },
     ];
 
     vi.mocked(fetchAllPayees).mockResolvedValue([
@@ -564,8 +642,20 @@ describe('enrichTransactionsBatch', () => {
 
   it('should only fetch categories when transactions have category IDs', async () => {
     const mockTransactions = [
-      { id: '1', account: 'acc1', date: '2023-01-01', amount: -100, category: 'c1' },
-      { id: '2', account: 'acc1', date: '2023-01-02', amount: -50, category: 'c2' },
+      {
+        id: '1',
+        account: 'acc1',
+        date: '2023-01-01',
+        amount: -100,
+        category: 'c1',
+      },
+      {
+        id: '2',
+        account: 'acc1',
+        date: '2023-01-02',
+        amount: -50,
+        category: 'c2',
+      },
     ];
 
     vi.mocked(fetchAllPayees).mockResolvedValue([]);

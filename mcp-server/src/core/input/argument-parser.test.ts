@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseDateRange, parseAccountFilter, parseCategoryFilter } from './argument-parser.js';
+import { describe, expect, it } from 'vitest';
+import { parseAccountFilter, parseCategoryFilter, parseDateRange } from './argument-parser.js';
 
 describe('parseDateRange', () => {
   it('should parse valid date range', () => {

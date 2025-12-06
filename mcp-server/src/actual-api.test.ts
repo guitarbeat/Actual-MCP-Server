@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from './actual-api.js';
 
 // Mock the @actual-app/api module
@@ -22,8 +22,8 @@ vi.mock('fs', () => ({
   },
 }));
 
+import fs from 'node:fs';
 import api from '@actual-app/api';
-import fs from 'fs';
 import { cacheService } from './core/cache/cache-service.js';
 
 // Mock cache service
@@ -80,9 +80,21 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'first-budget', name: 'First Budget' } as any,
-        { id: 'budget-2', cloudFileId: 'specific-budget-id', name: 'Specific Budget' } as any,
-        { id: 'budget-3', cloudFileId: 'third-budget', name: 'Third Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'first-budget',
+          name: 'First Budget',
+        } as any,
+        {
+          id: 'budget-2',
+          cloudFileId: 'specific-budget-id',
+          name: 'Specific Budget',
+        } as any,
+        {
+          id: 'budget-3',
+          cloudFileId: 'third-budget',
+          name: 'Third Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -98,14 +110,20 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'encrypted-budget-id', name: 'Encrypted Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'encrypted-budget-id',
+          name: 'Encrypted Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
 
-      expect(api.downloadBudget).toHaveBeenCalledWith('encrypted-budget-id', { password: 'secret-password' });
+      expect(api.downloadBudget).toHaveBeenCalledWith('encrypted-budget-id', {
+        password: 'secret-password',
+      });
     });
   });
 
@@ -115,8 +133,16 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'first-budget', name: 'First Budget' } as any,
-        { id: 'budget-2', cloudFileId: 'second-budget', name: 'Second Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'first-budget',
+          name: 'First Budget',
+        } as any,
+        {
+          id: 'budget-2',
+          cloudFileId: 'second-budget',
+          name: 'Second Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -163,7 +189,11 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'valid-budget', name: 'Valid Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'valid-budget',
+          name: 'Valid Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockRejectedValue(new Error('Budget not found'));
@@ -178,14 +208,20 @@ describe('Auto-load functionality', () => {
 
       vi.mocked(fs.existsSync).mockReturnValue(false);
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith('/test/new-data', { recursive: true });
+      expect(fs.mkdirSync).toHaveBeenCalledWith('/test/new-data', {
+        recursive: true,
+      });
     });
 
     it('should not create data directory if it already exists', async () => {
@@ -193,7 +229,11 @@ describe('Auto-load functionality', () => {
 
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -218,7 +258,11 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -242,7 +286,11 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -261,7 +309,11 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -280,7 +332,11 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -300,7 +356,11 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -324,7 +384,11 @@ describe('Auto-load functionality', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -372,7 +436,11 @@ describe('Auto-load functionality', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
@@ -408,12 +476,19 @@ describe('Auto-load functionality', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
       vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'budget-1', cloudFileId: 'test-budget', name: 'Test Budget' } as any,
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
       ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(cacheService.invalidate).mockClear();
-      vi.mocked(api.importTransactions).mockResolvedValue({ added: ['txn-1'], updated: [] });
+      vi.mocked(api.importTransactions).mockResolvedValue({
+        added: ['txn-1'],
+        updated: [],
+      });
     });
 
     it('should import transactions and invalidate caches', async () => {

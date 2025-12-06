@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handler } from './index.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SpendingByCategoryArgs } from '../../core/types/index.js';
+import { handler } from './index.js';
 
 // Mock all dependencies
 vi.mock('../../actual-api.js', () => ({
@@ -18,11 +18,19 @@ vi.mock('../../core/cache/cache-service.js', () => ({
   },
 }));
 
-import { getAccounts, getTransactions, getCategories, getCategoryGroups } from '../../actual-api.js';
+import { getAccounts, getCategories, getCategoryGroups, getTransactions } from '../../actual-api.js';
 import { cacheService } from '../../core/cache/cache-service.js';
 
 describe('spending-by-category tool integration', () => {
-  const mockAccounts = [{ id: 'acc1', name: 'Checking', type: 'checking', offbudget: false, closed: false }];
+  const mockAccounts = [
+    {
+      id: 'acc1',
+      name: 'Checking',
+      type: 'checking',
+      offbudget: false,
+      closed: false,
+    },
+  ];
 
   const mockCategoryGroups = [
     { id: 'grp1', name: 'Living Expenses', hidden: false, categories: [] },
@@ -30,9 +38,27 @@ describe('spending-by-category tool integration', () => {
   ];
 
   const mockCategories = [
-    { id: 'cat1', name: 'Groceries', group_id: 'grp1', is_income: false, hidden: false },
-    { id: 'cat2', name: 'Utilities', group_id: 'grp1', is_income: false, hidden: false },
-    { id: 'cat3', name: 'Salary', group_id: 'grp2', is_income: true, hidden: false },
+    {
+      id: 'cat1',
+      name: 'Groceries',
+      group_id: 'grp1',
+      is_income: false,
+      hidden: false,
+    },
+    {
+      id: 'cat2',
+      name: 'Utilities',
+      group_id: 'grp1',
+      is_income: false,
+      hidden: false,
+    },
+    {
+      id: 'cat3',
+      name: 'Salary',
+      group_id: 'grp2',
+      is_income: true,
+      hidden: false,
+    },
   ];
 
   const mockTransactions = [

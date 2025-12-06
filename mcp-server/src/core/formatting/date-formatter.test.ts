@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { formatDate, getDateRange, getDateRangeForMonths } from './date-formatter.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as utils from '../../utils.js';
+import { formatDate, getDateRange, getDateRangeForMonths } from './date-formatter.js';
 
 describe('date-formatter', () => {
   describe('formatDate', () => {

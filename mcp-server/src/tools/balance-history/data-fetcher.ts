@@ -1,8 +1,9 @@
 // Fetches accounts, transactions, and balances for balance-history tool
+
+import { getAccountBalance } from '../../actual-api.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { fetchAllTransactions, fetchTransactionsForAccount } from '../../core/data/fetch-transactions.js';
 import type { Account, Transaction } from '../../core/types/domain.js';
-import { getAccountBalance } from '../../actual-api.js';
 import { resolveAccountSelection } from '../../core/utils/account-selector.js';
 
 export class BalanceHistoryDataFetcher {
@@ -22,13 +23,17 @@ export class BalanceHistoryDataFetcher {
     if (accountId && account) {
       // # Reason: Fetch transactions and balance in parallel for single account
       const [txs, balance] = await Promise.all([
-        fetchTransactionsForAccount(accountId, start, end, { accountIdIsResolved: true }),
+        fetchTransactionsForAccount(accountId, start, end, {
+          accountIdIsResolved: true,
+        }),
         getAccountBalance(accountId),
       ]);
       transactions = txs;
       account.balance = balance;
     } else if (accountId) {
-      transactions = await fetchTransactionsForAccount(accountId, start, end, { accountIdIsResolved: true });
+      transactions = await fetchTransactionsForAccount(accountId, start, end, {
+        accountIdIsResolved: true,
+      });
     } else {
       // # Reason: Fetch transactions and all account balances in parallel
       const [txs, balances] = await Promise.all([

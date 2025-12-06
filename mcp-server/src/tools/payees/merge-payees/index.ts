@@ -2,8 +2,8 @@
 // MERGE PAYEES TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../core/response/index.js';
 import { mergePayees } from '../../../actual-api.js';
+import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 
 export const schema = {
   name: 'merge-payees',

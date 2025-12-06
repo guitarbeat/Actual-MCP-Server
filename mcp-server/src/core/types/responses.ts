@@ -3,7 +3,7 @@
 // Type definitions for MCP responses and error handling
 // ----------------------------
 
-import { CallToolResult, TextContent, ImageContent, AudioContent } from '@modelcontextprotocol/sdk/types.js';
+import type { AudioContent, CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
 /**
  * Standard MCP content item types (union of all supported content types)

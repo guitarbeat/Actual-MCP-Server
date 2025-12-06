@@ -2,12 +2,12 @@
 // PAYEE ENTITY HANDLER
 // ----------------------------
 
-import { cacheService } from '../../../core/cache/cache-service.js';
 import { createPayee, deletePayee, updatePayee } from '../../../actual-api.js';
-import type { EntityHandler, Operation } from './base-handler.js';
+import { cacheService } from '../../../core/cache/cache-service.js';
+import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { PayeeData } from '../types.js';
 import { PayeeDataSchema } from '../types.js';
-import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
+import type { EntityHandler, Operation } from './base-handler.js';
 
 /**
  * Handler for payee entity operations
