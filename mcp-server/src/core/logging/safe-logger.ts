@@ -43,7 +43,7 @@ export function setupSafeLogging(server: Server): void {
     const message = formatStructuredMessage('info', args);
     try {
       if (mcpServer) {
-        mcpServer.sendLoggingMessage({ level: 'info', message });
+        mcpServer.sendLoggingMessage({ level: 'info', data: message });
       }
     } catch {
       // If MCP logging fails, fall back to original (shouldn't happen in stdio mode)
@@ -55,7 +55,7 @@ export function setupSafeLogging(server: Server): void {
     const message = formatStructuredMessage('error', args);
     try {
       if (mcpServer) {
-        mcpServer.sendLoggingMessage({ level: 'error', message });
+        mcpServer.sendLoggingMessage({ level: 'error', data: message });
       }
     } catch {
       // If MCP logging fails, fall back to original
@@ -67,7 +67,7 @@ export function setupSafeLogging(server: Server): void {
     const message = formatStructuredMessage('warning', args);
     try {
       if (mcpServer) {
-        mcpServer.sendLoggingMessage({ level: 'warning', message });
+        mcpServer.sendLoggingMessage({ level: 'warning', data: message });
       }
     } catch {
       // If MCP logging fails, fall back to original
@@ -193,7 +193,7 @@ export function endPerformanceTracking(operationId: string, operationName?: stri
 
   try {
     if (mcpServer) {
-      mcpServer.sendLoggingMessage({ level: 'info', message });
+      mcpServer.sendLoggingMessage({ level: 'info', data: message });
     } else {
       originalConsoleLog(message);
     }

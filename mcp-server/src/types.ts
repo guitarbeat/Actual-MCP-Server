@@ -3,12 +3,10 @@
 // Re-exports from core/types for backward compatibility
 // ----------------------------
 
-import { z } from 'zod';
-import { ToolSchema } from '@modelcontextprotocol/sdk/types.js';
-
 // MCP-specific types
-const _ToolInputSchema = ToolSchema.shape.inputSchema;
-export type ToolInput = z.infer<typeof _ToolInputSchema>;
+// ToolInput represents a JSON schema object (result of zodToJsonSchema)
+// Used as a type annotation for tool inputSchema properties
+export type ToolInput = Record<string, unknown>;
 
 // Domain types
 export type {
