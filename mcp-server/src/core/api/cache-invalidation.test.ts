@@ -36,7 +36,7 @@ describe('Cache Invalidation Tests', () => {
 
     // Mock successful API initialization
     vi.mocked(api.getBudgets).mockResolvedValue([
-      { id: 'test-budget', cloudFileId: 'test-cloud-id', name: 'Test Budget' },
+      { id: 'test-budget', cloudFileId: 'test-cloud-id', name: 'Test Budget' } as any,
     ]);
     vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
   });
@@ -74,7 +74,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate accounts cache after deleteAccount', async () => {
       // Setup
-      vi.mocked(api.deleteAccount).mockResolvedValue({});
+      vi.mocked(api.deleteAccount).mockResolvedValue(undefined);
       cacheService.set('accounts:all', [{ id: 'account-1' }]);
 
       // Execute
@@ -87,7 +87,7 @@ describe('Cache Invalidation Tests', () => {
 
     it('should invalidate accounts cache after closeAccount', async () => {
       // Setup
-      vi.mocked(api.closeAccount).mockResolvedValue({});
+      vi.mocked(api.closeAccount).mockResolvedValue(undefined);
       cacheService.set('accounts:all', [{ id: 'account-1' }]);
 
       // Execute
