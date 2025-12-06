@@ -30,12 +30,12 @@ export interface CategorizedToolDefinition {
 
 /**
  * Configuration for a single CRUD operation (create, update, or delete)
- * 
+ *
  * This interface defines the metadata needed to generate a single tool definition.
  * Each operation (create, update, delete) requires its own configuration.
- * 
+ *
  * @template TSchema - Zod schema type for input validation
- * 
+ *
  * @example
  * ```typescript
  * const createConfig: CRUDOperationConfig<typeof CreateCategorySchema> = {
@@ -59,15 +59,15 @@ export interface CRUDOperationConfig<TSchema extends z.ZodType> {
 
 /**
  * Complete configuration for an entity's CRUD tools
- * 
+ *
  * This interface defines all metadata needed to generate a complete set of
  * CRUD tools (create, update, delete) for a single entity type.
- * 
+ *
  * @template TCreateSchema - Zod schema type for create operation
  * @template TUpdateSchema - Zod schema type for update operation
  * @template TDeleteSchema - Zod schema type for delete operation
  * @template THandler - Entity handler class type
- * 
+ *
  * @example
  * ```typescript
  * const categoryConfig: EntityCRUDConfig<
@@ -89,7 +89,7 @@ export interface EntityCRUDConfig<
   TCreateSchema extends z.ZodType,
   TUpdateSchema extends z.ZodType,
   TDeleteSchema extends z.ZodType,
-  THandler extends EntityHandler
+  THandler extends EntityHandler,
 > {
   /** Entity name used as tool name prefix (e.g., "category" → "create-category") */
   entityName: string;
@@ -107,45 +107,45 @@ export interface EntityCRUDConfig<
 
 /**
  * Generate CRUD tool definitions for an entity type
- * 
+ *
  * This factory function creates standardized create, update, and delete tools
  * for any entity type, eliminating code duplication across CRUD operations.
- * 
+ *
  * The factory generates three tool definitions with consistent behavior:
  * - **create-{entityName}**: Validates input, calls handler.create(), invalidates cache
  * - **update-{entityName}**: Validates input, calls handler.update(), invalidates cache
  * - **delete-{entityName}**: Validates input, calls handler.delete(), invalidates cache
- * 
+ *
  * Each generated tool includes:
  * - JSON schema converted from Zod schema
  * - Input validation with detailed error messages
  * - Handler instantiation and method execution
  * - Cache invalidation after successful operations
  * - Consistent success/error response formatting
- * 
+ *
  * @template TCreateSchema - Zod schema type for create operation
  * @template TUpdateSchema - Zod schema type for update operation
  * @template TDeleteSchema - Zod schema type for delete operation
  * @template THandler - Entity handler class type
- * 
+ *
  * @param config - Entity CRUD configuration with schemas, descriptions, and handler
  * @returns Array of three tool definitions [createTool, updateTool, deleteTool]
- * 
+ *
  * @example Basic usage
  * ```typescript
  * import { createCRUDTools } from './crud-factory.js';
  * import { entityConfigurations } from './crud-factory-config.js';
- * 
+ *
  * // Generate tools for categories
  * const categoryTools = createCRUDTools(entityConfigurations.category);
- * 
+ *
  * // Add to tool registry
  * const toolRegistry = [
  *   ...categoryTools,
  *   // ... other tools
  * ];
  * ```
- * 
+ *
  * @example Adding a new entity type
  * ```typescript
  * // 1. Define schemas
@@ -153,16 +153,16 @@ export interface EntityCRUDConfig<
  *   name: z.string().min(1),
  *   type: z.enum(['foo', 'bar']),
  * });
- * 
+ *
  * const UpdateWidgetSchema = z.object({
  *   id: z.string().uuid(),
  *   name: z.string().optional(),
  * });
- * 
+ *
  * const DeleteWidgetSchema = z.object({
  *   id: z.string().uuid(),
  * });
- * 
+ *
  * // 2. Create configuration
  * const widgetConfig = {
  *   entityName: 'widget',
@@ -187,12 +187,12 @@ export interface EntityCRUDConfig<
  *     category: 'core',
  *   },
  * };
- * 
+ *
  * // 3. Generate tools
  * const widgetTools = createCRUDTools(widgetConfig);
  * // Returns: [create-widget, update-widget, delete-widget]
  * ```
- * 
+ *
  * @see {@link EntityCRUDConfig} for configuration structure
  * @see {@link CRUDOperationConfig} for operation-specific configuration
  */
@@ -200,11 +200,16 @@ export function createCRUDTools<
   TCreateSchema extends z.ZodType,
   TUpdateSchema extends z.ZodType,
   TDeleteSchema extends z.ZodType,
-  THandler extends EntityHandler
->(
-  config: EntityCRUDConfig<TCreateSchema, TUpdateSchema, TDeleteSchema, THandler>
-): CategorizedToolDefinition[] {
-  const { entityName, displayName, handlerClass, create: createConfig, update: updateConfig, delete: deleteConfig } = config;
+  THandler extends EntityHandler,
+>(config: EntityCRUDConfig<TCreateSchema, TUpdateSchema, TDeleteSchema, THandler>): CategorizedToolDefinition[] {
+  const {
+    entityName,
+    displayName,
+    handlerClass,
+    create: createConfig,
+    update: updateConfig,
+    delete: deleteConfig,
+  } = config;
 
   // Generate CREATE tool
   const createTool: CategorizedToolDefinition = {
@@ -219,13 +224,13 @@ export function createCRUDTools<
         const handler = new handlerClass();
         const entityId = await handler.create(validated);
         handler.invalidateCache();
-        
+
         // Extract name from validated data if available for better success message
         const name = (validated as any).name;
         const successMessage = name
           ? `Successfully created ${displayName} "${name}" with id ${entityId}`
           : `Successfully created ${displayName} with id ${entityId}`;
-        
+
         return success(successMessage);
       } catch (err) {
         return errorFromCatch(err, {
@@ -279,7 +284,7 @@ export function createCRUDTools<
       try {
         const validated = deleteConfig.schema.parse(args);
         const { id } = validated as any;
-        
+
         const handler = new handlerClass();
         await handler.delete(id);
         handler.invalidateCache();

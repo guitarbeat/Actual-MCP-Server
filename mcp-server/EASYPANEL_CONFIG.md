@@ -18,9 +18,10 @@ APT Packages: (leave empty)
 ### How It Works
 
 Nixpacks will auto-detect Node.js version from:
-- ✅ `.nvmrc` file (created - specifies Node.js 20)
-- ✅ `.node-version` file (created - specifies Node.js 20)
-- ✅ `package.json` engines field (`"node": ">=20.0.0"`)
+
+- ✅ `.nvmrc` file (created - specifies Node.js 22)
+- ✅ `.node-version` file (created - specifies Node.js 22)
+- ✅ `package.json` engines field (`"node": ">=22.0.0"`)
 
 **The Version field (`1.34.1`) is for Nixpacks itself, not Node.js.** Nixpacks will read the `.nvmrc` file to determine which Node.js version to use.
 
@@ -31,7 +32,7 @@ If Nixpacks auto-detection doesn't work, use the Dockerfile:
 ### Configuration
 
 1. In Easy Panel, switch build method from **Nixpacks** to **Dockerfile**
-2. The `Dockerfile` is already created and uses Node.js 20
+2. The `Dockerfile` is already created and uses Node.js 22
 3. No additional configuration needed
 
 ### Why Use Dockerfile?
@@ -51,6 +52,7 @@ PORT=3000
 ```
 
 **Important:**
+
 - No quotes around values
 - No trailing spaces
 - Exact variable names (case-sensitive)
@@ -64,7 +66,7 @@ PORT=3000
 3. Verify other commands are set correctly
 4. Save and redeploy
 
-Nixpacks will read `.nvmrc` and use Node.js 20 automatically.
+Nixpacks will read `.nvmrc` and use Node.js 22 automatically.
 
 ### If Using Dockerfile (Option 2):
 
@@ -72,11 +74,12 @@ Nixpacks will read `.nvmrc` and use Node.js 20 automatically.
 2. No version field needed
 3. Save and redeploy
 
-Dockerfile explicitly uses Node.js 20.
+Dockerfile explicitly uses Node.js 22.
 
 ## Verification
 
 After deployment, check logs for:
-- ✅ Node.js version should be 20.x or 22.x
+
+- ✅ Node.js version should be 22.x
 - ✅ Build completes successfully
 - ✅ Server starts without "Cannot find module" errors

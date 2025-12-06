@@ -96,8 +96,9 @@ describe('balance-history tool integration', () => {
       expect(result.isError).toBeUndefined();
       expect(result.content).toBeDefined();
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].type).toBe('text');
-      expect(result.content[0].text).toContain('Balance History');
+      const content0 = result.content[0];
+      expect(content0.type).toBe('text');
+      expect(content0.type === 'text' && content0.text).toContain('Balance History');
     });
 
     it('should use cached data fetchers', async () => {
@@ -116,7 +117,8 @@ describe('balance-history tool integration', () => {
       const result = await handler(args);
 
       expect(result.isError).toBeUndefined();
-      expect(result.content[0].text).toContain('Checking');
+      const content0 = result.content[0];
+      expect(content0.type === 'text' && content0.text).toContain('Checking');
     });
 
     it('should fetch balances in parallel for multiple accounts', async () => {
@@ -183,7 +185,8 @@ describe('balance-history tool integration', () => {
       const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       const result = await handler(args);
-      const text = result.content[0].text;
+      const content0 = result.content[0];
+      const text = content0.type === 'text' ? content0.text : '';
 
       expect(text).toContain('Balance History');
       expect(text).toContain('Period:');
@@ -193,7 +196,8 @@ describe('balance-history tool integration', () => {
       const args: BalanceHistoryArgs = { accountId: 'Checking', months: 3, includeOffBudget: false };
 
       const result = await handler(args);
-      const text = result.content[0].text;
+      const content0 = result.content[0];
+      const text = content0.type === 'text' ? content0.text : '';
 
       expect(text).toContain('Checking');
       expect(result.isError).toBeUndefined();

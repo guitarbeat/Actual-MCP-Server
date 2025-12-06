@@ -80,7 +80,7 @@ describe('spending-by-category tool integration', () => {
       expect(result.content).toBeDefined();
       expect(result.content).toHaveLength(1);
       expect(result.content[0].type).toBe('text');
-      expect(result.content[0].text).toContain('Spending by Category');
+      expect(result.content[0].type === 'text' && result.content[0].text).toContain('Spending by Category');
     });
 
     it('should use cached data fetchers', async () => {
@@ -104,7 +104,7 @@ describe('spending-by-category tool integration', () => {
       const result = await handler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Checking');
+      expect(result.content[0].type === 'text' && result.content[0].text).toContain('Checking');
     });
 
     it('should handle includeIncome parameter', async () => {
@@ -117,7 +117,7 @@ describe('spending-by-category tool integration', () => {
       const result = await handler(args);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toBeDefined();
+      expect(result.content[0].type === 'text' && result.content[0].text).toBeDefined();
     });
   });
 
@@ -184,7 +184,8 @@ describe('spending-by-category tool integration', () => {
       };
 
       const result = await handler(args);
-      const text = result.content[0].text;
+      const content = result.content[0];
+      const text = content.type === 'text' ? content.text : '';
 
       expect(text).toContain('Spending by Category');
       expect(text).toContain('Period:');
