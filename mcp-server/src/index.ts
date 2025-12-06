@@ -13,8 +13,9 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import dotenv from 'dotenv';
-import express, { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
@@ -228,7 +229,13 @@ async function main(): Promise<void> {
   }
 
   if (useSse) {
-    const app = express();
+    // * Use SDK's createMcpExpressApp for DNS rebinding protection and modern setup
+    // * Note: We bind to '0.0.0.0' for production deployments, so DNS rebinding protection
+    // * is handled via bearer authentication instead of host header validation
+    const app = createMcpExpressApp({
+      host: '0.0.0.0', // Allow binding to all interfaces for production
+      // DNS rebinding protection is handled via bearer authentication
+    });
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
     app.use((req: Request, res: Response, next: NextFunction) => {
@@ -245,8 +252,6 @@ async function main(): Promise<void> {
 
       next();
     });
-
-    app.use(express.json());
     let transport: SSEServerTransport | null = null;
     let transportReady = false;
 
