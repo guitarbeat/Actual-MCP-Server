@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PayeeHandler } from './payee-handler.js';
 import * as actualApi from '../../../actual-api.js';
-import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 
 vi.mock('../../../actual-api.js');
 

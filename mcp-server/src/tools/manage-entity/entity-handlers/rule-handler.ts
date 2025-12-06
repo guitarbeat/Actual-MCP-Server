@@ -2,7 +2,6 @@
 // RULE ENTITY HANDLER
 // ----------------------------
 
-import { cacheService } from '../../../core/cache/cache-service.js';
 import { createRule, deleteRule, updateRule } from '../../../actual-api.js';
 import type { EntityHandler, Operation } from './base-handler.js';
 import type { RuleData } from '../types.js';

@@ -12,11 +12,7 @@ console.log('═'.repeat(60));
 
 // Check environment variables
 console.log('\n📋 Environment Variables:');
-const requiredVars = [
-  'ACTUAL_SERVER_URL',
-  'ACTUAL_PASSWORD',
-  'ACTUAL_BUDGET_SYNC_ID',
-] as const;
+const requiredVars = ['ACTUAL_SERVER_URL', 'ACTUAL_PASSWORD', 'ACTUAL_BUDGET_SYNC_ID'] as const;
 
 const optionalVars = ['BEARER_TOKEN', 'PORT', 'DEBUG_PERFORMANCE'] as const;
 

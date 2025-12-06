@@ -11,6 +11,7 @@ Quick reference for debugging Easy Panel deployment issues.
 **Problem:** The "Version" field in Easy Panel's Nixpacks config should be the **Node.js major version**, not a Nixpacks version.
 
 **Solution:**
+
 - Set **Version** to: `22` (Node.js LTS version)
 - ❌ **Wrong:** `1.34.1` (this looks like a Nixpacks version)
 - ✅ **Correct:** `20` or `22`
@@ -20,12 +21,14 @@ Quick reference for debugging Easy Panel deployment issues.
 ### Issue: Build Fails
 
 **Check Build Logs For:**
+
 - `Cannot find module` → Dependencies not installed
 - `TypeScript compilation errors` → Code issues
 - `npm ci failed` → Dependency lock file issues
 - `Node version mismatch` → Wrong Node.js version
 
 **Solutions:**
+
 1. Verify **Version** field is `20` or `22`
 2. Check **Install Command** is `npm ci`
 3. Check **Build Command** is `npm run build`
@@ -34,12 +37,14 @@ Quick reference for debugging Easy Panel deployment issues.
 ### Issue: Server Won't Start
 
 **Check Runtime Logs For:**
+
 - `Failed to initialize Actual Budget API` → Connection/credentials issue
 - `Cannot find module 'build/index.js'` → Build didn't complete
 - `Port 3000 already in use` → Port conflict
 - `Missing environment variables` → Config issue
 
 **Solutions:**
+
 1. Verify build completed successfully
 2. Check all environment variables are set (no quotes, no spaces)
 3. Verify **Start Command** is: `node build/index.js --sse --enable-write`
@@ -69,6 +74,7 @@ PORT=3000
 ```
 
 **Important:**
+
 - No quotes around values
 - No trailing spaces
 - Use exact variable names (case-sensitive)
@@ -123,6 +129,7 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 ### Test 4: Check Logs
 
 In Easy Panel → Service → Logs:
+
 - Look for initialization errors
 - Check for "Failed to initialize" messages
 - Verify environment variables are loaded
@@ -130,21 +137,26 @@ In Easy Panel → Service → Logs:
 ## Common Error Messages
 
 ### "Cannot find module 'build/index.js'"
+
 **Cause:** Build didn't complete or build directory missing
 **Fix:** Check build logs, verify build command runs successfully
 
 ### "Failed to initialize Actual Budget API"
+
 **Cause:** Connection or authentication issue with Actual Budget server
-**Fix:** 
+**Fix:**
+
 - Verify `ACTUAL_SERVER_URL` is correct
 - Check credentials are correct
 - Test Actual Budget server: `curl https://actual.alw.lol/api/health`
 
 ### "Port 3000 already in use"
+
 **Cause:** Another service using port 3000
 **Fix:** Change `PORT` environment variable to different port (e.g., `3001`)
 
 ### "Database is out of sync with migrations"
+
 **Cause:** Actual Budget server database issue (not MCP server)
 **Fix:** Update Actual Budget server to latest version
 
@@ -156,6 +168,7 @@ The **Version** field in Easy Panel's Nixpacks configuration refers to the **run
 - ❌ **Wrong:** `1.34.1` (this appears to be a Nixpacks version number)
 
 Easy Panel/Nixpacks will automatically:
+
 1. Use the version number to select the Node.js runtime
 2. Install Node.js 22.x based on your version field
 3. Run your install/build/start commands in that environment
@@ -189,6 +202,7 @@ node build/index.js --sse --enable-write
 ```
 
 If it works locally but not in Easy Panel, the issue is likely:
+
 - Version field configuration
 - Environment variables
 - Port configuration
