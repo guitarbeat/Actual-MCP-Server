@@ -168,6 +168,52 @@ app.post('/messages', (req, res) => {
 - ✅ No race conditions
 - ✅ Automatic cleanup on connection close
 
+## Potential Bug #3: Request ID Race Condition (Documented, Not Active)
+
+### Issue
+
+The `currentRequestId` variable in `safe-logger.ts` is a module-level variable that could be overwritten by concurrent requests. This follows the same pattern as the transport bugs.
+
+### Root Cause
+
+Module-level variable (`let currentRequestId: string | null = null;`) is shared across all requests. If `setRequestId()` or `generateRequestId()` are called from concurrent requests, they will overwrite each other's values.
+
+### Current Status
+
+**Not an active bug** - These functions are exported but not currently used anywhere in the codebase. However, this is a latent bug that would manifest if someone starts using request ID tracking.
+
+### Fix Recommendation
+
+If request ID tracking is needed in the future, use one of these approaches:
+
+1. **AsyncLocalStorage** (Node.js 12.17.0+):
+   ```typescript
+   import { AsyncLocalStorage } from 'async_hooks';
+   const requestIdStorage = new AsyncLocalStorage<string>();
+   
+   export function setRequestId(requestId: string | null): void {
+     requestIdStorage.enterWith(requestId);
+   }
+   
+   function getRequestId(): string | null {
+     return requestIdStorage.getStore() || null;
+   }
+   ```
+
+2. **Per-request context**: Pass request ID as a parameter to logging functions instead of using global state.
+
+3. **Request-scoped logger**: Create a logger instance per request/session.
+
+### Code Location
+
+- `./mcp-server/src/core/logging/safe-logger.ts` lines 25, 97-110
+
+### Impact
+
+- ⚠️ Latent bug - not currently causing issues
+- ⚠️ Would cause incorrect request ID tracking if used with concurrent requests
+- ✅ Documented with warnings in code comments
+
 ## Other Improvements
 
 ### 1. Express Setup Modernization

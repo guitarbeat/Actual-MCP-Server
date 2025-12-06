@@ -22,6 +22,9 @@ let useMcpLogging = false;
 let mcpServer: Server | null = null;
 
 // Request ID tracking for debugging
+// * WARNING: This is module-level state that can be overwritten by concurrent requests
+// * Currently unused in the codebase, but if used, should be replaced with AsyncLocalStorage
+// * or per-request context to avoid race conditions
 let currentRequestId: string | null = null;
 
 // Performance tracking
@@ -92,6 +95,10 @@ export function restoreConsoleMethods(): void {
  * Set the current request ID for logging context.
  * Useful for tracking requests across multiple log entries.
  *
+ * * WARNING: This uses module-level state and is NOT safe for concurrent requests.
+ * * If multiple requests run concurrently, they will overwrite each other's request IDs.
+ * * Consider using AsyncLocalStorage or per-request context instead.
+ *
  * @param requestId - Unique request identifier (or null to clear)
  */
 export function setRequestId(requestId: string | null): void {
@@ -100,6 +107,10 @@ export function setRequestId(requestId: string | null): void {
 
 /**
  * Generate a new request ID and set it as current.
+ *
+ * * WARNING: This uses module-level state and is NOT safe for concurrent requests.
+ * * If multiple requests run concurrently, they will overwrite each other's request IDs.
+ * * Consider using AsyncLocalStorage or per-request context instead.
  *
  * @returns The generated request ID
  */

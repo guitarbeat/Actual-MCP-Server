@@ -110,7 +110,9 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     }
   }
   if (initializing) {
-    // Wait for initialization to complete if already in progress
+    // * Wait for initialization to complete if already in progress
+    // * This prevents race conditions when multiple requests trigger initialization simultaneously
+    // * Note: Uses busy-wait pattern - acceptable for initialization which is infrequent
     while (initializing) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
