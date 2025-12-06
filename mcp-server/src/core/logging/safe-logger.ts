@@ -10,6 +10,7 @@
  */
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 
 // Store original console methods
@@ -21,11 +22,10 @@ const originalConsoleWarn = console.warn;
 let useMcpLogging = false;
 let mcpServer: Server | null = null;
 
-// Request ID tracking for debugging
-// * WARNING: This is module-level state that can be overwritten by concurrent requests
-// * Currently unused in the codebase, but if used, should be replaced with AsyncLocalStorage
-// * or per-request context to avoid race conditions
-let currentRequestId: string | null = null;
+// * Request ID tracking for debugging using AsyncLocalStorage
+// * This ensures request IDs are isolated per async context, preventing race conditions
+// * when multiple requests run concurrently
+const requestIdStorage = new AsyncLocalStorage<string | null>();
 
 // Performance tracking
 const performanceEnabled = process.env.DEBUG_PERFORMANCE === 'true';
@@ -95,29 +95,51 @@ export function restoreConsoleMethods(): void {
  * Set the current request ID for logging context.
  * Useful for tracking requests across multiple log entries.
  *
- * * WARNING: This uses module-level state and is NOT safe for concurrent requests.
- * * If multiple requests run concurrently, they will overwrite each other's request IDs.
- * * Consider using AsyncLocalStorage or per-request context instead.
+ * * Uses AsyncLocalStorage to ensure request IDs are isolated per async context,
+ * * preventing race conditions when multiple requests run concurrently.
  *
  * @param requestId - Unique request identifier (or null to clear)
  */
 export function setRequestId(requestId: string | null): void {
-  currentRequestId = requestId;
+  requestIdStorage.enterWith(requestId);
 }
 
 /**
  * Generate a new request ID and set it as current.
  *
- * * WARNING: This uses module-level state and is NOT safe for concurrent requests.
- * * If multiple requests run concurrently, they will overwrite each other's request IDs.
- * * Consider using AsyncLocalStorage or per-request context instead.
+ * * Uses AsyncLocalStorage to ensure request IDs are isolated per async context,
+ * * preventing race conditions when multiple requests run concurrently.
  *
  * @returns The generated request ID
  */
 export function generateRequestId(): string {
   const requestId = randomUUID();
-  currentRequestId = requestId;
+  requestIdStorage.enterWith(requestId);
   return requestId;
+}
+
+/**
+ * Run a function with a specific request ID in the async context.
+ * This is the recommended way to set request IDs for async operations.
+ *
+ * @param requestId - Unique request identifier (or null)
+ * @param fn - Function to run with the request ID in context
+ * @returns Result of the function
+ */
+export function withRequestId<T>(requestId: string | null, fn: () => T): T {
+  return requestIdStorage.run(requestId, fn);
+}
+
+/**
+ * Run an async function with a specific request ID in the async context.
+ * This is the recommended way to set request IDs for async operations.
+ *
+ * @param requestId - Unique request identifier (or null)
+ * @param fn - Async function to run with the request ID in context
+ * @returns Promise resolving to the result of the function
+ */
+export async function withRequestIdAsync<T>(requestId: string | null, fn: () => Promise<T>): Promise<T> {
+  return requestIdStorage.run(requestId, fn);
 }
 
 /**
@@ -134,6 +156,8 @@ function formatStructuredMessage(level: string, args: unknown[]): string {
   // Build context parts
   const contextParts: string[] = [];
 
+  // * Get request ID from async context (thread-safe)
+  const currentRequestId = requestIdStorage.getStore();
   if (currentRequestId) {
     contextParts.push(`requestId=${currentRequestId.substring(0, 8)}`);
   }
