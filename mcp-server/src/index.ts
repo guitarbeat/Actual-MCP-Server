@@ -226,11 +226,13 @@ async function main(): Promise<void> {
 
   if (useSse) {
     // * Use SDK's createMcpExpressApp for DNS rebinding protection and modern setup
-    // * Note: We bind to '0.0.0.0' for production deployments, so DNS rebinding protection
-    // * is handled via bearer authentication instead of host header validation
+    // * Note: We bind to '0.0.0.0' for production deployments
+    // * When bearer authentication is enabled, it provides security instead of host header validation
     const app = createMcpExpressApp({
       host: '0.0.0.0', // Allow binding to all interfaces for production
-      // DNS rebinding protection is handled via bearer authentication
+      // * Suppress DNS rebinding warning when bearer auth is enabled (bearer auth provides security)
+      // * When bearer auth is disabled, consider setting allowedHosts for production
+      allowedHosts: enableBearer ? ['*'] : undefined, // Allow all hosts when bearer auth protects the server
     });
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)

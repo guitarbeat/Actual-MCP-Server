@@ -70,10 +70,12 @@ async function checkConnectionHealth(): Promise<boolean> {
       errorStr.includes('connection') ||
       errorStr.includes('econnrefused') ||
       errorStr.includes('network') ||
-      errorStr.includes('timeout')
+      errorStr.includes('timeout') ||
+      errorStr.includes('no budget file is open') || // Budget was closed or lost
+      errorStr.includes('budget file') // Catch other budget-related errors
     ) {
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-        console.error('[CONNECTION] Health check failed - connection lost');
+        console.error('[CONNECTION] Health check failed - connection lost or budget closed');
       }
       return false;
     }
@@ -372,7 +374,9 @@ function isConnectionError(errorMessage: string): boolean {
     errorMessage.includes('econnrefused') ||
     errorMessage.includes('network') ||
     errorMessage.includes('timeout') ||
-    errorMessage.includes('unknown operator') // Some API errors indicate connection issues
+    errorMessage.includes('unknown operator') || // Some API errors indicate connection issues
+    errorMessage.includes('no budget file is open') || // Budget was closed or lost
+    errorMessage.includes('budget file') // Catch other budget-related errors
   );
 }
 
