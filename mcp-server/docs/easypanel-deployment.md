@@ -111,7 +111,7 @@ PORT=3000
 **Symptoms:** Build logs show errors, service never starts
 
 **Fixes:**
-1. Check Node.js version (needs >= 20.0.0)
+1. Check Node.js version (needs >= 22.0.0)
 2. Verify `package.json` is valid
 3. Check for TypeScript compilation errors
 4. Review build logs for specifics

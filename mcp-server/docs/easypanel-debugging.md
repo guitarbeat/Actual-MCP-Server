@@ -11,11 +11,11 @@ Quick reference for debugging Easy Panel deployment issues.
 **Problem:** The "Version" field in Easy Panel's Nixpacks config should be the **Node.js major version**, not a Nixpacks version.
 
 **Solution:**
-- Set **Version** to: `20` or `22` (Node.js LTS versions)
+- Set **Version** to: `22` (Node.js LTS version)
 - ❌ **Wrong:** `1.34.1` (this looks like a Nixpacks version)
 - ✅ **Correct:** `20` or `22`
 
-**Why:** Your `package.json` specifies `"node": ">=20.0.0"`, so use Node.js version `20` or `22`.
+**Why:** Your `package.json` specifies `"node": ">=22.0.0"`, so use Node.js version `22`.
 
 ### Issue: Build Fails
 
@@ -50,7 +50,7 @@ Quick reference for debugging Easy Panel deployment issues.
 ### Nixpacks Settings
 
 ```
-Version: 20                    ← Node.js major version (NOT 1.34.1)
+Version: 22                    ← Node.js major version (NOT 1.34.1)
 Install Command: npm ci
 Build Command: npm run build
 Start Command: node build/index.js --sse --enable-write
@@ -77,7 +77,7 @@ PORT=3000
 
 ### Pre-Deployment
 
-- [ ] **Version field** set to `20` or `22` (not `1.34.1`)
+- [ ] **Version field** set to `22` (not `1.34.1`)
 - [ ] **Install Command** is `npm ci`
 - [ ] **Build Command** is `npm run build`
 - [ ] **Start Command** is `node build/index.js --sse --enable-write`
@@ -152,12 +152,12 @@ In Easy Panel → Service → Logs:
 
 The **Version** field in Easy Panel's Nixpacks configuration refers to the **runtime version** (Node.js in this case), not the Nixpacks version itself.
 
-- ✅ **Correct:** `20` or `22` (Node.js major version)
+- ✅ **Correct:** `22` (Node.js major version)
 - ❌ **Wrong:** `1.34.1` (this appears to be a Nixpacks version number)
 
 Easy Panel/Nixpacks will automatically:
 1. Use the version number to select the Node.js runtime
-2. Install Node.js 20.x or 22.x based on your version field
+2. Install Node.js 22.x based on your version field
 3. Run your install/build/start commands in that environment
 
 ## Getting More Help
