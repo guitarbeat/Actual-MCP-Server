@@ -46,23 +46,28 @@ export class StreamableHTTPHandler {
         transport = this.transports.get(sessionId);
       } else if (!sessionId && parsedBody && isInitializeRequest(parsedBody)) {
         // * New initialization request - create new transport
+        // * Capture transport reference in closure to avoid race conditions
+        const transportRef: { current: StreamableHTTPServerTransport | undefined } = { current: undefined };
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           enableJsonResponse: false, // Use SSE streaming for real-time updates
           enableDnsRebindingProtection: false, // Handled by Express middleware + bearer auth
           onsessioninitialized: (sid: string) => {
             // * Store transport when session is initialized
-            // * This avoids race conditions where requests might come in before session is stored
+            // * Use closure reference to avoid race conditions where transport might not be set yet
             console.error(`[StreamableHTTPHandler] Session initialized: ${sid}`);
-            if (transport) {
-              this.transports.set(sid, transport);
+            if (transportRef.current) {
+              this.transports.set(sid, transportRef.current);
             }
           },
         });
+        // * Store transport reference immediately after creation
+        transportRef.current = transport;
 
-        // * Set up cleanup handler
+        // * Set up cleanup handler using closure reference to avoid undefined access
         transport.onclose = () => {
-          const sid = transport?.sessionId;
+          const currentTransport = transportRef.current;
+          const sid = currentTransport?.sessionId;
           if (sid && this.transports.has(sid)) {
             console.error(`[StreamableHTTPHandler] Transport closed for session ${sid}, cleaning up`);
             this.transports.delete(sid);
@@ -114,9 +119,25 @@ export class StreamableHTTPHandler {
 
       // * Handle request with existing transport
       // * Transport is already connected to the server
-      if (transport) {
-        await transport.handleRequest(req, res, parsedBody);
+      if (!transport) {
+        // * This should not happen due to logic flow, but TypeScript safety check
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              error: {
+                code: -32603,
+                message: 'Internal server error: Transport not available',
+              },
+              id: null,
+            })
+          );
+        }
+        return;
       }
+      await transport.handleRequest(req, res, parsedBody);
     } catch (error) {
       console.error('[StreamableHTTPHandler] Error handling request:', error);
 
