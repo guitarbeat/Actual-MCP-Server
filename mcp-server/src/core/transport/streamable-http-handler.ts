@@ -22,11 +22,13 @@ export class StreamableHTTPHandler {
   constructor(server: Server) {
     this.server = server;
     
-    // Create transport with session management
+    // * Create transport with session management
+    // * DNS rebinding protection is handled at the Express app level via createMcpExpressApp
+    // * and bearer authentication provides additional security
     this.transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
-      enableJsonResponse: false, // Use SSE streaming
-      enableDnsRebindingProtection: false, // Can be enabled later if needed
+      enableJsonResponse: false, // Use SSE streaming for real-time updates
+      enableDnsRebindingProtection: false, // Handled by Express middleware + bearer auth
     });
   }
 
