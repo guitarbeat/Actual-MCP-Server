@@ -420,10 +420,11 @@ async function main(): Promise<void> {
     // Handle all HTTP methods for /mcp endpoint (GET, POST, DELETE)
     app.all('/mcp', bearerAuth, async (req: Request, res: Response) => {
       const clientIp = req.ip || req.socket.remoteAddress;
-      const sessionId = req.headers['x-session-id'] || 'unknown';
-      
+      // * Use MCP standard header for session ID
+      const sessionId = req.headers['mcp-session-id'] || req.headers['x-session-id'] || 'unknown';
+
       console.error(`[MCP] ${req.method} request from ${clientIp} (session: ${sessionId})`);
-      
+
       try {
         await streamableHandler.handleRequest(req, res, req.body);
       } catch (error) {

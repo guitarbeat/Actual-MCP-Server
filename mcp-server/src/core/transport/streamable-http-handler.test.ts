@@ -135,7 +135,7 @@ describe('StreamableHTTPHandler', () => {
 
               // Handler should be created successfully
               expect(testHandler).toBeDefined();
-              expect(testHandler.isTransportConnected()).toBe(false);
+              expect(testHandler.getActiveSessionCount()).toBe(0);
             }
 
             // All handlers should be distinct
@@ -161,17 +161,17 @@ describe('StreamableHTTPHandler', () => {
             const mockReq = createMockRequest(method, '/mcp');
 
             // Initially not connected
-            expect(testHandler.isTransportConnected()).toBe(false);
+            expect(testHandler.getActiveSessionCount()).toBe(0);
 
             // Handle request (this will connect the transport)
             await testHandler.handleRequest(mockReq, mockRes);
 
             // Should be connected after handling request
-            expect(testHandler.isTransportConnected()).toBe(true);
+            expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
 
             // Cleanup
             await testHandler.cleanup();
-            expect(testHandler.isTransportConnected()).toBe(false);
+            expect(testHandler.getActiveSessionCount()).toBe(0);
           }
         ),
         { numRuns: 100 }
@@ -196,7 +196,7 @@ describe('StreamableHTTPHandler', () => {
               await testHandler.handleRequest(mockReq, mockRes);
 
               // Should remain connected after first request
-              expect(testHandler.isTransportConnected()).toBe(true);
+              expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
             }
 
             // Cleanup
@@ -223,7 +223,7 @@ describe('StreamableHTTPHandler', () => {
             const mockReq = createMockRequest('POST', '/mcp');
             await testHandler.handleRequest(mockReq, mockRes);
 
-            expect(testHandler.isTransportConnected()).toBe(true);
+            expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
 
             // Call cleanup multiple times (should be idempotent)
             for (let i = 0; i < numCleanups; i++) {
@@ -231,7 +231,7 @@ describe('StreamableHTTPHandler', () => {
             }
 
             // Should be disconnected after cleanup
-            expect(testHandler.isTransportConnected()).toBe(false);
+            expect(testHandler.getActiveSessionCount()).toBe(0);
           }
         ),
         { numRuns: 100 }
@@ -249,9 +249,14 @@ describe('StreamableHTTPHandler', () => {
             );
             const testHandler = new StreamableHTTPHandler(testServer);
 
-            const transport = testHandler.getTransport();
-            expect(transport).toBeDefined();
-            expect(typeof transport.handleRequest).toBe('function');
+            // * getTransport() now requires a sessionId
+            // * For this test, we'll verify the method exists and works with a session
+            const testSessionId = 'test-session-id';
+            const transport = testHandler.getTransport(testSessionId);
+            // Transport will be undefined if session doesn't exist (expected for new handler)
+            expect(transport).toBeUndefined();
+            // Verify method exists
+            expect(typeof testHandler.getTransport).toBe('function');
           }
         ),
         { numRuns: 100 }
