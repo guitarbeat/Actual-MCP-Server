@@ -341,25 +341,26 @@ async function main(): Promise<void> {
       // * SSEServerTransport generates its own session ID internally
       const actualSessionId = (transport as any).sessionId || sessionId;
 
-      // * Store transport by session ID
+      // * Store transport by actual session ID (use actualSessionId consistently)
       sseTransports.set(actualSessionId, transport);
 
-      // * Set up cleanup handler
+      // * Set up cleanup handler using actualSessionId to match storage key
       transport.onclose = () => {
-        console.error(`[SSE] Transport closed for session ${sessionId}, cleaning up`);
-        sseTransports.delete(sessionId);
+        console.error(`[SSE] Transport closed for session ${actualSessionId}, cleaning up`);
+        sseTransports.delete(actualSessionId);
       };
 
-      console.error(`[SSE] Creating transport (session: ${sessionId})...`);
+      console.error(`[SSE] Creating transport (session: ${actualSessionId})...`);
       server
         .connect(transport)
         .then(() => {
-          console.error(`[SSE] ✅ Transport connected successfully (session: ${sessionId})`);
+          console.error(`[SSE] ✅ Transport connected successfully (session: ${actualSessionId})`);
         })
         .catch((error) => {
           console.error('[SSE] ❌ Error connecting SSE transport:', error);
           console.error('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
-          sseTransports.delete(sessionId);
+          // * Use actualSessionId for cleanup to match storage key
+          sseTransports.delete(actualSessionId);
           if (!res.headersSent) {
             res.status(500).json({ error: 'Failed to establish SSE connection' });
           }
@@ -367,17 +368,18 @@ async function main(): Promise<void> {
 
       // Clean up transport when connection closes
       res.on('close', () => {
-        console.error(`[SSE] Connection closed (session: ${sessionId})`);
-        if (sseTransports.has(sessionId)) {
+        console.error(`[SSE] Connection closed (session: ${actualSessionId})`);
+        // * Use actualSessionId for cleanup to match storage key
+        if (sseTransports.has(actualSessionId)) {
           try {
-            const t = sseTransports.get(sessionId);
+            const t = sseTransports.get(actualSessionId);
             if (t) {
               t.close();
             }
           } catch (_e) {
             // Ignore cleanup errors
           }
-          sseTransports.delete(sessionId);
+          sseTransports.delete(actualSessionId);
         }
       });
     });
