@@ -329,11 +329,12 @@ Each tool includes:
 - **Parallel fetching**: 50% faster multi-account queries
 - **Name resolution**: Cached for instant lookups
 
-## Debugging
+## Deployment & Debugging
 
-For comprehensive debugging guidance, see the [Debugging Guide](./docs/debugging.md).
+- **Easy Panel Deployment:** See [Easy Panel Deployment Guide](./docs/easypanel-deployment.md)
+- **General Debugging:** See [Debugging Guide](./docs/debugging.md)
 
-Quick debugging tips:
+Quick tips:
 - Use `npm run inspector` to test the server interactively
 - Enable performance tracking: `DEBUG_PERFORMANCE=true npm run inspector`
 - View Claude Desktop logs: `tail -F ~/Library/Logs/Claude/mcp*.log`
