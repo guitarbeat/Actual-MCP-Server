@@ -1,6 +1,6 @@
 # Bug Fixes and Critical Improvements
 
-## Critical Bug Fix: Session Management
+## Critical Bug Fix #1: Streamable HTTP Session Management
 
 ### Issue
 
@@ -90,6 +90,84 @@ export class StreamableHTTPHandler {
 - ✅ Compliance with MCP SDK patterns
 - ✅ Better error messages for invalid sessions
 
+## Critical Bug Fix #2: SSE Transport Session Management
+
+### Issue
+
+The SSE transport handling had the **same bug pattern** - using module-level variables (`let transport` and `let transportReady`) that were shared across ALL SSE connections, causing:
+
+- Only the last SSE connection working correctly
+- Race conditions when multiple clients connect simultaneously
+- `/messages` endpoint only working for the most recent connection
+- Global console override affecting all connections
+
+### Root Cause
+
+Module-level variables (`let transport: SSEServerTransport | null = null;` and `let transportReady = false;`) were overwritten by each new SSE connection, breaking previous connections.
+
+### Fix
+
+Refactored to use per-session transport management:
+
+1. **Transport Map**: Store transports in a `Map<string, SSEServerTransport>` keyed by session ID
+2. **Per-Connection Transport**: Each `/sse` GET request creates its own transport instance
+3. **Session Lookup**: `/messages` POST endpoint looks up transport by session ID
+4. **Removed Global Console Override**: No longer globally overriding console methods (was causing conflicts)
+
+### Code Changes
+
+**Before:**
+
+```typescript
+let transport: SSEServerTransport | null = null;
+let transportReady = false;
+
+app.get('/sse', (req, res) => {
+  transport = new SSEServerTransport('/messages', res);
+  transportReady = false;
+  // ... connect and set transportReady = true
+});
+
+app.post('/messages', (req, res) => {
+  if (transport && transportReady) {
+    await transport.handlePostMessage(req, res, req.body);
+  }
+});
+```
+
+**After:**
+
+```typescript
+const sseTransports: Map<string, SSEServerTransport> = new Map();
+
+app.get('/sse', (req, res) => {
+  const sessionId = `sse-${randomUUID()}`;
+  const transport = new SSEServerTransport('/messages', res);
+  sseTransports.set(sessionId, transport);
+  
+  transport.onclose = () => {
+    sseTransports.delete(sessionId);
+  };
+  // ... connect
+});
+
+app.post('/messages', (req, res) => {
+  const sessionId = req.query.sessionId;
+  const transport = sseTransports.get(sessionId);
+  if (transport) {
+    await transport.handlePostMessage(req, res, req.body);
+  }
+});
+```
+
+### Impact
+
+- ✅ Multiple concurrent SSE connections work correctly
+- ✅ Each connection has its own transport instance
+- ✅ Proper session isolation
+- ✅ No race conditions
+- ✅ Automatic cleanup on connection close
+
 ## Other Improvements
 
 ### 1. Express Setup Modernization
@@ -101,6 +179,7 @@ export class StreamableHTTPHandler {
 
 - ✅ Now reads `mcp-session-id` header (MCP standard)
 - ✅ Falls back to `x-session-id` for backwards compatibility
+- ✅ SSE uses query parameter `sessionId` for session lookup
 
 ### 3. Error Responses
 
@@ -111,6 +190,7 @@ export class StreamableHTTPHandler {
 
 - ✅ Properly closes all active transports on cleanup
 - ✅ Prevents memory leaks
+- ✅ Automatic cleanup on connection close
 
 ## Testing Updates
 
@@ -123,4 +203,5 @@ Updated tests to match new API:
 ## References
 
 - [MCP SDK Example](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/src/examples/server/simpleStreamableHttp.ts)
+- [MCP SSE Example](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/src/examples/server/simpleSseServer.ts)
 - [MCP Specification](https://modelcontextprotocol.io/specification/draft)
