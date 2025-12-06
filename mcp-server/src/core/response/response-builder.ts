@@ -2,7 +2,7 @@
 // RESPONSE BUILDER
 // ----------------------------
 
-import { MCPResponse, ContentItem, ErrorPayload, ErrorContext } from './types.js';
+import type { ContentItem, ErrorContext, ErrorPayload, MCPResponse } from './types.js';
 
 const DEFAULT_SUGGESTION = 'Check the Actual Budget server logs and verify the provided arguments before retrying.';
 

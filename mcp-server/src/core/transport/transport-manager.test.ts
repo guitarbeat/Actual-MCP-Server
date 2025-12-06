@@ -5,11 +5,11 @@
  * Validates: Requirements 5.2
  */
 
-import { describe, it, expect } from 'vitest';
-import * as fc from 'fast-check';
-import { TransportManager, TransportType } from './transport-manager.js';
-import { ServerResponse } from 'node:http';
+import type { ServerResponse } from 'node:http';
 import { Writable } from 'node:stream';
+import * as fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
+import { TransportManager, TransportType } from './transport-manager.js';
 
 // Mock ServerResponse for testing
 class MockServerResponse extends Writable {
@@ -32,7 +32,7 @@ class MockServerResponse extends Writable {
     return this as unknown as ServerResponse;
   }
 
-  _write(chunk: unknown, encoding: string, callback: (error?: Error | null) => void): void {
+  _write(_chunk: unknown, _encoding: string, callback: (error?: Error | null) => void): void {
     callback();
   }
 
@@ -229,7 +229,7 @@ describe('TransportManager', () => {
             for (const id of connectionIds) {
               const beforeUpdate = manager.getConnection(id);
               expect(beforeUpdate).toBeDefined();
-              const beforeTime = beforeUpdate!.lastActivity.getTime();
+              const beforeTime = beforeUpdate?.lastActivity.getTime();
 
               // Wait a tiny bit to ensure timestamp changes
               const now = Date.now();
@@ -241,7 +241,7 @@ describe('TransportManager', () => {
 
               const afterUpdate = manager.getConnection(id);
               expect(afterUpdate).toBeDefined();
-              const afterTime = afterUpdate!.lastActivity.getTime();
+              const afterTime = afterUpdate?.lastActivity.getTime();
 
               // Last activity should be updated
               expect(afterTime).toBeGreaterThan(beforeTime);
@@ -273,7 +273,7 @@ describe('TransportManager', () => {
               manager.markSSETransportReady(id);
               const connection = manager.getSSETransport(id);
               expect(connection).toBeDefined();
-              expect(connection!.ready).toBe(true);
+              expect(connection?.ready).toBe(true);
             }
           }
         ),

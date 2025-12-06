@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { CategoryMapper } from './category-mapper.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { Category, CategoryGroup } from '../types/domain.js';
+import { CategoryMapper } from './category-mapper.js';
 
 describe('CategoryMapper', () => {
   let mapper: CategoryMapper;
@@ -29,26 +29,26 @@ describe('CategoryMapper', () => {
 
   describe('constructor', () => {
     it('should initialize categoryNames mapping', () => {
-      expect(mapper.categoryNames['cat1']).toBe('Food');
-      expect(mapper.categoryNames['cat2']).toBe('Rent');
-      expect(mapper.categoryNames['cat3']).toBe('Salary');
+      expect(mapper.categoryNames.cat1).toBe('Food');
+      expect(mapper.categoryNames.cat2).toBe('Rent');
+      expect(mapper.categoryNames.cat3).toBe('Salary');
     });
 
     it('should initialize groupNames mapping', () => {
-      expect(mapper.groupNames['g1']).toBe('Living');
-      expect(mapper.groupNames['g2']).toBe('Income');
-      expect(mapper.groupNames['g3']).toBe('Investment');
+      expect(mapper.groupNames.g1).toBe('Living');
+      expect(mapper.groupNames.g2).toBe('Income');
+      expect(mapper.groupNames.g3).toBe('Investment');
     });
 
     it('should initialize categoryToGroup mapping', () => {
-      expect(mapper.categoryToGroup['cat1']).toEqual({
+      expect(mapper.categoryToGroup.cat1).toEqual({
         id: 'g1',
         name: 'Living',
         isIncome: false,
         isSavingsOrInvestment: false,
       });
 
-      expect(mapper.categoryToGroup['cat3']).toEqual({
+      expect(mapper.categoryToGroup.cat3).toEqual({
         id: 'g2',
         name: 'Income',
         isIncome: true,

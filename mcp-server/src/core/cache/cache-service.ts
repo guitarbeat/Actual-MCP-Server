@@ -140,7 +140,7 @@ export class CacheService {
    * @param pattern - Pattern to match keys (e.g., 'accounts:*')
    */
   invalidatePattern(pattern: string): void {
-    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+    const regex = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`);
     const keysToDelete: string[] = [];
 
     for (const key of this.cache.keys()) {

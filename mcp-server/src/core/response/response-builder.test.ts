@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { success, successWithContent, successWithJson, error, errorFromCatch } from './response-builder.js';
+import { describe, expect, it } from 'vitest';
+import { error, errorFromCatch, success, successWithContent, successWithJson } from './response-builder.js';
 
 describe('Response Builder', () => {
   describe('success', () => {
@@ -132,7 +132,9 @@ describe('Response Builder', () => {
     });
 
     it('should handle unknown error types with fallback message', () => {
-      const result = errorFromCatch(null, { fallbackMessage: 'Fallback error message' });
+      const result = errorFromCatch(null, {
+        fallbackMessage: 'Fallback error message',
+      });
 
       const text = (result.content[0] as { text: string }).text;
       const payload = JSON.parse(text);
@@ -141,7 +143,9 @@ describe('Response Builder', () => {
 
     it('should use custom suggestion when provided', () => {
       const err = new Error('Custom error');
-      const result = errorFromCatch(err, { suggestion: 'Try restarting the server' });
+      const result = errorFromCatch(err, {
+        suggestion: 'Try restarting the server',
+      });
 
       const text = (result.content[0] as { text: string }).text;
       const payload = JSON.parse(text);
