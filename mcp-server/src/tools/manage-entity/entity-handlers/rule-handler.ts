@@ -3,10 +3,10 @@
 // ----------------------------
 
 import { createRule, deleteRule, updateRule } from '../../../actual-api.js';
-import type { EntityHandler, Operation } from './base-handler.js';
+import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { RuleData } from '../types.js';
 import { RuleDataSchema } from '../types.js';
-import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
+import type { EntityHandler, Operation } from './base-handler.js';
 
 /**
  * Handler for rule entity operations

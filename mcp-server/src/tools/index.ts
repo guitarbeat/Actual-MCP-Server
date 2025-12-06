@@ -1,45 +1,40 @@
 // ----------------------------
 // TOOLS
 // ----------------------------
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi } from '../actual-api.js';
-import { error, errorFromCatch, MCPResponse } from '../core/response/index.js';
-
+import { error, errorFromCatch, type MCPResponse } from '../core/response/index.js';
+// Account tools (non-CRUD)
+import * as closeAccount from './accounts/close-account/index.js';
+import * as getAccountBalance from './accounts/get-account-balance/index.js';
+import * as reopenAccount from './accounts/reopen-account/index.js';
+import * as balanceHistory from './balance-history/index.js';
+import * as holdBudget from './budget/hold-budget/index.js';
+import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
+import * as getBudget from './budgets/get-budget/index.js';
+import * as getBudgets from './budgets/get-budgets/index.js';
+import * as importTransactions from './budgets/import-transactions/index.js';
+import * as switchBudget from './budgets/switch-budget/index.js';
+import * as getGroupedCategories from './categories/get-grouped-categories/index.js';
 // CRUD Factory
 import { createCRUDTools } from './crud-factory.js';
 import { entityConfigurations } from './crud-factory-config.js';
-
-import * as balanceHistory from './balance-history/index.js';
-import * as getGroupedCategories from './categories/get-grouped-categories/index.js';
 import * as getAccounts from './get-accounts/index.js';
 import * as getTransactions from './get-transactions/index.js';
 import * as monthlySummary from './monthly-summary/index.js';
 import * as getPayees from './payees/get-payees/index.js';
-import * as getRules from './rules/get-rules/index.js';
-import * as spendingByCategory from './spending-by-category/index.js';
-
-// Budget operation tools
-import * as setBudget from './set-budget/index.js';
-import * as holdBudget from './budget/hold-budget/index.js';
-import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
-import * as getBudget from './budgets/get-budget/index.js';
-import * as importTransactions from './budgets/import-transactions/index.js';
-import * as getBudgets from './budgets/get-budgets/index.js';
-import * as switchBudget from './budgets/switch-budget/index.js';
 
 // Payee tools
 import * as mergePayees from './payees/merge-payees/index.js';
-
+import * as getRules from './rules/get-rules/index.js';
+// Budget operation tools
+import * as setBudget from './set-budget/index.js';
+import * as spendingByCategory from './spending-by-category/index.js';
 // Transaction CRUD tools
 import * as createTransaction from './transactions/create-transaction/index.js';
-import * as updateTransaction from './transactions/update-transaction/index.js';
 import * as deleteTransaction from './transactions/delete-transaction/index.js';
-
-// Account tools (non-CRUD)
-import * as closeAccount from './accounts/close-account/index.js';
-import * as reopenAccount from './accounts/reopen-account/index.js';
-import * as getAccountBalance from './accounts/get-account-balance/index.js';
+import * as updateTransaction from './transactions/update-transaction/index.js';
 
 /**
  * Tool definition interface for registry-based tool management
@@ -91,34 +86,114 @@ const categoryGroupCRUDTools = createCRUDTools(entityConfigurations.categoryGrou
  */
 const toolRegistry: CategorizedToolDefinition[] = [
   // Core read-only tools
-  { schema: getTransactions.schema, handler: getTransactions.handler, requiresWrite: false, category: 'core' },
-  { schema: spendingByCategory.schema, handler: spendingByCategory.handler, requiresWrite: false, category: 'core' },
-  { schema: monthlySummary.schema, handler: monthlySummary.handler, requiresWrite: false, category: 'core' },
-  { schema: balanceHistory.schema, handler: balanceHistory.handler, requiresWrite: false, category: 'core' },
-  { schema: getAccounts.schema, handler: getAccounts.handler, requiresWrite: false, category: 'core' },
+  {
+    schema: getTransactions.schema,
+    handler: getTransactions.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: spendingByCategory.schema,
+    handler: spendingByCategory.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: monthlySummary.schema,
+    handler: monthlySummary.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: balanceHistory.schema,
+    handler: balanceHistory.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: getAccounts.schema,
+    handler: getAccounts.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
   {
     schema: getGroupedCategories.schema,
     handler: getGroupedCategories.handler,
     requiresWrite: false,
     category: 'core',
   },
-  { schema: getPayees.schema, handler: getPayees.handler, requiresWrite: false, category: 'core' },
-  { schema: getRules.schema, handler: getRules.handler, requiresWrite: false, category: 'core' },
+  {
+    schema: getPayees.schema,
+    handler: getPayees.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: getRules.schema,
+    handler: getRules.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
 
   // Core write tools
-  { schema: setBudget.schema, handler: setBudget.handler, requiresWrite: true, category: 'core' },
-  { schema: mergePayees.schema, handler: mergePayees.handler, requiresWrite: true, category: 'core' },
-  { schema: importTransactions.schema, handler: importTransactions.handler, requiresWrite: true, category: 'core' },
+  {
+    schema: setBudget.schema,
+    handler: setBudget.handler,
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: mergePayees.schema,
+    handler: mergePayees.handler,
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: importTransactions.schema,
+    handler: importTransactions.handler,
+    requiresWrite: true,
+    category: 'core',
+  },
 
   // Transaction CRUD tools
-  { schema: createTransaction.schema, handler: createTransaction.handler, requiresWrite: true, category: 'core' },
-  { schema: updateTransaction.schema, handler: updateTransaction.handler, requiresWrite: true, category: 'core' },
-  { schema: deleteTransaction.schema, handler: deleteTransaction.handler, requiresWrite: true, category: 'core' },
+  {
+    schema: createTransaction.schema,
+    handler: createTransaction.handler,
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: updateTransaction.schema,
+    handler: updateTransaction.handler,
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: deleteTransaction.schema,
+    handler: deleteTransaction.handler,
+    requiresWrite: true,
+    category: 'core',
+  },
 
   // Account tools (non-CRUD)
-  { schema: closeAccount.schema, handler: closeAccount.handler, requiresWrite: true, category: 'nini' },
-  { schema: reopenAccount.schema, handler: reopenAccount.handler, requiresWrite: true, category: 'nini' },
-  { schema: getAccountBalance.schema, handler: getAccountBalance.handler, requiresWrite: false, category: 'core' },
+  {
+    schema: closeAccount.schema,
+    handler: closeAccount.handler,
+    requiresWrite: true,
+    category: 'nini',
+  },
+  {
+    schema: reopenAccount.schema,
+    handler: reopenAccount.handler,
+    requiresWrite: true,
+    category: 'nini',
+  },
+  {
+    schema: getAccountBalance.schema,
+    handler: getAccountBalance.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
 
   // Factory-generated CRUD tools for all entity types
   ...categoryCRUDTools,
@@ -128,13 +203,38 @@ const toolRegistry: CategorizedToolDefinition[] = [
   ...categoryGroupCRUDTools,
 
   // Budget tools
-  { schema: getBudget.schema, handler: getBudget.handler, requiresWrite: false, category: 'core' },
-  { schema: holdBudget.schema, handler: holdBudget.handler, requiresWrite: true, category: 'nini' },
-  { schema: resetBudgetHold.schema, handler: resetBudgetHold.handler, requiresWrite: true, category: 'nini' },
+  {
+    schema: getBudget.schema,
+    handler: getBudget.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: holdBudget.schema,
+    handler: holdBudget.handler,
+    requiresWrite: true,
+    category: 'nini',
+  },
+  {
+    schema: resetBudgetHold.schema,
+    handler: resetBudgetHold.handler,
+    requiresWrite: true,
+    category: 'nini',
+  },
 
   // Budget file management (nini-only features for advanced users)
-  { schema: getBudgets.schema, handler: getBudgets.handler, requiresWrite: false, category: 'nini' },
-  { schema: switchBudget.schema, handler: switchBudget.handler, requiresWrite: true, category: 'nini' },
+  {
+    schema: getBudgets.schema,
+    handler: getBudgets.handler,
+    requiresWrite: false,
+    category: 'nini',
+  },
+  {
+    schema: switchBudget.schema,
+    handler: switchBudget.handler,
+    requiresWrite: true,
+    category: 'nini',
+  },
 ];
 
 /**

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { MonthlySummaryReportGenerator } from './report-generator.js';
+import { describe, expect, it } from 'vitest';
 import type { MonthlySummaryReportData } from '../../core/types/index.js';
+import { MonthlySummaryReportGenerator } from './report-generator.js';
 
 describe('MonthlySummaryReportGenerator', () => {
   it('renders traditional savings after subtracting investments', () => {

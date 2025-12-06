@@ -1,5 +1,5 @@
 // Groups transactions by category and aggregates spending
-import type { Transaction, CategorySpending, CategoryGroupInfo } from '../types/domain.js';
+import type { CategoryGroupInfo, CategorySpending, Transaction } from '../types/domain.js';
 
 export class TransactionGrouper {
   groupByCategory(

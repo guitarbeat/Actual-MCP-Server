@@ -2,13 +2,13 @@
 // ENTITY-SPECIFIC ERROR BUILDERS
 // ----------------------------
 
-import { MCPResponse } from '../../../core/response/types.js';
 import {
-  notFoundError,
-  validationError,
   apiError,
+  notFoundError,
   unsupportedFeatureError,
+  validationError,
 } from '../../../core/response/error-builder.js';
+import type { MCPResponse } from '../../../core/response/types.js';
 import type { Operation } from '../entity-handlers/base-handler.js';
 
 /**
@@ -28,8 +28,8 @@ export class EntityErrorBuilder {
    * @returns A not found error response with entity-specific suggestions
    */
   static notFound(entityType: EntityType, id: string): MCPResponse {
-    const entityName = this.formatEntityName(entityType);
-    const listTool = this.getListToolName(entityType);
+    const entityName = EntityErrorBuilder.formatEntityName(entityType);
+    const listTool = EntityErrorBuilder.getListToolName(entityType);
 
     return notFoundError(entityName, id, {
       suggestion: `Use the '${listTool}' tool to list available ${entityType}s and verify the ID exists.`,
@@ -57,8 +57,8 @@ export class EntityErrorBuilder {
    * @returns An API error response with entity-specific context
    */
   static operationError(entityType: EntityType, operation: Operation, err: unknown): MCPResponse {
-    const entityName = this.formatEntityName(entityType);
-    const listTool = this.getListToolName(entityType);
+    const entityName = EntityErrorBuilder.formatEntityName(entityType);
+    const listTool = EntityErrorBuilder.getListToolName(entityType);
 
     return apiError(`Failed to ${operation} ${entityType}`, err, {
       entityType,
@@ -74,9 +74,9 @@ export class EntityErrorBuilder {
    * @returns An unsupported feature error response with upgrade guidance
    */
   static unsupportedFeature(entityType: EntityType, operation?: Operation): MCPResponse {
-    const entityName = this.formatEntityName(entityType);
+    const entityName = EntityErrorBuilder.formatEntityName(entityType);
     const featureDescription = operation
-      ? `${this.formatOperation(operation)} ${entityName.toLowerCase()}`
+      ? `${EntityErrorBuilder.formatOperation(operation)} ${entityName.toLowerCase()}`
       : `${entityName} operations`;
 
     const suggestion =
@@ -105,7 +105,10 @@ export class EntityErrorBuilder {
       suggestion = `Provide the entity data object with required fields for ${operation} operation.`;
     }
 
-    return validationError(message, { field: missingParam, expected: suggestion });
+    return validationError(message, {
+      field: missingParam,
+      expected: suggestion,
+    });
   }
 
   /**

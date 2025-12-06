@@ -10,7 +10,7 @@
  * - Should be unique within a server
  */
 
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const TOOL_NAME_REGEX = /^[A-Za-z0-9_.-]+$/;
@@ -31,7 +31,7 @@ const toolNames = new Map<string, string>(); // name -> file
  * Looks for tool schema definitions: export const schema = { name: '...' }
  * Ignores comments and example code
  */
-function extractToolNames(filePath: string, content: string): string[] {
+function extractToolNames(_filePath: string, content: string): string[] {
   const names: string[] = [];
 
   // Remove comments to avoid false positives from examples
@@ -53,7 +53,7 @@ function extractToolNames(filePath: string, content: string): string[] {
 /**
  * Validate a single tool name
  */
-function validateToolName(name: string, file: string): string | null {
+function validateToolName(name: string, _file: string): string | null {
   // Check length
   if (name.length < MIN_LENGTH) {
     return `Tool name is too short (minimum ${MIN_LENGTH} character)`;

@@ -2,11 +2,11 @@
 // DELETE SCHEDULE TOOL
 // ----------------------------
 
-import { success, errorFromCatch, MCPResponse } from '../../../core/response/index.js';
-import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../types.js';
+import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
 
 const DeleteScheduleSchema = z.object({
   id: z.string().uuid('Schedule ID must be a valid UUID'),

@@ -2,13 +2,13 @@
 // GET ACCOUNT BALANCE TOOL
 // ----------------------------
 
-import { success, errorFromCatch, MCPResponse } from '../../../core/response/index.js';
-import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
-import { nameResolver } from '../../../core/utils/name-resolver.js';
-import { formatAmount } from '../../../utils.js';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import { nameResolver } from '../../../core/utils/name-resolver.js';
 import type { ToolInput } from '../../../types.js';
+import { formatAmount } from '../../../utils.js';
+import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
 
 const GetAccountBalanceSchema = z.object({
   id: z.string().min(1, 'Account name or ID is required'),

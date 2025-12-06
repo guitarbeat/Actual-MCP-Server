@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PayeeHandler } from './payee-handler.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from '../../../actual-api.js';
+import { PayeeHandler } from './payee-handler.js';
 
 vi.mock('../../../actual-api.js');
 

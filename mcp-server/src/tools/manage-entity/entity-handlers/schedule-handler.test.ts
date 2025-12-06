@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ScheduleHandler } from './schedule-handler.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as actualApi from '../../../actual-api.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
+import { ScheduleHandler } from './schedule-handler.js';
 
 vi.mock('../../../actual-api.js');
 
