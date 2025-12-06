@@ -15,6 +15,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
@@ -22,6 +23,7 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 import { setupSafeLogging, restoreConsoleMethods } from './core/logging/safe-logger.js';
+import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
 
 dotenv.config({ path: '.env' });
 
@@ -81,15 +83,23 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 
   if (!authHeader) {
     console.error('[AUTH] ❌ Missing Authorization header');
+    // Include WWW-Authenticate header as per HTTP spec
+    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
-      error: 'Authorization header required',
+      error: 'Authentication required',
+      message: 'Authorization header required',
+      code: -32000, // MCP authentication error code
     });
     return;
   }
 
   if (!authHeader.startsWith('Bearer ')) {
+    console.error('[AUTH] ❌ Invalid Authorization header format');
+    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
-      error: "Authorization header must start with 'Bearer '",
+      error: 'Authentication failed',
+      message: "Authorization header must start with 'Bearer '",
+      code: -32000,
     });
     return;
   }
@@ -101,6 +111,8 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     console.error('[AUTH] ❌ BEARER_TOKEN environment variable not set');
     res.status(500).json({
       error: 'Server configuration error',
+      message: 'Authentication system not properly configured',
+      code: -32004, // Internal error
     });
     return;
   }
@@ -108,8 +120,11 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   if (token !== expectedToken) {
     console.error('[AUTH] ❌ Invalid bearer token (token mismatch)');
     console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
+    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
-      error: 'Invalid bearer token',
+      error: 'Authentication failed',
+      message: 'Invalid bearer token',
+      code: -32000,
     });
     return;
   }
@@ -201,7 +216,7 @@ async function main(): Promise<void> {
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
     app.use((req: Request, res: Response, next: NextFunction) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-MCP-Connection-ID');
       res.setHeader('Access-Control-Expose-Headers', 'X-MCP-Connection-ID');
 
@@ -272,8 +287,11 @@ async function main(): Promise<void> {
               <p class="status">✓ Server is running</p>
               <p>This is an MCP (Model Context Protocol) server for Actual Budget.</p>
               <h2>Available Endpoints:</h2>
+              <h3>Legacy SSE Transport:</h3>
               <div class="endpoint">GET /sse - SSE transport endpoint</div>
               <div class="endpoint">POST /messages - Messages endpoint</div>
+              <h3>Modern Streamable HTTP Transport:</h3>
+              <div class="endpoint">GET/POST/DELETE /mcp - Streamable HTTP endpoint</div>
               ${enableBearer ? '<p><strong>🔒 Bearer authentication: ENABLED</strong></p>' : '<p><em>⚠️ Bearer authentication: DISABLED</em></p>'}
             </div>
           </body>
@@ -290,7 +308,10 @@ async function main(): Promise<void> {
       const originalConsoleError = console.error;
       const originalConsoleLog = console.log;
 
-      console.error(`[SSE] Connection attempt from ${req.ip || req.socket.remoteAddress}`);
+      const clientIp = req.ip || req.socket.remoteAddress;
+      const sessionId = `sse-${randomUUID()}`;
+
+      console.error(`[SSE] Connection attempt from ${clientIp} (session: ${sessionId})`);
       console.error(
         `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
       );
@@ -298,12 +319,12 @@ async function main(): Promise<void> {
       transport = new SSEServerTransport('/messages', res);
       transportReady = false;
 
-      console.error('[SSE] Creating transport...');
+      console.error(`[SSE] Creating transport (session: ${sessionId})...`);
       server
         .connect(transport)
         .then(() => {
           transportReady = true;
-          originalConsoleError('[SSE] ✅ Transport connected successfully');
+          originalConsoleError(`[SSE] ✅ Transport connected successfully (session: ${sessionId})`);
           // Override console methods to send via MCP logging
           // Only override if transport is still ready
           console.log = (message: string) => {
@@ -346,7 +367,7 @@ async function main(): Promise<void> {
         transportReady = false;
         console.error = originalConsoleError;
         console.log = originalConsoleLog;
-        originalConsoleError('[SSE] Connection closed');
+        originalConsoleError(`[SSE] Connection closed (session: ${sessionId})`);
         if (transport) {
           try {
             transport.close();
@@ -367,6 +388,57 @@ async function main(): Promise<void> {
             ? 'Transport is initializing, please wait'
             : 'Transport not initialized. Connect to /sse first.',
         });
+      }
+    });
+
+    // * Streamable HTTP transport endpoint - modern MCP transport
+    // Create a single handler instance for all /mcp requests
+    const streamableHandler = new StreamableHTTPHandler(server);
+
+    // Handle all HTTP methods for /mcp endpoint (GET, POST, DELETE)
+    app.all('/mcp', bearerAuth, async (req: Request, res: Response) => {
+      const clientIp = req.ip || req.socket.remoteAddress;
+      const sessionId = req.headers['x-session-id'] || 'unknown';
+      
+      console.error(`[MCP] ${req.method} request from ${clientIp} (session: ${sessionId})`);
+      
+      try {
+        await streamableHandler.handleRequest(req, res, req.body);
+      } catch (error) {
+        console.error(`[MCP] Error handling request (session: ${sessionId}):`, error);
+        
+        if (!res.headersSent) {
+          // Determine appropriate error code
+          let errorCode = -32004; // Internal error
+          let statusCode = 500;
+          let errorMessage = 'Internal server error';
+
+          if (error instanceof Error) {
+            errorMessage = error.message;
+            
+            // Map specific errors to MCP error codes
+            if (error.message.includes('session')) {
+              errorCode = -32001; // Invalid session
+              statusCode = 400;
+            } else if (error.message.includes('parse') || error.message.includes('JSON')) {
+              errorCode = -32005; // Parse error
+              statusCode = 400;
+            } else if (error.message.includes('method')) {
+              errorCode = -32002; // Method not found
+              statusCode = 404;
+            } else if (error.message.includes('parameter')) {
+              errorCode = -32003; // Invalid parameters
+              statusCode = 400;
+            }
+          }
+
+          res.status(statusCode).json({
+            error: 'MCP Error',
+            message: errorMessage,
+            code: errorCode,
+            sessionId: sessionId !== 'unknown' ? sessionId : undefined,
+          });
+        }
       }
     });
 

@@ -19,6 +19,7 @@ ACTUAL_BUDGET_SYNC_ID=your-budget-id
 ## Features
 
 - **17 core tools** for budget management
+- **Dual transport support** - Both legacy SSE and modern Streamable HTTP transports
 - **Name resolution** - Use account/category names instead of UUIDs
 - **Auto-loading** - Budget loads automatically on startup
 - **Persistent connection** - 70-90% faster consecutive requests
@@ -50,9 +51,13 @@ ACTUAL_BUDGET_SYNC_ID=your-budget-id
 - `run-bank-sync` - Sync with bank
 - `run-import` - Import transactions
 
-## Usage with Claude Desktop
+## Transport Options
 
-Add to `claude_desktop_config.json`:
+The server supports two MCP transport protocols:
+
+### Stdio Transport (Default - for Claude Desktop)
+
+Used for local desktop applications like Claude Desktop. Messages are exchanged via stdin/stdout.
 
 ```json
 {
@@ -68,6 +73,29 @@ Add to `claude_desktop_config.json`:
     }
   }
 }
+```
+
+### HTTP Transports (for Remote/Web Clients)
+
+For remote or web-based MCP clients, start the server in HTTP mode:
+
+```bash
+node build/index.js --sse --enable-write --enable-bearer
+```
+
+**Available endpoints:**
+
+**Legacy SSE Transport:**
+- `GET /sse` - Establish SSE connection
+- `POST /messages` - Send messages
+
+**Modern Streamable HTTP Transport:**
+- `GET/POST/DELETE /mcp` - Streamable HTTP endpoint
+
+**Environment variables:**
+```bash
+BEARER_TOKEN=your-secret-token  # Required when --enable-bearer is used
+PORT=3000                        # Optional, defaults to 3000
 ```
 
 ## Example Queries
