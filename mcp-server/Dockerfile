@@ -50,8 +50,9 @@ EXPOSE 3000
 
 # * Health check to verify server is running
 # * Checks if the server responds to HTTP requests on the root endpoint
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" || exit 1
+# * Uses a simple Node.js HTTP request (Alpine doesn't include curl/wget by default)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "const http=require('http');const req=http.get('http://localhost:3000/',{timeout:2000},(r)=>{r.resume();process.exit(r.statusCode===200?0:1)});req.on('error',()=>process.exit(1));req.on('timeout',()=>{req.destroy();process.exit(1)})"
 
 # Start the server
 # * Note: Environment variables should be provided via docker run -e or docker-compose
