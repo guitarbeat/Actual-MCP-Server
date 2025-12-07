@@ -1,5 +1,69 @@
 # Easy Panel Build Configuration
 
+## Local Development Build (No Docker Required)
+
+For local development, you don't need Docker or Nixpacks. Simply use npm directly:
+
+### Prerequisites
+
+1. **Install Node.js 22** (required by `package.json` engines):
+   ```bash
+   # Using nvm (recommended)
+   nvm install 22
+   nvm use 22
+   
+   # Or download from https://nodejs.org/
+   ```
+
+2. **Verify Node.js version**:
+   ```bash
+   node --version  # Should be v22.x.x
+   ```
+
+### Local Build Steps
+
+```bash
+cd mcp-server
+
+# Install dependencies
+npm ci
+
+# Run the server (development mode - no build needed!)
+npm start
+
+# Or run with specific flags (development mode)
+npm start -- --sse --enable-write
+
+# For production build (requires fixing TypeScript errors first)
+npm run build
+node build/index.js --sse --enable-write
+```
+
+### Environment Variables
+
+Create a `.env` file in the `mcp-server` directory:
+
+```bash
+ACTUAL_SERVER_URL=https://actual.alw.lol
+ACTUAL_PASSWORD=your-password
+ACTUAL_BUDGET_SYNC_ID=your-budget-id
+BEARER_TOKEN=your-token
+PORT=3000
+```
+
+**Note:** Development mode (`npm start`) uses `tsx` to run TypeScript directly, so you don't need to build first. The TypeScript errors only affect the production build (`npm run build`).
+
+### Note on Nixpacks
+
+**Nixpacks is NOT suitable for local development** because:
+- It still requires Docker to run the built image
+- It's designed for cloud deployments (like Easy Panel)
+- For local development, use npm directly (no Docker needed)
+
+---
+
+## Easy Panel Deployment Options
+
 ## Option 1: Nixpacks (Auto-Detection) - RECOMMENDED
 
 If Easy Panel only shows Nixpacks version options (like `1.34.1`), use auto-detection:

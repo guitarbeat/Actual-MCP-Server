@@ -230,9 +230,11 @@ async function main(): Promise<void> {
     // * When bearer authentication is enabled, it provides security instead of host header validation
     const app = createMcpExpressApp({
       host: '0.0.0.0', // Allow binding to all interfaces for production
-      // * Suppress DNS rebinding warning when bearer auth is enabled (bearer auth provides security)
-      // * When bearer auth is disabled, consider setting allowedHosts for production
-      allowedHosts: enableBearer ? ['*'] : undefined, // Allow all hosts when bearer auth protects the server
+      // * When bearer authentication is enabled, allow localhost connections
+      // * Bearer auth provides security instead of host header validation
+      allowedHosts: enableBearer
+        ? ['localhost', '127.0.0.1', '::1', '[::1]'] // Allow localhost connections when bearer auth is enabled
+        : undefined,
     });
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)

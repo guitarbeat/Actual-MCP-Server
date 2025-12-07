@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "actual-budget": {
+      "url": "http://localhost:3000/mcp",
+      "transport": "streamableHttp",
+      "headers": {
+        "Authorization": "Bearer 9d7ed444f28745aa225d7ab219c00b1500414949121412002b2d34ad7f1bc97b"
+      }
+    }
+  }
+}

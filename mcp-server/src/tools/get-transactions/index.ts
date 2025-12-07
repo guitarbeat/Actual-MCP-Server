@@ -3,10 +3,10 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
+import type { Transaction } from '../../core/types/domain.js';
 import { type GetTransactionsArgs, GetTransactionsArgsSchema } from '../../core/types/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import type { ToolInput } from '../../types.js';
-import type { Transaction } from '../../core/types/domain.js';
 import { getDateRange } from '../../utils.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsInputParser } from './input-parser.js';
@@ -51,7 +51,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
 
     let resolvedAccountId: string;
     let transactions: Transaction[];
-    
+
     // Handle "all" accounts
     if (accountId.toLowerCase() === 'all') {
       const { fetchAllAccounts } = await import('../../core/data/fetch-accounts.js');

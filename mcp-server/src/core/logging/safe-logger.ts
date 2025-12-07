@@ -185,7 +185,7 @@ function formatMessage(args: unknown[]): string {
     .map((arg) => {
       if (arg instanceof Error) {
         // Include stack trace for Error objects
-        return `${arg.message}${arg.stack ? '\n' + arg.stack : ''}`;
+        return `${arg.message}${arg.stack ? `\n${arg.stack}` : ''}`;
       }
       if (typeof arg === 'object' && arg !== null) {
         try {

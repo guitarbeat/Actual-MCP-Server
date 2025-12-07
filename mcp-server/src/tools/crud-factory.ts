@@ -227,9 +227,10 @@ export function createCRUDTools<
 
         // Extract name from validated data if available for better success message
         const name = (validated as Record<string, unknown>).name;
-        const successMessage = name && typeof name === 'string'
-          ? `Successfully created ${displayName} "${name}" with id ${entityId}`
-          : `Successfully created ${displayName} with id ${entityId}`;
+        const successMessage =
+          name && typeof name === 'string'
+            ? `Successfully created ${displayName} "${name}" with id ${entityId}`
+            : `Successfully created ${displayName} with id ${entityId}`;
 
         return success(successMessage);
       } catch (err) {
@@ -292,7 +293,7 @@ export function createCRUDTools<
         const validated = deleteConfig.schema.parse(args);
         const validatedRecord = validated as Record<string, unknown>;
         const { id } = validatedRecord;
-        
+
         const handler = new handlerClass();
         await handler.delete(id as string);
         handler.invalidateCache();
