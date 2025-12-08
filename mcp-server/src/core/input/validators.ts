@@ -1,13 +1,37 @@
 // Shared validators for input data
 
-/** Regular expression for validating UUID v4 strings. */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+import { z } from 'zod';
 
-/** Regular expression for validating YYYY-MM formatted month strings. */
-const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
+/**
+ * Zod schema for UUID v4 validation.
+ */
+export const UUIDSchema = z.string().uuid();
 
-/** Regular expression for validating YYYY-MM-DD formatted date strings. */
-const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+/**
+ * Zod schema for YYYY-MM-DD date validation with additional date validity check.
+ */
+export const DateSchema = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/)
+  .refine(
+    (date) => {
+      const [year, month, day] = date.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
+      // Verify the date components match (catches invalid dates like Feb 30)
+      return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+    },
+    { message: 'Invalid date' }
+  );
+
+/**
+ * Zod schema for YYYY-MM month validation.
+ */
+export const MonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+
+/**
+ * Zod schema for positive integer amount in cents.
+ */
+export const PositiveIntegerCentsSchema = z.number().int().positive();
 
 /**
  * Validate if a string is a valid UUID.
@@ -16,7 +40,7 @@ const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
  * @returns True if the value is a valid UUID, false otherwise.
  */
 export function validateUUID(value: string): boolean {
-  return typeof value === 'string' && UUID_REGEX.test(value.trim());
+  return UUIDSchema.safeParse(value.trim()).success;
 }
 
 /**
@@ -26,16 +50,7 @@ export function validateUUID(value: string): boolean {
  * @returns True if the value is a valid date, false otherwise.
  */
 export function validateDate(value: string): boolean {
-  if (typeof value !== 'string' || !DATE_REGEX.test(value.trim())) {
-    return false;
-  }
-  // Additional check: ensure the date is actually valid (e.g., not 2024-02-30)
-  const trimmed = value.trim();
-  const [year, month, day] = trimmed.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-
-  // Verify the date components match (catches invalid dates like Feb 30)
-  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+  return DateSchema.safeParse(value.trim()).success;
 }
 
 /**
@@ -45,7 +60,7 @@ export function validateDate(value: string): boolean {
  * @returns True if the value is a valid amount, false otherwise.
  */
 export function validateAmount(value: number): boolean {
-  return typeof value === 'number' && Number.isInteger(value) && value > 0 && !Number.isNaN(value);
+  return PositiveIntegerCentsSchema.safeParse(value).success;
 }
 
 /**
@@ -55,7 +70,7 @@ export function validateAmount(value: number): boolean {
  * @returns True if the value is a valid month, false otherwise.
  */
 export function validateMonth(value: string): boolean {
-  return typeof value === 'string' && MONTH_REGEX.test(value.trim());
+  return MonthSchema.safeParse(value.trim()).success;
 }
 
 /**
@@ -67,15 +82,18 @@ export function validateMonth(value: string): boolean {
  * @throws Error when the value is missing, not a string, or not a UUID.
  */
 export function assertUuid(value: unknown, fieldName: string): string {
-  if (typeof value !== 'string' || value.trim() === '') {
+  if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
     throw new Error(`${fieldName} is required and must be a valid UUID`);
   }
 
-  if (!validateUUID(value)) {
-    throw new Error(`${fieldName} must be a valid UUID`);
+  try {
+    return UUIDSchema.parse(value);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(`${fieldName} must be a valid UUID`);
+    }
+    throw error;
   }
-
-  return value;
 }
 
 /**
@@ -87,15 +105,18 @@ export function assertUuid(value: unknown, fieldName: string): string {
  * @throws Error when the value is missing, not a string, or not formatted as YYYY-MM.
  */
 export function assertMonth(value: unknown, fieldName: string): string {
-  if (typeof value !== 'string' || value.trim() === '') {
+  if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
     throw new Error(`${fieldName} is required and must be in YYYY-MM format`);
   }
 
-  if (!validateMonth(value)) {
-    throw new Error(`${fieldName} must be in YYYY-MM format`);
+  try {
+    return MonthSchema.parse(value);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(`${fieldName} must be in YYYY-MM format`);
+    }
+    throw error;
   }
-
-  return value;
 }
 
 /**
@@ -107,13 +128,16 @@ export function assertMonth(value: unknown, fieldName: string): string {
  * @throws Error when the value is missing, not a number, not an integer, or not positive.
  */
 export function assertPositiveIntegerCents(value: unknown, fieldName: string): number {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
+  if (value === null || value === undefined || (typeof value === 'number' && Number.isNaN(value))) {
     throw new Error(`${fieldName} is required and must be a positive integer amount in cents`);
   }
 
-  if (!validateAmount(value)) {
-    throw new Error(`${fieldName} must be a positive integer amount in cents`);
+  try {
+    return PositiveIntegerCentsSchema.parse(value);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(`${fieldName} must be a positive integer amount in cents`);
+    }
+    throw error;
   }
-
-  return value;
 }

@@ -1,4 +1,5 @@
 // Aggregates category spendings into groups and sorts them
+import { groupBy, mapValues, sumBy, orderBy } from 'lodash-es';
 import type { CategorySpending, GroupSpending } from '../types/domain.js';
 
 /**
@@ -13,26 +14,27 @@ export class GroupAggregator {
    * @returns Array of group spending data, sorted by total
    */
   aggregateAndSort(spendingByCategory: Record<string, CategorySpending>): GroupSpending[] {
-    const spendingByGroup: Record<string, GroupSpending> = {};
-    Object.values(spendingByCategory).forEach((category) => {
-      if (!spendingByGroup[category.group]) {
-        spendingByGroup[category.group] = {
-          name: category.group,
-          total: 0,
-          categories: [],
-        };
-      }
-      spendingByGroup[category.group].total += category.total;
-      spendingByGroup[category.group].categories.push(category);
-    });
+    const categories = Object.values(spendingByCategory);
+    const grouped = groupBy(categories, 'group');
+
+    const spendingByGroup = mapValues(grouped, (categoryList, groupName) => ({
+      name: groupName,
+      total: sumBy(categoryList, 'total'),
+      categories: categoryList,
+    }));
+
     // Sort groups by absolute total (descending)
-    const sortedGroups: GroupSpending[] = Object.values(spendingByGroup).sort(
-      (a, b) => Math.abs(b.total) - Math.abs(a.total)
+    const sortedGroups = orderBy(
+      Object.values(spendingByGroup),
+      [(group) => Math.abs(group.total)],
+      ['desc']
     );
+
     // Sort categories within each group by absolute total (descending)
     sortedGroups.forEach((group) => {
-      group.categories.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+      group.categories = orderBy(group.categories, [(cat) => Math.abs(cat.total)], ['desc']);
     });
+
     return sortedGroups;
   }
 
