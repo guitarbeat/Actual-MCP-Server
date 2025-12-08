@@ -1,3 +1,4 @@
+import { parse, format, getYear, getMonth } from 'date-fns';
 import type { MonthData, Transaction } from '../../core/types/index.js';
 
 export class MonthlySummaryTransactionAggregator {
@@ -16,14 +17,13 @@ export class MonthlySummaryTransactionAggregator {
       }
 
       // Parse date as local date to avoid timezone issues with YYYY-MM-DD format
-      const [year, month, day] = transaction.date.split('-').map(Number);
-      const date = new Date(year, month - 1, day);
-      const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const date = parse(transaction.date, 'yyyy-MM-dd', new Date());
+      const yearMonth = format(date, 'yyyy-MM');
 
       if (!monthlyData[yearMonth]) {
         monthlyData[yearMonth] = {
-          year: date.getFullYear(),
-          month: date.getMonth() + 1,
+          year: getYear(date),
+          month: getMonth(date) + 1, // getMonth returns 0-11, we need 1-12
           income: 0,
           expenses: 0,
           investments: 0,
