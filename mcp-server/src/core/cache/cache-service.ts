@@ -1,16 +1,10 @@
 /**
  * Cache service with LRU eviction and TTL support.
  * Provides in-memory caching for frequently accessed data.
+ * Uses lru-cache library for efficient LRU implementation.
  */
 
-/**
- * Represents a single cache entry with data, timestamp, and TTL.
- */
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  ttl: number;
-}
+import { LRUCache } from 'lru-cache';
 
 /**
  * Cache statistics for monitoring cache performance.
@@ -25,24 +19,27 @@ export interface CacheStats {
 /**
  * Cache service implementing LRU eviction with TTL support.
  * Singleton pattern ensures single cache instance across the application.
+ * Uses lru-cache library for optimized LRU implementation.
  */
 export class CacheService {
-  private cache: Map<string, CacheEntry<unknown>>;
-  private accessOrder: string[];
+  private cache: LRUCache<string, unknown>;
   private hits: number;
   private misses: number;
-  private readonly maxEntries: number;
-  private readonly defaultTtl: number;
   private readonly enabled: boolean;
 
   constructor() {
-    this.cache = new Map();
-    this.accessOrder = [];
+    const maxEntries = parseInt(process.env.CACHE_MAX_ENTRIES || '1000', 10);
+    const defaultTtl = parseInt(process.env.CACHE_TTL_SECONDS || '300', 10) * 1000;
+    this.enabled = process.env.CACHE_ENABLED !== 'false';
+
+    this.cache = new LRUCache<string, unknown>({
+      max: maxEntries,
+      ttl: defaultTtl,
+      updateAgeOnGet: true, // LRU behavior - update access time on get
+    });
+
     this.hits = 0;
     this.misses = 0;
-    this.maxEntries = parseInt(process.env.CACHE_MAX_ENTRIES || '1000', 10);
-    this.defaultTtl = parseInt(process.env.CACHE_TTL_SECONDS || '300', 10) * 1000;
-    this.enabled = process.env.CACHE_ENABLED !== 'false';
   }
 
   /**
@@ -77,23 +74,8 @@ export class CacheService {
    * @returns Cached data or null if not found/expired
    */
   private get<T>(key: string): T | null {
-    const entry = this.cache.get(key) as CacheEntry<T> | undefined;
-
-    if (!entry) {
-      return null;
-    }
-
-    // Check if entry has expired
-    const now = Date.now();
-    if (now - entry.timestamp > entry.ttl) {
-      this.cache.delete(key);
-      this.removeFromAccessOrder(key);
-      return null;
-    }
-
-    // Update access order for LRU
-    this.updateAccessOrder(key);
-    return entry.data;
+    const value = this.cache.get(key) as T | undefined;
+    return value ?? null;
   }
 
   /**
@@ -108,19 +90,11 @@ export class CacheService {
       return;
     }
 
-    // Evict least recently used entry if at capacity
-    if (this.cache.size >= this.maxEntries && !this.cache.has(key)) {
-      this.evictLRU();
+    if (ttl !== undefined) {
+      this.cache.set(key, data, { ttl });
+    } else {
+      this.cache.set(key, data);
     }
-
-    const entry: CacheEntry<T> = {
-      data,
-      timestamp: Date.now(),
-      ttl: ttl || this.defaultTtl,
-    };
-
-    this.cache.set(key, entry as CacheEntry<unknown>);
-    this.updateAccessOrder(key);
   }
 
   /**
@@ -130,7 +104,6 @@ export class CacheService {
    */
   invalidate(key: string): void {
     this.cache.delete(key);
-    this.removeFromAccessOrder(key);
   }
 
   /**
@@ -150,7 +123,7 @@ export class CacheService {
     }
 
     for (const key of keysToDelete) {
-      this.invalidate(key);
+      this.cache.delete(key);
     }
   }
 
@@ -159,7 +132,6 @@ export class CacheService {
    */
   clear(): void {
     this.cache.clear();
-    this.accessOrder = [];
     this.hits = 0;
     this.misses = 0;
   }
@@ -188,39 +160,6 @@ export class CacheService {
    */
   isEnabled(): boolean {
     return this.enabled;
-  }
-
-  /**
-   * Update access order for LRU tracking.
-   *
-   * @param key - Cache key
-   */
-  private updateAccessOrder(key: string): void {
-    this.removeFromAccessOrder(key);
-    this.accessOrder.push(key);
-  }
-
-  /**
-   * Remove key from access order tracking.
-   *
-   * @param key - Cache key
-   */
-  private removeFromAccessOrder(key: string): void {
-    const index = this.accessOrder.indexOf(key);
-    if (index > -1) {
-      this.accessOrder.splice(index, 1);
-    }
-  }
-
-  /**
-   * Evict least recently used entry.
-   */
-  private evictLRU(): void {
-    if (this.accessOrder.length > 0) {
-      const lruKey = this.accessOrder[0];
-      this.cache.delete(lruKey);
-      this.accessOrder.shift();
-    }
   }
 }
 

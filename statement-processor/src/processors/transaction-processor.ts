@@ -2,18 +2,21 @@
  * Transaction Processor - Orchestrates the transformation of Chase transactions
  */
 
+import { parse, format, isValid } from 'date-fns';
 import { ChaseTransaction, ProcessedTransaction } from './types.js';
 import { cleanPayeeName } from './payee-cleaner.js';
 import { CategorizationEngine } from './categorization-engine.js';
 
 /**
  * Convert date from MM/DD/YYYY to YYYY-MM-DD format
+ * Uses date-fns for parsing and validation to match patterns used elsewhere in the codebase.
  * 
  * @param dateStr - Date string in MM/DD/YYYY format
  * @returns Date string in YYYY-MM-DD format
+ * @throws Error if date format is invalid or date is not valid (e.g., Feb 30)
  */
 export function convertDateFormat(dateStr: string): string {
-  // Parse MM/DD/YYYY format
+  // Validate basic format first to provide specific error messages
   const parts = dateStr.split('/');
   if (parts.length !== 3) {
     throw new Error(`Invalid date format: ${dateStr}. Expected MM/DD/YYYY`);
@@ -21,7 +24,7 @@ export function convertDateFormat(dateStr: string): string {
 
   const [month, day, year] = parts;
   
-  // Validate parts
+  // Validate parts are numeric
   const monthNum = parseInt(month, 10);
   const dayNum = parseInt(day, 10);
   const yearNum = parseInt(year, 10);
@@ -30,19 +33,24 @@ export function convertDateFormat(dateStr: string): string {
     throw new Error(`Invalid date format: ${dateStr}. Expected numeric values`);
   }
 
+  // Validate month range before parsing (to match existing error messages)
   if (monthNum < 1 || monthNum > 12) {
     throw new Error(`Invalid month: ${month}. Must be between 1 and 12`);
   }
 
+  // Validate day range before parsing (to match existing error messages)
   if (dayNum < 1 || dayNum > 31) {
     throw new Error(`Invalid day: ${day}. Must be between 1 and 31`);
   }
 
-  // Pad with zeros if needed
-  const paddedMonth = month.padStart(2, '0');
-  const paddedDay = day.padStart(2, '0');
+  // Use date-fns to parse and validate the date (catches invalid dates like Feb 30)
+  const parsed = parse(dateStr, 'MM/dd/yyyy', new Date());
+  if (!isValid(parsed)) {
+    throw new Error(`Invalid date format: ${dateStr}. Expected MM/DD/YYYY`);
+  }
 
-  return `${year}-${paddedMonth}-${paddedDay}`;
+  // Format to YYYY-MM-DD
+  return format(parsed, 'yyyy-MM-dd');
 }
 
 /**

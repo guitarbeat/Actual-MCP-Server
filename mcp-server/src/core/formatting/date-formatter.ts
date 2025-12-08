@@ -1,5 +1,8 @@
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+
 /**
  * Format a date as YYYY-MM-DD
+ * Uses UTC date components to match the original toISOString behavior.
  *
  * @param date - Date to format (Date object, string, or null/undefined)
  * @returns Formatted date string in YYYY-MM-DD format, or empty string if date is null/undefined
@@ -9,7 +12,11 @@ export function formatDate(date: Date | string | undefined | null): string {
   if (typeof date === 'string') return date;
 
   const d = new Date(date);
-  return d.toISOString().split('T')[0];
+  // Extract UTC components to match original toISOString().split('T')[0] behavior
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -21,8 +28,7 @@ export function formatDate(date: Date | string | undefined | null): string {
  */
 export function getDateRange(startDate?: string, endDate?: string): { startDate: string; endDate: string } {
   const today = new Date();
-  const defaultStartDate = new Date();
-  defaultStartDate.setMonth(today.getMonth() - 3); // 3 months ago by default
+  const defaultStartDate = subMonths(today, 3); // 3 months ago by default
 
   return {
     startDate: startDate || formatDate(defaultStartDate),
@@ -40,11 +46,11 @@ export function getDateRangeForMonths(months: number): {
   start: string;
   end: string;
 } {
-  const now = new Date();
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // last day of current month
-  const start = new Date(end.getFullYear(), end.getMonth() - months + 1, 1); // first day of N months ago
+  const end = endOfMonth(new Date()); // last day of current month
+  const start = startOfMonth(subMonths(end, months - 1)); // first day of N months ago
+
   return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
+    start: format(start, 'yyyy-MM-dd'),
+    end: format(end, 'yyyy-MM-dd'),
   };
 }
