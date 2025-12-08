@@ -128,7 +128,7 @@ export function assertMonth(value: unknown, fieldName: string): string {
  * @throws Error when the value is missing, not a number, not an integer, or not positive.
  */
 export function assertPositiveIntegerCents(value: unknown, fieldName: string): number {
-  if (value === null || value === undefined || (typeof value === 'number' && Number.isNaN(value))) {
+  if (value === null || value === undefined || typeof value !== 'number' || Number.isNaN(value)) {
     throw new Error(`${fieldName} is required and must be a positive integer amount in cents`);
   }
 

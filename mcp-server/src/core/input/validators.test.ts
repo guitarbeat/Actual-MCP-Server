@@ -128,4 +128,25 @@ describe('assertPositiveIntegerCents', () => {
       'amount is required and must be a positive integer amount in cents'
     );
   });
+
+  it('should throw error for non-number types', () => {
+    expect(() => assertPositiveIntegerCents('123', 'amount')).toThrow(
+      'amount is required and must be a positive integer amount in cents'
+    );
+    expect(() => assertPositiveIntegerCents(null, 'amount')).toThrow(
+      'amount is required and must be a positive integer amount in cents'
+    );
+    expect(() => assertPositiveIntegerCents(undefined, 'amount')).toThrow(
+      'amount is required and must be a positive integer amount in cents'
+    );
+    expect(() => assertPositiveIntegerCents({}, 'amount')).toThrow(
+      'amount is required and must be a positive integer amount in cents'
+    );
+    expect(() => assertPositiveIntegerCents([], 'amount')).toThrow(
+      'amount is required and must be a positive integer amount in cents'
+    );
+    expect(() => assertPositiveIntegerCents(true, 'amount')).toThrow(
+      'amount is required and must be a positive integer amount in cents'
+    );
+  });
 });
