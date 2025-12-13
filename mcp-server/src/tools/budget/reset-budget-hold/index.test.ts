@@ -27,7 +27,8 @@ describe('reset-budget-hold tool', () => {
   });
 
   it('should return error when month is missing', async () => {
-    const response = await handler({ month: '2024-01' });
+    // @ts-expect-error - testing missing month
+    const response = await handler({});
 
     expect(response.isError).toBe(true);
     expect(mockApi.resetBudgetHold).not.toHaveBeenCalled();
