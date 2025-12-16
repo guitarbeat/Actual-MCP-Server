@@ -441,32 +441,34 @@ async function ensureConnection<T>(operation: () => Promise<T>): Promise<T> {
  * Get all accounts (ensures API is initialized)
  */
 export async function getAccounts(): Promise<APIAccountEntity[]> {
-  return ensureConnection(() => api.getAccounts());
+  return ensureConnection(() => cacheService.getOrFetch('accounts:all', () => api.getAccounts()));
 }
 
 /**
  * Get all categories (ensures API is initialized)
  */
 export async function getCategories(): Promise<APICategoryEntity[]> {
-  return ensureConnection(async () => {
-    const result = await api.getCategories();
-    // * Filter out category groups if API returns a union type
-    return result.filter((item): item is APICategoryEntity => 'group_id' in item);
-  });
+  return ensureConnection(() =>
+    cacheService.getOrFetch('categories:all', async () => {
+      const result = await api.getCategories();
+      // * Filter out category groups if API returns a union type
+      return result.filter((item): item is APICategoryEntity => 'group_id' in item);
+    })
+  );
 }
 
 /**
  * Get all category groups (ensures API is initialized)
  */
 export async function getCategoryGroups(): Promise<APICategoryGroupEntity[]> {
-  return ensureConnection(() => api.getCategoryGroups());
+  return ensureConnection(() => cacheService.getOrFetch('categoryGroups:all', () => api.getCategoryGroups()));
 }
 
 /**
  * Get all payees (ensures API is initialized)
  */
 export async function getPayees(): Promise<APIPayeeEntity[]> {
-  return ensureConnection(() => api.getPayees());
+  return ensureConnection(() => cacheService.getOrFetch('payees:all', () => api.getPayees()));
 }
 
 /**
