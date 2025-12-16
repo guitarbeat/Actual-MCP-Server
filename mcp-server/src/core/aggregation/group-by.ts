@@ -24,11 +24,7 @@ export class GroupAggregator {
     }));
 
     // Sort groups by absolute total (descending)
-    const sortedGroups = orderBy(
-      Object.values(spendingByGroup),
-      [(group) => Math.abs(group.total)],
-      ['desc']
-    );
+    const sortedGroups = orderBy(Object.values(spendingByGroup), [(group) => Math.abs(group.total)], ['desc']);
 
     // Sort categories within each group by absolute total (descending)
     sortedGroups.forEach((group) => {
