@@ -119,4 +119,3 @@ cd mcp-server
 - **Session ID Header**: Use `mcp-session-id` header (MCP standard) or `x-session-id` (fallback)
 - **Bearer Auth**: Required for all requests when `--enable-bearer` flag is used
 - **SSE Streaming**: Responses are streamed as Server-Sent Events for real-time updates
-

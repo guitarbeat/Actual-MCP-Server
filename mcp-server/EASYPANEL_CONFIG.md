@@ -7,11 +7,12 @@ For local development, you don't need Docker or Nixpacks. Simply use npm directl
 ### Prerequisites
 
 1. **Install Node.js 22** (required by `package.json` engines):
+
    ```bash
    # Using nvm (recommended)
    nvm install 22
    nvm use 22
-   
+
    # Or download from https://nodejs.org/
    ```
 
@@ -56,6 +57,7 @@ PORT=3000
 ### Note on Nixpacks
 
 **Nixpacks is NOT suitable for local development** because:
+
 - It still requires Docker to run the built image
 - It's designed for cloud deployments (like Easy Panel)
 - For local development, use npm directly (no Docker needed)
