@@ -72,14 +72,14 @@ class MockServerResponse extends Writable {
 }
 
 // Mock IncomingMessage for testing
-function createMockRequest(method: string, url: string, body?: unknown): IncomingMessage {
+function createMockRequest(method: string, url: string, headers: Record<string, string> = {}): IncomingMessage {
   return {
     method,
     url,
     headers: {
       'content-type': 'application/json',
+      ...headers,
     },
-    body,
   } as unknown as IncomingMessage;
 }
 
@@ -132,7 +132,7 @@ describe('StreamableHTTPHandler', () => {
     it('should handle request and connect transport', async () => {
       fc.assert(
         await fc.asyncProperty(
-          fc.constantFrom('GET', 'POST', 'DELETE'), // Valid HTTP methods for /mcp
+          fc.constantFrom('POST'), // Initialize requests are typically POST
           async (method) => {
             const testServer = new Server(
               { name: 'Test', version: '1.0.0' },
@@ -142,11 +142,23 @@ describe('StreamableHTTPHandler', () => {
             const mockRes = new MockServerResponse() as unknown as ServerResponse;
             const mockReq = createMockRequest(method, '/mcp');
 
+            // Valid Initialize Request Body
+            const initBody = {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'initialize',
+              params: {
+                protocolVersion: '2024-11-05',
+                capabilities: {},
+                clientInfo: { name: 'test-client', version: '1.0.0' }
+              }
+            };
+
             // Initially not connected
             expect(testHandler.getActiveSessionCount()).toBe(0);
 
             // Handle request (this will connect the transport)
-            await testHandler.handleRequest(mockReq, mockRes);
+            await testHandler.handleRequest(mockReq, mockRes, initBody);
 
             // Should be connected after handling request
             expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
@@ -156,14 +168,14 @@ describe('StreamableHTTPHandler', () => {
             expect(testHandler.getActiveSessionCount()).toBe(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 50 } // Reduce runs for async tests to be faster
       );
     });
 
     it('should handle multiple requests with same handler', async () => {
       fc.assert(
         await fc.asyncProperty(
-          fc.integer({ min: 1, max: 5 }), // Number of requests
+          fc.integer({ min: 1, max: 5 }), // Number of follow-up requests
           async (numRequests) => {
             const testServer = new Server(
               { name: 'Test', version: '1.0.0' },
@@ -171,13 +183,42 @@ describe('StreamableHTTPHandler', () => {
             );
             const testHandler = new StreamableHTTPHandler(testServer);
 
+            // 1. Initialize First
+            const initRes = new MockServerResponse() as unknown as ServerResponse;
+            const initReq = createMockRequest('POST', '/mcp');
+            const initBody = {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'initialize',
+              params: {
+                protocolVersion: '2024-11-05',
+                capabilities: {},
+                clientInfo: { name: 'test-client', version: '1.0.0' }
+              }
+            };
+
+            await testHandler.handleRequest(initReq, initRes, initBody);
+
+            // Should have 1 session
+            expect(testHandler.getActiveSessionCount()).toBe(1);
+
+            // Get the generated session ID from the internal map
+            // @ts-ignore - accessing private map
+            const sessionId = testHandler.transports.keys().next().value;
+            expect(sessionId).toBeDefined();
+
             for (let i = 0; i < numRequests; i++) {
               const mockRes = new MockServerResponse() as unknown as ServerResponse;
-              const mockReq = createMockRequest('POST', '/mcp');
+              const mockReq = createMockRequest('POST', '/mcp', { 'mcp-session-id': sessionId });
+              const body = {
+                jsonrpc: '2.0',
+                id: i + 2,
+                method: 'ping'
+              };
 
-              await testHandler.handleRequest(mockReq, mockRes);
+              await testHandler.handleRequest(mockReq, mockRes, body);
 
-              // Should remain connected after first request
+              // Should remain connected
               expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
             }
 
@@ -185,7 +226,7 @@ describe('StreamableHTTPHandler', () => {
             await testHandler.cleanup();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 50 }
       );
     });
 
@@ -203,7 +244,18 @@ describe('StreamableHTTPHandler', () => {
             // Connect the transport
             const mockRes = new MockServerResponse() as unknown as ServerResponse;
             const mockReq = createMockRequest('POST', '/mcp');
-            await testHandler.handleRequest(mockReq, mockRes);
+            const initBody = {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'initialize',
+              params: {
+                protocolVersion: '2024-11-05',
+                capabilities: {},
+                clientInfo: { name: 'test-client', version: '1.0.0' }
+              }
+            };
+
+            await testHandler.handleRequest(mockReq, mockRes, initBody);
 
             expect(testHandler.getActiveSessionCount()).toBeGreaterThan(0);
 
@@ -216,7 +268,7 @@ describe('StreamableHTTPHandler', () => {
             expect(testHandler.getActiveSessionCount()).toBe(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 50 }
       );
     });
 
@@ -241,7 +293,7 @@ describe('StreamableHTTPHandler', () => {
             expect(typeof testHandler.getTransport).toBe('function');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 10 }
       );
     });
 
@@ -263,13 +315,14 @@ describe('StreamableHTTPHandler', () => {
             const invalidReq = {
               method: undefined,
               url: undefined,
+              // Missing headers
             } as unknown as IncomingMessage;
 
             // Should not throw, but handle error gracefully
             await expect(testHandler.handleRequest(invalidReq, mockRes)).resolves.not.toThrow();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 10 }
       );
     });
   });

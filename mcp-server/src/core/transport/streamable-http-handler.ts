@@ -37,7 +37,11 @@ export class StreamableHTTPHandler {
   async handleRequest(req: IncomingMessage, res: ServerResponse, parsedBody?: unknown): Promise<void> {
     try {
       // * Get session ID from headers (MCP standard header)
-      const sessionId = req.headers['mcp-session-id'] as string | undefined;
+      // * Check for both standard and custom headers for compatibility
+      const headers = req.headers || {};
+      const sessionId =
+        (headers['mcp-session-id'] as string | undefined) ||
+        (headers['x-session-id'] as string | undefined);
 
       let transport: StreamableHTTPServerTransport | undefined;
 
