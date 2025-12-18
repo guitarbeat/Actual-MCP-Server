@@ -30,6 +30,7 @@ import { cacheService } from './core/cache/cache-service.js';
 vi.mock('./core/cache/cache-service.js', () => ({
   cacheService: {
     invalidate: vi.fn(),
+    invalidatePattern: vi.fn(),
   },
 }));
 
@@ -419,7 +420,7 @@ describe('Auto-load functionality', () => {
 
       await actualApi.updateTransaction('txn-123', { amount: 5000 });
 
-      expect(cacheService.invalidate).toHaveBeenCalledWith('transactions');
+      expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
     });
 
     it('should handle update errors', async () => {
@@ -462,7 +463,7 @@ describe('Auto-load functionality', () => {
     it('should invalidate transaction cache after deletion', async () => {
       await actualApi.deleteTransaction('txn-123');
 
-      expect(cacheService.invalidate).toHaveBeenCalledWith('transactions');
+      expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
     });
 
     it('should handle deletion errors', async () => {
@@ -485,6 +486,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(cacheService.invalidate).mockClear();
+      vi.mocked(cacheService.invalidatePattern).mockClear();
       vi.mocked(api.importTransactions).mockResolvedValue({
         added: ['txn-1'],
         updated: [],
@@ -511,7 +513,7 @@ describe('Auto-load functionality', () => {
         ],
         undefined
       );
-      expect(cacheService.invalidate).toHaveBeenCalledWith('transactions');
+      expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
       expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
       expect(result).toEqual({ added: ['txn-1'], updated: [] });
     });
