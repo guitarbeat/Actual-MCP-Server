@@ -39,14 +39,23 @@ export function validationError(message: string, options: ValidationErrorOptions
     'Review the tool documentation for valid input formats and ensure all required fields are provided correctly.';
 
   if (field) {
-    if (field.toLowerCase().includes('id')) {
+    const lowerField = field.toLowerCase();
+    if (lowerField.includes('id')) {
       suggestion = `The '${field}' field must be a valid UUID. Use the appropriate listing tool (e.g., get-accounts, get-categories) to find valid IDs.`;
-    } else if (field.toLowerCase().includes('date')) {
+    } else if (lowerField.includes('date')) {
       suggestion = `The '${field}' field must be in ISO date format (YYYY-MM-DD). Example: 2024-01-15`;
-    } else if (field.toLowerCase().includes('amount')) {
+    } else if (lowerField.includes('amount')) {
       suggestion = `The '${field}' field must be a number in milliunits (e.g., 12500 for $125.00).`;
-    } else if (field.toLowerCase().includes('month')) {
+    } else if (lowerField.includes('month')) {
       suggestion = `The '${field}' field must be in YYYY-MM format. Example: 2024-08`;
+    } else if (lowerField === 'type') {
+      suggestion = `The '${field}' field has restricted values. For accounts: checking, savings, credit, investment, mortgage, debt, other.`;
+    } else if (lowerField === 'op') {
+      suggestion = `The '${field}' field specifies the operator. Common operators: is, contains, gt, lt. Check documentation for supported operators.`;
+    } else if (lowerField === 'field') {
+      suggestion = `The '${field}' field specifies the target. Common targets: account, category, payee, amount, date.`;
+    } else if (lowerField === 'method') {
+      suggestion = `The '${field}' field for split actions must be one of: fixed-amount, fixed-percent, remainder.`;
     }
   }
 
