@@ -93,7 +93,7 @@ export function notFoundError(entityType: string, entityId: string, options: Not
  */
 function getTroubleshootingSuggestion(errorStr: string): string {
   if (errorStr.includes('connection') || errorStr.includes('econnrefused') || errorStr.includes('network')) {
-    return 'Connection failed: Verify ACTUAL_SERVER_URL is correct and the Actual Budget server is running. Check network connectivity and firewall settings.';
+    return 'Connection failed: Verify ACTUAL_SERVER_URL is correct and the Actual Budget server is running. You can verify connectivity by opening the URL in a browser or using curl.';
   }
   if (errorStr.includes('auth') || errorStr.includes('password') || errorStr.includes('unauthorized')) {
     return 'Authentication failed: Verify ACTUAL_PASSWORD is correct and matches your Actual Budget server password. Check that the server requires authentication.';
