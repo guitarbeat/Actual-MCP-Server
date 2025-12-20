@@ -475,7 +475,11 @@ export async function getPayees(): Promise<APIPayeeEntity[]> {
  * Get transactions for a specific account and date range (ensures API is initialized)
  */
 export async function getTransactions(accountId: string, start: string, end: string): Promise<TransactionEntity[]> {
-  return ensureConnection(() => api.getTransactions(accountId, start, end));
+  return ensureConnection(() =>
+    cacheService.getOrFetch(`transactions:${accountId}:${start}:${end}`, () =>
+      api.getTransactions(accountId, start, end)
+    )
+  );
 }
 
 /**
