@@ -138,6 +138,8 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
         .sort((a, b) => b.count - a.count);
     }
 
+    const totalAmount = filtered.reduce((sum, t) => sum + t.amount, 0);
+
     const markdown = new GetTransactionsReportGenerator().generate(mapped, {
       accountReference: accountId,
       resolvedAccountId,
@@ -146,6 +148,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       filteredCount: filtered.length,
       totalFetched: transactions.length,
       accountSummary,
+      totalAmount,
     });
     return success(markdown);
   } catch (err) {
