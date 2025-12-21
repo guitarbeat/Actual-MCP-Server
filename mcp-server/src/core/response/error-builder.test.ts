@@ -62,6 +62,24 @@ describe('Error Builder', () => {
       const payload = getPayload(result);
       expect(payload.message).toContain('expected: YYYY-MM-DD');
     });
+
+    it('should provide specific suggestion for categoryName', () => {
+      const result = validationError('Invalid type', {
+        field: 'categoryName',
+      });
+
+      const payload = getPayload(result);
+      expect(payload.suggestion).toContain("allows partial matching (e.g., 'groc' matches 'Groceries')");
+    });
+
+    it('should provide specific suggestion for payeeName', () => {
+      const result = validationError('Invalid type', {
+        field: 'payeeName',
+      });
+
+      const payload = getPayload(result);
+      expect(payload.suggestion).toContain("allows partial matching (e.g., 'amazon' matches 'Amazon.com')");
+    });
   });
 
   describe('notFoundError', () => {
