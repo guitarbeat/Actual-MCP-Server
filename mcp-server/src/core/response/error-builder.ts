@@ -47,6 +47,10 @@ export function validationError(message: string, options: ValidationErrorOptions
       suggestion = `The '${field}' field must be a number in milliunits (e.g., 12500 for $125.00).`;
     } else if (field.toLowerCase().includes('month')) {
       suggestion = `The '${field}' field must be in YYYY-MM format. Example: 2024-08`;
+    } else if (field.toLowerCase().includes('categoryname')) {
+      suggestion = `The '${field}' field allows partial matching (e.g., 'groc' matches 'Groceries').`;
+    } else if (field.toLowerCase().includes('payeename')) {
+      suggestion = `The '${field}' field allows partial matching (e.g., 'amazon' matches 'Amazon.com').`;
     }
   }
 
