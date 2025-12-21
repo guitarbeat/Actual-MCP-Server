@@ -475,7 +475,11 @@ export async function getPayees(): Promise<APIPayeeEntity[]> {
  * Get transactions for a specific account and date range (ensures API is initialized)
  */
 export async function getTransactions(accountId: string, start: string, end: string): Promise<TransactionEntity[]> {
-  return ensureConnection(() => api.getTransactions(accountId, start, end));
+  return ensureConnection(() =>
+    cacheService.getOrFetch(`transactions:${accountId}:${start}:${end}`, () =>
+      api.getTransactions(accountId, start, end)
+    )
+  );
 }
 
 /**
@@ -639,7 +643,11 @@ export async function addTransactions(
   }>,
   options?: { learnCategories?: boolean; runTransfers?: boolean }
 ): Promise<'ok'> {
-  return ensureConnection(() => api.addTransactions(accountId, transactions as any, options));
+  return ensureConnection(async () => {
+    const result = await api.addTransactions(accountId, transactions as any, options);
+    cacheService.invalidatePattern('transactions:*');
+    return result;
+  });
 }
 
 /**
@@ -692,7 +700,7 @@ export async function importTransactions(
       throw new Error(`importTransactions reported errors: ${errorMessages}`);
     }
 
-    cacheService.invalidate('transactions');
+    cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
 
     return result;
@@ -709,7 +717,7 @@ export async function importTransactions(
 export async function updateTransaction(id: string, updates: Record<string, unknown>): Promise<void> {
   return ensureConnection(async () => {
     await api.updateTransaction(id, updates);
-    cacheService.invalidate('transactions');
+    cacheService.invalidatePattern('transactions:*');
   });
 }
 
@@ -722,7 +730,7 @@ export async function updateTransaction(id: string, updates: Record<string, unkn
 export async function deleteTransaction(id: string): Promise<void> {
   return ensureConnection(async () => {
     await api.deleteTransaction(id);
-    cacheService.invalidate('transactions');
+    cacheService.invalidatePattern('transactions:*');
   });
 }
 
