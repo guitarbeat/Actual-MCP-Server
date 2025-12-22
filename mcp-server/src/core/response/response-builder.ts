@@ -2,6 +2,7 @@
 // RESPONSE BUILDER
 // ----------------------------
 
+import { ZodError } from 'zod';
 import type { ContentItem, ErrorContext, ErrorPayload, MCPResponse } from './types.js';
 
 /**
@@ -167,7 +168,14 @@ export function errorFromCatch(err: unknown, context: ErrorContext = {}): MCPRes
   let resolvedMessage: string | undefined;
 
   try {
-    if (err instanceof Error) {
+    if (err instanceof ZodError) {
+      // Format Zod errors into a readable string
+      const issues = err.errors.map((e) => {
+        const path = e.path.join('.');
+        return path ? `${path}: ${e.message}` : e.message;
+      });
+      resolvedMessage = `Validation error: ${issues.join('; ')}`;
+    } else if (err instanceof Error) {
       resolvedMessage = err.message || 'Unknown error';
     } else if (typeof err === 'string') {
       resolvedMessage = err;
