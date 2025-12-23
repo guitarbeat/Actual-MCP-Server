@@ -11,7 +11,7 @@ import {
     getSchedules,
     getTransactions,
 } from '../api/actual-client.js';
-import { formatAmount, getDateRange } from '../formatting/index.js';
+import { formatAmount, formatDate, getDateRange } from '../formatting/index.js';
 import type { Account, Category, CategoryGroup } from '../types/index.js';
 
 // ----------------------------
@@ -141,7 +141,9 @@ export async function analyzeOverspending(month: string): Promise<OverspendingIt
  * Find transactions without categories
  */
 export async function findUncategorizedTransactions(month: string): Promise<UncategorizedSummary> {
-    const { startDate, endDate } = getDateRange(month);
+    const startOfMonth = `${month}-01`;
+    const endOfMonth = formatDate(new Date()); // Or calculate end of the specific month
+    const { startDate, endDate } = getDateRange(startOfMonth, endOfMonth);
     const accounts = await getAccounts();
 
     let count = 0;
@@ -260,7 +262,12 @@ export async function getUpcomingSchedulesSummary(days: number = 14): Promise<Up
  * Calculate spending trends
  */
 export async function calculateTrends(month: string): Promise<TrendsSummary> {
+    const currentMonthStart = `${month}-01`;
+    const { startDate: currentStart, endDate: currentEnd } = getDateRange(currentMonthStart);
+    
     const prevMonth = getPreviousMonth(month);
+    const prevMonthStart = `${prevMonth}-01`;
+    const { startDate: prevStart, endDate: prevEnd } = getDateRange(prevMonthStart, `${prevMonth}-31`); // Rough end is fine as API filters
 
     const [currentBudget, previousBudget] = await Promise.all([
         getBudgetMonth(month) as Promise<{ incomeAvailable?: number; toBudget?: number; categoryGroups?: Array<{ categories?: Array<{ spent?: number }> }> }>,
