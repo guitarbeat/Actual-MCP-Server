@@ -372,6 +372,12 @@ Quick tips:
 - Enable performance tracking: `DEBUG_PERFORMANCE=true npm run inspector`
 - View Claude Desktop logs: `tail -F ~/Library/Logs/Claude/mcp*.log`
 
+## Support the Project
+
+If you find this MCP server useful, consider supporting its development!
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_badges/orange_card.png)](https://www.buymeacoffee.com/your-username)
+
 ## License
 
 MIT

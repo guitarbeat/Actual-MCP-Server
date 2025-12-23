@@ -96,13 +96,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/s-stefanov/actual-mcp",
+  "homepage": "https://github.com/guitarbeat/actual-mcp",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s-stefanov/actual-mcp.git"
+    "url": "git+https://github.com/guitarbeat/actual-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/s-stefanov/actual-mcp/issues"
+    "url": "https://github.com/guitarbeat/actual-mcp/issues"
   },
   "keywords": [
     "mcp",
@@ -112,6 +112,6 @@
     "model-context-protocol",
     "actual"
   ],
-  "author": "Stefan Stefanov",
+  "author": "guitarbeat",
   "license": "MIT"
 }
