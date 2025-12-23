@@ -14,25 +14,7 @@ import { SpendingByCategoryReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'spending-by-category',
-  description:
-    'Break down spending by category to show where money is going. Use this when the user asks about spending patterns, top categories, or budget analysis.\n\n' +
-    'WHEN TO USE:\n' +
-    '- User asks "where is my money going?"\n' +
-    '- User wants to see "spending breakdown" or "spending by category"\n' +
-    '- User asks "what are my top spending categories?"\n' +
-    '- User wants to analyze spending for a time period\n' +
-    '- User asks "how much did I spend on [category]?"\n' +
-    '- User wants to compare spending across categories\n\n' +
-    'OPTIONAL FILTERS:\n' +
-    '- startDate/endDate: YYYY-MM-DD format (defaults to last 30 days)\n' +
-    '- accountId: Specific account name or omit for all accounts\n' +
-    '- includeIncome: Set true to include income categories (default: expenses only)\n\n' +
-    'EXAMPLES:\n' +
-    '- "Show spending breakdown": {}\n' +
-    '- "January spending": {"startDate": "2024-01-01", "endDate": "2024-01-31"}\n' +
-    '- "Checking account spending": {"accountId": "Checking"}\n' +
-    '- "Income and expenses": {"includeIncome": true}\n\n' +
-    'RETURNS: Category groups sorted by spending (highest first) with transaction counts',
+  description: 'Break down spending by category to show where money is going. Useful for analyzing spending patterns, top categories, or budget analysis.',
   inputSchema: zodToJsonSchema(SpendingByCategoryArgsSchema) as ToolInput,
 };
 

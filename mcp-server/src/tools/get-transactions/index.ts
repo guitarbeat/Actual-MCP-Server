@@ -14,31 +14,7 @@ import { GetTransactionsReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'get-transactions',
-  description:
-    'Query and filter transaction history from a specific account or across all accounts. Use this when the user asks to see, find, list, or show transactions.\n\n' +
-    'WHEN TO USE:\n' +
-    '- User asks "show me transactions from my checking account"\n' +
-    '- User wants to find specific purchases or payments\n' +
-    '- User asks about spending at a specific merchant (use payeeName filter)\n' +
-    '- User wants to see recent activity in an account\n' +
-    '- User asks about transactions in a category (use categoryName filter)\n' +
-    '- User wants to find large expenses or income deposits (use minAmount/maxAmount)\n' +
-    '- User asks "show all uncategorized transactions" (use accountId: "all", categoryName: "Uncategorized", excludeTransfers: true)\n\n' +
-    'REQUIRED:\n' +
-    '- accountId: Account name (e.g., "Checking"), partial match (e.g., "Chase" matches "Chase Checking"), or "all" to search across all accounts\n\n' +
-    'OPTIONAL FILTERS:\n' +
-    '- startDate/endDate: YYYY-MM-DD format (defaults to last 3 months)\n' +
-    '- minAmount/maxAmount: Dollar amounts (negative = expenses, positive = income)\n' +
-    '- categoryName: Partial category name (e.g., "groc" matches "Groceries")\n' +
-    '- payeeName: Partial merchant name (e.g., "amazon" matches "Amazon.com")\n' +
-    '- limit: Max results to return\n\n' +
-    'EXAMPLES:\n' +
-    '- "Show recent checking transactions": {"accountId": "Checking"}\n' +
-    '- "Find Amazon purchases": {"accountId": "Credit Card", "payeeName": "Amazon"}\n' +
-    '- "Show grocery spending": {"accountId": "Checking", "categoryName": "Groceries"}\n' +
-    '- "Find expenses over $100": {"accountId": "Checking", "maxAmount": -100}\n' +
-    '- "Last 10 transactions": {"accountId": "Checking", "limit": 10}\n' +
-    '- "Show all uncategorized transactions": {"accountId": "all", "categoryName": "Uncategorized", "excludeTransfers": true}',
+  description: 'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category.',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 
