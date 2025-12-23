@@ -7,7 +7,7 @@
 
 import { parseArgs } from 'node:util';
 import { CSVImportConfig } from './types.js';
-import { generateOutputFilename } from './csv-formatter.js';
+import { generateOutputFilename } from './format-output-csv.js';
 
 /**
  * CLI options parsed from command-line arguments
