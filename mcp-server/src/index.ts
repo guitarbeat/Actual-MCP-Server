@@ -233,7 +233,9 @@ async function main(): Promise<void> {
       // * When bearer authentication is enabled, allow localhost connections
       // * Bearer auth provides security instead of host header validation
       allowedHosts: enableBearer
-        ? ['localhost', '127.0.0.1', '::1', '[::1]'] // Allow localhost connections when bearer auth is enabled
+        ? ['localhost', '127.0.0.1', '::1', '[::1]', 'actual-mcp.onrender.com', process.env.RENDER_EXTERNAL_HOSTNAME].filter(
+            (h): h is string => !!h
+          )
         : undefined,
     });
 
