@@ -1,14 +1,11 @@
-node_modules/
-build/
-coverage/
-*.log
-.env
-.env.test
-.env_test
-.env.local
-.env.*.local
-data/**
+# System & Deps
 .DS_Store
-pnpm-lock.yaml
+node_modules/
+dist/
+build/
+.env
 
-**/*.local.*
+# Legacy (Preserved and tracked)
+# legacy-version/
+
+# Note: upstream-version/ and statement-processor/ ARE tracked
