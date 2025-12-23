@@ -1,0 +1,4 @@
+## 2024-05-22 - Timing Attack in Authentication
+**Vulnerability:** The bearer token comparison in `mcp-server/src/index.ts` used a direct string comparison (`!==`), which is susceptible to timing attacks. Additionally, the code logged the length of the received token, further leaking information about the expected secret.
+**Learning:** Simple string comparisons leak information about how much of the string matches and the length of the secret. Logging token lengths directly aids attackers in narrowing down the secret space.
+**Prevention:** Use `crypto.timingSafeEqual` for all secret comparisons. To handle variable-length inputs (like strings vs secrets), hash both inputs (e.g., using SHA-256) before comparison. This ensures constant-time comparison regardless of input content or length. Avoid logging any properties of the received secret.
