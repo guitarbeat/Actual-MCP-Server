@@ -23,4 +23,4 @@ ENV NODE_ENV=production
 RUN npm ci --omit=dev
 
 EXPOSE 3000
-ENTRYPOINT ["node", "build/index.js"]
+ENTRYPOINT ["node", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
