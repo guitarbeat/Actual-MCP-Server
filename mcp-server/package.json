@@ -2,7 +2,7 @@
   "name": "actual-mcp",
   "version": "1.6.0",
   "description": "Actual Budget MCP server exposing API functionality",
-  "private": false,
+  "private": true,
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "type": "module",
