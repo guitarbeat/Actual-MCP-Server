@@ -80,32 +80,30 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
+  // * Allow authentication via Authorization header or query parameters
+  // * Query parameters are useful for browser-based clients (EventSource) that don't support custom headers
   const authHeader = req.headers.authorization;
+  const queryToken = req.query.authToken || req.query.apiKey || req.query.token;
+  
+  let token: string | undefined;
 
-  if (!authHeader) {
-    console.error('[AUTH] ❌ Missing Authorization header');
-    // Include WWW-Authenticate header as per HTTP spec
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else if (typeof queryToken === 'string') {
+    token = queryToken;
+  }
+
+  if (!token) {
+    console.error('[AUTH] ❌ Missing authentication (no header or query param)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
       error: 'Authentication required',
-      message: 'Authorization header required',
-      code: -32000, // MCP authentication error code
-    });
-    return;
-  }
-
-  if (!authHeader.startsWith('Bearer ')) {
-    console.error('[AUTH] ❌ Invalid Authorization header format');
-    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
-    res.status(401).json({
-      error: 'Authentication failed',
-      message: "Authorization header must start with 'Bearer '",
+      message: 'Authorization header (Bearer token) or authToken/apiKey query parameter required',
       code: -32000,
     });
     return;
   }
 
-  const token = authHeader.substring(7); // Remove "Bearer " prefix
   const expectedToken = process.env.BEARER_TOKEN;
 
   if (!expectedToken) {
@@ -113,14 +111,13 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     res.status(500).json({
       error: 'Server configuration error',
       message: 'Authentication system not properly configured',
-      code: -32004, // Internal error
+      code: -32004,
     });
     return;
   }
 
   if (token !== expectedToken) {
-    console.error('[AUTH] ❌ Invalid bearer token (token mismatch)');
-    console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
+    console.error('[AUTH] ❌ Invalid token (token mismatch)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
       error: 'Authentication failed',
