@@ -3,7 +3,7 @@
 // ----------------------------
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { initActualApi } from '../actual-api.js';
+import { initActualApi } from '../core/api/actual-client.js';
 import { error, errorFromCatch, type MCPResponse } from '../core/response/index.js';
 // Account tools (non-CRUD)
 import * as closeAccount from './accounts/close-account/index.js';
@@ -31,6 +31,7 @@ import * as getRules from './rules/get-rules/index.js';
 // Budget operation tools
 import * as setBudget from './set-budget/index.js';
 import * as spendingByCategory from './spending-by-category/index.js';
+import * as financialInsights from './financial-insights/index.js';
 // Transaction CRUD tools
 import * as createTransaction from './transactions/create-transaction/index.js';
 import * as deleteTransaction from './transactions/delete-transaction/index.js';
@@ -96,6 +97,12 @@ const toolRegistry: CategorizedToolDefinition[] = [
   {
     schema: monthlySummary.schema,
     handler: monthlySummary.handler,
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: financialInsights.schema,
+    handler: financialInsights.handler,
     requiresWrite: false,
     category: 'core',
   },

@@ -2,7 +2,7 @@
 // IMPORT TRANSACTIONS TOOL
 // ----------------------------
 
-import { runBankSync } from '../../../actual-api.js';
+import { runBankSync } from '../../../core/api/actual-client.js';
 import {
   errorFromCatch,
   successWithJson,

@@ -2,7 +2,7 @@
 // RESPONSE BUILDER
 // ----------------------------
 
-import type { ContentItem, ErrorContext, ErrorPayload, MCPResponse } from './types.js';
+import type { ContentItem, ErrorContext, ErrorPayload, MCPResponse } from '../types/index.js';
 
 /**
  * Default error suggestion when no specific suggestion can be inferred

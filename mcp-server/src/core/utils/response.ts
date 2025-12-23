@@ -13,7 +13,7 @@ export type {
   PermissionErrorOptions,
   TextContentItem,
   ValidationErrorOptions,
-} from '../core/response/index.js';
+} from '../response/index.js';
 export {
   apiError,
   error,
@@ -31,8 +31,8 @@ export {
   successWithJson,
   unsupportedFeatureError,
   validationError,
-} from '../core/response/index.js';
+} from '../response/index.js';
 
 // Legacy type aliases for backward compatibility
-import type { MCPResponse } from '../core/response/index.js';
+import type { MCPResponse } from '../response/index.js';
 export type Response = MCPResponse;

@@ -1,5 +1,5 @@
 import type { MonthData, MonthlySummaryReportData } from '../../core/types/index.js';
-import { formatAmount } from '../../utils.js';
+import { formatAmount } from '../../core/formatting/index.js';
 
 export class MonthlySummaryReportGenerator {
   generate(data: MonthlySummaryReportData): string {

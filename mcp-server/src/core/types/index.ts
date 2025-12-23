@@ -3,6 +3,9 @@
 // Centralized export for all type definitions
 // ----------------------------
 
+// MCP-specific types
+export type ToolInput = Record<string, unknown>;
+
 // Domain types (entities from Actual Budget)
 export type {
   Account,
@@ -25,6 +28,7 @@ export type {
   NotFoundErrorOptions,
   PermissionErrorOptions,
   TextContentItem,
+  UnsupportedFeatureOptions,
   ValidationErrorOptions,
 } from './responses.js';
 // Zod schemas for validation

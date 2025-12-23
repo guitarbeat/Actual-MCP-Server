@@ -4,9 +4,9 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { resetBudgetHold } from '../../../actual-api.js';
+import { resetBudgetHold } from '../../../core/api/actual-client.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
-import type { ToolInput } from '../../../types.js';
+import type { ToolInput } from '../../../core/types/index.js';
 
 const ResetBudgetHoldSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),

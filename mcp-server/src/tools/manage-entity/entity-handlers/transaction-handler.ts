@@ -2,7 +2,7 @@
 // TRANSACTION ENTITY HANDLER
 // ----------------------------
 
-import { deleteTransaction, importTransactions, updateTransaction } from '../../../actual-api.js';
+import { deleteTransaction, importTransactions, updateTransaction } from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';

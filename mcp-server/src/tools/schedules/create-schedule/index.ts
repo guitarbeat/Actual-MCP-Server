@@ -4,7 +4,7 @@
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
-import type { ToolInput } from '../../../types.js';
+import type { ToolInput } from '../../../core/types/index.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
 import type { ScheduleData } from '../../manage-entity/types.js';
 import { ScheduleDataSchema } from '../../manage-entity/types.js';

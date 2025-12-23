@@ -2,7 +2,7 @@
 // SCHEDULE ENTITY HANDLER
 // ----------------------------
 
-import { createSchedule, deleteSchedule, updateSchedule } from '../../../actual-api.js';
+import { createSchedule, deleteSchedule, updateSchedule } from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';

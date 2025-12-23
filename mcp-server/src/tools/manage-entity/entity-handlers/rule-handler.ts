@@ -2,7 +2,7 @@
 // RULE ENTITY HANDLER
 // ----------------------------
 
-import { createRule, deleteRule, updateRule } from '../../../actual-api.js';
+import { createRule, deleteRule, updateRule } from '../../../core/api/actual-client.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { RuleData } from '../types.js';
 import { RuleDataSchema } from '../types.js';

@@ -1,6 +1,6 @@
 // Fetches accounts, transactions, and balances for balance-history tool
 
-import { getAccountBalance } from '../../actual-api.js';
+import { getAccountBalance } from '../../core/api/actual-client.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { fetchAllTransactions, fetchTransactionsForAccount } from '../../core/data/fetch-transactions.js';
 import type { Account, Transaction } from '../../core/types/domain.js';

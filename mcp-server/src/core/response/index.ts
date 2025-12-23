@@ -31,4 +31,4 @@ export type {
   PermissionErrorOptions,
   TextContentItem,
   ValidationErrorOptions,
-} from './types.js';
+} from '../types/index.js';

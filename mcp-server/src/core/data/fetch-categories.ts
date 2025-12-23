@@ -1,4 +1,4 @@
-import { getCategories, getCategoryGroups } from '../../actual-api.js';
+import { getCategories, getCategoryGroups } from '../../core/api/actual-client.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { Category, CategoryGroup } from '../types/domain.js';
 
