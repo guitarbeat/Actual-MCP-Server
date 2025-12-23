@@ -1,4 +1,4 @@
-import { getSchedules } from '../../../actual-api.js';
+import { getSchedules } from '../../../core/api/actual-client.js';
 import { errorFromCatch, successWithJson, unsupportedFeatureError } from '../../../core/response/index.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';

@@ -1,4 +1,4 @@
-import { getAccounts } from '../../actual-api.js';
+import { getAccounts } from '../../core/api/actual-client.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { Account } from '../types/domain.js';
 

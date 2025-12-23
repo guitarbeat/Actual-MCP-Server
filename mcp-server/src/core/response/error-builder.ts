@@ -10,7 +10,7 @@ import type {
   PermissionErrorOptions,
   UnsupportedFeatureOptions,
   ValidationErrorOptions,
-} from './types.js';
+} from '../types/index.js';
 
 /**
  * Create a validation error response with clear, actionable guidance

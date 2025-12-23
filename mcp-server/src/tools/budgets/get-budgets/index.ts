@@ -2,7 +2,7 @@
 // GET BUDGETS TOOL
 // ----------------------------
 
-import { getBudgets } from '../../../actual-api.js';
+import { getBudgets } from '../../../core/api/actual-client.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 
 export const schema = {

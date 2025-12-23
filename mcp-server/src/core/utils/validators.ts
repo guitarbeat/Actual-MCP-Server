@@ -11,4 +11,4 @@ export {
   validateDate,
   validateMonth,
   validateUUID,
-} from '../core/input/validators.js';
+} from '../input/validators.js';

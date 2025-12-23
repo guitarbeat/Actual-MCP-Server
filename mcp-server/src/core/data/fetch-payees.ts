@@ -1,4 +1,4 @@
-import { getPayees } from '../../actual-api.js';
+import { getPayees } from '../../core/api/actual-client.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { Payee } from '../types/domain.js';
 

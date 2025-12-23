@@ -2,7 +2,7 @@
 // PAYEE ENTITY HANDLER
 // ----------------------------
 
-import { createPayee, deletePayee, updatePayee } from '../../../actual-api.js';
+import { createPayee, deletePayee, updatePayee } from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { PayeeData } from '../types.js';

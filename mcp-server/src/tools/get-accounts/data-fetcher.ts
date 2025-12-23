@@ -3,7 +3,7 @@
  * Handles fetching accounts and their balances with optional filtering
  */
 
-import { getAccountBalance } from '../../actual-api.js';
+import { getAccountBalance } from '../../core/api/actual-client.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import type { Account } from '../../core/types/domain.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
