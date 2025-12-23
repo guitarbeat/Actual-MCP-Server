@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: actual-mcp
+    env: docker
+    dockerContext: ./mcp-server
+    dockerfilePath: mcp-server/Dockerfile
+    envVars:
+      - key: ACTUAL_SERVER_URL
+        sync: false
+      - key: ACTUAL_PASSWORD
+        sync: false
+      - key: ACTUAL_BUDGET_SYNC_ID
+        sync: false
+      - key: BEARER_TOKEN
+        sync: false
+      - key: ACTUAL_BUDGET_ENCRYPTION_PASSWORD
+        sync: false
