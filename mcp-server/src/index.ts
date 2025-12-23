@@ -334,7 +334,11 @@ async function main(): Promise<void> {
 
       console.error(`[SSE] Connection attempt from ${clientIp} (session: ${sessionId})`);
       console.error(
-        `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
+        `[SSE] Headers: ${JSON.stringify({ 
+          'user-agent': req.headers['user-agent'], 
+          accept: req.headers.accept,
+          'has-auth': !!req.headers.authorization 
+        })}`
       );
 
       // * Create a new SSE transport for this connection
