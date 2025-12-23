@@ -639,7 +639,12 @@ export async function addTransactions(
   }>,
   options?: { learnCategories?: boolean; runTransfers?: boolean }
 ): Promise<'ok'> {
-  return ensureConnection(() => api.addTransactions(accountId, transactions as any, options));
+  return ensureConnection(async () => {
+    const result = await api.addTransactions(accountId, transactions as any, options);
+    cacheService.invalidate('transactions');
+    cacheService.invalidate('accounts:all');
+    return result;
+  });
 }
 
 /**
