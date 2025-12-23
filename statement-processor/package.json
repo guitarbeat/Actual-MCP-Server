@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "csv-import": "tsx src/main.ts",
+    "csv-import": "tsx src/process-chase-statement.ts",
     "test": "vitest",
     "test:watch": "vitest --watch"
   },
@@ -21,7 +21,8 @@
   "dependencies": {
     "csv-parse": "^5.5.6",
     "csv-stringify": "^6.4.6",
-    "date-fns": "^3.3.1"
+    "date-fns": "^3.3.1",
+    "openai": "^6.15.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
