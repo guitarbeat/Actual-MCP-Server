@@ -14,23 +14,7 @@ import { MonthlySummaryTransactionAggregator } from './transaction-aggregator.js
 
 export const schema = {
   name: 'monthly-summary',
-  description:
-    'Generate high-level financial overview showing income, expenses, savings, and savings rate trends. Use this when the user asks about overall financial health or monthly summaries.\n\n' +
-    'WHEN TO USE:\n' +
-    '- User asks "how am I doing financially?"\n' +
-    '- User wants to see "monthly summary" or "financial overview"\n' +
-    '- User asks about "savings rate" or "how much am I saving?"\n' +
-    '- User wants to compare "income vs expenses"\n' +
-    '- User asks "show me the last few months"\n' +
-    '- User wants to track financial progress over time\n\n' +
-    'OPTIONAL PARAMETERS:\n' +
-    '- months: Number of months to analyze (default: 3, common: 6, 12)\n' +
-    '- accountId: Specific account name or omit for all accounts\n\n' +
-    'EXAMPLES:\n' +
-    '- "Show financial summary": {}\n' +
-    '- "Last year overview": {"months": 12}\n' +
-    '- "Checking account summary": {"accountId": "Checking", "months": 6}\n\n' +
-    'RETURNS: Monthly income, expenses, savings, averages, and savings rates',
+  description: 'Generate high-level financial overview showing income, expenses, savings, and savings rate trends for a specified period (default 3 months).',
   inputSchema: zodToJsonSchema(MonthlySummaryArgsSchema) as ToolInput,
 };
 
