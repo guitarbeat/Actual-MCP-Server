@@ -1,0 +1,82 @@
+{
+  "name": "actual-mcp",
+  "version": "1.5.0",
+  "description": "Actual Budget MCP server exposing API functionality",
+  "private": false,
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "type": "module",
+  "bin": {
+    "actual-mcp": "build/index.js"
+  },
+  "files": [
+    "build",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "watch": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL -e ACTUAL_PASSWORD=$ACTUAL_PASSWORD -e ACTUAL_BUDGET_SYNC_ID=$ACTUAL_BUDGET_SYNC_ID node build/index.js",
+    "start": "tsx src/index.ts",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "quality": "npm run lint && npm run format:check && npm run type-check",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@actual-app/api": "25.11.0",
+    "@modelcontextprotocol/sdk": "1.17.4",
+    "express": "5.2.1",
+    "zod": "3.25.76",
+    "zod-to-json-schema": "3.25.0",
+    "dotenv": "17.2.3"
+  },
+  "devDependencies": {
+    "@changesets/cli": "2.29.8",
+    "@types/express": "5.0.6",
+    "@types/node": "22.19.3",
+    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/ui": "3.2.4",
+    "eslint": "9.39.2",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "globals": "16.5.0",
+    "jiti": "2.6.1",
+    "prettier": "3.7.4",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.50.0",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "3.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/s-stefanov/actual-mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/s-stefanov/actual-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/s-stefanov/actual-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "actual-budget",
+    "budgeting",
+    "ai",
+    "model-context-protocol",
+    "actual"
+  ],
+  "author": "Stefan Stefanov",
+  "license": "MIT"
+}
