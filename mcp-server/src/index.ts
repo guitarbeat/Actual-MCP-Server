@@ -18,7 +18,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
-import { initActualApi, shutdownActualApi } from './actual-api.js';
+import { initActualApi, shutdownActualApi } from './core/api/actual-client.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';

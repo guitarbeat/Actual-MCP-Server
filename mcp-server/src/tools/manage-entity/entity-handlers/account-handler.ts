@@ -9,7 +9,7 @@ import {
   getAccountBalance,
   reopenAccount,
   updateAccount,
-} from '../../../actual-api.js';
+} from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { EntityHandler, Operation } from './base-handler.js';

@@ -2,7 +2,7 @@
 // SWITCH BUDGET TOOL
 // ----------------------------
 
-import { downloadBudget, loadBudget } from '../../../actual-api.js';
+import { downloadBudget, loadBudget } from '../../../core/api/actual-client.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 
 export const schema = {

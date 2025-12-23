@@ -2,7 +2,7 @@
 // CATEGORY ENTITY HANDLER
 // ----------------------------
 
-import { createCategory, deleteCategory, updateCategory } from '../../../actual-api.js';
+import { createCategory, deleteCategory, updateCategory } from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { CategoryData } from '../types.js';

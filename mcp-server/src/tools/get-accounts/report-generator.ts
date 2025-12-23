@@ -3,7 +3,7 @@
  * Formats account data for display
  */
 
-import { formatAmount } from '../../utils.js';
+import { formatAmount } from '../../core/formatting/index.js';
 import type { AccountWithBalance } from './data-fetcher.js';
 
 export interface FormattedAccount {

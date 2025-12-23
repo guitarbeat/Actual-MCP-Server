@@ -6,7 +6,7 @@ import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.j
 import { CategoryMapper } from '../../core/mapping/category-mapper.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
 import { type Account, type SpendingByCategoryArgs, SpendingByCategoryArgsSchema } from '../../core/types/index.js';
-import type { ToolInput } from '../../types.js';
+import type { ToolInput } from '../../core/types/index.js';
 import { SpendingByCategoryDataFetcher } from './data-fetcher.js';
 import type { SpendingByCategoryInput } from './input-parser.js';
 import { SpendingByCategoryInputParser } from './input-parser.js';

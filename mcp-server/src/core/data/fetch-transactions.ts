@@ -1,5 +1,5 @@
 import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
-import { getTransactions } from '../../actual-api.js';
+import { getTransactions } from '../../core/api/actual-client.js';
 import { GroupAggregator } from '../aggregation/group-by.js';
 import type { Account, Category, Payee, Transaction } from '../types/domain.js';
 import { nameResolver } from '../utils/name-resolver.js';
