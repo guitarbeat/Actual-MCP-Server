@@ -20,6 +20,7 @@ ACTUAL_BUDGET_SYNC_ID=your-budget-id
 ## Features
 
 - **17 core tools** for budget management
+- **2 built-in prompts** for common financial analysis tasks
 - **Dual transport support** - Both legacy SSE and modern Streamable HTTP transports
 - **Name resolution** - Use account/category names instead of UUIDs
 - **Auto-loading** - Budget loads automatically on startup
