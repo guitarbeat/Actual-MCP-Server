@@ -14,7 +14,8 @@ import { GetTransactionsReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'get-transactions',
-  description: 'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category.',
+  description:
+    'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category.',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 
