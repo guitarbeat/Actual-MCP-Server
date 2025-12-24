@@ -18,6 +18,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
+import { timingSafeStringEqual } from './core/auth/index.js';
 import { initActualApi, shutdownActualApi } from './core/api/actual-client.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
@@ -84,7 +85,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   // * Query parameters are useful for browser-based clients (EventSource) that don't support custom headers
   const authHeader = req.headers.authorization;
   const queryToken = req.query.authToken || req.query.apiKey || req.query.token;
-  
+
   let token: string | undefined;
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -116,7 +117,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
-  if (token !== expectedToken) {
+  if (!timingSafeStringEqual(token, expectedToken)) {
     console.error('[AUTH] ❌ Invalid token (token mismatch)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
@@ -230,9 +231,14 @@ async function main(): Promise<void> {
       // * When bearer authentication is enabled, allow localhost connections
       // * Bearer auth provides security instead of host header validation
       allowedHosts: enableBearer
-        ? ['localhost', '127.0.0.1', '::1', '[::1]', 'actual-mcp.onrender.com', process.env.RENDER_EXTERNAL_HOSTNAME].filter(
-            (h): h is string => !!h
-          )
+        ? [
+            'localhost',
+            '127.0.0.1',
+            '::1',
+            '[::1]',
+            'actual-mcp.onrender.com',
+            process.env.RENDER_EXTERNAL_HOSTNAME,
+          ].filter((h): h is string => !!h)
         : undefined,
     });
 
@@ -331,10 +337,10 @@ async function main(): Promise<void> {
 
       console.error(`[SSE] Connection attempt from ${clientIp} (session: ${sessionId})`);
       console.error(
-        `[SSE] Headers: ${JSON.stringify({ 
-          'user-agent': req.headers['user-agent'], 
+        `[SSE] Headers: ${JSON.stringify({
+          'user-agent': req.headers['user-agent'],
           accept: req.headers.accept,
-          'has-auth': !!req.headers.authorization 
+          'has-auth': !!req.headers.authorization,
         })}`
       );
 

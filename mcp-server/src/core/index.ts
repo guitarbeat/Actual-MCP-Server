@@ -1,6 +1,7 @@
 // Core exports
 // Keep existing exports for backward compatibility
 
+export * from './auth/index.js';
 export * from './aggregation/group-by.js';
 export * from './aggregation/index.js';
 export * from './aggregation/sort-by.js';
