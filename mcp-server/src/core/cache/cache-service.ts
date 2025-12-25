@@ -23,6 +23,7 @@ export interface CacheStats {
  */
 export class CacheService {
   private cache: LRUCache<string, any>;
+  private pendingPromises: Map<string, Promise<any>>;
   private hits: number;
   private misses: number;
   private readonly enabled: boolean;
@@ -38,6 +39,7 @@ export class CacheService {
       updateAgeOnGet: true, // LRU behavior - update access time on get
     });
 
+    this.pendingPromises = new Map();
     this.hits = 0;
     this.misses = 0;
   }
@@ -61,10 +63,25 @@ export class CacheService {
       return cached;
     }
 
+    // Check for in-flight requests to prevent cache stampede
+    if (this.pendingPromises.has(key)) {
+      return this.pendingPromises.get(key) as Promise<T>;
+    }
+
     this.misses++;
-    const data = await fetchFn();
-    this.set(key, data, ttl);
-    return data;
+
+    const promise = (async () => {
+      try {
+        const data = await fetchFn();
+        this.set(key, data, ttl);
+        return data;
+      } finally {
+        this.pendingPromises.delete(key);
+      }
+    })();
+
+    this.pendingPromises.set(key, promise);
+    return promise;
   }
 
   /**
