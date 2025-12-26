@@ -11,22 +11,41 @@ import { TransactionHandler } from '../../manage-entity/entity-handlers/transact
 
 // Transaction data schema for create operation
 const CreateTransactionSchema = z.object({
-  account: z.string().min(1, 'Account is required'),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  amount: z.number(),
-  payee: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-  cleared: z.boolean().optional(),
+  account: z
+    .string()
+    .min(1, 'Account is required')
+    .describe('Account name (e.g., "Checking") or UUID to add the transaction to.'),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+    .describe('Date of the transaction in YYYY-MM-DD format (e.g., "2025-01-15").'),
+  amount: z
+    .number()
+    .describe(
+      'Transaction amount in dollars. Use negative values for expenses (e.g., -50.00) and positive values for income (e.g., 2000.00).'
+    ),
+  payee: z
+    .string()
+    .optional()
+    .describe('Name of the merchant, person, or entity (e.g., "Whole Foods", "Netflix", "John Smith").'),
+  category: z
+    .string()
+    .optional()
+    .describe('Category to classify the transaction (e.g., "Groceries", "Rent", "Salary").'),
+  notes: z.string().optional().describe('Additional notes or description for the transaction.'),
+  cleared: z.boolean().optional().describe('Whether the transaction has cleared the bank. Defaults to false.'),
   subtransactions: z
     .array(
       z.object({
-        amount: z.number(),
-        category: z.string().optional(),
-        notes: z.string().optional(),
+        amount: z.number().describe('Amount for this split part in dollars.'),
+        category: z.string().optional().describe('Category for this split part.'),
+        notes: z.string().optional().describe('Notes for this split part.'),
       })
     )
-    .optional(),
+    .optional()
+    .describe(
+      'List of sub-transactions for split transactions. The sum of sub-transaction amounts must match the total amount.'
+    ),
 });
 
 export const schema = {
