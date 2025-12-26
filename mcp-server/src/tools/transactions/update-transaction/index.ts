@@ -11,17 +11,24 @@ import { TransactionHandler } from '../../manage-entity/entity-handlers/transact
 
 // Transaction update schema
 const UpdateTransactionSchema = z.object({
-  id: z.string().uuid('Transaction ID must be a valid UUID'),
-  account: z.string().optional(),
+  id: z
+    .string()
+    .uuid('Transaction ID must be a valid UUID')
+    .describe('The unique identifier of the transaction to update (use get-transactions to find this).'),
+  account: z.string().optional().describe('New account name or UUID to move the transaction to.'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-    .optional(),
-  amount: z.number().optional(),
-  payee: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-  cleared: z.boolean().optional(),
+    .optional()
+    .describe('New date for the transaction in YYYY-MM-DD format.'),
+  amount: z
+    .number()
+    .optional()
+    .describe('New transaction amount in dollars. Negative for expenses, positive for income.'),
+  payee: z.string().optional().describe('New payee name. Pass an empty string to remove the payee.'),
+  category: z.string().optional().describe('New category name. Pass an empty string to remove the category.'),
+  notes: z.string().optional().describe('New notes or description.'),
+  cleared: z.boolean().optional().describe('Update cleared status (true for cleared, false for uncleared).'),
 });
 
 export const schema = {
