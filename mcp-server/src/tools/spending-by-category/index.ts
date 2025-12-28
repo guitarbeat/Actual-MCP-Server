@@ -14,7 +14,8 @@ import { SpendingByCategoryReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'spending-by-category',
-  description: 'Break down spending by category to show where money is going. Useful for analyzing spending patterns, top categories, or budget analysis.',
+  description:
+    'Break down spending by category to show where money is going. Useful for analyzing spending patterns, top categories, or budget analysis.',
   inputSchema: zodToJsonSchema(SpendingByCategoryArgsSchema) as ToolInput,
 };
 
