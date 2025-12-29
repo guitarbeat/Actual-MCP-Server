@@ -140,22 +140,29 @@ export const BudgetReviewArgsSchema = z.object({
 });
 
 export const UpdateTransactionArgsSchema = z.object({
-  transactionId: z.string(),
-  categoryId: z.string().optional(),
-  payeeId: z.string().optional(),
-  notes: z.string().optional(),
-  amount: z.number().optional(),
+  transactionId: z.string().describe('The UUID of the transaction to update.'),
+  categoryId: z.string().optional().describe('The UUID of the new category.'),
+  payeeId: z.string().optional().describe('The UUID of the new payee.'),
+  notes: z.string().optional().describe('New notes for the transaction.'),
+  amount: z
+    .number()
+    .optional()
+    .describe('New transaction amount in dollars. Negative for expenses, positive for income.'),
 });
 
 export const CreateTransactionArgsSchema = z.object({
-  accountId: z.string(),
-  date: z.string(),
-  amount: z.number(),
-  payee: z.string().optional(),
-  category: z.string().optional(),
-  categoryGroup: z.string().optional(),
-  notes: z.string().optional(),
-  cleared: z.boolean().optional(),
+  accountId: z
+    .string()
+    .describe('The UUID of the account to add the transaction to. Use get-accounts to find IDs.'),
+  date: z.string().describe('Transaction date in YYYY-MM-DD format.'),
+  amount: z
+    .number()
+    .describe('Transaction amount in dollars. Negative for expenses, positive for income.'),
+  payee: z.string().optional().describe('Name of the payee/merchant.'),
+  category: z.string().optional().describe('Name of the category.'),
+  categoryGroup: z.string().optional().describe('Name of the category group.'),
+  notes: z.string().optional().describe('Additional notes for the transaction.'),
+  cleared: z.boolean().optional().describe('Whether the transaction is cleared. Defaults to false.'),
 });
 
 // ----------------------------
@@ -263,14 +270,16 @@ export const GetAccountsArgsSchema = z
 // ----------------------------
 
 export const CreateScheduleArgsSchema = z.object({
-  name: z.string(),
-  accountId: z.string(),
-  payee: z.string().optional(),
-  amount: z.number(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-  nextDate: z.string(),
-  rule: z.string(),
+  name: z.string().describe('Name of the schedule.'),
+  accountId: z.string().describe('Account ID to associate with the schedule.'),
+  payee: z.string().optional().describe('Payee name.'),
+  amount: z
+    .number()
+    .describe('Amount for the schedule in dollars. Negative for expenses, positive for income.'),
+  category: z.string().optional().describe('Category name.'),
+  notes: z.string().optional().describe('Notes for the schedule.'),
+  nextDate: z.string().describe('Next occurrence date in YYYY-MM-DD format.'),
+  rule: z.string().describe('Recurrence rule (e.g., "RRULE:FREQ=MONTHLY").'),
 });
 
 export const UpdateScheduleArgsSchema = z.object({
