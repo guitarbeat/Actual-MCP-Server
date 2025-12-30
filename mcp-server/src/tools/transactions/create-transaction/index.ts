@@ -11,22 +11,30 @@ import { TransactionHandler } from '../../manage-entity/entity-handlers/transact
 
 // Transaction data schema for create operation
 const CreateTransactionSchema = z.object({
-  account: z.string().min(1, 'Account is required'),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  amount: z.number(),
-  payee: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-  cleared: z.boolean().optional(),
+  account: z.string().min(1, 'Account is required').describe('Account name (e.g., "Checking")'),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+    .describe('Transaction date in YYYY-MM-DD format (e.g. "2025-01-15")'),
+  amount: z
+    .number()
+    .describe(
+      'Amount. If abs(value) < 1000, treated as dollars (e.g. 10.50 = $10.50). If abs(value) >= 1000, treated as cents (e.g. 1200 = $12.00). FOR AMOUNTS >= $1000, YOU MUST USE CENTS (e.g. 100000 = $1000.00).'
+    ),
+  payee: z.string().optional().describe('Payee or merchant name'),
+  category: z.string().optional().describe('Category name'),
+  notes: z.string().optional().describe('Additional notes'),
+  cleared: z.boolean().optional().describe('Whether the transaction is cleared'),
   subtransactions: z
     .array(
       z.object({
-        amount: z.number(),
-        category: z.string().optional(),
-        notes: z.string().optional(),
+        amount: z.number().describe('Subtransaction amount (follows same rules as main amount)'),
+        category: z.string().optional().describe('Category for this split'),
+        notes: z.string().optional().describe('Notes for this split'),
       })
     )
-    .optional(),
+    .optional()
+    .describe('Split transaction details'),
 });
 
 export const schema = {
