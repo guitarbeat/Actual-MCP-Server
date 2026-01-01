@@ -1,0 +1,4 @@
+## 2024-05-24 - [Timing Attack Prevention in Authentication]
+**Vulnerability:** The `bearerAuth` middleware compared user-provided tokens with the expected secret using strict equality (`===`), which is susceptible to timing attacks. An attacker could potentially infer the secret token by measuring the time it takes for the comparison to fail.
+**Learning:** Even in high-level languages like JavaScript, string comparisons can leak timing information about the length of the matching prefix.
+**Prevention:** Always use `crypto.timingSafeEqual` for comparing secrets. This function runs in constant time regardless of the content of the buffers, preventing timing side channels. Note that `timingSafeEqual` requires buffers of the same length, so a length check (which leaks length but not content) is a necessary precursor.
