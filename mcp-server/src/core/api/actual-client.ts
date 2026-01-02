@@ -10,8 +10,8 @@ import type {
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import type { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
-import { cacheService } from './core/cache/cache-service.js';
-import type { BudgetFile } from './core/types/index.js';
+import { cacheService } from '../cache/cache-service.js';
+import type { BudgetFile } from '../types/index.js';
 
 type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;

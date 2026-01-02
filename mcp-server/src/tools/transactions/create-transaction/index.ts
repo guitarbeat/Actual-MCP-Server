@@ -10,7 +10,7 @@ import type { TransactionData } from '../../manage-entity/entity-handlers/transa
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
 
 // Transaction data schema for create operation
-const CreateTransactionSchema = z.object({
+export const CreateTransactionSchema = z.object({
   account: z
     .string()
     .min(1, 'Account is required')

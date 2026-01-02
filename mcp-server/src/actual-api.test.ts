@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as actualApi from './actual-api.js';
+import * as actualApi from './core/api/actual-client.js';
 
 // Mock the @actual-app/api module
 vi.mock('@actual-app/api', () => ({

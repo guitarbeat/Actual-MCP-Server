@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { timingSafeStringEqual } from './crypto.js';
+import { timingSafeStringEqual } from './index.js';
 
 /**
  * Middleware to enforce Bearer token authentication.
