@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 /**
@@ -18,8 +18,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
-import { initActualApi, shutdownActualApi } from './actual-api.js';
-import { timingSafeStringEqual } from './core/auth/index.js';
+import { initActualApi, shutdownActualApi } from './core/api/actual-client.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
@@ -81,32 +80,30 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
+  // * Allow authentication via Authorization header or query parameters
+  // * Query parameters are useful for browser-based clients (EventSource) that don't support custom headers
   const authHeader = req.headers.authorization;
+  const queryToken = req.query.authToken || req.query.apiKey || req.query.token;
 
-  if (!authHeader) {
-    console.error('[AUTH] ❌ Missing Authorization header');
-    // Include WWW-Authenticate header as per HTTP spec
+  let token: string | undefined;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else if (typeof queryToken === 'string') {
+    token = queryToken;
+  }
+
+  if (!token) {
+    console.error('[AUTH] ❌ Missing authentication (no header or query param)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
       error: 'Authentication required',
-      message: 'Authorization header required',
-      code: -32000, // MCP authentication error code
-    });
-    return;
-  }
-
-  if (!authHeader.startsWith('Bearer ')) {
-    console.error('[AUTH] ❌ Invalid Authorization header format');
-    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
-    res.status(401).json({
-      error: 'Authentication failed',
-      message: "Authorization header must start with 'Bearer '",
+      message: 'Authorization header (Bearer token) or authToken/apiKey query parameter required',
       code: -32000,
     });
     return;
   }
 
-  const token = authHeader.substring(7); // Remove "Bearer " prefix
   const expectedToken = process.env.BEARER_TOKEN;
 
   if (!expectedToken) {
@@ -114,14 +111,19 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     res.status(500).json({
       error: 'Server configuration error',
       message: 'Authentication system not properly configured',
-      code: -32004, // Internal error
+      code: -32004,
     });
     return;
   }
 
-  if (!timingSafeStringEqual(token, expectedToken)) {
-    console.error('[AUTH] ❌ Invalid bearer token (token mismatch)');
-    console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
+  // * Use constant-time comparison to prevent timing attacks
+  // * timingSafeEqual throws if lengths are different, so check length first
+  const tokenBuffer = Buffer.from(token);
+  const expectedBuffer = Buffer.from(expectedToken);
+  const valid = tokenBuffer.length === expectedBuffer.length && timingSafeEqual(tokenBuffer, expectedBuffer);
+
+  if (!valid) {
+    console.error('[AUTH] ❌ Invalid token (token mismatch)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
       error: 'Authentication failed',
@@ -234,7 +236,14 @@ async function main(): Promise<void> {
       // * When bearer authentication is enabled, allow localhost connections
       // * Bearer auth provides security instead of host header validation
       allowedHosts: enableBearer
-        ? ['localhost', '127.0.0.1', '::1', '[::1]'] // Allow localhost connections when bearer auth is enabled
+        ? [
+            'localhost',
+            '127.0.0.1',
+            '::1',
+            '[::1]',
+            'actual-mcp.onrender.com',
+            process.env.RENDER_EXTERNAL_HOSTNAME,
+          ].filter((h): h is string => !!h)
         : undefined,
     });
 
@@ -333,7 +342,11 @@ async function main(): Promise<void> {
 
       console.error(`[SSE] Connection attempt from ${clientIp} (session: ${sessionId})`);
       console.error(
-        `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
+        `[SSE] Headers: ${JSON.stringify({
+          'user-agent': req.headers['user-agent'],
+          accept: req.headers.accept,
+          'has-auth': !!req.headers.authorization,
+        })}`
       );
 
       // * Create a new SSE transport for this connection
