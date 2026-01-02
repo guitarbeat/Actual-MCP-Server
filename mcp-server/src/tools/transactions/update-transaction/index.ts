@@ -11,23 +11,23 @@ import { TransactionHandler } from '../../manage-entity/entity-handlers/transact
 
 // Transaction update schema
 const UpdateTransactionSchema = z.object({
-  id: z.string().uuid('Transaction ID must be a valid UUID').describe('The UUID of the transaction to update.'),
-  account: z.string().optional().describe('New account name.'),
+  id: z.string().uuid('Transaction ID must be a valid UUID').describe('The ID of the transaction to update'),
+  account: z.string().optional().describe('New account name'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
     .optional()
-    .describe('New transaction date in YYYY-MM-DD format.'),
+    .describe('New date (YYYY-MM-DD)'),
   amount: z
     .number()
     .optional()
     .describe(
-      'New amount. Negative for expenses, positive for income. Values < 1000 are treated as dollars (e.g., -50 is -$50.00).'
+      'New amount. If abs(value) < 1000, treated as dollars (e.g. 10.50 = $10.50). If abs(value) >= 1000, treated as cents (e.g. 1200 = $12.00). FOR AMOUNTS >= $1000, YOU MUST USE CENTS (e.g. 100000 = $1000.00).'
     ),
-  payee: z.string().optional().describe('New payee name.'),
-  category: z.string().optional().describe('New category name.'),
-  notes: z.string().optional().describe('New notes.'),
-  cleared: z.boolean().optional().describe('New cleared status (true/false).'),
+  payee: z.string().optional().describe('New payee name'),
+  category: z.string().optional().describe('New category name'),
+  notes: z.string().optional().describe('New notes'),
+  cleared: z.boolean().optional().describe('New cleared status'),
 });
 
 export const schema = {
