@@ -1,4 +1,5 @@
 // Generates the response/report for get-transactions tool
+import { formatAmount } from '../../core/formatting/index.js';
 
 interface TransactionRow {
   id: string;
@@ -16,6 +17,7 @@ interface ReportMetadata {
   appliedFilters: string[];
   filteredCount: number;
   totalFetched: number;
+  totalAmount: number;
   accountSummary?: { accountName: string; count: number }[];
 }
 
@@ -38,6 +40,7 @@ export class GetTransactionsReportGenerator {
       `**Resolved account ID:** ${metadata.resolvedAccountId}`,
       `**Date range evaluated:** ${metadata.dateRange.start} → ${metadata.dateRange.end}`,
       `**Transactions returned:** ${metadata.filteredCount} of ${metadata.totalFetched} fetched`,
+      `**Total amount:** ${formatAmount(metadata.totalAmount)}`,
       '',
       '**Applied filters:**',
       filtersList,
