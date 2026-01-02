@@ -25,11 +25,13 @@ export const schema = {
     '- amount: Dollar amount (e.g., 500 for $500) OR carryover: true/false\n\n' +
     'EXAMPLES:\n' +
     '- "Set groceries to $500": {"month": "2024-01", "category": "Groceries", "amount": 500}\n' +
+    '- "Move $100 from groceries": {"month": "2024-01", "category": "Groceries", "amount": -100}\n' +
     '- "Enable carryover": {"month": "2024-01", "category": "Groceries", "carryover": true}\n' +
     '- "Set budget with carryover": {"month": "2024-01", "category": "Groceries", "amount": 500, "carryover": true}\n\n' +
     'NOTES:\n' +
-    '- Amounts < 1000 treated as dollars (500 = $500)\n' +
-    '- Amounts >= 1000 treated as cents (50000 = $500)\n' +
+    '- Amounts < 1000 treated as dollars (500 = $500, -100 = -$100)\n' +
+    '- Amounts >= 1000 treated as cents (50000 = $500, -10000 = -$100)\n' +
+    '- Negative amounts move money FROM the category (useful for budget adjustments)\n' +
     '- Use get-grouped-categories first if you need to find the exact category name',
   inputSchema: {
     type: 'object',
@@ -47,7 +49,7 @@ export const schema = {
       amount: {
         type: 'number',
         description:
-          'Budget amount (dollars or cents, auto-detected). Amounts < 1000 are treated as dollars (e.g., 500 = $500.00), amounts >= 1000 are treated as cents (e.g., 50000 = $500.00). Must be non-negative. Optional if carryover is provided.',
+          'Budget amount (dollars or cents, auto-detected). Amounts < 1000 are treated as dollars (e.g., 500 = $500.00, -100 = -$100.00), amounts >= 1000 are treated as cents (e.g., 50000 = $500.00, -10000 = -$100.00). Supports negative amounts for moving money from categories. Optional if carryover is provided.',
       },
       carryover: {
         type: 'boolean',
