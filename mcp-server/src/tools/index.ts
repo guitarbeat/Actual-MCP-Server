@@ -95,7 +95,6 @@ function wrapHandler(
   };
 }
 
-
 // Generate CRUD tools using factory for all entity types
 const categoryCRUDTools = createCRUDTools(entityConfigurations.category);
 const payeeCRUDTools = createCRUDTools(entityConfigurations.payee);

@@ -366,14 +366,14 @@ async function ensureConnectionHealthy(): Promise<void> {
     // If already initializing, wait for it to complete with a timeout
     const waitStartTime = Date.now();
     const maxWaitTime = 55000; // 55 seconds (just under typical 60s client timeout)
-    
+
     while (initializing) {
       if (Date.now() - waitStartTime > maxWaitTime) {
         throw new Error('Initialization timed out after 55 seconds');
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
-    
+
     if (initializationError) {
       throw initializationError;
     }
