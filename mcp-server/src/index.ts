@@ -18,8 +18,8 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
-import { initActualApi, shutdownActualApi } from './actual-api.js';
-import { createBearerAuthMiddleware } from './core/auth/middleware.js';
+import { initActualApi, shutdownActualApi } from './core/api/actual-client.js';
+import { createBearerAuth } from './core/auth/bearer-auth.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
@@ -75,7 +75,10 @@ const server = new Server(
 const resolvedPort = port ? parseInt(port, 10) : process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Bearer authentication middleware
-const bearerAuth = createBearerAuthMiddleware(enableBearer);
+const bearerAuth = createBearerAuth({
+  enableBearer,
+  bearerToken: process.env.BEARER_TOKEN,
+});
 
 // ----------------------------
 // SERVER STARTUP
@@ -177,7 +180,14 @@ async function main(): Promise<void> {
       // * When bearer authentication is enabled, allow localhost connections
       // * Bearer auth provides security instead of host header validation
       allowedHosts: enableBearer
-        ? ['localhost', '127.0.0.1', '::1', '[::1]'] // Allow localhost connections when bearer auth is enabled
+        ? [
+            'localhost',
+            '127.0.0.1',
+            '::1',
+            '[::1]',
+            'actual-mcp.onrender.com',
+            process.env.RENDER_EXTERNAL_HOSTNAME,
+          ].filter((h): h is string => !!h)
         : undefined,
     });
 
@@ -276,7 +286,11 @@ async function main(): Promise<void> {
 
       console.error(`[SSE] Connection attempt from ${clientIp} (session: ${sessionId})`);
       console.error(
-        `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
+        `[SSE] Headers: ${JSON.stringify({
+          'user-agent': req.headers['user-agent'],
+          accept: req.headers.accept,
+          'has-auth': !!req.headers.authorization,
+        })}`
       );
 
       // * Create a new SSE transport for this connection
