@@ -60,7 +60,7 @@ const {
 const server = new Server(
   {
     name: 'Actual Budget',
-    version: '1.6.4',
+    version: '1.6.5',
   },
   {
     capabilities: {
@@ -351,17 +351,20 @@ async function initializeApi(testResources: boolean, testCustom: boolean, useSse
 
   try {
     await initActualApi();
+    console.error('✓ Actual Budget API initialized successfully');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStr = errorMessage.toLowerCase();
 
-    if (!errorStr.includes('out of sync') && !errorStr.includes('out-of-sync') && !errorStr.includes('migration')) {
+    if (errorStr.includes('out of sync') || errorStr.includes('out-of-sync') || errorStr.includes('migration')) {
+      console.error('ℹ️  Actual Budget server is currently out of sync or migrating. This is normal during a rebuild.');
+      console.error('   The MCP server will continue to retry connection in the background.');
+    } else {
       console.error('✗ Failed to initialize Actual Budget API:', error);
       console.error(
-        'Server cannot start without Actual Budget connection\n\nCommon causes:\n  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD\n  - Actual Budget server is not running or not accessible\n  - Network connectivity issues\n  - Invalid ACTUAL_BUDGET_SYNC_ID'
+        'Server is running but Actual Budget connection failed. Will retry on next request.\n\nCommon causes:\n  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD\n  - Actual Budget server is not running or not accessible\n  - Network connectivity issues\n  - Invalid ACTUAL_BUDGET_SYNC_ID'
       );
     }
-    process.exit(1);
   }
 }
 
