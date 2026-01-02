@@ -24,5 +24,4 @@ yarn-error.log*
 .vscode
 *.log
 upstream-comparison
-.agent/rules
 .smart-coding-cache

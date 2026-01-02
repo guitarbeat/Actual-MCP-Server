@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: mcp-server/package-lock.json
+
+    - name: Install Dependencies
+      working-directory: ./mcp-server
+      run: npm ci
+
+    - name: Run Linter & Type Check
+      working-directory: ./mcp-server
+      run: npm run quality
+
+    - name: Build
+      working-directory: ./mcp-server
+      run: npm run build
+
+    - name: Run Tests
+      working-directory: ./mcp-server
+      run: npm test
+
+  check-version-bump:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Check package.json version change
+      working-directory: ./mcp-server
+      run: |
+        # Fetch the base branch to compare against
+        git fetch origin ${{ github.base_ref }}
+        
+        # Get versions
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        BASE_VERSION=$(git show origin/${{ github.base_ref }}:mcp-server/package.json | jq -r .version)
+        
+        echo "Current version: $CURRENT_VERSION"
+        echo "Base version: $BASE_VERSION"
+        
+        if [ "$CURRENT_VERSION" = "$BASE_VERSION" ]; then
+          echo "::warning::Version number in package.json has not been updated."
+          # You can uncomment the exit 1 to enforce this as a hard failure
+          # exit 1 
+        else
+          echo "✅ Version updated from $BASE_VERSION to $CURRENT_VERSION"
+        fi
