@@ -4,9 +4,9 @@
 // ----------------------------
 
 import { setBudgetAmount, setBudgetCarryover } from '../../core/api/actual-client.js';
+import { formatAmount } from '../../core/formatting/index.js';
 import { errorFromCatch, successWithJson } from '../../core/response/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
-import { formatAmount } from '../../core/formatting/index.js';
 import { type SetBudgetArgs, SetBudgetArgsSchema } from './types.js';
 
 export const schema = {

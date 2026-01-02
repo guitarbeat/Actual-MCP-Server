@@ -3,9 +3,9 @@
 // Pre-analyzed financial summary to reduce context window load
 // ----------------------------
 
-import { generateInsightsSummary, type FinancialInsightsSummary } from '../../core/analysis/financial-analyzer.js';
-import { errorFromCatch, successWithJson } from '../../core/response/index.js';
+import { type FinancialInsightsSummary, generateInsightsSummary } from '../../core/analysis/financial-analyzer.js';
 import { formatAmount } from '../../core/formatting/index.js';
+import { errorFromCatch, successWithJson } from '../../core/response/index.js';
 
 export const schema = {
   name: 'get-financial-insights',

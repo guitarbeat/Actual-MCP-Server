@@ -20,18 +20,17 @@ import * as getGroupedCategories from './categories/get-grouped-categories/index
 // CRUD Factory
 import { createCRUDTools } from './crud-factory.js';
 import { entityConfigurations } from './crud-factory-config.js';
+import * as financialInsights from './financial-insights/index.js';
 import * as getAccounts from './get-accounts/index.js';
 import * as getTransactions from './get-transactions/index.js';
 import * as monthlySummary from './monthly-summary/index.js';
 import * as getPayees from './payees/get-payees/index.js';
-
 // Payee tools
 import * as mergePayees from './payees/merge-payees/index.js';
 import * as getRules from './rules/get-rules/index.js';
 // Budget operation tools
 import * as setBudget from './set-budget/index.js';
 import * as spendingByCategory from './spending-by-category/index.js';
-import * as financialInsights from './financial-insights/index.js';
 // Transaction CRUD tools
 import * as createTransaction from './transactions/create-transaction/index.js';
 import * as deleteTransaction from './transactions/delete-transaction/index.js';
