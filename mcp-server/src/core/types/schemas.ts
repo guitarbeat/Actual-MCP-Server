@@ -151,13 +151,9 @@ export const UpdateTransactionArgsSchema = z.object({
 });
 
 export const CreateTransactionArgsSchema = z.object({
-  accountId: z
-    .string()
-    .describe('The UUID of the account to add the transaction to. Use get-accounts to find IDs.'),
+  accountId: z.string().describe('The UUID of the account to add the transaction to. Use get-accounts to find IDs.'),
   date: z.string().describe('Transaction date in YYYY-MM-DD format.'),
-  amount: z
-    .number()
-    .describe('Transaction amount in dollars. Negative for expenses, positive for income.'),
+  amount: z.number().describe('Transaction amount in dollars. Negative for expenses, positive for income.'),
   payee: z.string().optional().describe('Name of the payee/merchant.'),
   category: z.string().optional().describe('Name of the category.'),
   categoryGroup: z.string().optional().describe('Name of the category group.'),
@@ -273,9 +269,7 @@ export const CreateScheduleArgsSchema = z.object({
   name: z.string().describe('Name of the schedule.'),
   accountId: z.string().describe('Account ID to associate with the schedule.'),
   payee: z.string().optional().describe('Payee name.'),
-  amount: z
-    .number()
-    .describe('Amount for the schedule in dollars. Negative for expenses, positive for income.'),
+  amount: z.number().describe('Amount for the schedule in dollars. Negative for expenses, positive for income.'),
   category: z.string().optional().describe('Category name.'),
   notes: z.string().optional().describe('Notes for the schedule.'),
   nextDate: z.string().describe('Next occurrence date in YYYY-MM-DD format.'),
