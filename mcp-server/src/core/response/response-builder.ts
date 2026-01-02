@@ -123,7 +123,7 @@ export function successWithJson<T>(data: T): MCPResponse {
     content: [
       {
         type: 'text',
-        text: JSON.stringify(data),
+        text: JSON.stringify(data, null, 2),
       },
     ],
   };
