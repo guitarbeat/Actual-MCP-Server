@@ -11,22 +11,35 @@ import { TransactionHandler } from '../../manage-entity/entity-handlers/transact
 
 // Transaction data schema for create operation
 const CreateTransactionSchema = z.object({
-  account: z.string().min(1, 'Account is required'),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  amount: z.number(),
-  payee: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-  cleared: z.boolean().optional(),
+  account: z
+    .string()
+    .min(1, 'Account is required')
+    .describe(
+      'Name of the account to add the transaction to (e.g. "Checking", "Savings"). Must match an existing account name.'
+    ),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+    .describe('Date of the transaction in YYYY-MM-DD format (e.g. "2024-03-21").'),
+  amount: z
+    .number()
+    .describe('Transaction amount. Use negative for expenses (e.g. -50.00) and positive for income (e.g. 1000.00).'),
+  payee: z.string().optional().describe('Name of the merchant or person (e.g. "grocery store", "employer").'),
+  category: z.string().optional().describe('Category name for the transaction (e.g. "Food", "Salary").'),
+  notes: z.string().optional().describe('Additional details or memo for the transaction.'),
+  cleared: z.boolean().optional().describe('Whether the transaction has cleared the bank. Defaults to false.'),
   subtransactions: z
     .array(
       z.object({
-        amount: z.number(),
-        category: z.string().optional(),
-        notes: z.string().optional(),
+        amount: z
+          .number()
+          .describe('Amount for this specific split. Sum of split amounts must match total transaction amount.'),
+        category: z.string().optional().describe('Category for this split.'),
+        notes: z.string().optional().describe('Notes for this split.'),
       })
     )
-    .optional(),
+    .optional()
+    .describe('Array of subtransactions for splitting the total amount across multiple categories.'),
 });
 
 export const schema = {
