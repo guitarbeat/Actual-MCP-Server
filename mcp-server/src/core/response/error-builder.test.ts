@@ -63,32 +63,22 @@ describe('Error Builder', () => {
       expect(payload.message).toContain('expected: YYYY-MM-DD');
     });
 
-    it('should suggest valid account types for "type" field', () => {
-      const result = validationError('Invalid type', { field: 'type' });
+    it('should provide specific suggestion for categoryName', () => {
+      const result = validationError('Invalid type', {
+        field: 'categoryName',
+      });
+
       const payload = getPayload(result);
-      expect(payload.suggestion).toContain('restricted values');
-      expect(payload.suggestion).toContain('checking, savings, credit');
+      expect(payload.suggestion).toContain("allows partial matching (e.g., 'groc' matches 'Groceries')");
     });
 
-    it('should suggest valid operators for "op" field', () => {
-      const result = validationError('Invalid operator', { field: 'op' });
-      const payload = getPayload(result);
-      expect(payload.suggestion).toContain('specifies the operator');
-      expect(payload.suggestion).toContain('is, contains, gt, lt');
-    });
+    it('should provide specific suggestion for payeeName', () => {
+      const result = validationError('Invalid type', {
+        field: 'payeeName',
+      });
 
-    it('should suggest valid targets for "field" field', () => {
-      const result = validationError('Invalid field', { field: 'field' });
       const payload = getPayload(result);
-      expect(payload.suggestion).toContain('specifies the target');
-      expect(payload.suggestion).toContain('account, category, payee');
-    });
-
-    it('should suggest valid methods for "method" field', () => {
-      const result = validationError('Invalid method', { field: 'method' });
-      const payload = getPayload(result);
-      expect(payload.suggestion).toContain('split actions');
-      expect(payload.suggestion).toContain('fixed-amount, fixed-percent, remainder');
+      expect(payload.suggestion).toContain("allows partial matching (e.g., 'amazon' matches 'Amazon.com')");
     });
   });
 

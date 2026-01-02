@@ -10,7 +10,7 @@ import type {
   PermissionErrorOptions,
   UnsupportedFeatureOptions,
   ValidationErrorOptions,
-} from '../types/index.js';
+} from './types.js';
 
 /**
  * Create a validation error response with clear, actionable guidance
@@ -39,23 +39,18 @@ export function validationError(message: string, options: ValidationErrorOptions
     'Review the tool documentation for valid input formats and ensure all required fields are provided correctly.';
 
   if (field) {
-    const lowerField = field.toLowerCase();
-    if (lowerField.includes('id')) {
+    if (field.toLowerCase().includes('id')) {
       suggestion = `The '${field}' field must be a valid UUID. Use the appropriate listing tool (e.g., get-accounts, get-categories) to find valid IDs.`;
-    } else if (lowerField.includes('date')) {
+    } else if (field.toLowerCase().includes('date')) {
       suggestion = `The '${field}' field must be in ISO date format (YYYY-MM-DD). Example: 2024-01-15`;
-    } else if (lowerField.includes('amount')) {
+    } else if (field.toLowerCase().includes('amount')) {
       suggestion = `The '${field}' field must be a number in milliunits (e.g., 12500 for $125.00).`;
-    } else if (lowerField.includes('month')) {
+    } else if (field.toLowerCase().includes('month')) {
       suggestion = `The '${field}' field must be in YYYY-MM format. Example: 2024-08`;
-    } else if (lowerField === 'type') {
-      suggestion = `The '${field}' field has restricted values. For accounts: checking, savings, credit, investment, mortgage, debt, other.`;
-    } else if (lowerField === 'op') {
-      suggestion = `The '${field}' field specifies the operator. Common operators: is, contains, gt, lt. Check documentation for supported operators.`;
-    } else if (lowerField === 'field') {
-      suggestion = `The '${field}' field specifies the target. Common targets: account, category, payee, amount, date.`;
-    } else if (lowerField === 'method') {
-      suggestion = `The '${field}' field for split actions must be one of: fixed-amount, fixed-percent, remainder.`;
+    } else if (field.toLowerCase().includes('categoryname')) {
+      suggestion = `The '${field}' field allows partial matching (e.g., 'groc' matches 'Groceries').`;
+    } else if (field.toLowerCase().includes('payeename')) {
+      suggestion = `The '${field}' field allows partial matching (e.g., 'amazon' matches 'Amazon.com').`;
     }
   }
 
