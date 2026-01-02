@@ -1,4 +1,4 @@
-## 2024-05-23 - Timing Attacks on Bearer Tokens
-**Vulnerability:** The server was using direct string comparison (`===`) for validating Bearer tokens in `mcp-server/src/index.ts`. It was also logging the length of the invalid token.
-**Learning:** String comparisons terminate early when a mismatch is found, allowing an attacker to deduce the token character by character by measuring response times. Logging token length also leaks information about the secret.
-**Prevention:** Use constant-time comparison functions (like `crypto.timingSafeEqual`) for all secret validations. Never log lengths or content of secrets in error messages.
+## 2024-03-24 - Timing Attacks on Bearer Tokens
+**Vulnerability:** The bearer token validation used a direct string comparison (`token !== expectedToken`), which is vulnerable to timing attacks. An attacker could theoretically deduce the token character by character by measuring the response time.
+**Learning:** Even simple string comparisons for secrets can be a security risk. Node.js `crypto.timingSafeEqual` operates on buffers of equal length, so standard strings need careful handling or hashing first.
+**Prevention:** Always use constant-time comparison functions for secrets. Hashing both inputs (e.g. SHA-256) before comparison allows using `timingSafeEqual` safely even if the original strings have different lengths.

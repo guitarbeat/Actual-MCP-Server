@@ -1,18 +1,18 @@
-import { timingSafeEqual, createHash } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 /**
- * Performs a constant-time comparison of two strings to prevent timing attacks.
+ * Compares two strings using a constant-time algorithm to prevent timing attacks.
  *
- * Uses SHA-256 hashing to compare strings of arbitrary length without leaking length information
- * (beyond the fact that they don't match).
+ * This function hashes both inputs using SHA-256 before comparing them.
+ * This ensures that the comparison takes the same amount of time regardless of
+ * the content of the strings, and handles strings of different lengths securely
+ * (since the hashes will have the same length).
  *
- * @param a The first string (e.g., the user-provided token)
- * @param b The second string (e.g., the expected token)
- * @returns True if strings match, false otherwise
+ * @param a The first string to compare (e.g., the user-provided token)
+ * @param b The second string to compare (e.g., the expected token)
+ * @returns True if the strings are equal, false otherwise
  */
 export function timingSafeStringEqual(a: string, b: string): boolean {
-  // Use SHA-256 to hash both strings
-  // This allows us to compare fixed-length buffers regardless of input length
   const hashA = createHash('sha256').update(a).digest();
   const hashB = createHash('sha256').update(b).digest();
 
