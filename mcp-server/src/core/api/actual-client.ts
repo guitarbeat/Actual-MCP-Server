@@ -240,8 +240,18 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
 
   initializationError = null;
   try {
+    const connStart = Date.now();
     await initializeApiConnection();
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(`[PERF] API connection initialized in ${Date.now() - connStart}ms`);
+    }
+
+    const budgetFetchStart = Date.now();
     const { budgetId, budgets } = await downloadAndLoadBudget();
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(`[PERF] Budget list fetched and budget downloaded in ${Date.now() - budgetFetchStart}ms`);
+    }
+
     initialized = true;
     logSuccessfulInitialization(startTime, budgets, budgetId);
     setupAutoSync();
@@ -339,10 +349,17 @@ export function resetInitializationStats(): void {
  */
 async function ensureConnectionHealthy(): Promise<void> {
   if (initializing) {
-    // If already initializing, wait for it to complete
+    // If already initializing, wait for it to complete with a timeout
+    const waitStartTime = Date.now();
+    const maxWaitTime = 55000; // 55 seconds (just under typical 60s client timeout)
+    
     while (initializing) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      if (Date.now() - waitStartTime > maxWaitTime) {
+        throw new Error('Initialization timed out after 55 seconds');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
+    
     if (initializationError) {
       throw initializationError;
     }
@@ -811,14 +828,28 @@ export async function getBudgetMonth(month: string): Promise<unknown> {
  * Set budget amount for a category in a specific month (ensures API is initialized)
  */
 export async function setBudgetAmount(month: string, categoryId: string, amount: number): Promise<unknown> {
-  return ensureConnection(() => api.setBudgetAmount(month, categoryId, amount));
+  const opStart = Date.now();
+  return ensureConnection(async () => {
+    const result = await api.setBudgetAmount(month, categoryId, amount);
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(`[PERF] setBudgetAmount completed in ${Date.now() - opStart}ms`);
+    }
+    return result;
+  });
 }
 
 /**
  * Set budget carryover for a category in a specific month (ensures API is initialized)
  */
 export async function setBudgetCarryover(month: string, categoryId: string, flag: boolean): Promise<unknown> {
-  return ensureConnection(() => api.setBudgetCarryover(month, categoryId, flag));
+  const opStart = Date.now();
+  return ensureConnection(async () => {
+    const result = await api.setBudgetCarryover(month, categoryId, flag);
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(`[PERF] setBudgetCarryover completed in ${Date.now() - opStart}ms`);
+    }
+    return result;
+  });
 }
 
 /**
