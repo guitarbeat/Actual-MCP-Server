@@ -1,4 +1,4 @@
-## 2024-05-23 - Timing Attack in Authentication
-**Vulnerability:** The Bearer token validation used simple string comparison (`token !== expectedToken`) and logged the length of the received token. This allowed timing attacks (determining the token character by character) and leaked information about the expected token length.
-**Learning:** Even simple equality checks for secrets can be vulnerable. `node:crypto` provides `timingSafeEqual`, but it requires buffers of equal length.
-**Prevention:** Use `timingSafeStringEqual` (which hashes inputs first) for all secret comparisons. Never log lengths or values of invalid secrets.
+## 2024-05-22 - Bearer Token Timing Attack
+**Vulnerability:** The inline bearer token comparison used `token !== expectedToken`, which is susceptible to timing attacks (leaking the length of the matching prefix).
+**Learning:** Even simple string comparisons for secrets can be vulnerable. Node.js provides `crypto.timingSafeEqual` for this exact purpose, but it requires buffers of equal length.
+**Prevention:** Always use `crypto.timingSafeEqual` for comparing secrets. Refactor auth logic into dedicated middleware to ensure consistency and testability.
