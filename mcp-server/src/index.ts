@@ -60,7 +60,7 @@ const {
 const server = new Server(
   {
     name: 'Actual Budget',
-    version: '1.6.3',
+    version: '1.6.4',
   },
   {
     capabilities: {
@@ -82,31 +82,26 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   }
 
   const authHeader = req.headers.authorization;
+  let token: string | undefined;
 
-  if (!authHeader) {
-    console.error('[AUTH] ❌ Missing Authorization header');
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else if (req.query.token && typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
+
+  if (!token) {
+    console.error('[AUTH] ❌ Missing authentication token (header or query param)');
     // Include WWW-Authenticate header as per HTTP spec
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
       error: 'Authentication required',
-      message: 'Authorization header required',
+      message: 'Authorization header (Bearer) or ?token query parameter required',
       code: -32000, // MCP authentication error code
     });
     return;
   }
 
-  if (!authHeader.startsWith('Bearer ')) {
-    console.error('[AUTH] ❌ Invalid Authorization header format');
-    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
-    res.status(401).json({
-      error: 'Authentication failed',
-      message: "Authorization header must start with 'Bearer '",
-      code: -32000,
-    });
-    return;
-  }
-
-  const token = authHeader.substring(7); // Remove "Bearer " prefix
   const expectedToken = process.env.BEARER_TOKEN;
 
   if (!expectedToken) {
