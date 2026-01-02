@@ -33,6 +33,9 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 
+import packageJson from '../package.json' assert { type: 'json' };
+const { version } = packageJson;
+
 dotenv.config({ path: '.env' });
 
 // Argument parsing (must happen before server creation)
@@ -66,7 +69,7 @@ const {
 const server = new Server(
   {
     name: 'Actual Budget',
-    version: '1.6.5',
+    version: version,
   },
   {
     capabilities: {
@@ -539,7 +542,7 @@ async function main(): Promise<void> {
             <div class="container">
               <header>
                 <h1>Actual Budget MCP</h1>
-                <span class="version">v1.6.5</span>
+                <span class="version">v${version}</span>
               </header>
 
               <div class="status-line">
