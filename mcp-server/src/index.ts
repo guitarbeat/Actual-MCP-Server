@@ -33,7 +33,7 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 
-import packageJson from '../package.json' assert { type: 'json' };
+import packageJson from '../package.json' with { type: 'json' };
 const { version } = packageJson;
 
 dotenv.config({ path: '.env' });
