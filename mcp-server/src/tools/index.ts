@@ -69,6 +69,33 @@ interface CategorizedToolDefinition {
   category: ToolCategory;
 }
 
+/**
+ * Wrapper function to adapt tool handlers that expect specific argument types
+ * to the CategorizedToolDefinition interface which requires Record<string, unknown>.
+ *
+ * Handles three cases:
+ * 1. Handlers that require specific args (e.g., { category: string, month: string })
+ * 2. Handlers that accept optional args (e.g., args?: SomeType)
+ * 3. Handlers that take no args (e.g., handler())
+ *
+ * @param handler - The original handler function
+ * @returns A new handler that accepts Record<string, unknown> and passes it to the original handler
+ */
+function wrapHandler(
+  // biome-ignore lint/suspicious/noExplicitAny: Handler functions have various typed signatures that all accept objects; runtime validation is done via Zod
+  handler: ((args: any) => Promise<MCPResponse>) | (() => Promise<MCPResponse>)
+): (args: Record<string, unknown>) => Promise<MCPResponse> {
+  return async (args: Record<string, unknown>): Promise<MCPResponse> => {
+    // If handler takes no args, call it without args
+    if (handler.length === 0) {
+      return (handler as () => Promise<MCPResponse>)();
+    }
+    // Otherwise, pass args (handlers validate internally with Zod)
+    return handler(args);
+  };
+}
+
+
 // Generate CRUD tools using factory for all entity types
 const categoryCRUDTools = createCRUDTools(entityConfigurations.category);
 const payeeCRUDTools = createCRUDTools(entityConfigurations.payee);
@@ -84,55 +111,55 @@ const toolRegistry: CategorizedToolDefinition[] = [
   // Core read-only tools
   {
     schema: getTransactions.schema,
-    handler: getTransactions.handler,
+    handler: wrapHandler(getTransactions.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: spendingByCategory.schema,
-    handler: spendingByCategory.handler,
+    handler: wrapHandler(spendingByCategory.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: monthlySummary.schema,
-    handler: monthlySummary.handler,
+    handler: wrapHandler(monthlySummary.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: financialInsights.schema,
-    handler: financialInsights.handler,
+    handler: wrapHandler(financialInsights.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: balanceHistory.schema,
-    handler: balanceHistory.handler,
+    handler: wrapHandler(balanceHistory.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: getAccounts.schema,
-    handler: getAccounts.handler,
+    handler: wrapHandler(getAccounts.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: getGroupedCategories.schema,
-    handler: getGroupedCategories.handler,
+    handler: wrapHandler(getGroupedCategories.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: getPayees.schema,
-    handler: getPayees.handler,
+    handler: wrapHandler(getPayees.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: getRules.schema,
-    handler: getRules.handler,
+    handler: wrapHandler(getRules.handler),
     requiresWrite: false,
     category: 'core',
   },
@@ -140,19 +167,19 @@ const toolRegistry: CategorizedToolDefinition[] = [
   // Core write tools
   {
     schema: setBudget.schema,
-    handler: setBudget.handler,
+    handler: wrapHandler(setBudget.handler),
     requiresWrite: true,
     category: 'core',
   },
   {
     schema: mergePayees.schema,
-    handler: mergePayees.handler,
+    handler: wrapHandler(mergePayees.handler),
     requiresWrite: true,
     category: 'core',
   },
   {
     schema: importTransactions.schema,
-    handler: importTransactions.handler,
+    handler: wrapHandler(importTransactions.handler),
     requiresWrite: true,
     category: 'core',
   },
@@ -160,19 +187,19 @@ const toolRegistry: CategorizedToolDefinition[] = [
   // Transaction CRUD tools
   {
     schema: createTransaction.schema,
-    handler: createTransaction.handler,
+    handler: wrapHandler(createTransaction.handler),
     requiresWrite: true,
     category: 'core',
   },
   {
     schema: updateTransaction.schema,
-    handler: updateTransaction.handler,
+    handler: wrapHandler(updateTransaction.handler),
     requiresWrite: true,
     category: 'core',
   },
   {
     schema: deleteTransaction.schema,
-    handler: deleteTransaction.handler,
+    handler: wrapHandler(deleteTransaction.handler),
     requiresWrite: true,
     category: 'core',
   },
@@ -180,19 +207,19 @@ const toolRegistry: CategorizedToolDefinition[] = [
   // Account tools (non-CRUD)
   {
     schema: closeAccount.schema,
-    handler: closeAccount.handler,
+    handler: wrapHandler(closeAccount.handler),
     requiresWrite: true,
     category: 'nini',
   },
   {
     schema: reopenAccount.schema,
-    handler: reopenAccount.handler,
+    handler: wrapHandler(reopenAccount.handler),
     requiresWrite: true,
     category: 'nini',
   },
   {
     schema: getAccountBalance.schema,
-    handler: getAccountBalance.handler,
+    handler: wrapHandler(getAccountBalance.handler),
     requiresWrite: false,
     category: 'core',
   },
@@ -207,19 +234,19 @@ const toolRegistry: CategorizedToolDefinition[] = [
   // Budget tools
   {
     schema: getBudget.schema,
-    handler: getBudget.handler,
+    handler: wrapHandler(getBudget.handler),
     requiresWrite: false,
     category: 'core',
   },
   {
     schema: holdBudget.schema,
-    handler: holdBudget.handler,
+    handler: wrapHandler(holdBudget.handler),
     requiresWrite: true,
     category: 'nini',
   },
   {
     schema: resetBudgetHold.schema,
-    handler: resetBudgetHold.handler,
+    handler: wrapHandler(resetBudgetHold.handler),
     requiresWrite: true,
     category: 'nini',
   },
@@ -227,13 +254,13 @@ const toolRegistry: CategorizedToolDefinition[] = [
   // Budget file management (nini-only features for advanced users)
   {
     schema: getBudgets.schema,
-    handler: getBudgets.handler,
+    handler: wrapHandler(getBudgets.handler),
     requiresWrite: false,
     category: 'nini',
   },
   {
     schema: switchBudget.schema,
-    handler: switchBudget.handler,
+    handler: wrapHandler(switchBudget.handler),
     requiresWrite: true,
     category: 'nini',
   },
@@ -320,7 +347,7 @@ export const setupTools = (server: Server, enableWrite: boolean, enableNini = fa
       }
 
       // Execute tool handler
-      const result = await tool.handler(args);
+      const result = await tool.handler(args ?? {});
       return result;
     } catch (err) {
       return errorFromCatch(err, {

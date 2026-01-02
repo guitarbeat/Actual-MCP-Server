@@ -967,9 +967,9 @@ export async function runImport(file: string, _importType?: string): Promise<unk
     if (typeof api.runImport === 'function') {
       // * API signature changed - runImport now takes a function callback
       // * Note: This may need adjustment based on actual API signature
-      return (api.runImport as (cb: () => Promise<void>, file: string) => Promise<unknown>)(
-        () => Promise.resolve(),
-        file
+      // Cast through unknown to handle API signature mismatch
+      return (api.runImport as unknown as (file: string, cb: () => Promise<void>) => Promise<unknown>)(file, () =>
+        Promise.resolve()
       );
     }
     throw new Error('runImport method is not available in this version of the API');
@@ -996,7 +996,8 @@ export async function runQuery(query: string): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.runQuery === 'function') {
       // * API signature changed - runQuery now takes query string directly or different format
-      return (api.runQuery as (q: string) => Promise<unknown>)(query);
+      // Cast through unknown to handle API signature mismatch (Query type vs string)
+      return (api.runQuery as unknown as (q: string) => Promise<unknown>)(query);
     }
     throw new Error('runQuery method is not available in this version of the API');
   });
