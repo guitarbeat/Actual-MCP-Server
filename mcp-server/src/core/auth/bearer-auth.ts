@@ -1,18 +1,13 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 
-export type BearerAuthOptions = {
+interface BearerAuthOptions {
   enableBearer: boolean;
-  bearerToken: string | undefined;
-};
+  expectedToken?: string;
+}
 
-/**
- * Creates a middleware for Bearer authentication.
- *
- * Uses crypto.timingSafeEqual to prevent timing attacks.
- */
 export const createBearerAuth = (options: BearerAuthOptions) => {
-  const { enableBearer, bearerToken } = options;
+  const { enableBearer, expectedToken } = options;
 
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!enableBearer) {
@@ -44,8 +39,6 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
       return;
     }
 
-    const expectedToken = bearerToken;
-
     if (!expectedToken) {
       console.error('[AUTH] ❌ BEARER_TOKEN environment variable not set');
       res.status(500).json({
@@ -56,14 +49,12 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
       return;
     }
 
-    // Use timingSafeEqual to prevent timing attacks
+    // Secure comparison to prevent timing attacks
     const tokenBuffer = Buffer.from(token);
     const expectedBuffer = Buffer.from(expectedToken);
 
-    // Check length first (leaking length is acceptable in this context and required for timingSafeEqual)
-    const valid = tokenBuffer.length === expectedBuffer.length && timingSafeEqual(tokenBuffer, expectedBuffer);
-
-    if (!valid) {
+    // timingSafeEqual requires buffers of same length
+    if (tokenBuffer.length !== expectedBuffer.length || !timingSafeEqual(tokenBuffer, expectedBuffer)) {
       console.error('[AUTH] ❌ Invalid token (token mismatch)');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
