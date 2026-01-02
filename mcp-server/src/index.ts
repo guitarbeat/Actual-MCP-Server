@@ -23,6 +23,7 @@ import { timingSafeStringEqual } from './core/auth/crypto.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
+import { timingSafeStringEqual } from './core/auth/index.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
