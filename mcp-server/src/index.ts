@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 /**
@@ -18,6 +18,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
+import { timingSafeStringEqual } from './core/auth/index.js';
 import { initActualApi, shutdownActualApi } from './core/api/actual-client.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
@@ -116,12 +117,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
-  // Use constant-time comparison to prevent timing attacks
-  const tokenBuffer = Buffer.from(token);
-  const expectedBuffer = Buffer.from(expectedToken);
-  const match = tokenBuffer.length === expectedBuffer.length && timingSafeEqual(tokenBuffer, expectedBuffer);
-
-  if (!match) {
+  if (!timingSafeStringEqual(token, expectedToken)) {
     console.error('[AUTH] ❌ Invalid token (token mismatch)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
