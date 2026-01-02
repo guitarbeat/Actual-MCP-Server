@@ -1,4 +1,4 @@
-## 2024-02-14 - [Timing Attack in Auth Token Comparison]
-**Vulnerability:** The Bearer token validation used a simple string comparison (`token !== expectedToken`). This allows an attacker to deduce the token character by character by measuring the time it takes for the server to respond (timing attack), as the comparison returns immediately upon the first mismatch.
-**Learning:** Even high-level languages like JavaScript can be vulnerable to timing attacks when comparing secrets. The V8 engine optimizes string comparisons to fail fast, which is good for performance but bad for security when secrets are involved.
-**Prevention:** Always use constant-time comparison functions (like `crypto.timingSafeEqual`) for validating secrets, tokens, and hashes. If `timingSafeEqual` is too strict about lengths, implement a wrapper that hashes inputs first (SHA-256) to ensure equal length before comparison.
+## 2024-05-23 - Timing Attack in Authentication
+**Vulnerability:** The Bearer token validation used simple string comparison (`token !== expectedToken`) and logged the length of the received token. This allowed timing attacks (determining the token character by character) and leaked information about the expected token length.
+**Learning:** Even simple equality checks for secrets can be vulnerable. `node:crypto` provides `timingSafeEqual`, but it requires buffers of equal length.
+**Prevention:** Use `timingSafeStringEqual` (which hashes inputs first) for all secret comparisons. Never log lengths or values of invalid secrets.
