@@ -124,9 +124,8 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       appliedFilters,
       filteredCount: filtered.length,
       totalFetched: transactions.length,
-      totalAmount: filtered.reduce((sum, t) => sum + t.amount, 0),
-      accountSummary,
       totalAmount,
+      accountSummary,
     });
     return success(markdown);
   } catch (err) {

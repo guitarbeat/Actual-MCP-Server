@@ -6,7 +6,6 @@ export * from './aggregation/group-by.js';
 export * from './aggregation/index.js';
 export * from './aggregation/sort-by.js';
 export * from './aggregation/sum-by.js';
-export * from './auth/crypto.js';
 // New barrel exports for DRY improvements
 export * from './auth/index.js';
 export * from './cache/index.js';
