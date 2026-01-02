@@ -159,7 +159,6 @@ function handleSseConnection(req: Request, res: Response): void {
   const transport = new SSEServerTransport('/messages', res);
 
   // * Get the actual session ID from the transport
-  // @ts-expect-error - SSEServerTransport has sessionId but it's not in the public type definition
   const actualSessionId = (transport as { sessionId?: string }).sessionId || sessionId;
 
   // * Store transport
