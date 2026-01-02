@@ -1,6 +1,6 @@
 {
   "name": "actual-mcp",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Actual Budget MCP server exposing API functionality",
   "private": true,
   "main": "build/index.js",
