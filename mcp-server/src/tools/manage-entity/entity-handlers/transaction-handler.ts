@@ -297,7 +297,7 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
   }
 
   invalidateCache(): void {
-    cacheService.invalidate('transactions');
+    cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
   }
 }
