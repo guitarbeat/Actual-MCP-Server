@@ -31,7 +31,6 @@ vi.mock('./core/cache/cache-service.js', () => ({
   cacheService: {
     invalidate: vi.fn(),
     invalidatePattern: vi.fn(),
-    getOrFetch: vi.fn((key, fetchFn) => fetchFn()),
   },
 }));
 
@@ -422,6 +421,7 @@ describe('Auto-load functionality', () => {
       await actualApi.updateTransaction('txn-123', { amount: 5000 });
 
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
+      expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
     });
 
     it('should handle update errors', async () => {
@@ -465,6 +465,7 @@ describe('Auto-load functionality', () => {
       await actualApi.deleteTransaction('txn-123');
 
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
+      expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
     });
 
     it('should handle deletion errors', async () => {

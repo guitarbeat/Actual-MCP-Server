@@ -719,6 +719,7 @@ export async function updateTransaction(id: string, updates: Record<string, unkn
   return ensureConnection(async () => {
     await api.updateTransaction(id, updates);
     cacheService.invalidatePattern('transactions:*');
+    cacheService.invalidate('accounts:all');
   });
 }
 
@@ -732,6 +733,7 @@ export async function deleteTransaction(id: string): Promise<void> {
   return ensureConnection(async () => {
     await api.deleteTransaction(id);
     cacheService.invalidatePattern('transactions:*');
+    cacheService.invalidate('accounts:all');
   });
 }
 

@@ -1,5 +1,5 @@
 # Bolt's Journal
 
-## 2024-05-23 - [Initial Setup]
-**Learning:** Performance optimizations should be targeted and measured. This journal will track critical learnings.
-**Action:** Always verify optimizations with tests and benchmarks.
+## 2024-05-22 - Initial Setup
+**Learning:** Performance journals help track critical insights.
+**Action:** Document surprising performance findings here.
