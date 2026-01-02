@@ -18,7 +18,13 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
-import { initActualApi, shutdownActualApi } from './core/api/actual-client.js';
+import {
+  getInitializationStats,
+  initActualApi,
+  isInitialized,
+  isInitializing,
+  shutdownActualApi,
+} from './core/api/actual-client.js';
 import { timingSafeStringEqual } from './core/auth/index.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
@@ -419,8 +425,15 @@ async function main(): Promise<void> {
       res.send(svg);
     });
 
-    // * Root route - basic server info
+    // * Root route - Modern Dashboard with Glassmorphism
     app.get('/', (_req: Request, res: Response) => {
+      const stats = getInitializationStats();
+      const initialized = isInitialized();
+      const initializing = isInitializing();
+
+      const statusColor = initialized ? '#10b981' : initializing ? '#f59e0b' : '#ef4444';
+      const statusText = initialized ? 'Connected' : initializing ? 'Initializing...' : 'Disconnected';
+
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.send(`
@@ -429,46 +442,408 @@ async function main(): Promise<void> {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Actual Budget MCP Server</title>
+            <title>Actual Budget MCP | Dashboard</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
             <style>
+              :root {
+                --primary: #2563eb;
+                --primary-glow: rgba(37, 99, 235, 0.4);
+                --bg: #0f172a;
+                --card-bg: rgba(30, 41, 59, 0.7);
+                --text: #f8fafc;
+                --text-muted: #94a3b8;
+                --success: #10b981;
+                --warning: #f59e0b;
+                --danger: #ef4444;
+                --glass-border: rgba(255, 255, 255, 0.1);
+              }
+
+              * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+              }
+
               body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                max-width: 800px;
-                margin: 50px auto;
-                padding: 20px;
-                background: #f5f5f5;
+                font-family: 'Inter', sans-serif;
+                background-color: var(--bg);
+                background-image: 
+                  radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+                color: var(--text);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 40px 20px;
+                line-height: 1.5;
               }
+
               .container {
-                background: white;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                width: 100%;
+                max-width: 900px;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
               }
-              h1 { color: #2563eb; margin-top: 0; }
-              .endpoint { 
-                background: #f8f9fa; 
-                padding: 10px; 
-                margin: 10px 0; 
-                border-left: 3px solid #2563eb;
+
+              header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+              }
+
+              .logo-container {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+              }
+
+              .logo-icon {
+                width: 48px;
+                height: 48px;
+                background: linear-gradient(135deg, var(--primary), #3b82f6);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                box-shadow: 0 0 20px var(--primary-glow);
+              }
+
+              h1 {
+                font-size: 24px;
+                font-weight: 700;
+                letter-spacing: -0.025em;
+              }
+
+              .badge {
+                padding: 4px 12px;
+                border-radius: 9999px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+              }
+
+              .badge-version {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid var(--glass-border);
+                color: var(--text-muted);
+              }
+
+              .main-stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+              }
+
+              .card {
+                background: var(--card-bg);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid var(--glass-border);
+                border-radius: 16px;
+                padding: 24px;
+                transition: transform 0.2s ease, border-color 0.2s ease;
+              }
+
+              .card:hover {
+                border-color: rgba(255, 255, 255, 0.2);
+              }
+
+              .status-card {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+              }
+
+              .status-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 14px;
+                font-weight: 500;
+                color: var(--text-muted);
+              }
+
+              .status-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background-color: ${statusColor};
+                box-shadow: 0 0 10px ${statusColor};
+              }
+
+              .status-dot.pulsing {
+                animation: pulse 2s infinite;
+              }
+
+              @keyframes pulse {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.4; transform: scale(1.2); }
+                100% { opacity: 1; transform: scale(1); }
+              }
+
+              .status-value {
+                font-size: 32px;
+                font-weight: 700;
+                color: ${statusColor};
+              }
+
+              .stats-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                margin-top: 8px;
+              }
+
+              .stat-item {
+                display: flex;
+                flex-direction: column;
+              }
+
+              .stat-label {
+                font-size: 12px;
+                color: var(--text-muted);
+                margin-bottom: 2px;
+              }
+
+              .stat-value-small {
+                font-size: 16px;
+                font-weight: 600;
+              }
+
+              .endpoints-card h2 {
+                font-size: 18px;
+                margin-bottom: 16px;
+                color: var(--text);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              }
+
+              .section-title {
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-muted);
+                margin: 20px 0 12px 0;
+                display: block;
+              }
+
+              .endpoint-group {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 12px;
+                overflow: hidden;
+                margin-bottom: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+              }
+
+              .endpoint-row {
+                padding: 12px 16px;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+              }
+
+              .endpoint-row:last-child {
+                border-bottom: none;
+              }
+
+              .method {
                 font-family: monospace;
+                font-weight: 700;
+                font-size: 11px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                width: 60px;
+                text-align: center;
               }
-              .status { color: #10b981; font-weight: bold; }
+
+              .method-get { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+              .method-post { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
+              .method-all { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+
+              .path {
+                font-family: 'JetBrains Mono', 'Fira Code', monospace;
+                font-size: 14px;
+                color: #e2e8f0;
+                flex: 1;
+              }
+
+              .desc {
+                font-size: 13px;
+                color: var(--text-muted);
+                width: 40%;
+                text-align: right;
+              }
+
+              .security-card {
+                border-left: 4px solid ${enableBearer ? 'var(--success)' : 'var(--warning)'};
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              }
+
+              .security-info {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+              }
+
+              .security-icon {
+                font-size: 24px;
+              }
+
+              footer {
+                margin-top: auto;
+                padding-top: 40px;
+                font-size: 13px;
+                color: var(--text-muted);
+                display: flex;
+                gap: 24px;
+              }
+
+              footer a {
+                color: var(--text-muted);
+                text-decoration: none;
+                transition: color 0.2s;
+              }
+
+              footer a:hover {
+                color: var(--primary);
+              }
+
+              @media (max-width: 640px) {
+                .endpoint-row {
+                  flex-direction: column;
+                  align-items: flex-start;
+                  gap: 8px;
+                }
+                .desc {
+                  width: 100%;
+                  text-align: left;
+                }
+                .main-stats {
+                  grid-template-columns: 1fr;
+                }
+              }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1>💰 Actual Budget MCP Server</h1>
-              <p class="status">✓ Server is running</p>
-              <p>This is an MCP (Model Context Protocol) server for Actual Budget.</p>
-              <h2>Available Endpoints:</h2>
-              <h3>Legacy SSE Transport:</h3>
-              <div class="endpoint">GET /sse - SSE transport endpoint</div>
-              <div class="endpoint">POST /messages - Messages endpoint</div>
-              <h3>Modern Streamable HTTP Transport:</h3>
-              <div class="endpoint">GET/POST/DELETE /mcp - Streamable HTTP endpoint</div>
-              ${enableBearer ? '<p><strong>🔒 Bearer authentication: ENABLED</strong></p>' : '<p><em>⚠️ Bearer authentication: DISABLED</em></p>'}
+              <header>
+                <div class="logo-container">
+                  <div class="logo-icon">💰</div>
+                  <div>
+                    <h1>Actual Budget MCP</h1>
+                    <div style="font-size: 12px; color: var(--text-muted)">Financial Intelligence Interface</div>
+                  </div>
+                </div>
+                <span class="badge badge-version">v1.6.5</span>
+              </header>
+
+              <div class="main-stats">
+                <div class="card status-card">
+                  <div class="status-header">
+                    <div class="status-dot pulsing"></div>
+                    System Status
+                  </div>
+                  <div class="status-value">${statusText}</div>
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-label">Init Time</span>
+                      <span class="stat-value-small">${stats.initializationTime ? `${stats.initializationTime}ms` : '---'}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Cache Saves</span>
+                      <span class="stat-value-small">${stats.skipCount} cycles</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card status-card">
+                  <div class="status-header">
+                    <div class="status-dot" style="background-color: var(--primary); box-shadow: 0 0 10px var(--primary)"></div>
+                    Network
+                  </div>
+                  <div class="status-value">${resolvedPort}</div>
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-label">Active Sessions</span>
+                      <span class="stat-value-small">${streamableHandler.getActiveSessionCount()}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Environment</span>
+                      <span class="stat-value-small">${process.env.NODE_ENV || 'development'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card security-card">
+                <div class="security-info">
+                  <div class="security-icon">${enableBearer ? '🔒' : '⚠️'}</div>
+                  <div>
+                    <div style="font-weight: 600">Bearer Authentication</div>
+                    <div style="font-size: 13px; color: var(--text-muted)">
+                      ${enableBearer ? 'Secure communication enabled' : 'Public mode (Authentication disabled)'}
+                    </div>
+                  </div>
+                </div>
+                <span class="badge" style="background: ${enableBearer ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; color: ${enableBearer ? 'var(--success)' : 'var(--warning)'}">
+                  ${enableBearer ? 'Active' : 'Missing'}
+                </span>
+              </div>
+
+              <div class="card endpoints-card">
+                <h2>🔌 API Endpoints</h2>
+                
+                <span class="section-title">Modern Protocol (Recommended)</span>
+                <div class="endpoint-group">
+                  <div class="endpoint-row">
+                    <span class="method method-all">ANY</span>
+                    <span class="path">/mcp</span>
+                    <span class="desc">Streamable HTTP Transport</span>
+                  </div>
+                </div>
+
+                <span class="section-title">Legacy Protocol</span>
+                <div class="endpoint-group">
+                  <div class="endpoint-row">
+                    <span class="method method-get">GET</span>
+                    <span class="path">/sse</span>
+                    <span class="desc">Event Stream Connection</span>
+                  </div>
+                  <div class="endpoint-row">
+                    <span class="method method-post">POST</span>
+                    <span class="path">/messages</span>
+                    <span class="desc">Message Incoming</span>
+                  </div>
+                </div>
+
+                <span class="section-title">Management</span>
+                <div class="endpoint-group">
+                  <div class="endpoint-row">
+                    <span class="method method-get">GET</span>
+                    <span class="path">/health</span>
+                    <span class="desc">System Vital Check</span>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <footer>
+              <span>© 2026 Actual Budget MCP</span>
+              <a href="https://github.com/guitarbeat/actual-mcp" target="_blank">GitHub Repository</a>
+              <a href="https://modelcontextprotocol.io" target="_blank">MCP Documentation</a>
+            </footer>
           </body>
         </html>
       `);

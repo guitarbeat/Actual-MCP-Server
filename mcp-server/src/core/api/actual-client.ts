@@ -338,6 +338,20 @@ export function getInitializationStats(): {
 }
 
 /**
+ * Check if the API is currently initialized
+ */
+export function isInitialized(): boolean {
+  return initialized;
+}
+
+/**
+ * Check if the API is currently initializing
+ */
+export function isInitializing(): boolean {
+  return initializing;
+}
+
+/**
  * Reset initialization statistics (useful for testing)
  */
 export function resetInitializationStats(): void {
