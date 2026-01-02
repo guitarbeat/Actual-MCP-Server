@@ -60,7 +60,7 @@ const {
 const server = new Server(
   {
     name: 'Actual Budget',
-    version: '1.6.1',
+    version: '1.6.2',
   },
   {
     capabilities: {
@@ -389,9 +389,7 @@ async function main(): Promise<void> {
       host: '0.0.0.0', // Allow binding to all interfaces for production
       // * When bearer authentication is enabled, allow localhost connections
       // * Bearer auth provides security instead of host header validation
-      allowedHosts: enableBearer
-        ? ['localhost', '127.0.0.1', '::1', '[::1]'] // Allow localhost connections when bearer auth is enabled
-        : undefined,
+      allowedHosts: undefined, // Allow all hosts (bearer auth provides security)
     });
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
@@ -477,7 +475,12 @@ async function main(): Promise<void> {
         </html>
       `);
     });
-
+    
+    // * Health check route for deployment platforms
+    app.get('/health', (_req: Request, res: Response) => {
+      res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+    
     app.get('/sse', bearerAuth, handleSseConnection);
     app.post('/messages', bearerAuth, handleSseMessages);
 
