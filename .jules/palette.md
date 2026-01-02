@@ -1,3 +1,5 @@
-## 2024-05-23 - Pretty-Printing JSON Responses
-**Learning:** Developers and LLMs both benefit from readable JSON in logs/inspector. While LLMs parse minified JSON fine, the "human in the loop" (debugger, user verifying output) struggles with massive one-line JSON blobs.
-**Action:** Default to `JSON.stringify(data, null, 2)` for structured data responses in MCP servers unless payload size is critical.
+# Palette's Journal - Critical UX/Accessibility Learnings
+
+## 2024-05-23 - Backend UX Focus
+**Learning:** Since this is a backend-only MCP server, "UX" translates to "Developer Experience" (DX) and "AI Usability". Improvements should focus on clear error messages, helpful logging, and robust input validation that guides the AI or developer to the correct usage.
+**Action:** Look for opportunities to improve error messages, validation feedback, and configuration guidance.
