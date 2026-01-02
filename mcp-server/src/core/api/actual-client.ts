@@ -10,8 +10,8 @@ import type {
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import type { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
-import { cacheService } from '../cache/cache-service.js';
-import type { BudgetFile } from '../types/index.js';
+import { cacheService } from './core/cache/cache-service.js';
+import type { BudgetFile } from './core/types/index.js';
 
 type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
@@ -473,11 +473,6 @@ export async function getPayees(): Promise<APIPayeeEntity[]> {
 
 /**
  * Get transactions for a specific account and date range (ensures API is initialized)
- *
- * Performance optimization:
- * - Uses cacheService to cache results for unique (accountId, start, end) combinations
- * - Prevents expensive API calls for repeated queries on the same data
- * - Cache is automatically invalidated when transactions are added, updated, or deleted
  */
 export async function getTransactions(accountId: string, start: string, end: string): Promise<TransactionEntity[]> {
   return ensureConnection(() =>
@@ -651,7 +646,6 @@ export async function addTransactions(
   return ensureConnection(async () => {
     const result = await api.addTransactions(accountId, transactions as any, options);
     cacheService.invalidatePattern('transactions:*');
-    cacheService.invalidate('accounts:all');
     return result;
   });
 }
