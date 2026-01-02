@@ -1,5 +1,5 @@
-## 2024-05-24 - [Missing Transaction Caching]
+# Bolt's Journal
 
-**Learning:** `getTransactions` was calling the API directly without caching, despite `CacheService` being available and invalidation logic existing for a generic `transactions` key. This resulted in redundant API calls for the same data.
-
-**Action:** Always verify if expensive data fetch operations are using `CacheService`. Ensure cache keys are granular enough (e.g., including date ranges) and invalidation patterns match these keys (e.g., using `invalidatePattern`).
+## 2024-05-23 - [Initial Setup]
+**Learning:** Performance optimizations should be targeted and measured. This journal will track critical learnings.
+**Action:** Always verify optimizations with tests and benchmarks.
