@@ -14,7 +14,8 @@ import { MonthlySummaryTransactionAggregator } from './transaction-aggregator.js
 
 export const schema = {
   name: 'monthly-summary',
-  description: 'Generate high-level financial overview showing income, expenses, savings, and savings rate trends for a specified period (default 3 months).',
+  description:
+    'Generate high-level financial overview showing income, expenses, savings, and savings rate trends for a specified period (default 3 months).',
   inputSchema: zodToJsonSchema(MonthlySummaryArgsSchema) as ToolInput,
 };
 
