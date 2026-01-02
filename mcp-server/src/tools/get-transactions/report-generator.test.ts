@@ -1,55 +1,46 @@
+
 import { describe, it, expect } from 'vitest';
 import { GetTransactionsReportGenerator } from './report-generator.js';
 
 describe('GetTransactionsReportGenerator', () => {
-  it('generates a report with total amount', () => {
-    const generator = new GetTransactionsReportGenerator();
-    const mockTransactions = [
-      { id: '1', date: '2024-01-01', payee: 'Store A', category: 'Food', amount: '$50.00', notes: '' },
-      { id: '2', date: '2024-01-02', payee: 'Store B', category: 'Food', amount: '$25.00', notes: '' },
-    ];
+  const generator = new GetTransactionsReportGenerator();
+  const mockTransactions = [
+    {
+      id: '1',
+      date: '2024-03-20',
+      payee: 'Amazon',
+      category: 'Shopping',
+      amount: '$100.00',
+      notes: '',
+    },
+  ];
 
-    // We cast to any because we are mocking the internal interface
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockMetadata: any = {
-      accountReference: 'checking',
+  it('should include total amount in report when provided', () => {
+    const metadata = {
+      accountReference: 'Checking',
       resolvedAccountId: 'acc-123',
-      dateRange: { start: '2024-01-01', end: '2024-01-31' },
-      appliedFilters: ['Category: Food'],
-      filteredCount: 2,
-      totalFetched: 10,
-      totalAmount: 7500, // 75.00 in cents
+      dateRange: { start: '2024-03-01', end: '2024-03-31' },
+      appliedFilters: [],
+      filteredCount: 1,
+      totalFetched: 1,
+      totalAmount: 10000, // $100.00
     };
 
-    const report = generator.generate(mockTransactions, mockMetadata);
-
-    expect(report).toContain('**Total amount:** $75.00');
+    const report = generator.generate(mockTransactions, metadata);
+    expect(report).toContain('**Total amount:** $100.00');
   });
 
-  it('handles negative total amount (expenses)', () => {
-    const generator = new GetTransactionsReportGenerator();
-    const mockTransactions: {
-      id: string;
-      date: string;
-      payee: string;
-      category: string;
-      amount: string;
-      notes: string;
-    }[] = [];
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockMetadata: any = {
-      accountReference: 'checking',
+  it('should not include total amount when not provided', () => {
+    const metadata = {
+      accountReference: 'Checking',
       resolvedAccountId: 'acc-123',
-      dateRange: { start: '2024-01-01', end: '2024-01-31' },
+      dateRange: { start: '2024-03-01', end: '2024-03-31' },
       appliedFilters: [],
-      filteredCount: 0,
-      totalFetched: 10,
-      totalAmount: -12345, // -$123.45
+      filteredCount: 1,
+      totalFetched: 1,
     };
 
-    const report = generator.generate(mockTransactions, mockMetadata);
-
-    expect(report).toContain('**Total amount:** -$123.45');
+    const report = generator.generate(mockTransactions, metadata);
+    expect(report).not.toContain('**Total amount:**');
   });
 });

@@ -17,8 +17,8 @@ interface ReportMetadata {
   appliedFilters: string[];
   filteredCount: number;
   totalFetched: number;
-  totalAmount: number;
   accountSummary?: { accountName: string; count: number }[];
+  totalAmount?: number;
 }
 
 export class GetTransactionsReportGenerator {
@@ -40,12 +40,13 @@ export class GetTransactionsReportGenerator {
       `**Resolved account ID:** ${metadata.resolvedAccountId}`,
       `**Date range evaluated:** ${metadata.dateRange.start} → ${metadata.dateRange.end}`,
       `**Transactions returned:** ${metadata.filteredCount} of ${metadata.totalFetched} fetched`,
-      `**Total amount:** ${formatAmount(metadata.totalAmount)}`,
-      '',
-      '**Applied filters:**',
-      filtersList,
-      '',
     ];
+
+    if (metadata.totalAmount !== undefined) {
+      sections.push(`**Total amount:** ${formatAmount(metadata.totalAmount)}`);
+    }
+
+    sections.push('', '**Applied filters:**', filtersList, '');
 
     // Add account summary if searching across all accounts
     if (metadata.accountSummary && metadata.accountSummary.length > 0) {
