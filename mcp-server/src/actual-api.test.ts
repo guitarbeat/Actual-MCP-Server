@@ -31,6 +31,7 @@ vi.mock('./core/cache/cache-service.js', () => ({
   cacheService: {
     invalidate: vi.fn(),
     invalidatePattern: vi.fn(),
+    getOrFetch: vi.fn().mockImplementation((_key, fetchFn) => fetchFn()),
   },
 }));
 
