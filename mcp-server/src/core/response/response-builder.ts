@@ -212,38 +212,38 @@ export function errorFromCatch(err: unknown, context: ErrorContext = {}): MCPRes
 }
 
 /**
- * Log error with relevant context for troubleshooting.
- * Formats error messages and includes operation context for easier debugging.
- *
- * @param err - The error object or value that was thrown
- * @param context - Error context including operation, tool, and args
+ * Safely serialize an unknown error to a string
+ * @param err - The error to serialize
+ * @returns Serialized error message
  */
-function logErrorWithContext(err: unknown, context: ErrorContext): void {
-  const timestamp = new Date().toISOString();
-  let errorMessage: string;
-  let errorStack: string | undefined;
-
+function serializeErrorMessage(err: unknown): string {
   try {
     if (err instanceof Error) {
-      errorMessage = err.message || 'Unknown error';
-      errorStack = err.stack;
-    } else if (typeof err === 'string') {
-      errorMessage = err;
-    } else if (err === null || err === undefined) {
-      errorMessage = String(err);
-    } else {
-      // Try to stringify, but catch circular reference errors
-      try {
-        errorMessage = JSON.stringify(err);
-      } catch {
-        errorMessage = String(err);
-      }
+      return err.message || 'Unknown error';
+    }
+    if (typeof err === 'string') {
+      return err;
+    }
+    if (err === null || err === undefined) {
+      return String(err);
+    }
+    // Try to stringify, but catch circular reference errors
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return String(err);
     }
   } catch {
-    errorMessage = 'Unknown error (could not serialize)';
+    return 'Unknown error (could not serialize)';
   }
+}
 
-  // Build context string with all available information
+/**
+ * Build a context string from ErrorContext
+ * @param context - The context object
+ * @returns Formatted context string
+ */
+function formatErrorContext(context: ErrorContext): string {
   const contextParts: string[] = [];
   if (context.operation) contextParts.push(`operation=${context.operation}`);
   if (context.tool) contextParts.push(`tool=${context.tool}`);
@@ -255,7 +255,21 @@ function logErrorWithContext(err: unknown, context: ErrorContext): void {
     }
   }
 
-  const contextStr = contextParts.length > 0 ? ` [${contextParts.join(', ')}]` : '';
+  return contextParts.length > 0 ? ` [${contextParts.join(', ')}]` : '';
+}
+
+/**
+ * Log error with relevant context for troubleshooting.
+ * Formats error messages and includes operation context for easier debugging.
+ *
+ * @param err - The error object or value that was thrown
+ * @param context - Error context including operation, tool, and args
+ */
+function logErrorWithContext(err: unknown, context: ErrorContext): void {
+  const timestamp = new Date().toISOString();
+  const errorMessage = serializeErrorMessage(err);
+  const errorStack = err instanceof Error ? err.stack : undefined;
+  const contextStr = formatErrorContext(context);
 
   console.error(`${ERROR_LOG_PREFIX} ${timestamp}${contextStr}: ${errorMessage}`);
 

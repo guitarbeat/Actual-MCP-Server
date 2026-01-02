@@ -7,15 +7,16 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["src/**/*.ts", "src/**/*.tsx"],
-    "experimentalScannerIgnores": [
-      "node_modules",
-      "dist",
-      "build",
-      "coverage",
-      ".actual",
-      "**/*.test.ts",
-      "**/*.spec.ts"
+    "includes": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "!!**/node_modules",
+      "!!**/dist",
+      "!!**/build",
+      "!!**/coverage",
+      "!!**/.actual",
+      "!!**/*.test.ts",
+      "!!**/*.spec.ts"
     ]
   },
   "formatter": {
