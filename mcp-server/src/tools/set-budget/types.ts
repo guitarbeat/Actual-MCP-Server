@@ -35,9 +35,8 @@ export const SetBudgetArgsSchema = z
     category: z.string().describe('Category ID or name'),
     amount: z
       .number()
-      .min(0, 'Budget amount must be non-negative')
       .optional()
-      .describe('Budget amount (dollars or cents, auto-detected)'),
+      .describe('Budget amount (dollars or cents, auto-detected). Supports negative amounts for moving money from categories.'),
     carryover: z.boolean().optional().describe('Enable or disable budget carryover'),
   })
   .strict()
