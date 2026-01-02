@@ -1,25 +1,22 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
-  "linter": {
+  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
+  "vcs": {
     "enabled": true,
-    "rules": {
-      "recommended": true,
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "warn",
-        "noForEach": "off"
-      },
-      "style": {
-        "noNonNullAssertion": "off",
-        "useConst": "warn"
-      },
-      "suspicious": {
-        "noExplicitAny": "warn",
-        "noArrayIndexKey": "off"
-      }
-    }
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": ["src/**/*.ts", "src/**/*.tsx"],
+    "experimentalScannerIgnores": [
+      "node_modules",
+      "dist",
+      "build",
+      "coverage",
+      ".actual",
+      "**/*.test.ts",
+      "**/*.spec.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -29,6 +26,22 @@
     "lineEnding": "lf",
     "lineWidth": 120
   },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "useConst": "warn"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn"
+      }
+    }
+  },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
@@ -36,16 +49,5 @@
       "semicolons": "always",
       "arrowParentheses": "always"
     }
-  },
-  "files": {
-    "ignore": [
-      "node_modules",
-      "dist",
-      "build",
-      "coverage",
-      ".actual",
-      "*.test.ts",
-      "*.spec.ts"
-    ]
   }
 }
