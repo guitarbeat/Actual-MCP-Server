@@ -473,6 +473,11 @@ export async function getPayees(): Promise<APIPayeeEntity[]> {
 
 /**
  * Get transactions for a specific account and date range (ensures API is initialized)
+ *
+ * Performance optimization:
+ * - Uses cacheService to cache results for unique (accountId, start, end) combinations
+ * - Prevents expensive API calls for repeated queries on the same data
+ * - Cache is automatically invalidated when transactions are added, updated, or deleted
  */
 export async function getTransactions(accountId: string, start: string, end: string): Promise<TransactionEntity[]> {
   return ensureConnection(() =>
