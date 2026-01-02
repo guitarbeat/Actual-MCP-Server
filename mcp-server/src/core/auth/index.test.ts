@@ -1,27 +1,23 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { timingSafeStringEqual } from './index.js';
 
 describe('timingSafeStringEqual', () => {
   it('should return true for identical strings', () => {
     expect(timingSafeStringEqual('secret', 'secret')).toBe(true);
     expect(timingSafeStringEqual('', '')).toBe(true);
-    expect(
-      timingSafeStringEqual(
-        'very long secret string that is definitely longer than the other one',
-        'very long secret string that is definitely longer than the other one'
-      )
-    ).toBe(true);
+    expect(timingSafeStringEqual('a', 'a')).toBe(true);
+    expect(timingSafeStringEqual('long-secret-token-12345', 'long-secret-token-12345')).toBe(true);
   });
 
   it('should return false for different strings', () => {
-    expect(timingSafeStringEqual('secret', 'wrong')).toBe(false);
-    expect(timingSafeStringEqual('secret', 'secre')).toBe(false);
-    expect(timingSafeStringEqual('secret', 'secrets')).toBe(false);
-    expect(timingSafeStringEqual('', ' ')).toBe(false);
+    expect(timingSafeStringEqual('secret', 'public')).toBe(false);
+    expect(timingSafeStringEqual('secret', 'Secret')).toBe(false);
+    expect(timingSafeStringEqual('a', 'b')).toBe(false);
   });
 
-  it('should handle special characters', () => {
-    expect(timingSafeStringEqual('p@ssw0rd!', 'p@ssw0rd!')).toBe(true);
-    expect(timingSafeStringEqual('p@ssw0rd!', 'p@ssw0rd')).toBe(false);
+  it('should return false for strings of different lengths', () => {
+    expect(timingSafeStringEqual('secret', 'secre')).toBe(false);
+    expect(timingSafeStringEqual('secret', 'secrets')).toBe(false);
+    expect(timingSafeStringEqual('', 'a')).toBe(false);
   });
 });
