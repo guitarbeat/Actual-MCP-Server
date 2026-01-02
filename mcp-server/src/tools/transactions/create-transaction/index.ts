@@ -10,36 +10,36 @@ import type { TransactionData } from '../../manage-entity/entity-handlers/transa
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
 
 // Transaction data schema for create operation
-const CreateTransactionSchema = z.object({
+export const CreateTransactionSchema = z.object({
   account: z
     .string()
     .min(1, 'Account is required')
-    .describe(
-      'Name of the account to add the transaction to (e.g. "Checking", "Savings"). Must match an existing account name.'
-    ),
+    .describe('Account name (e.g., "Checking") or ID where the transaction should be recorded.'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-    .describe('Date of the transaction in YYYY-MM-DD format (e.g. "2024-03-21").'),
+    .describe('Transaction date in YYYY-MM-DD format (e.g., "2025-01-15").'),
   amount: z
     .number()
-    .describe('Transaction amount. Use negative for expenses (e.g. -50.00) and positive for income (e.g. 1000.00).'),
-  payee: z.string().optional().describe('Name of the merchant or person (e.g. "grocery store", "employer").'),
-  category: z.string().optional().describe('Category name for the transaction (e.g. "Food", "Salary").'),
-  notes: z.string().optional().describe('Additional details or memo for the transaction.'),
-  cleared: z.boolean().optional().describe('Whether the transaction has cleared the bank. Defaults to false.'),
+    .describe(
+      'Transaction amount. Negative for expenses, positive for income. Amounts < 1000 are treated as dollars (e.g., -50 is -$50.00). Amounts >= 1000 are treated as cents (e.g., -1250 is -$12.50).'
+    ),
+  payee: z.string().optional().describe('Payee name or merchant (e.g., "Whole Foods", "Employer").'),
+  category: z.string().optional().describe('Category name (e.g., "Groceries", "Salary").'),
+  notes: z.string().optional().describe('Additional notes or memo for the transaction.'),
+  cleared: z.boolean().optional().describe('Whether the transaction is cleared. Defaults to false.'),
   subtransactions: z
     .array(
       z.object({
         amount: z
           .number()
-          .describe('Amount for this specific split. Sum of split amounts must match total transaction amount.'),
+          .describe('Subtransaction amount. Rules for dollars vs cents match the main amount field.'),
         category: z.string().optional().describe('Category for this split.'),
         notes: z.string().optional().describe('Notes for this split.'),
       })
     )
     .optional()
-    .describe('Array of subtransactions for splitting the total amount across multiple categories.'),
+    .describe('List of subtransactions for split transactions. The sum should match the main amount.'),
 });
 
 export const schema = {
