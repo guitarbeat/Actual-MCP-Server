@@ -119,9 +119,13 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
+  // Use constant-time comparison to prevent timing attacks
   if (!timingSafeStringEqual(token, expectedToken)) {
     console.error('[AUTH] ❌ Invalid bearer token (token mismatch)');
-    console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
+    // Don't log token lengths in production as it can leak info
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
+    }
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
       error: 'Authentication failed',
