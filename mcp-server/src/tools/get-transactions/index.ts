@@ -12,6 +12,86 @@ import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsInputParser } from './input-parser.js';
 import { GetTransactionsReportGenerator } from './report-generator.js';
 
+/**
+ * Filter transactions based on provided criteria
+ */
+function filterTransactions(
+  transactions: Transaction[],
+  criteria: {
+    minAmount?: number;
+    maxAmount?: number;
+    categoryName?: string;
+    payeeName?: string;
+    excludeTransfers?: boolean;
+    limit?: number;
+  }
+): Transaction[] {
+  let filtered = [...transactions];
+  const { minAmount, maxAmount, categoryName, payeeName, excludeTransfers, limit } = criteria;
+
+  if (minAmount !== undefined) {
+    filtered = filtered.filter((t) => t.amount >= minAmount * 100);
+  }
+  if (maxAmount !== undefined) {
+    filtered = filtered.filter((t) => t.amount <= maxAmount * 100);
+  }
+  if (categoryName) {
+    const lowerCategory = categoryName.toLowerCase();
+    if (lowerCategory === 'uncategorized') {
+      filtered = filtered.filter((t) => !t.category || t.category === null);
+    } else {
+      filtered = filtered.filter((t) => (t.category_name || '').toLowerCase().includes(lowerCategory));
+    }
+  }
+  if (payeeName) {
+    const lowerPayee = payeeName.toLowerCase();
+    filtered = filtered.filter((t) => (t.payee_name || '').toLowerCase().includes(lowerPayee));
+  }
+  if (excludeTransfers) {
+    filtered = filtered.filter((t) => !t.is_parent && !t.is_child && t.transfer_id == null);
+  }
+  if (limit && filtered.length > limit) {
+    filtered = filtered.slice(0, limit);
+  }
+  return filtered;
+}
+
+/**
+ * Build descriptive list of applied filters
+ */
+function buildAppliedFilters(criteria: {
+  minAmount?: number;
+  maxAmount?: number;
+  categoryName?: string;
+  payeeName?: string;
+  limit?: number;
+}): string[] {
+  const filters: string[] = [];
+  const { minAmount, maxAmount, categoryName, payeeName, limit } = criteria;
+
+  if (minAmount !== undefined) filters.push(`Minimum amount: $${minAmount.toFixed(2)}`);
+  if (maxAmount !== undefined) filters.push(`Maximum amount: $${maxAmount.toFixed(2)}`);
+  if (categoryName) filters.push(`Category contains: "${categoryName}"`);
+  if (payeeName) filters.push(`Payee contains: "${payeeName}"`);
+  if (limit !== undefined) filters.push(`Result limit: ${limit}`);
+
+  return filters;
+}
+
+/**
+ * Generate account summary for "all" search
+ */
+function generateAccountSummary(filtered: Transaction[]): { accountName: string; count: number }[] {
+  const accountCounts = new Map<string, number>();
+  filtered.forEach((t) => {
+    const name = t.account_name || t.account || 'Unknown';
+    accountCounts.set(name, (accountCounts.get(name) || 0) + 1);
+  });
+  return Array.from(accountCounts.entries())
+    .map(([accountName, count]) => ({ accountName, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 export const schema = {
   name: 'get-transactions',
   description:
@@ -29,13 +109,12 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     let resolvedAccountId: string;
     let transactions: Transaction[];
 
-    // Handle "all" accounts
+    // Fetch transactions
     if (accountId.toLowerCase() === 'all') {
       const { fetchAllAccounts } = await import('../../core/data/fetch-accounts.js');
       const accounts = await fetchAllAccounts();
       const onBudgetAccounts = accounts.filter((acc) => !acc.offbudget && !acc.closed);
 
-      // Fetch transactions from all on-budget accounts
       const allTransactions = await Promise.all(
         onBudgetAccounts.map((acc) =>
           new GetTransactionsDataFetcher().fetch(acc.id, start, end, {
@@ -47,74 +126,26 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       resolvedAccountId = 'all';
     } else {
       resolvedAccountId = await nameResolver.resolveAccount(accountId);
-      // Fetch transactions
       transactions = await new GetTransactionsDataFetcher().fetch(resolvedAccountId, start, end, {
         accountIdIsResolved: true,
       });
     }
 
-    let filtered = [...transactions];
+    // Apply filtering
+    const filtered = filterTransactions(transactions, {
+      minAmount,
+      maxAmount,
+      categoryName,
+      payeeName,
+      excludeTransfers,
+      limit,
+    });
 
-    if (minAmount !== undefined) {
-      filtered = filtered.filter((t) => t.amount >= minAmount * 100);
-    }
-    if (maxAmount !== undefined) {
-      filtered = filtered.filter((t) => t.amount <= maxAmount * 100);
-    }
-    if (categoryName) {
-      const lowerCategory = categoryName.toLowerCase();
-      if (lowerCategory === 'uncategorized') {
-        // Special case: filter for null/empty categories
-        filtered = filtered.filter((t) => !t.category || t.category === null);
-      } else {
-        filtered = filtered.filter((t) => (t.category_name || '').toLowerCase().includes(lowerCategory));
-      }
-    }
-    if (payeeName) {
-      const lowerPayee = payeeName.toLowerCase();
-      filtered = filtered.filter((t) => (t.payee_name || '').toLowerCase().includes(lowerPayee));
-    }
-    if (excludeTransfers) {
-      filtered = filtered.filter((t) => !t.is_parent && !t.is_child && t.transfer_id == null);
-    }
-    if (limit && filtered.length > limit) {
-      filtered = filtered.slice(0, limit);
-    }
-
-    // Map transactions for output
     const mapped = new TransactionMapper().map(filtered);
+    const appliedFilters = buildAppliedFilters({ minAmount, maxAmount, categoryName, payeeName, limit });
 
-    // Build filter description
-    const appliedFilters: string[] = [];
-    if (minAmount !== undefined) {
-      appliedFilters.push(`Minimum amount: $${minAmount.toFixed(2)}`);
-    }
-    if (maxAmount !== undefined) {
-      appliedFilters.push(`Maximum amount: $${maxAmount.toFixed(2)}`);
-    }
-    if (categoryName) {
-      appliedFilters.push(`Category contains: "${categoryName}"`);
-    }
-    if (payeeName) {
-      appliedFilters.push(`Payee contains: "${payeeName}"`);
-    }
-    if (limit !== undefined) {
-      appliedFilters.push(`Result limit: ${limit}`);
-    }
-
-    // Generate account summary if searching all accounts
-    let accountSummary: { accountName: string; count: number }[] | undefined;
-    if (accountId.toLowerCase() === 'all') {
-      const accountCounts = new Map<string, number>();
-      filtered.forEach((t) => {
-        const name = t.account_name || t.account || 'Unknown';
-        accountCounts.set(name, (accountCounts.get(name) || 0) + 1);
-      });
-      accountSummary = Array.from(accountCounts.entries())
-        .map(([accountName, count]) => ({ accountName, count }))
-        .sort((a, b) => b.count - a.count);
-    }
-
+    // Generate summary if needed
+    const accountSummary = accountId.toLowerCase() === 'all' ? generateAccountSummary(filtered) : undefined;
     const totalAmount = filtered.reduce((sum, t) => sum + t.amount, 0);
 
     const markdown = new GetTransactionsReportGenerator().generate(mapped, {

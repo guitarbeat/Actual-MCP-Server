@@ -142,48 +142,195 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 // Global variable to track if stdio transport is already connected
 let stdioTransportConnected = false;
 
-// Start the server
-async function main(): Promise<void> {
-  // Startup banner (skip for test modes)
-  if (!testResources && !testCustom) {
-    // Reserved for future startup banner
+// * Store SSE transports by session ID for proper session isolation
+// * Each SSE connection gets its own transport instance
+const sseTransports: Map<string, SSEServerTransport> = new Map();
+
+/**
+ * Handle SSE connection setup
+ */
+function handleSseConnection(req: Request, res: Response): void {
+  const clientIp = req.ip || req.socket.remoteAddress;
+  const sessionId = `sse-${randomUUID()}`;
+
+  console.error(`[SSE] Connection attempt from ${clientIp} (session: ${sessionId})`);
+
+  // * Create a new SSE transport for this connection
+  const transport = new SSEServerTransport('/messages', res);
+
+  // * Get the actual session ID from the transport
+  // @ts-expect-error - SSEServerTransport has sessionId but it's not in the public type definition
+  const actualSessionId = (transport as { sessionId?: string }).sessionId || sessionId;
+
+  // * Store transport
+  sseTransports.set(actualSessionId, transport);
+
+  // * Cleanup handler
+  transport.onclose = () => {
+    console.error(`[SSE] Transport closed for session ${actualSessionId}, cleaning up`);
+    sseTransports.delete(actualSessionId);
+  };
+
+  server
+    .connect(transport)
+    .then(() => {
+      console.error(`[SSE] ✅ Transport connected successfully (session: ${actualSessionId})`);
+    })
+    .catch((error) => {
+      console.error('[SSE] ❌ Error connecting SSE transport:', error);
+      sseTransports.delete(actualSessionId);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to establish SSE connection' });
+      }
+    });
+
+  // Clean up transport when connection closes
+  res.on('close', () => {
+    console.error(`[SSE] Connection closed (session: ${actualSessionId})`);
+    if (sseTransports.has(actualSessionId)) {
+      try {
+        const t = sseTransports.get(actualSessionId);
+        if (t) {
+          t.close();
+        }
+      } catch (_e) {
+        // Ignore cleanup errors
+      }
+      sseTransports.delete(actualSessionId);
+    }
+  });
+}
+
+/**
+ * Handle incoming messages for SSE transport
+ */
+async function handleSseMessages(req: Request, res: Response): Promise<void> {
+  const sessionId = req.query.sessionId as string | undefined;
+
+  if (!sessionId) {
+    const transportsArray = Array.from(sseTransports.entries());
+    if (transportsArray.length === 1) {
+      const [, transport] = transportsArray[0];
+      await transport.handlePostMessage(req, res, req.body);
+      return;
+    }
+    if (transportsArray.length === 0) {
+      res.status(503).json({
+        error: 'Transport not initialized',
+        message: 'No active SSE connections. Connect to /sse first.',
+      });
+      return;
+    }
+    res.status(400).json({
+      error: 'Session ID required',
+      message: 'Multiple active sessions detected. Please include sessionId parameter.',
+    });
+    return;
   }
 
-  // If testing resources, verify connectivity and list accounts, then exit
-  if (testResources) {
-    console.log('Testing resources...');
-    try {
-      await initActualApi();
-      const accounts = await fetchAllAccounts();
-      console.log(`Found ${accounts.length} account(s).`);
-      accounts.forEach((account) => console.log(`- ${account.id}: ${account.name}`));
-      console.log('Resource test passed.');
-      await shutdownActualApi();
-      process.exit(0);
-    } catch (error) {
-      console.error('Resource test failed:', error);
-      process.exit(1);
+  const transport = sseTransports.get(sessionId);
+  if (!transport) {
+    res.status(404).json({
+      error: 'Session not found',
+      message: `No active transport found for session: ${sessionId}`,
+    });
+    return;
+  }
+
+  try {
+    await transport.handlePostMessage(req, res, req.body);
+  } catch (error) {
+    console.error(`[SSE] Error handling message for session ${sessionId}:`, error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+}
+
+/**
+ * Map error objects to MCP error response
+ */
+function mapMcpError(error: unknown, sessionId: string, res: Response): void {
+  if (res.headersSent) {
+    return;
+  }
+
+  let errorCode = -32004; // Internal error
+  let statusCode = 500;
+  let errorMessage = 'Internal server error';
+
+  if (error instanceof Error) {
+    errorMessage = error.message;
+    if (error.message.includes('session')) {
+      errorCode = -32001;
+      statusCode = 400;
+    } else if (error.message.includes('parse') || error.message.includes('JSON')) {
+      errorCode = -32005;
+      statusCode = 400;
+    } else if (error.message.includes('method')) {
+      errorCode = -32002;
+      statusCode = 404;
+    } else if (error.message.includes('parameter')) {
+      errorCode = -32003;
+      statusCode = 400;
     }
   }
 
-  if (testCustom) {
-    console.log('Initializing custom test...');
-    try {
-      await initActualApi();
+  res.status(statusCode).json({
+    error: 'MCP Error',
+    message: errorMessage,
+    code: errorCode,
+    sessionId: sessionId !== 'unknown' ? sessionId : undefined,
+  });
+}
 
-      // Custom test here
-
-      // ----------------
-
-      console.log('Custom test passed.');
-      await shutdownActualApi();
-      process.exit(0);
-    } catch (error) {
-      console.error('Custom test failed:', error);
-    }
+/**
+ * Run resource connectivity test and exit
+ */
+async function runResourceTest(): Promise<void> {
+  console.log('Testing resources...');
+  try {
+    await initActualApi();
+    const accounts = await fetchAllAccounts();
+    console.log(`Found ${accounts.length} account(s).`);
+    accounts.forEach((account) => {
+      console.log(`- ${account.id}: ${account.name}`);
+    });
+    console.log('Resource test passed.');
+    await shutdownActualApi();
+    process.exit(0);
+  } catch (error) {
+    console.error('Resource test failed:', error);
+    process.exit(1);
   }
+}
 
-  // Validate environment variables
+/**
+ * Run custom development test and exit
+ */
+async function runCustomTest(): Promise<void> {
+  console.log('Initializing custom test...');
+  try {
+    await initActualApi();
+
+    // Custom test logic can be placed here during development
+
+    console.log('Custom test passed.');
+    await shutdownActualApi();
+    process.exit(0);
+  } catch (error) {
+    console.error('Custom test failed:', error);
+    process.exit(1);
+  }
+}
+
+/**
+ * Validate required environment variables and print warnings
+ */
+function validateEnv(): void {
   if (!process.env.ACTUAL_DATA_DIR && !process.env.ACTUAL_SERVER_URL) {
     console.error('Warning: Neither ACTUAL_DATA_DIR nor ACTUAL_SERVER_URL is set.');
   }
@@ -192,39 +339,50 @@ async function main(): Promise<void> {
     console.error('Warning: ACTUAL_SERVER_URL is set but ACTUAL_PASSWORD is not.');
     console.error('If your server requires authentication, initialization will fail.');
   }
+}
 
-  // Initialize Actual Budget API at startup
-  if (!testResources && !testCustom) {
-    // * CRITICAL: In stdio mode, setup safe logging BEFORE initialization
-    // * This ensures all logs during initialization go through MCP logging
-    if (!useSse && !stdioTransportConnected) {
-      const transport = new StdioServerTransport();
-      await server.connect(transport);
-      setupSafeLogging(server);
-      stdioTransportConnected = true;
-    }
+/**
+ * Initialize Actual Budget API if not in test mode
+ */
+async function initializeApi(testResources: boolean, testCustom: boolean, useSse: boolean): Promise<void> {
+  if (testResources || testCustom) return;
 
-    try {
-      await initActualApi();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorStr = errorMessage.toLowerCase();
-
-      // * Migration errors are already handled in initActualApi with detailed guidance
-      // * For other errors, provide general guidance
-      if (!errorStr.includes('out of sync') && !errorStr.includes('out-of-sync') && !errorStr.includes('migration')) {
-        console.error('✗ Failed to initialize Actual Budget API:', error);
-        console.error('Server cannot start without Actual Budget connection');
-        console.error('');
-        console.error('Common causes:');
-        console.error('  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD');
-        console.error('  - Actual Budget server is not running or not accessible');
-        console.error('  - Network connectivity issues');
-        console.error('  - Invalid ACTUAL_BUDGET_SYNC_ID');
-      }
-      process.exit(1);
-    }
+  // * CRITICAL: In stdio mode, setup safe logging BEFORE initialization
+  if (!useSse && !stdioTransportConnected) {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    setupSafeLogging(server);
+    stdioTransportConnected = true;
   }
+
+  try {
+    await initActualApi();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStr = errorMessage.toLowerCase();
+
+    if (!errorStr.includes('out of sync') && !errorStr.includes('out-of-sync') && !errorStr.includes('migration')) {
+      console.error('✗ Failed to initialize Actual Budget API:', error);
+      console.error(
+        'Server cannot start without Actual Budget connection\n\nCommon causes:\n  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD\n  - Actual Budget server is not running or not accessible\n  - Network connectivity issues\n  - Invalid ACTUAL_BUDGET_SYNC_ID'
+      );
+    }
+    process.exit(1);
+  }
+}
+
+// Start the server
+async function main(): Promise<void> {
+  if (testResources) {
+    await runResourceTest();
+  }
+
+  if (testCustom) {
+    await runCustomTest();
+  }
+
+  validateEnv();
+  await initializeApi(!!testResources, !!testCustom, useSse);
 
   if (useSse) {
     // * Use SDK's createMcpExpressApp for DNS rebinding protection and modern setup
@@ -255,8 +413,7 @@ async function main(): Promise<void> {
       next();
     });
     // * Store SSE transports by session ID for proper session isolation
-    // * Each SSE connection gets its own transport instance
-    const sseTransports: Map<string, SSEServerTransport> = new Map();
+    // * Each SSE connection gets its own transport instance for proper session isolation already moved to top-level
 
     // * Favicon route - simple SVG favicon
     app.get('/favicon.ico', (_req: Request, res: Response) => {
@@ -324,120 +481,8 @@ async function main(): Promise<void> {
       `);
     });
 
-    // Note: Removed /mcp endpoint to match working implementation
-    // The working version only uses /sse and /messages endpoints
-    // If you need stateless HTTP transport, use /sse endpoint with SSE transport
-
-    app.get('/sse', bearerAuth, (req: Request, res: Response) => {
-      const clientIp = req.ip || req.socket.remoteAddress;
-      const sessionId = `sse-${randomUUID()}`;
-
-      console.error(`[SSE] Connection attempt from ${clientIp} (session: ${sessionId})`);
-      console.error(
-        `[SSE] Headers: ${JSON.stringify({ 'user-agent': req.headers['user-agent'], accept: req.headers.accept })}`
-      );
-
-      // * Create a new SSE transport for this connection
-      // * Each SSE connection gets its own transport instance for proper session isolation
-      const transport = new SSEServerTransport('/messages', res);
-
-      // * Get the actual session ID from the transport
-      // * SSEServerTransport generates its own session ID internally
-      const actualSessionId = (transport as any).sessionId || sessionId;
-
-      // * Store transport by actual session ID (use actualSessionId consistently)
-      sseTransports.set(actualSessionId, transport);
-
-      // * Set up cleanup handler using actualSessionId to match storage key
-      transport.onclose = () => {
-        console.error(`[SSE] Transport closed for session ${actualSessionId}, cleaning up`);
-        sseTransports.delete(actualSessionId);
-      };
-
-      console.error(`[SSE] Creating transport (session: ${actualSessionId})...`);
-      server
-        .connect(transport)
-        .then(() => {
-          console.error(`[SSE] ✅ Transport connected successfully (session: ${actualSessionId})`);
-        })
-        .catch((error) => {
-          console.error('[SSE] ❌ Error connecting SSE transport:', error);
-          console.error('[SSE] Error details:', error instanceof Error ? error.stack : String(error));
-          // * Use actualSessionId for cleanup to match storage key
-          sseTransports.delete(actualSessionId);
-          if (!res.headersSent) {
-            res.status(500).json({ error: 'Failed to establish SSE connection' });
-          }
-        });
-
-      // Clean up transport when connection closes
-      res.on('close', () => {
-        console.error(`[SSE] Connection closed (session: ${actualSessionId})`);
-        // * Use actualSessionId for cleanup to match storage key
-        if (sseTransports.has(actualSessionId)) {
-          try {
-            const t = sseTransports.get(actualSessionId);
-            if (t) {
-              t.close();
-            }
-          } catch (_e) {
-            // Ignore cleanup errors
-          }
-          sseTransports.delete(actualSessionId);
-        }
-      });
-    });
-    app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
-      // * Extract session ID from request (SSE transport includes it in the request)
-      // * The SDK's SSEServerTransport handles session ID extraction internally
-      // * We need to get it from the transport that was created for this session
-      const sessionId = req.query.sessionId as string | undefined;
-
-      if (!sessionId) {
-        // * Try to find transport by checking all active transports
-        // * This is a fallback - ideally the client should include sessionId
-        const transportsArray = Array.from(sseTransports.entries());
-        if (transportsArray.length === 1) {
-          // * Only one active transport - use it
-          const [, transport] = transportsArray[0];
-          await transport.handlePostMessage(req, res, req.body);
-          return;
-        } else if (transportsArray.length === 0) {
-          res.status(503).json({
-            error: 'Transport not initialized',
-            message: 'No active SSE connections. Connect to /sse first.',
-          });
-          return;
-        } else {
-          res.status(400).json({
-            error: 'Session ID required',
-            message: 'Multiple active sessions detected. Please include sessionId parameter.',
-          });
-          return;
-        }
-      }
-
-      const transport = sseTransports.get(sessionId);
-      if (!transport) {
-        res.status(404).json({
-          error: 'Session not found',
-          message: `No active transport found for session: ${sessionId}`,
-        });
-        return;
-      }
-
-      try {
-        await transport.handlePostMessage(req, res, req.body);
-      } catch (error) {
-        console.error(`[SSE] Error handling message for session ${sessionId}:`, error);
-        if (!res.headersSent) {
-          res.status(500).json({
-            error: 'Internal server error',
-            message: error instanceof Error ? error.message : 'Unknown error',
-          });
-        }
-      }
-    });
+    app.get('/sse', bearerAuth, handleSseConnection);
+    app.post('/messages', bearerAuth, handleSseMessages);
 
     // * Streamable HTTP transport endpoint - modern MCP transport
     // Create a single handler instance for all /mcp requests
@@ -445,49 +490,12 @@ async function main(): Promise<void> {
 
     // Handle all HTTP methods for /mcp endpoint (GET, POST, DELETE)
     app.all('/mcp', bearerAuth, async (req: Request, res: Response) => {
-      const clientIp = req.ip || req.socket.remoteAddress;
-      // * Use MCP standard header for session ID
-      const sessionId = req.headers['mcp-session-id'] || req.headers['x-session-id'] || 'unknown';
-
-      console.error(`[MCP] ${req.method} request from ${clientIp} (session: ${sessionId})`);
-
+      const sessionId = (req.headers['mcp-session-id'] || req.headers['x-session-id'] || 'unknown') as string;
       try {
         await streamableHandler.handleRequest(req, res, req.body);
       } catch (error) {
         console.error(`[MCP] Error handling request (session: ${sessionId}):`, error);
-
-        if (!res.headersSent) {
-          // Determine appropriate error code
-          let errorCode = -32004; // Internal error
-          let statusCode = 500;
-          let errorMessage = 'Internal server error';
-
-          if (error instanceof Error) {
-            errorMessage = error.message;
-
-            // Map specific errors to MCP error codes
-            if (error.message.includes('session')) {
-              errorCode = -32001; // Invalid session
-              statusCode = 400;
-            } else if (error.message.includes('parse') || error.message.includes('JSON')) {
-              errorCode = -32005; // Parse error
-              statusCode = 400;
-            } else if (error.message.includes('method')) {
-              errorCode = -32002; // Method not found
-              statusCode = 404;
-            } else if (error.message.includes('parameter')) {
-              errorCode = -32003; // Invalid parameters
-              statusCode = 400;
-            }
-          }
-
-          res.status(statusCode).json({
-            error: 'MCP Error',
-            message: errorMessage,
-            code: errorCode,
-            sessionId: sessionId !== 'unknown' ? sessionId : undefined,
-          });
-        }
+        mapMcpError(error, sessionId, res);
       }
     });
 

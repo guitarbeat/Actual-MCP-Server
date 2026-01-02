@@ -74,90 +74,48 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
    * Normalize transaction data: resolve names to IDs and convert amounts to cents
    */
   private async normalizeData(data: TransactionData, isCreate: boolean): Promise<NormalizedTransactionData> {
-    // Validate required fields for create
     if (isCreate) {
-      if (!data.account) {
-        throw new Error('account is required for create operation');
-      }
-      if (!data.date) {
-        throw new Error('date is required for create operation');
-      }
-      if (data.amount === undefined) {
-        throw new Error('amount is required for create operation');
-      }
-
-      // Validate date format
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
-        throw new Error('date must be in YYYY-MM-DD format');
-      }
+      this.validateCreateData(data);
     }
 
     const normalized: NormalizedTransactionData = {
-      accountId: '',
+      accountId: await nameResolver.resolveAccount(data.account || ''),
       date: data.date || '',
-      amount: 0,
+      amount: data.amount !== undefined ? convertAmountToCents(data.amount) : 0,
+      payeeId: data.payee ? await nameResolver.resolvePayee(data.payee) : null,
+      categoryId: data.category ? await nameResolver.resolveCategory(data.category) : null,
+      notes: data.notes,
+      cleared: data.cleared,
     };
 
-    // Resolve account name to ID
-    if (data.account) {
-      normalized.accountId = await nameResolver.resolveAccount(data.account);
-    }
-
-    // Resolve payee name to ID if provided
-    if (data.payee) {
-      normalized.payeeId = await nameResolver.resolvePayee(data.payee);
-    } else {
-      normalized.payeeId = null;
-    }
-
-    // Resolve category name to ID if provided
-    if (data.category) {
-      normalized.categoryId = await nameResolver.resolveCategory(data.category);
-    } else {
-      normalized.categoryId = null;
-    }
-
-    // Convert amount to cents
-    if (data.amount !== undefined) {
-      normalized.amount = convertAmountToCents(data.amount);
-    }
-
-    // Copy optional fields
-    if (data.notes !== undefined) {
-      normalized.notes = data.notes;
-    }
-    if (data.cleared !== undefined) {
-      normalized.cleared = data.cleared;
-    }
-
-    // Normalize subtransactions if provided
     if (data.subtransactions && data.subtransactions.length > 0) {
-      normalized.subtransactions = await Promise.all(
-        data.subtransactions.map(async (sub) => {
-          const normalizedSub: {
-            amount: number;
-            categoryId?: string | null;
-            notes?: string;
-          } = {
-            amount: convertAmountToCents(sub.amount),
-          };
-
-          if (sub.category) {
-            normalizedSub.categoryId = await nameResolver.resolveCategory(sub.category);
-          } else {
-            normalizedSub.categoryId = null;
-          }
-
-          if (sub.notes !== undefined) {
-            normalizedSub.notes = sub.notes;
-          }
-
-          return normalizedSub;
-        })
-      );
+      normalized.subtransactions = await this.normalizeSubtransactions(data.subtransactions);
     }
 
     return normalized;
+  }
+
+  private validateCreateData(data: TransactionData): void {
+    if (!data.account) throw new Error('account is required for create operation');
+    if (!data.date) throw new Error('date is required for create operation');
+    if (data.amount === undefined) throw new Error('amount is required for create operation');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+      throw new Error('date must be in YYYY-MM-DD format');
+    }
+  }
+
+  private async normalizeSubtransactions(
+    subtransactions: TransactionData['subtransactions']
+  ): Promise<Array<{ amount: number; categoryId: string | null; notes?: string }>> {
+    if (!subtransactions) return [];
+
+    return await Promise.all(
+      subtransactions.map(async (sub) => ({
+        amount: convertAmountToCents(sub.amount),
+        categoryId: sub.category ? await nameResolver.resolveCategory(sub.category) : null,
+        notes: sub.notes,
+      }))
+    );
   }
 
   /**
