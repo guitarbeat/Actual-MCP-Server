@@ -42,165 +42,76 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
    * @returns The ID of the created schedule
    */
   async create(data: ScheduleData): Promise<string> {
-    // Validate data
     const validated = ScheduleDataSchema.parse(data);
+    if (!validated.date) throw new Error('date field is required for schedule creation');
 
-    // Ensure date field is present (required)
-    if (!validated.date) {
-      throw new Error('date field is required for schedule creation');
-    }
-
-    // Transform data for API: resolve names to IDs and convert amounts
-    const apiData: Record<string, unknown> = {
-      date: validated.date,
-    };
-
-    // Resolve account name to ID if provided
-    if (validated.accountId) {
-      apiData.account = await nameResolver.resolveAccount(validated.accountId);
-    } else if (validated.account !== undefined && validated.account !== null) {
-      apiData.account = await nameResolver.resolveAccount(validated.account);
-    }
-
-    // Add optional fields
-    if (validated.name !== undefined) {
-      apiData.name = validated.name;
-    }
-
-    // Convert amount to cents if it's a number
-    if (validated.amount !== undefined) {
-      if (typeof validated.amount === 'number') {
-        apiData.amount = convertAmountToCents(validated.amount);
-      } else {
-        // For isbetween, convert both numbers
-        apiData.amount = {
-          num1: convertAmountToCents(validated.amount.num1),
-          num2: convertAmountToCents(validated.amount.num2),
-        };
-      }
-    }
-
-    if (validated.amountOp !== undefined) {
-      apiData.amountOp = validated.amountOp;
-    }
-
-    // Resolve payee name to ID if provided
-    if (validated.payee !== undefined) {
-      if (validated.payee) {
-        apiData.payee = await nameResolver.resolvePayee(validated.payee);
-      } else {
-        apiData.payee = null;
-      }
-    }
-
-    // Resolve category name to ID if provided
-    if (validated.category !== undefined) {
-      if (validated.category) {
-        apiData.category = await nameResolver.resolveCategory(validated.category);
-      } else {
-        apiData.category = null;
-      }
-    }
-
-    if (validated.notes !== undefined) {
-      apiData.notes = validated.notes;
-    }
-    if (validated.posts_transaction !== undefined) {
-      apiData.posts_transaction = validated.posts_transaction;
-    }
-
-    // Explicitly exclude fields that should not be sent
-    // (rule, next_date, completed are auto-managed by API)
+    const apiData: Record<string, unknown> = { date: validated.date };
+    await this.applyScheduleTransformations(apiData, validated);
 
     try {
-      const scheduleId = await createSchedule(apiData);
-      return scheduleId;
+      return await createSchedule(apiData);
     } catch (error) {
       this.handleScheduleApiError('create', error);
     }
   }
 
-  /**
-   * Update an existing schedule
-   * @param id - The schedule ID
-   * @param data - Schedule update data
-   */
   async update(id: string, data: ScheduleUpdateData): Promise<void> {
-    // Validate data allowing partial updates
     const validated = ScheduleUpdateDataSchema.parse(data);
-
-    // Transform data for API: resolve names to IDs and convert amounts
     const apiData: Record<string, unknown> = {};
-
-    // Resolve account name to ID if provided
-    if (validated.accountId !== undefined) {
-      apiData.account = await nameResolver.resolveAccount(validated.accountId);
-    } else if (validated.account !== undefined) {
-      if (validated.account !== null) {
-        apiData.account = await nameResolver.resolveAccount(validated.account);
-      } else {
-        apiData.account = null;
-      }
-    }
-
-    // Add optional fields (only include if provided)
-    if (validated.name !== undefined) {
-      apiData.name = validated.name;
-    }
-    if (validated.date !== undefined) {
-      apiData.date = validated.date;
-    }
-
-    // Convert amount to cents if it's a number
-    if (validated.amount !== undefined) {
-      if (typeof validated.amount === 'number') {
-        apiData.amount = convertAmountToCents(validated.amount);
-      } else {
-        // For isbetween, convert both numbers
-        apiData.amount = {
-          num1: convertAmountToCents(validated.amount.num1),
-          num2: convertAmountToCents(validated.amount.num2),
-        };
-      }
-    }
-
-    if (validated.amountOp !== undefined) {
-      apiData.amountOp = validated.amountOp;
-    }
-
-    // Resolve payee name to ID if provided
-    if (validated.payee !== undefined) {
-      if (validated.payee) {
-        apiData.payee = await nameResolver.resolvePayee(validated.payee);
-      } else {
-        apiData.payee = null;
-      }
-    }
-
-    // Resolve category name to ID if provided
-    if (validated.category !== undefined) {
-      if (validated.category) {
-        apiData.category = await nameResolver.resolveCategory(validated.category);
-      } else {
-        apiData.category = null;
-      }
-    }
-
-    if (validated.notes !== undefined) {
-      apiData.notes = validated.notes;
-    }
-    if (validated.posts_transaction !== undefined) {
-      apiData.posts_transaction = validated.posts_transaction;
-    }
-
-    // Explicitly exclude fields that should not be sent
-    // (rule, next_date, completed are auto-managed by API)
+    await this.applyScheduleTransformations(apiData, validated);
 
     try {
       await updateSchedule(id, apiData);
     } catch (error) {
       this.handleScheduleApiError('update', error);
     }
+  }
+
+  private async applyScheduleTransformations(
+    apiData: Record<string, unknown>,
+    validated: ScheduleData | ScheduleUpdateData
+  ): Promise<void> {
+    await this.resolveScheduleAccounts(apiData, validated);
+    if (validated.name !== undefined) apiData.name = validated.name;
+    if (validated.date !== undefined) apiData.date = validated.date;
+
+    if (validated.amount !== undefined) {
+      apiData.amount = this.transformScheduleAmount(validated.amount);
+    }
+
+    if (validated.amountOp !== undefined) apiData.amountOp = validated.amountOp;
+
+    if (validated.payee !== undefined) {
+      apiData.payee = validated.payee ? await nameResolver.resolvePayee(validated.payee) : null;
+    }
+
+    if (validated.category !== undefined) {
+      apiData.category = validated.category ? await nameResolver.resolveCategory(validated.category) : null;
+    }
+
+    if (validated.notes !== undefined) apiData.notes = validated.notes;
+    if (validated.posts_transaction !== undefined) apiData.posts_transaction = validated.posts_transaction;
+  }
+
+  private async resolveScheduleAccounts(
+    apiData: Record<string, unknown>,
+    validated: ScheduleData | ScheduleUpdateData
+  ): Promise<void> {
+    if ('accountId' in validated && validated.accountId) {
+      apiData.account = await nameResolver.resolveAccount(validated.accountId);
+    } else if (validated.account !== undefined && validated.account !== null) {
+      apiData.account = await nameResolver.resolveAccount(validated.account);
+    }
+  }
+
+  private transformScheduleAmount(amount: number | { num1: number; num2: number }): unknown {
+    if (typeof amount === 'number') {
+      return convertAmountToCents(amount);
+    }
+    return {
+      num1: convertAmountToCents(amount.num1),
+      num2: convertAmountToCents(amount.num2),
+    };
   }
 
   /**

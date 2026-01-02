@@ -51,36 +51,11 @@ export class GetAccountsDataFetcher {
   async fetchAccounts(options: FetchAccountsOptions): Promise<AccountWithBalance[]> {
     let accounts: Account[] = await fetchAllAccounts();
 
-    // Filter by account ID if specified (supports both ID and name with partial matching)
     if (options.accountId) {
-      // If it looks like an ID, try exact match first
       if (isId(options.accountId)) {
-        try {
-          const resolvedId = await nameResolver.resolveAccount(options.accountId);
-          accounts = accounts.filter((a) => a.id === resolvedId);
-        } catch {
-          // If exact match fails for ID-like string, return empty (invalid ID)
-          accounts = [];
-        }
+        accounts = await this.resolveAccountsById(accounts, options.accountId);
       } else {
-        // For name-like strings, try exact match first, then partial match
-        const normalizedInput = normalizeName(options.accountId);
-        let matchedAccounts = accounts.filter((a) => normalizeName(a.name) === normalizedInput);
-
-        // If no exact match, try partial matching
-        if (matchedAccounts.length === 0) {
-          matchedAccounts = accounts.filter((a) => normalizeName(a.name).includes(normalizedInput));
-        }
-
-        accounts = matchedAccounts;
-
-        // If still no matches, throw error with helpful message
-        if (accounts.length === 0) {
-          const availableAccounts = (await fetchAllAccounts()).map((a: Account) => a.name).join(', ');
-          throw new Error(
-            `Account '${options.accountId}' not found. Available accounts: ${availableAccounts || 'none'}`
-          );
-        }
+        accounts = await this.resolveAccountsByName(accounts, options.accountId);
       }
     }
 
@@ -95,5 +70,29 @@ export class GetAccountsDataFetcher {
     }
 
     return accounts as AccountWithBalance[];
+  }
+  private async resolveAccountsById(accounts: Account[], accountId: string): Promise<Account[]> {
+    try {
+      const resolvedId = await nameResolver.resolveAccount(accountId);
+      return accounts.filter((a) => a.id === resolvedId);
+    } catch {
+      return [];
+    }
+  }
+
+  private async resolveAccountsByName(accounts: Account[], accountId: string): Promise<Account[]> {
+    const normalizedInput = normalizeName(accountId);
+    let matchedAccounts = accounts.filter((a) => normalizeName(a.name) === normalizedInput);
+
+    if (matchedAccounts.length === 0) {
+      matchedAccounts = accounts.filter((a) => normalizeName(a.name).includes(normalizedInput));
+    }
+
+    if (matchedAccounts.length === 0) {
+      const availableAccounts = (await fetchAllAccounts()).map((a: Account) => a.name).join(', ');
+      throw new Error(`Account '${accountId}' not found. Available accounts: ${availableAccounts || 'none'}`);
+    }
+
+    return matchedAccounts;
   }
 }

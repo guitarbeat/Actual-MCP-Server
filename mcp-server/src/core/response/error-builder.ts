@@ -13,6 +13,34 @@ import type {
 } from './types.js';
 
 /**
+ * Get a specific suggestion based on the field name
+ * @param field - The field name that failed validation
+ * @returns A helpful suggestion string
+ */
+function getFieldSuggestion(field: string): string {
+  const f = field.toLowerCase();
+  if (f.includes('id')) {
+    return `The '${field}' field must be a valid UUID. Use the appropriate listing tool (e.g., get-accounts, get-categories) to find valid IDs.`;
+  }
+  if (f.includes('date')) {
+    return `The '${field}' field must be in ISO date format (YYYY-MM-DD). Example: 2024-01-15`;
+  }
+  if (f.includes('amount')) {
+    return `The '${field}' field must be a number in milliunits (e.g., 12500 for $125.00).`;
+  }
+  if (f.includes('month')) {
+    return `The '${field}' field must be in YYYY-MM format. Example: 2024-08`;
+  }
+  if (f.includes('categoryname')) {
+    return `The '${field}' field allows partial matching (e.g., 'groc' matches 'Groceries').`;
+  }
+  if (f.includes('payeename')) {
+    return `The '${field}' field allows partial matching (e.g., 'amazon' matches 'Amazon.com').`;
+  }
+  return 'Review the tool documentation for valid input formats and ensure all required fields are provided correctly.';
+}
+
+/**
  * Create a validation error response with clear, actionable guidance
  * @param message - The validation error message
  * @param options - Additional context for the validation error
@@ -34,25 +62,9 @@ export function validationError(message: string, options: ValidationErrorOptions
     detailedMessage += ` (expected: ${expected})`;
   }
 
-  // Provide more specific suggestions based on the field type
-  let suggestion =
-    'Review the tool documentation for valid input formats and ensure all required fields are provided correctly.';
-
-  if (field) {
-    if (field.toLowerCase().includes('id')) {
-      suggestion = `The '${field}' field must be a valid UUID. Use the appropriate listing tool (e.g., get-accounts, get-categories) to find valid IDs.`;
-    } else if (field.toLowerCase().includes('date')) {
-      suggestion = `The '${field}' field must be in ISO date format (YYYY-MM-DD). Example: 2024-01-15`;
-    } else if (field.toLowerCase().includes('amount')) {
-      suggestion = `The '${field}' field must be a number in milliunits (e.g., 12500 for $125.00).`;
-    } else if (field.toLowerCase().includes('month')) {
-      suggestion = `The '${field}' field must be in YYYY-MM format. Example: 2024-08`;
-    } else if (field.toLowerCase().includes('categoryname')) {
-      suggestion = `The '${field}' field allows partial matching (e.g., 'groc' matches 'Groceries').`;
-    } else if (field.toLowerCase().includes('payeename')) {
-      suggestion = `The '${field}' field allows partial matching (e.g., 'amazon' matches 'Amazon.com').`;
-    }
-  }
+  const suggestion = field
+    ? getFieldSuggestion(field)
+    : 'Review the tool documentation for valid input formats and ensure all required fields are provided correctly.';
 
   return error(detailedMessage, suggestion);
 }

@@ -22,8 +22,8 @@ export interface CacheStats {
  * Uses lru-cache library for optimized LRU implementation.
  */
 export class CacheService {
-  private cache: LRUCache<string, any>;
-  private pendingPromises: Map<string, Promise<any>>;
+  private cache: LRUCache<string, unknown>;
+  private pendingPromises: Map<string, Promise<unknown>>;
   private hits: number;
   private misses: number;
   private readonly enabled: boolean;
@@ -33,7 +33,7 @@ export class CacheService {
     const defaultTtl = parseInt(process.env.CACHE_TTL_SECONDS || '300', 10) * 1000;
     this.enabled = process.env.CACHE_ENABLED !== 'false';
 
-    this.cache = new LRUCache<string, any>({
+    this.cache = new LRUCache<string, unknown>({
       max: maxEntries,
       ttl: defaultTtl,
       updateAgeOnGet: true, // LRU behavior - update access time on get

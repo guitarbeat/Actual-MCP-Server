@@ -22,7 +22,7 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
 
     let token: string | undefined;
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader?.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     } else if (typeof queryToken === 'string') {
       token = queryToken;

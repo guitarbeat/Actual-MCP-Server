@@ -644,7 +644,8 @@ export async function addTransactions(
   options?: { learnCategories?: boolean; runTransfers?: boolean }
 ): Promise<'ok'> {
   return ensureConnection(async () => {
-    const result = await api.addTransactions(accountId, transactions as any, options);
+    // @ts-expect-error - Transactions array structure matches what Actual API expects internally
+    const result = await api.addTransactions(accountId, transactions, options);
     cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
     return result;
@@ -966,7 +967,10 @@ export async function runImport(file: string, _importType?: string): Promise<unk
     if (typeof api.runImport === 'function') {
       // * API signature changed - runImport now takes a function callback
       // * Note: This may need adjustment based on actual API signature
-      return (api.runImport as any)(() => Promise.resolve(), file);
+      return (api.runImport as (cb: () => Promise<void>, file: string) => Promise<unknown>)(
+        () => Promise.resolve(),
+        file
+      );
     }
     throw new Error('runImport method is not available in this version of the API');
   });
@@ -992,7 +996,7 @@ export async function runQuery(query: string): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.runQuery === 'function') {
       // * API signature changed - runQuery now takes query string directly or different format
-      return (api.runQuery as any)(query);
+      return (api.runQuery as (q: string) => Promise<unknown>)(query);
     }
     throw new Error('runQuery method is not available in this version of the API');
   });

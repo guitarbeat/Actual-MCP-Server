@@ -7,6 +7,7 @@ import {
   ListResourcesRequestSchema,
   ListResourceTemplatesRequestSchema,
   ReadResourceRequestSchema,
+  type ReadResourceResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import {
   getAccountBalance,
@@ -101,6 +102,121 @@ export const RESOURCE_TEMPLATES = [
   },
 ];
 
+/**
+ * Handle listing all accounts
+ */
+async function handleAccountsResource(uri: string): Promise<ReadResourceResult> {
+  const accounts: Account[] = await getAccounts();
+
+  const accountsText: string = accounts
+    .map((account) => {
+      const closed = account.closed ? ' (CLOSED)' : '';
+      const offBudget = account.offbudget ? ' (OFF BUDGET)' : '';
+      const balance = account.balance !== undefined ? ` - ${formatAmount(account.balance)}` : '';
+
+      return `- ${account.name}${closed}${offBudget}${balance} [ID: ${account.id}]`;
+    })
+    .join('\n');
+
+  return {
+    contents: [
+      {
+        uri,
+        text: `# Actual Budget Accounts\n\n${accountsText}\n\nTotal Accounts: ${accounts.length}`,
+        mimeType: 'text/markdown',
+      },
+    ],
+  };
+}
+
+/**
+ * Handle individual account details
+ */
+async function handleAccountDetailsResource(uri: string, accountId: string): Promise<ReadResourceResult> {
+  const accounts: Account[] = await getAccounts();
+  const account: Account | undefined = accounts.find((a) => a.id === accountId);
+
+  if (!account) {
+    return {
+      contents: [
+        {
+          uri,
+          text: `Error: Account with ID ${accountId} not found`,
+          mimeType: 'text/plain',
+        },
+      ],
+    };
+  }
+
+  const balance: number = await getAccountBalance(accountId);
+  const formattedBalance: string = formatAmount(balance);
+
+  const details = `# Account: ${account.name}
+
+ID: ${account.id}
+Type: ${account.type || 'Unknown'}
+Balance: ${formattedBalance}
+On Budget: ${!account.offbudget}
+Status: ${account.closed ? 'Closed' : 'Open'}
+
+To view transactions for this account, use the get-transactions tool.`;
+
+  return {
+    contents: [
+      {
+        uri,
+        text: details,
+        mimeType: 'text/markdown',
+      },
+    ],
+  };
+}
+
+/**
+ * Handle account transactions
+ */
+async function handleAccountTransactionsResource(uri: string, accountId: string): Promise<ReadResourceResult> {
+  const { startDate, endDate } = getDateRange();
+  const transactions: Transaction[] = await getTransactions(accountId, startDate, endDate);
+
+  if (!transactions || transactions.length === 0) {
+    return {
+      contents: [
+        {
+          uri,
+          text: `No transactions found for account ID ${accountId} between ${startDate} and ${endDate}`,
+          mimeType: 'text/plain',
+        },
+      ],
+    };
+  }
+
+  const header = '| Date | Payee | Category | Amount | Notes |\n| ---- | ----- | -------- | ------ | ----- |\n';
+  const rows: string = transactions
+    .map((t) => {
+      const amount: string = formatAmount(t.amount);
+      const date: string = formatDate(t.date);
+      const payee: string = t.payee_name || '(No payee)';
+      const category: string = t.category_name || '(Uncategorized)';
+      const notes: string = t.notes || '';
+
+      return `| ${date} | ${payee} | ${category} | ${amount} | ${notes} |`;
+    })
+    .join('\n');
+
+  const text = `# Transactions for Account\n\nTime period: ${startDate} to ${endDate}\nTotal Transactions: ${transactions.length}\n\n${header}${rows}`;
+
+  return {
+    contents: [
+      {
+        uri,
+        text,
+        mimeType: 'text/markdown',
+      },
+    ],
+  };
+}
+
 export const setupResources = (server: Server): void => {
   /**
    * Handler for listing available resources (accounts and budgets)
@@ -148,201 +264,89 @@ export const setupResources = (server: Server): void => {
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     try {
       await initActualApi();
-      const uri: string = request.params.uri;
-      const url = new URL(uri);
-
-      // Parse the path to determine what to return
-      const pathParts: string[] = url.pathname.split('/').filter(Boolean);
-
-      // If the path is just "accounts", return list of all accounts
-      if (pathParts.length === 0 && url.hostname === 'accounts') {
-        const accounts: Account[] = await getAccounts();
-
-        const accountsText: string = accounts
-          .map((account) => {
-            const closed = account.closed ? ' (CLOSED)' : '';
-            const offBudget = account.offbudget ? ' (OFF BUDGET)' : '';
-            const balance = account.balance !== undefined ? ` - ${formatAmount(account.balance)}` : '';
-
-            return `- ${account.name}${closed}${offBudget}${balance} [ID: ${account.id}]`;
-          })
-          .join('\n');
-
-        return {
-          contents: [
-            {
-              uri: uri,
-              text: `# Actual Budget Accounts\n\n${accountsText}\n\nTotal Accounts: ${accounts.length}`,
-              mimeType: 'text/markdown',
-            },
-          ],
-        };
-      }
-
-      // If the path is "accounts/{id}", return account details
-      if (pathParts.length === 1 && url.hostname === 'accounts') {
-        const accountId: string = pathParts[0];
-        const accounts: Account[] = await getAccounts();
-        const account: Account | undefined = accounts.find((a) => a.id === accountId);
-
-        if (!account) {
-          return {
-            contents: [
-              {
-                uri: uri,
-                text: `Error: Account with ID ${accountId} not found`,
-                mimeType: 'text/plain',
-              },
-            ],
-          };
-        }
-
-        const balance: number = await getAccountBalance(accountId);
-        const formattedBalance: string = formatAmount(balance);
-
-        const details = `# Account: ${account.name}
-
-ID: ${account.id}
-Type: ${account.type || 'Unknown'}
-Balance: ${formattedBalance}
-On Budget: ${!account.offbudget}
-Status: ${account.closed ? 'Closed' : 'Open'}
-
-To view transactions for this account, use the get-transactions tool.`;
-
-        return {
-          contents: [
-            {
-              uri: uri,
-              text: details,
-              mimeType: 'text/markdown',
-            },
-          ],
-        };
-      }
-
-      // If the path is "accounts/{id}/transactions", return transactions
-      if (pathParts.length === 2 && pathParts[1] === 'transactions' && url.hostname === 'accounts') {
-        const accountId: string = pathParts[0];
-        const { startDate, endDate } = getDateRange();
-        const transactions: Transaction[] = await getTransactions(accountId, startDate, endDate);
-
-        if (!transactions || transactions.length === 0) {
-          return {
-            contents: [
-              {
-                uri: uri,
-                text: `No transactions found for account ID ${accountId} between ${startDate} and ${endDate}`,
-                mimeType: 'text/plain',
-              },
-            ],
-          };
-        }
-
-        // Create a markdown table of transactions
-        const header = '| Date | Payee | Category | Amount | Notes |\n| ---- | ----- | -------- | ------ | ----- |\n';
-        const rows: string = transactions
-          .map((t) => {
-            const amount: string = formatAmount(t.amount);
-            const date: string = formatDate(t.date);
-            const payee: string = t.payee_name || '(No payee)';
-            const category: string = t.category_name || '(Uncategorized)';
-            const notes: string = t.notes || '';
-
-            return `| ${date} | ${payee} | ${category} | ${amount} | ${notes} |`;
-          })
-          .join('\n');
-
-        const text = `# Transactions for Account\n\nTime period: ${startDate} to ${endDate}\nTotal Transactions: ${transactions.length}\n\n${header}${rows}`;
-
-        return {
-          contents: [
-            {
-              uri: uri,
-              text: text,
-              mimeType: 'text/markdown',
-            },
-          ],
-        };
-      }
-
-      // If the path is just "budgets", return list of relevant budget months
-      if (pathParts.length === 0 && url.hostname === 'budgets') {
-        const allMonths: string[] = await getBudgetMonths();
-        const months: string[] = filterRelevantBudgetMonths(allMonths);
-
-        const monthsText: string = months.map((month) => `- ${month}`).join('\n');
-
-        return {
-          contents: [
-            {
-              uri: uri,
-              text: `# Actual Budget Months\n\nShowing relevant months (3 months back, current month, 2 months forward):\n\n${monthsText}\n\nTotal Months: ${months.length}`,
-              mimeType: 'text/markdown',
-            },
-          ],
-        };
-      }
-
-      // If the path is "budgets/{month}", return budget details
-      if (pathParts.length === 1 && url.hostname === 'budgets') {
-        const month: string = pathParts[0];
-
-        // Validate month format (YYYY-MM)
-        if (!/^\d{4}-\d{2}$/.test(month)) {
-          return {
-            contents: [
-              {
-                uri: uri,
-                text: `Error: Invalid month format. Expected YYYY-MM format (e.g., 2024-01), got: ${month}`,
-                mimeType: 'text/plain',
-              },
-            ],
-          };
-        }
-
-        try {
-          const budgetData = await getBudgetMonth(month);
-          const formattedBudget = formatBudgetMonth(budgetData as BudgetMonthData, month);
-
-          return {
-            contents: [
-              {
-                uri: uri,
-                text: formattedBudget,
-                mimeType: 'text/markdown',
-              },
-            ],
-          };
-        } catch (_error) {
-          return {
-            contents: [
-              {
-                uri: uri,
-                text: `Error: Budget data for month ${month} not found or could not be retrieved.`,
-                mimeType: 'text/plain',
-              },
-            ],
-          };
-        }
-      }
-
-      // If we don't recognize the URI pattern, return an error
-      return {
-        contents: [
-          {
-            uri: uri,
-            text: `Error: Unrecognized resource URI: ${uri}`,
-            mimeType: 'text/plain',
-          },
-        ],
-      };
+      return await handleResourceRequest(request.params.uri);
     } catch (error) {
       console.error('Error reading resource:', error);
       throw error;
     }
   });
 };
+
+/**
+ * Route resource request based on URI
+ */
+async function handleResourceRequest(uri: string): Promise<ReadResourceResult> {
+  const url = new URL(uri);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+
+  if (url.hostname === 'accounts') {
+    return await routeAccountsResource(uri, pathParts);
+  }
+
+  if (url.hostname === 'budgets') {
+    return await routeBudgetsResource(uri, pathParts);
+  }
+
+  return {
+    contents: [{ uri, text: `Error: Unrecognized resource URI: ${uri}`, mimeType: 'text/plain' }],
+  };
+}
+
+/**
+ * Route actual://accounts requests
+ */
+async function routeAccountsResource(uri: string, pathParts: string[]): Promise<ReadResourceResult> {
+  if (pathParts.length === 0) return await handleAccountsResource(uri);
+  if (pathParts.length === 1) return await handleAccountDetailsResource(uri, pathParts[0]);
+  if (pathParts.length === 2 && pathParts[1] === 'transactions') {
+    return await handleAccountTransactionsResource(uri, pathParts[0]);
+  }
+  return {
+    contents: [{ uri, text: `Error: Unrecognized account resource: ${uri}`, mimeType: 'text/plain' }],
+  };
+}
+
+/**
+ * Route actual://budgets requests
+ */
+async function routeBudgetsResource(uri: string, pathParts: string[]): Promise<ReadResourceResult> {
+  if (pathParts.length === 0) {
+    const allMonths = await getBudgetMonths();
+    const months = filterRelevantBudgetMonths(allMonths);
+    return {
+      contents: [
+        {
+          uri,
+          text: `# Actual Budget Months\n\nShowing relevant months (3 months back, current month, 2 months forward):\n\n${months.map((m) => `- ${m}`).join('\n')}\n\nTotal Months: ${months.length}`,
+          mimeType: 'text/markdown',
+        },
+      ],
+    };
+  }
+
+  if (pathParts.length === 1) {
+    const month = pathParts[0];
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+      return {
+        contents: [{ uri, text: `Error: Invalid month format (YYYY-MM): ${month}`, mimeType: 'text/plain' }],
+      };
+    }
+    try {
+      const budgetData = await getBudgetMonth(month);
+      return {
+        contents: [{ uri, text: formatBudgetMonth(budgetData as BudgetMonthData, month), mimeType: 'text/markdown' }],
+      };
+    } catch (_e) {
+      return {
+        contents: [{ uri, text: `Error: Budget data not found for ${month}`, mimeType: 'text/plain' }],
+      };
+    }
+  }
+
+  return {
+    contents: [{ uri, text: `Error: Unrecognized budget resource: ${uri}`, mimeType: 'text/plain' }],
+  };
+}
 
 interface CategoryData {
   name: string;
