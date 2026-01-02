@@ -22,8 +22,10 @@ export interface CacheStats {
  * Uses lru-cache library for optimized LRU implementation.
  */
 export class CacheService {
-  private cache: LRUCache<string, unknown>;
-  private pendingPromises: Map<string, Promise<unknown>>;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
+  private cache: LRUCache<string, any>;
+  // biome-ignore lint/suspicious/noExplicitAny: Pending promises can resolve to any type
+  private pendingPromises: Map<string, Promise<any>>;
   private hits: number;
   private misses: number;
   private readonly enabled: boolean;
@@ -33,7 +35,8 @@ export class CacheService {
     const defaultTtl = parseInt(process.env.CACHE_TTL_SECONDS || '300', 10) * 1000;
     this.enabled = process.env.CACHE_ENABLED !== 'false';
 
-    this.cache = new LRUCache<string, unknown>({
+    // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
+    this.cache = new LRUCache<string, any>({
       max: maxEntries,
       ttl: defaultTtl,
       updateAgeOnGet: true, // LRU behavior - update access time on get
@@ -43,6 +46,7 @@ export class CacheService {
     this.hits = 0;
     this.misses = 0;
   }
+
 
   /**
    * Get data from cache or fetch if missing/expired.
