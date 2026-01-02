@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createBearerAuth } from './bearer-auth.js';
-import type { Request, Response, NextFunction } from 'express';
 
 describe('createBearerAuth', () => {
   let req: Partial<Request>;

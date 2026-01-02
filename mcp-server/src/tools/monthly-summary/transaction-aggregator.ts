@@ -1,4 +1,4 @@
-import { parse, format, getYear, getMonth } from 'date-fns';
+import { format, getMonth, getYear, parse } from 'date-fns';
 import type { MonthData, Transaction } from '../../core/types/index.js';
 
 export class MonthlySummaryTransactionAggregator {

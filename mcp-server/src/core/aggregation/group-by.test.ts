@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { GroupAggregator } from './group-by.js';
+import { describe, expect, it } from 'vitest';
 import type { CategorySpending } from '../types/domain.js';
+import { GroupAggregator } from './group-by.js';
 
 describe('GroupAggregator', () => {
   it('should aggregate and sort correctly', () => {

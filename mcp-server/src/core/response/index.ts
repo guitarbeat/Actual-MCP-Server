@@ -3,6 +3,18 @@
 // Barrel export for response builders and types
 // ----------------------------
 
+// Types
+export type {
+  ApiErrorOptions,
+  ContentItem,
+  ErrorContext,
+  ErrorPayload,
+  MCPResponse,
+  NotFoundErrorOptions,
+  PermissionErrorOptions,
+  TextContentItem,
+  ValidationErrorOptions,
+} from '../types/index.js';
 // Specialized error builders
 export {
   apiError,
@@ -19,16 +31,3 @@ export {
 } from './error-builder.js';
 // Response builders
 export { error, errorFromCatch, success, successWithContent, successWithJson } from './response-builder.js';
-
-// Types
-export type {
-  ApiErrorOptions,
-  ContentItem,
-  ErrorContext,
-  ErrorPayload,
-  MCPResponse,
-  NotFoundErrorOptions,
-  PermissionErrorOptions,
-  TextContentItem,
-  ValidationErrorOptions,
-} from '../types/index.js';

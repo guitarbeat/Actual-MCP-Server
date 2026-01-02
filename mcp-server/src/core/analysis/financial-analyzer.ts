@@ -3,13 +3,7 @@
 // Server-side analysis to reduce context window load
 // ----------------------------
 
-import {
-  getAccountBalance,
-  getAccounts,
-  getBudgetMonth,
-  getSchedules,
-  getTransactions,
-} from '../api/actual-client.js';
+import { getAccountBalance, getAccounts, getBudgetMonth, getSchedules, getTransactions } from '../api/actual-client.js';
 import { formatDate, getDateRange } from '../formatting/index.js';
 
 // ----------------------------
