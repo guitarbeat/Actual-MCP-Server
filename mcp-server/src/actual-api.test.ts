@@ -31,6 +31,7 @@ vi.mock('./core/cache/cache-service.js', () => ({
   cacheService: {
     invalidate: vi.fn(),
     invalidatePattern: vi.fn(),
+    getOrFetch: vi.fn((key, fetchFn) => fetchFn()),
   },
 }));
 
@@ -486,7 +487,6 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(cacheService.invalidate).mockClear();
-      vi.mocked(cacheService.invalidatePattern).mockClear();
       vi.mocked(api.importTransactions).mockResolvedValue({
         added: ['txn-1'],
         updated: [],
