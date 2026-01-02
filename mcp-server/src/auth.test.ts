@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { timingSafeEqual } from 'node:crypto';
+import { describe, expect, it } from 'vitest';
 
 describe('Authentication Security', () => {
   it('should verify tokens using constant-time comparison', () => {

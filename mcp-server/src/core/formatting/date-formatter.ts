@@ -1,4 +1,4 @@
-import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { endOfMonth, format, startOfMonth, subMonths } from 'date-fns';
 
 /**
  * Format a date as YYYY-MM-DD

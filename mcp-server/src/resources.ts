@@ -16,9 +16,9 @@ import {
   getTransactions,
   initActualApi,
 } from './core/api/actual-client.js';
+import { formatAmount, formatDate, getDateRange } from './core/formatting/index.js';
 // Import types from core/types
 import type { Account, Transaction } from './core/types/index.js';
-import { formatAmount, formatDate, getDateRange } from './core/formatting/index.js';
 
 /**
  * Filter budget months to show only relevant months:
