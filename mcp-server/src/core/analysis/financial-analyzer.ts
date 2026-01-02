@@ -7,12 +7,10 @@ import {
   getAccountBalance,
   getAccounts,
   getBudgetMonth,
-  getCategoryGroups,
   getSchedules,
   getTransactions,
 } from '../api/actual-client.js';
-import { formatAmount, formatDate, getDateRange } from '../formatting/index.js';
-import type { Account, Category, CategoryGroup } from '../types/index.js';
+import { formatDate, getDateRange } from '../formatting/index.js';
 
 // ----------------------------
 // TYPES
@@ -261,11 +259,11 @@ export async function getUpcomingSchedulesSummary(days = 14): Promise<UpcomingSc
  */
 export async function calculateTrends(month: string): Promise<TrendsSummary> {
   const currentMonthStart = `${month}-01`;
-  const { startDate: currentStart, endDate: currentEnd } = getDateRange(currentMonthStart);
+  const { startDate: _currentStart, endDate: _currentEnd } = getDateRange(currentMonthStart);
 
   const prevMonth = getPreviousMonth(month);
   const prevMonthStart = `${prevMonth}-01`;
-  const { startDate: prevStart, endDate: prevEnd } = getDateRange(prevMonthStart, `${prevMonth}-31`); // Rough end is fine as API filters
+  const { startDate: _prevStart, endDate: _prevEnd } = getDateRange(prevMonthStart, `${prevMonth}-31`); // Rough end is fine as API filters
 
   const [currentBudget, previousBudget] = await Promise.all([
     getBudgetMonth(month) as Promise<{
