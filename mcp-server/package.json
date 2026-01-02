@@ -29,12 +29,12 @@
     "test:unit:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "type-check": "tsc --noEmit",
-    "quality": "npm run lint && npm run format:check && npm run type-check",
+    "quality": "npm run lint && npm run type-check",
     "prepare": "husky || true",
     "prepublishOnly": "npm run build"
   },
@@ -77,21 +77,9 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   },
-  "prettier": {
-    "semi": true,
-    "trailingComma": "es5",
-    "singleQuote": true,
-    "printWidth": 120,
-    "tabWidth": 2,
-    "useTabs": false
-  },
   "lint-staged": {
-    "*.{ts,js}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": [
-      "prettier --write"
+    "*.{ts,tsx,js,jsx,json}": [
+      "biome check --write --no-errors-on-unmatched"
     ]
   },
   "publishConfig": {
