@@ -11,26 +11,30 @@ import { TransactionHandler } from '../../manage-entity/entity-handlers/transact
 
 // Transaction data schema for create operation
 const CreateTransactionSchema = z.object({
-  account: z.string().min(1, 'Account is required').describe("Name of the account (e.g., 'Checking', 'Savings')"),
+  account: z.string().min(1, 'Account is required').describe('Account name (e.g., "Checking", "Savings").'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-    .describe('Date of the transaction in YYYY-MM-DD format'),
-  amount: z.number().describe('Amount in dollars (e.g. 50.25). Negative for expenses, positive for income'),
-  payee: z.string().optional().describe('Name of the merchant or person'),
-  category: z.string().optional().describe('Name of the category'),
-  notes: z.string().optional().describe('Additional notes or details about the transaction'),
-  cleared: z.boolean().optional().describe('Whether the transaction has cleared the bank'),
+    .describe('Transaction date in YYYY-MM-DD format (e.g., "2024-03-15").'),
+  amount: z
+    .number()
+    .describe(
+      'Transaction amount. Negative for expenses, positive for income. Values < 1000 are treated as dollars (e.g., -50 is -$50.00).'
+    ),
+  payee: z.string().optional().describe('Merchant or person name (e.g., "Whole Foods", "Netflix").'),
+  category: z.string().optional().describe('Category name (e.g., "Groceries", "Rent").'),
+  notes: z.string().optional().describe('Additional notes or details about the transaction.'),
+  cleared: z.boolean().optional().describe('Whether the transaction has cleared the bank. Default is false.'),
   subtransactions: z
     .array(
       z.object({
-        amount: z.number().describe('Amount for this split'),
-        category: z.string().optional().describe('Category for this split'),
-        notes: z.string().optional().describe('Note for this split'),
+        amount: z.number().describe('Subtransaction amount.'),
+        category: z.string().optional().describe('Subtransaction category.'),
+        notes: z.string().optional().describe('Subtransaction notes.'),
       })
     )
     .optional()
-    .describe('List of subtransactions for split transactions'),
+    .describe('Split transaction details if applicable.'),
 });
 
 export const schema = {
