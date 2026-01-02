@@ -60,7 +60,7 @@ const {
 const server = new Server(
   {
     name: 'Actual Budget',
-    version: '1.2.0',
+    version: '1.6.1',
   },
   {
     capabilities: {
@@ -381,8 +381,6 @@ async function main(): Promise<void> {
   }
 
   validateEnv();
-  await initializeApi(!!testResources, !!testCustom, useSse);
-
   if (useSse) {
     // * Use SDK's createMcpExpressApp for DNS rebinding protection and modern setup
     // * Note: We bind to '0.0.0.0' for production deployments
@@ -498,13 +496,15 @@ async function main(): Promise<void> {
       }
     });
 
-    app.listen(resolvedPort, '0.0.0.0', (error) => {
-      if (error) {
-        console.error('Error:', error);
-      }
-      // Server started successfully
+    app.listen(resolvedPort, '0.0.0.0', () => {
+      console.error(`[SSE] 🚀 MCP Server listening on port ${resolvedPort}`);
     });
+
+    // * Initialize API after server starts listening on port
+    // * This prevents Render from timing out during initialization
+    await initializeApi(!!testResources, !!testCustom, useSse);
   } else {
+    await initializeApi(!!testResources, !!testCustom, useSse);
     // * Transport already connected and safe logging setup in main() above
     // * Just log that we're ready
     if (!stdioTransportConnected) {
