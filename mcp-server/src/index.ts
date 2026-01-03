@@ -404,6 +404,18 @@ async function main(): Promise<void> {
       allowedHosts: undefined, // Allow all hosts (bearer auth provides security)
     });
 
+    // * Security Headers
+    app.disable('x-powered-by');
+    app.use((_req: Request, res: Response, next: NextFunction) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader('X-XSS-Protection', '1; mode=block');
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      // Note: CSP is not enabled to avoid breaking the inline styles in the dashboard
+      // Note: HSTS is not enabled as this server often runs on HTTP (localhost)
+      next();
+    });
+
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
     app.use((req: Request, res: Response, next: NextFunction) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
