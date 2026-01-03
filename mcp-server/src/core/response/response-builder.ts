@@ -44,7 +44,7 @@ const suggestionMatchers: Array<{ test: RegExp; suggestion: string }> = [
   {
     test: /amount/i,
     suggestion:
-      'Provide the amount as a number expressed in milliunits (e.g., 12500 for $125.00) to match Actual Budget expectations.',
+      'Provide the amount as a number. Use dollars for small amounts (e.g., 10.50) or cents for amounts >= 1000 (e.g., 12500 for $125.00).',
   },
   {
     test: /nextDate/i,

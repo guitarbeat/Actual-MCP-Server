@@ -18,6 +18,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
+import packageJson from '../package.json' with { type: 'json' };
 import {
   getInitializationStats,
   initActualApi,
@@ -33,7 +34,6 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 
-import packageJson from '../package.json' with { type: 'json' };
 const { version } = packageJson;
 
 dotenv.config({ path: '.env' });

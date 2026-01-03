@@ -26,7 +26,7 @@ function getFieldSuggestion(field: string): string {
     return `The '${field}' field must be in ISO date format (YYYY-MM-DD). Example: 2024-01-15`;
   }
   if (f.includes('amount')) {
-    return `The '${field}' field must be a number in milliunits (e.g., 12500 for $125.00).`;
+    return `The '${field}' field must be a number. Use dollars for small amounts (e.g., 10.50) or cents for amounts >= 1000 (e.g., 12500 for $125.00).`;
   }
   if (f.includes('month')) {
     return `The '${field}' field must be in YYYY-MM format. Example: 2024-08`;
