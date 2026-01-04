@@ -3,6 +3,11 @@ import { fetchAllCategories } from '../data/fetch-categories.js';
 import { fetchAllPayees } from '../data/fetch-payees.js';
 import type { Account, Category, Payee } from '../types/domain.js';
 
+// Pre-compiled regex for emoji removal
+// This covers most emoji ranges: Emoticons, Miscellaneous Symbols, Dingbats, etc.
+const EMOJI_REGEX =
+  /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu;
+
 /**
  * Utility class for resolving entity names to IDs with caching support.
  * Handles both UUID pass-through and name-to-ID lookup for accounts, categories, and payees.
@@ -11,6 +16,11 @@ export class NameResolver {
   private accountCache: Map<string, string> = new Map();
   private categoryCache: Map<string, string> = new Map();
   private payeeCache: Map<string, string> = new Map();
+
+  // WeakMaps to cache normalized name indices associated with specific data array instances
+  private accountIndex: WeakMap<Account[], Map<string, string>> = new WeakMap();
+  private categoryIndex: WeakMap<Category[], Map<string, string>> = new WeakMap();
+  private payeeIndex: WeakMap<Payee[], Map<string, string>> = new WeakMap();
 
   /**
    * Check if a string looks like a UUID/ID (contains hyphens or is alphanumeric).
@@ -33,11 +43,32 @@ export class NameResolver {
    * @returns Normalized name (lowercase, emojis removed, trimmed)
    */
   private normalizeName(name: string): string {
-    // Remove emojis using Unicode ranges
-    // This covers most emoji ranges: Emoticons, Miscellaneous Symbols, Dingbats, etc.
-    const emojiRegex =
-      /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu;
-    return name.replace(emojiRegex, '').trim().toLowerCase();
+    return name.replace(EMOJI_REGEX, '').trim().toLowerCase();
+  }
+
+  /**
+   * Get or create a normalized name index for the given list.
+   *
+   * @param list - The list of entities (accounts, categories, payees)
+   * @param indexCache - The WeakMap to store the index
+   * @returns Map of normalized name -> ID
+   */
+  private getIndex<T extends { id: string; name: string }>(
+    list: T[],
+    indexCache: WeakMap<T[], Map<string, string>>
+  ): Map<string, string> {
+    let index = indexCache.get(list);
+    if (!index) {
+      index = new Map();
+      for (const item of list) {
+        const normalized = this.normalizeName(item.name);
+        if (!index.has(normalized)) {
+          index.set(normalized, item.id);
+        }
+      }
+      indexCache.set(list, index);
+    }
+    return index;
   }
 
   /**
@@ -65,16 +96,19 @@ export class NameResolver {
 
     // Fetch and search using normalized comparison
     const accounts = await fetchAllAccounts();
-    const account = accounts.find((a: Account) => this.normalizeName(a.name) === normalizedInput);
 
-    if (!account) {
+    // Use indexed lookup
+    const index = this.getIndex(accounts, this.accountIndex);
+    const accountId = index.get(normalizedInput);
+
+    if (!accountId) {
       const availableAccounts = accounts.map((a: Account) => a.name).join(', ');
       throw new Error(`Account '${nameOrId}' not found. Available accounts: ${availableAccounts || 'none'}`);
     }
 
     // Cache the result using normalized name
-    this.accountCache.set(normalizedInput, account.id);
-    return account.id;
+    this.accountCache.set(normalizedInput, accountId);
+    return accountId;
   }
 
   /**
@@ -102,16 +136,19 @@ export class NameResolver {
 
     // Fetch and search using normalized comparison
     const categories = await fetchAllCategories();
-    const category = categories.find((c: Category) => this.normalizeName(c.name) === normalizedInput);
 
-    if (!category) {
+    // Use indexed lookup
+    const index = this.getIndex(categories, this.categoryIndex);
+    const categoryId = index.get(normalizedInput);
+
+    if (!categoryId) {
       const availableCategories = categories.map((c: Category) => c.name).join(', ');
       throw new Error(`Category '${nameOrId}' not found. Available categories: ${availableCategories || 'none'}`);
     }
 
     // Cache the result using normalized name
-    this.categoryCache.set(normalizedInput, category.id);
-    return category.id;
+    this.categoryCache.set(normalizedInput, categoryId);
+    return categoryId;
   }
 
   /**
@@ -139,16 +176,19 @@ export class NameResolver {
 
     // Fetch and search using normalized comparison
     const payees = await fetchAllPayees();
-    const payee = payees.find((p: Payee) => this.normalizeName(p.name) === normalizedInput);
 
-    if (!payee) {
+    // Use indexed lookup
+    const index = this.getIndex(payees, this.payeeIndex);
+    const payeeId = index.get(normalizedInput);
+
+    if (!payeeId) {
       const availablePayees = payees.map((p: Payee) => p.name).join(', ');
       throw new Error(`Payee '${nameOrId}' not found. Available payees: ${availablePayees || 'none'}`);
     }
 
     // Cache the result using normalized name
-    this.payeeCache.set(normalizedInput, payee.id);
-    return payee.id;
+    this.payeeCache.set(normalizedInput, payeeId);
+    return payeeId;
   }
 
   /**
@@ -159,6 +199,10 @@ export class NameResolver {
     this.accountCache.clear();
     this.categoryCache.clear();
     this.payeeCache.clear();
+    // WeakMaps clear automatically when keys are garbage collected,
+    // but since we don't control the lifecycle of the arrays returned by fetchers (they depend on CacheService),
+    // we don't explicitly clear them here. If CacheService clears its cache and returns new arrays,
+    // the WeakMaps will effectively drop old entries.
   }
 
   /**
