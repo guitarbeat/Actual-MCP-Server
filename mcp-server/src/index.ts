@@ -404,6 +404,18 @@ async function main(): Promise<void> {
       allowedHosts: undefined, // Allow all hosts (bearer auth provides security)
     });
 
+    // * Security headers
+    app.disable('x-powered-by');
+    app.use((_req: Request, res: Response, next: NextFunction) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader('X-XSS-Protection', '1; mode=block');
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      // CSP for API endpoints - restrictive default
+      res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+      next();
+    });
+
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
     app.use((req: Request, res: Response, next: NextFunction) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -595,6 +607,11 @@ async function main(): Promise<void> {
     app.get('/', (_req: Request, res: Response) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      // Allow inline styles for dashboard
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'"
+      );
       res.send(renderDashboard());
     });
 
