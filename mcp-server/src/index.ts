@@ -440,12 +440,12 @@ async function main(): Promise<void> {
       const initializing = isInitializing();
 
       const getStatusDetails = () => {
-        if (initialized) return { color: '#10b981', text: 'Connected' };
-        if (initializing) return { color: '#f59e0b', text: 'Initializing...' };
-        return { color: '#ef4444', text: 'Disconnected' };
+        if (initialized) return { type: 'success', text: 'Connected' };
+        if (initializing) return { type: 'warning', text: 'Initializing...' };
+        return { type: 'error', text: 'Disconnected' };
       };
 
-      const { color: statusColor, text: statusText } = getStatusDetails();
+      const { type: statusType, text: statusText } = getStatusDetails();
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
@@ -507,7 +507,22 @@ async function main(): Promise<void> {
                 font-weight: 600;
                 margin-bottom: 20px;
               }
-              .dot { width: 8px; height: 8px; border-radius: 50%; }
+              .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+
+              .badge-success { background: #dcfce7; color: #166534; }
+              .badge-warning { background: #fef3c7; color: #92400e; }
+              .badge-error { background: #fee2e2; color: #991b1b; }
+              .badge-primary { background: #dbeafe; color: #1e40af; }
+              .badge-neutral { background: #f3f4f6; color: #1f2937; }
+
+              @media (prefers-color-scheme: dark) {
+                .badge-success { background: #14532d; color: #dcfce7; }
+                .badge-warning { background: #78350f; color: #fef3c7; }
+                .badge-error { background: #7f1d1d; color: #fee2e2; }
+                .badge-primary { background: #1e3a8a; color: #dbeafe; }
+                .badge-neutral { background: #374151; color: #f3f4f6; }
+              }
+
               .grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -551,8 +566,7 @@ async function main(): Promise<void> {
               </header>
 
               <div class="status-line">
-                <div class="dot" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
-                <span style="color: ${statusColor}">${statusText}</span>
+                <span class="badge badge-${statusType}">${statusText}</span>
               </div>
 
               <div class="grid">
@@ -565,17 +579,17 @@ async function main(): Promise<void> {
               <div style="margin-bottom: 8px; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</div>
               <div class="endpoints">
                 <div class="ep-row">
-                  <span class="method" style="color: var(--primary)">ALL</span>
+                  <span class="method"><span class="badge badge-primary">ALL</span></span>
                   <span class="path">/mcp</span>
                   <span class="desc">Streamable Connection</span>
                 </div>
                 <div class="ep-row">
-                  <span class="method" style="color: var(--success)">GET</span>
+                  <span class="method"><span class="badge badge-success">GET</span></span>
                   <span class="path">/sse</span>
                   <span class="desc">Event Stream</span>
                 </div>
                 <div class="ep-row">
-                  <span class="method" style="color: var(--warning)">GET</span>
+                  <span class="method"><span class="badge badge-warning">GET</span></span>
                   <span class="path">/health</span>
                   <span class="desc">Health Check</span>
                 </div>
