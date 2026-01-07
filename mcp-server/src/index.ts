@@ -440,17 +440,17 @@ async function main(): Promise<void> {
       const initializing = isInitializing();
 
       const getStatusDetails = () => {
-        if (initialized) return { color: '#10b981', text: 'Connected' };
-        if (initializing) return { color: '#f59e0b', text: 'Initializing...' };
-        return { color: '#ef4444', text: 'Disconnected' };
+        if (initialized) return { color: 'var(--success)', text: 'Connected' };
+        if (initializing) return { color: 'var(--warning)', text: 'Initializing...' };
+        return { color: 'var(--error)', text: 'Disconnected' };
       };
 
       const { color: statusColor, text: statusText } = getStatusDetails();
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
-          <span class="label">${label}</span>
-          <span class="val">${value}</span>
+          <dt class="label">${label}</dt>
+          <dd class="val">${value}</dd>
         </div>
       `;
 
@@ -469,9 +469,9 @@ async function main(): Promise<void> {
                 --muted: #666666;
                 --border: #eeeeee;
                 --primary: #2563eb;
-                --success: #10b981;
-                --warning: #f59e0b;
-                --error: #ef4444;
+                --success: #047857; /* Emerald 700 - Accessible on white */
+                --warning: #b45309; /* Amber 700 - Accessible on white */
+                --error: #b91c1c;   /* Red 700 - Accessible on white */
               }
               @media (prefers-color-scheme: dark) {
                 :root {
@@ -479,6 +479,9 @@ async function main(): Promise<void> {
                   --text: #f1f5f9;
                   --muted: #94a3b8;
                   --border: #1e293b;
+                  --success: #10b981; /* Emerald 500 */
+                  --warning: #f59e0b; /* Amber 500 */
+                  --error: #ef4444;   /* Red 500 */
                 }
               }
               body {
@@ -513,15 +516,25 @@ async function main(): Promise<void> {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 margin-bottom: 20px;
+                margin-top: 0;
+                padding: 0;
               }
               .item {
                 padding: 12px;
                 border: 1px solid var(--border);
                 border-radius: 6px;
+                margin: 0;
               }
               .label { font-size: 11px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
-              .val { font-size: 14px; font-weight: 500; }
-              .endpoints { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+              .val { font-size: 14px; font-weight: 500; margin: 0; }
+              .endpoints {
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                overflow: hidden;
+                list-style: none;
+                margin: 0;
+                padding: 0;
+              }
               .ep-row {
                 padding: 8px 12px;
                 display: flex;
@@ -541,6 +554,7 @@ async function main(): Promise<void> {
                 text-align: center;
               }
               footer a { color: var(--primary); text-decoration: none; margin: 0 10px; }
+              footer a:hover, footer a:focus { text-decoration: underline; }
             </style>
           </head>
           <body>
@@ -555,31 +569,31 @@ async function main(): Promise<void> {
                 <span style="color: ${statusColor}">${statusText}</span>
               </div>
 
-              <div class="grid">
+              <dl class="grid">
                 ${renderStat('Port', resolvedPort)}
                 ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
                 ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
                 ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
-              </div>
+              </dl>
 
               <div style="margin-bottom: 8px; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</div>
-              <div class="endpoints">
-                <div class="ep-row">
+              <ul class="endpoints">
+                <li class="ep-row">
                   <span class="method" style="color: var(--primary)">ALL</span>
                   <span class="path">/mcp</span>
                   <span class="desc">Streamable Connection</span>
-                </div>
-                <div class="ep-row">
+                </li>
+                <li class="ep-row">
                   <span class="method" style="color: var(--success)">GET</span>
                   <span class="path">/sse</span>
                   <span class="desc">Event Stream</span>
-                </div>
-                <div class="ep-row">
+                </li>
+                <li class="ep-row">
                   <span class="method" style="color: var(--warning)">GET</span>
                   <span class="path">/health</span>
                   <span class="desc">Health Check</span>
-                </div>
-              </div>
+                </li>
+              </ul>
 
               <footer>
                 <a href="https://github.com/guitarbeat/actual-mcp">GitHub</a>
