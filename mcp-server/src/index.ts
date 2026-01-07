@@ -31,6 +31,7 @@ import {
 import { timingSafeStringEqual } from './core/auth/index.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
+import { securityHeaders } from './core/transport/security-headers.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
@@ -403,6 +404,9 @@ async function main(): Promise<void> {
       // * Bearer auth provides security instead of host header validation
       allowedHosts: undefined, // Allow all hosts (bearer auth provides security)
     });
+
+    // * Security headers middleware
+    app.use(securityHeaders);
 
     // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
     app.use((req: Request, res: Response, next: NextFunction) => {
