@@ -449,8 +449,8 @@ async function main(): Promise<void> {
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
-          <span class="label">${label}</span>
-          <span class="val">${value}</span>
+          <dt class="label">${label}</dt>
+          <dd class="val">${value}</dd>
         </div>
       `;
 
@@ -521,7 +521,7 @@ async function main(): Promise<void> {
               }
               .label { font-size: 11px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
               .val { font-size: 14px; font-weight: 500; }
-              .endpoints { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+              .endpoints { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; list-style: none; padding: 0; margin: 0; }
               .ep-row {
                 padding: 8px 12px;
                 display: flex;
@@ -534,6 +534,7 @@ async function main(): Promise<void> {
               .method { font-family: monospace; font-weight: bold; font-size: 11px; width: 35px; }
               .path { font-family: monospace; flex: 1; }
               .desc { color: var(--muted); font-size: 12px; }
+              dl, dd, ul, li { margin: 0; padding: 0; }
               footer {
                 margin-top: 30px;
                 font-size: 12px;
@@ -555,31 +556,31 @@ async function main(): Promise<void> {
                 <span style="color: ${statusColor}">${statusText}</span>
               </div>
 
-              <div class="grid">
+              <dl class="grid">
                 ${renderStat('Port', resolvedPort)}
                 ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
                 ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
                 ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
-              </div>
+              </dl>
 
               <div style="margin-bottom: 8px; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</div>
-              <div class="endpoints">
-                <div class="ep-row">
+              <ul class="endpoints">
+                <li class="ep-row">
                   <span class="method" style="color: var(--primary)">ALL</span>
                   <span class="path">/mcp</span>
                   <span class="desc">Streamable Connection</span>
-                </div>
-                <div class="ep-row">
+                </li>
+                <li class="ep-row">
                   <span class="method" style="color: var(--success)">GET</span>
                   <span class="path">/sse</span>
                   <span class="desc">Event Stream</span>
-                </div>
-                <div class="ep-row">
+                </li>
+                <li class="ep-row">
                   <span class="method" style="color: var(--warning)">GET</span>
                   <span class="path">/health</span>
                   <span class="desc">Health Check</span>
-                </div>
-              </div>
+                </li>
+              </ul>
 
               <footer>
                 <a href="https://github.com/guitarbeat/actual-mcp">GitHub</a>
