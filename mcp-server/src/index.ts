@@ -100,17 +100,15 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 
   if (authHeader?.startsWith('Bearer ')) {
     token = authHeader.substring(7);
-  } else if (req.query.token && typeof req.query.token === 'string') {
-    token = req.query.token;
   }
 
   if (!token) {
-    console.error('[AUTH] ❌ Missing authentication token (header or query param)');
+    console.error('[AUTH] ❌ Missing authentication token (header)');
     // Include WWW-Authenticate header as per HTTP spec
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
       error: 'Authentication required',
-      message: 'Authorization header (Bearer) or ?token query parameter required',
+      message: 'Authorization header (Bearer) required',
       code: -32000, // MCP authentication error code
     });
     return;
