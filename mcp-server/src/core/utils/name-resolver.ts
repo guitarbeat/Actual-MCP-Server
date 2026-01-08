@@ -3,6 +3,11 @@ import { fetchAllCategories } from '../data/fetch-categories.js';
 import { fetchAllPayees } from '../data/fetch-payees.js';
 import type { Account, Category, Payee } from '../types/domain.js';
 
+// Module-level constant to prevent recompilation on every call
+// This covers most emoji ranges: Emoticons, Miscellaneous Symbols, Dingbats, etc.
+const EMOJI_REGEX =
+  /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu;
+
 /**
  * Utility class for resolving entity names to IDs with caching support.
  * Handles both UUID pass-through and name-to-ID lookup for accounts, categories, and payees.
@@ -35,9 +40,7 @@ export class NameResolver {
   private normalizeName(name: string): string {
     // Remove emojis using Unicode ranges
     // This covers most emoji ranges: Emoticons, Miscellaneous Symbols, Dingbats, etc.
-    const emojiRegex =
-      /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu;
-    return name.replace(emojiRegex, '').trim().toLowerCase();
+    return name.replace(EMOJI_REGEX, '').trim().toLowerCase();
   }
 
   /**
