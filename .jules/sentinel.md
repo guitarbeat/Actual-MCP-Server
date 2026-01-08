@@ -1,0 +1,4 @@
+## 2024-05-23 - [Security Headers Architecture]
+**Vulnerability:** The application was missing standard security headers (CSP, HSTS, X-Content-Type-Options, X-Frame-Options) and exposed the `X-Powered-By` header, which could facilitate reconnaissance and various attacks (XSS, Clickjacking, MIME sniffing).
+**Learning:** Even internal-facing tools or development servers benefit from defense-in-depth strategies. Implementing a strict Content Security Policy (CSP) requires careful consideration of inline styles and scripts used by server-side rendering logic (like the dashboard).
+**Prevention:** I implemented a dedicated `securityHeaders` middleware in `src/core/transport/security-headers.ts` that enforces these headers by default. Future endpoints must respect the established CSP (e.g., avoiding inline scripts) or explicitly adjust the policy if absolutely necessary.
