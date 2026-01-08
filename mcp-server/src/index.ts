@@ -449,8 +449,8 @@ async function main(): Promise<void> {
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
-          <span class="label">${label}</span>
-          <span class="val">${value}</span>
+          <dt class="label">${label}</dt>
+          <dd class="val">${value}</dd>
         </div>
       `;
 
@@ -460,6 +460,7 @@ async function main(): Promise<void> {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="description" content="Actual Budget MCP Server Dashboard - Monitor connection status and endpoints">
             <title>Actual Budget MCP</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
             <style>
@@ -508,21 +509,36 @@ async function main(): Promise<void> {
                 margin-bottom: 20px;
               }
               .dot { width: 8px; height: 8px; border-radius: 50%; }
-              .grid {
+              /* Stats Grid - Using DL/DT/DD */
+              dl.grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
-                margin-bottom: 20px;
+                margin: 0 0 20px 0;
+                padding: 0;
               }
               .item {
+                margin: 0;
                 padding: 12px;
                 border: 1px solid var(--border);
                 border-radius: 6px;
+                display: flex;
+                flex-direction: column;
               }
-              .label { font-size: 11px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
-              .val { font-size: 14px; font-weight: 500; }
-              .endpoints { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-              .ep-row {
+              dt.label { font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+              dd.val { font-size: 14px; font-weight: 500; margin: 0; }
+
+              /* Endpoints List - Using UL/LI */
+              .endpoints-title { margin-bottom: 8px; font-size: 12px; font-weight: bold; color: var(--muted); }
+              ul.endpoints {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                overflow: hidden;
+              }
+              li.ep-row {
                 padding: 8px 12px;
                 display: flex;
                 align-items: center;
@@ -530,10 +546,11 @@ async function main(): Promise<void> {
                 border-bottom: 1px solid var(--border);
                 font-size: 13px;
               }
-              .ep-row:last-child { border-bottom: none; }
+              li.ep-row:last-child { border-bottom: none; }
               .method { font-family: monospace; font-weight: bold; font-size: 11px; width: 35px; }
               .path { font-family: monospace; flex: 1; }
               .desc { color: var(--muted); font-size: 12px; }
+
               footer {
                 margin-top: 30px;
                 font-size: 12px;
@@ -551,39 +568,39 @@ async function main(): Promise<void> {
               </header>
 
               <div class="status-line">
-                <div class="dot" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
+                <div class="dot" style="background: ${statusColor}; border: 2px solid ${statusColor}44" aria-hidden="true"></div>
                 <span style="color: ${statusColor}">${statusText}</span>
               </div>
 
-              <div class="grid">
+              <dl class="grid">
                 ${renderStat('Port', resolvedPort)}
                 ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
                 ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
                 ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
-              </div>
+              </dl>
 
-              <div style="margin-bottom: 8px; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</div>
-              <div class="endpoints">
-                <div class="ep-row">
+              <div class="endpoints-title">ENDPOINTS</div>
+              <ul class="endpoints">
+                <li class="ep-row">
                   <span class="method" style="color: var(--primary)">ALL</span>
                   <span class="path">/mcp</span>
                   <span class="desc">Streamable Connection</span>
-                </div>
-                <div class="ep-row">
+                </li>
+                <li class="ep-row">
                   <span class="method" style="color: var(--success)">GET</span>
                   <span class="path">/sse</span>
                   <span class="desc">Event Stream</span>
-                </div>
-                <div class="ep-row">
+                </li>
+                <li class="ep-row">
                   <span class="method" style="color: var(--warning)">GET</span>
                   <span class="path">/health</span>
                   <span class="desc">Health Check</span>
-                </div>
-              </div>
+                </li>
+              </ul>
 
               <footer>
-                <a href="https://github.com/guitarbeat/actual-mcp">GitHub</a>
-                <a href="/health">Live JSON</a>
+                <a href="https://github.com/guitarbeat/actual-mcp" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="/health" target="_blank">Live JSON</a>
               </footer>
             </div>
           </body>
