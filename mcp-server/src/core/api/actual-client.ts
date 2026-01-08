@@ -380,6 +380,13 @@ async function ensureConnectionHealthy(): Promise<void> {
     return;
   }
 
+  // Optimization: Trust the initialized state to avoid checking health (API call) on every request.
+  // If the connection is broken, the subsequent operation will fail and trigger the retry logic
+  // in ensureConnection(). This saves one network round-trip per request.
+  if (initialized) {
+    return;
+  }
+
   const isHealthy = await checkConnectionHealth();
   if (!isHealthy) {
     if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
