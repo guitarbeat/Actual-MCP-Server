@@ -15,29 +15,19 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
       return;
     }
 
-    // * Allow authentication via Authorization header or query parameters
-    // * Query parameters are useful for browser-based clients (EventSource) that don't support custom headers
     const authHeader = req.headers.authorization;
-    const queryToken = req.query.authToken || req.query.apiKey || req.query.token;
-
-    let token: string | undefined;
-
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
-    } else if (typeof queryToken === 'string') {
-      token = queryToken;
-    }
-
-    if (!token) {
-      console.error('[AUTH] ❌ Missing authentication (no header or query param)');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('[AUTH] ❌ Missing or invalid Authorization header');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
         error: 'Authentication required',
-        message: 'Authorization header (Bearer token) or authToken/apiKey query parameter required',
+        message: 'Authorization header with Bearer token is required',
         code: -32000,
       });
       return;
     }
+
+    const token = authHeader.substring(7);
 
     if (!expectedToken) {
       console.error('[AUTH] ❌ BEARER_TOKEN environment variable not set');
@@ -55,7 +45,8 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
 
     // timingSafeEqual requires buffers of same length
     if (tokenBuffer.length !== expectedBuffer.length || !timingSafeEqual(tokenBuffer, expectedBuffer)) {
-      console.error('[AUTH] ❌ Invalid token (token mismatch)');
+      // The console error message is intentionally generic to avoid leaking information.
+      console.error('[AUTH] ❌ Invalid token provided');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
         error: 'Authentication failed',
