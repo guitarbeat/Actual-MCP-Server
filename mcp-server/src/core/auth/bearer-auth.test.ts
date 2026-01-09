@@ -71,10 +71,12 @@ describe('createBearerAuth', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('should accept token from query parameter', () => {
+  it('should return 401 if token is provided via query parameter', () => {
     const auth = createBearerAuth({ enableBearer: true, expectedToken: 'secret' });
     req.query = { authToken: 'secret' };
     auth(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalled();
+    expect(statusMock).toHaveBeenCalledWith(401);
+    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication required' }));
+    expect(next).not.toHaveBeenCalled();
   });
 });
