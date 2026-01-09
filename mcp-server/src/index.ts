@@ -33,6 +33,7 @@ import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { securityHeaders } from './core/transport/security-headers.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
+import { escapeHtml } from './core/utils/html-utils.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
@@ -453,8 +454,8 @@ async function main(): Promise<void> {
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
-          <dt class="label">${label}</dt>
-          <dd class="val">${value}</dd>
+          <dt class="label">${escapeHtml(label)}</dt>
+          <dd class="val">${escapeHtml(value)}</dd>
         </div>
       `;
 
