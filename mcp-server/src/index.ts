@@ -444,12 +444,12 @@ async function main(): Promise<void> {
       const initializing = isInitializing();
 
       const getStatusDetails = () => {
-        if (initialized) return { color: '#10b981', text: 'Connected' };
-        if (initializing) return { color: '#f59e0b', text: 'Initializing...' };
-        return { color: '#ef4444', text: 'Disconnected' };
+        if (initialized) return { color: 'var(--success)', text: 'Connected', className: '' };
+        if (initializing) return { color: 'var(--warning)', text: 'Initializing...', className: 'pulse' };
+        return { color: 'var(--error)', text: 'Disconnected', className: '' };
       };
 
-      const { color: statusColor, text: statusText } = getStatusDetails();
+      const { color: statusColor, text: statusText, className: statusClass } = getStatusDetails();
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
@@ -464,6 +464,7 @@ async function main(): Promise<void> {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            ${initializing ? '<meta http-equiv="refresh" content="3">' : ''}
             <title>Actual Budget MCP</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
             <style>
@@ -473,9 +474,10 @@ async function main(): Promise<void> {
                 --muted: #666666;
                 --border: #eeeeee;
                 --primary: #2563eb;
-                --success: #10b981;
-                --warning: #f59e0b;
-                --error: #ef4444;
+                /* WCAG AA Compliant colors for light mode (700 shades) */
+                --success: #047857;
+                --warning: #b45309;
+                --error: #b91c1c;
               }
               @media (prefers-color-scheme: dark) {
                 :root {
@@ -483,7 +485,19 @@ async function main(): Promise<void> {
                   --text: #f1f5f9;
                   --muted: #94a3b8;
                   --border: #1e293b;
+                  /* Restore lighter colors for dark background (500 shades) */
+                  --success: #10b981;
+                  --warning: #f59e0b;
+                  --error: #ef4444;
                 }
+              }
+              @keyframes pulse {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(0.95); }
+                100% { opacity: 1; transform: scale(1); }
+              }
+              .pulse {
+                animation: pulse 2s infinite ease-in-out;
               }
               body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -556,7 +570,7 @@ async function main(): Promise<void> {
               </header>
 
               <div class="status-line">
-                <div class="dot" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
+                <div class="dot ${statusClass}" style="background: ${statusColor};" aria-hidden="true"></div>
                 <span style="color: ${statusColor}">${statusText}</span>
               </div>
 
@@ -587,7 +601,7 @@ async function main(): Promise<void> {
               </ul>
 
               <footer>
-                <a href="https://github.com/guitarbeat/actual-mcp">GitHub</a>
+                <a href="https://github.com/guitarbeat/actual-mcp" target="_blank" rel="noopener noreferrer">GitHub</a>
                 <a href="/health">Live JSON</a>
               </footer>
             </div>
