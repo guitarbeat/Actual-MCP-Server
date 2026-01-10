@@ -28,7 +28,7 @@ import {
   isInitializing,
   shutdownActualApi,
 } from './core/api/actual-client.js';
-import { timingSafeStringEqual } from './core/auth/index.js';
+import { createBearerAuth } from './core/auth/bearer-auth.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { securityHeaders } from './core/transport/security-headers.js';
@@ -90,60 +90,10 @@ const server = new Server(
 const resolvedPort = port ? parseInt(port, 10) : process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Bearer authentication middleware
-const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
-  if (!enableBearer) {
-    next();
-    return;
-  }
-
-  const authHeader = req.headers.authorization;
-  let token: string | undefined;
-
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.substring(7);
-  } else if (req.query.token && typeof req.query.token === 'string') {
-    token = req.query.token;
-  }
-
-  if (!token) {
-    console.error('[AUTH] ❌ Missing authentication token (header or query param)');
-    // Include WWW-Authenticate header as per HTTP spec
-    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
-    res.status(401).json({
-      error: 'Authentication required',
-      message: 'Authorization header (Bearer) or ?token query parameter required',
-      code: -32000, // MCP authentication error code
-    });
-    return;
-  }
-
-  const expectedToken = process.env.BEARER_TOKEN;
-
-  if (!expectedToken) {
-    console.error('[AUTH] ❌ BEARER_TOKEN environment variable not set');
-    res.status(500).json({
-      error: 'Server configuration error',
-      message: 'Authentication system not properly configured',
-      code: -32004, // Internal error
-    });
-    return;
-  }
-
-  if (!timingSafeStringEqual(token, expectedToken)) {
-    console.error('[AUTH] ❌ Invalid bearer token (token mismatch)');
-    // Don't log token lengths in production as it could leak information
-    // console.error(`[AUTH] Received token length: ${token.length}, Expected token length: ${expectedToken.length}`);
-    res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
-    res.status(401).json({
-      error: 'Authentication failed',
-      message: 'Invalid bearer token',
-      code: -32000,
-    });
-    return;
-  }
-
-  next();
-};
+const bearerAuth = createBearerAuth({
+  enableBearer,
+  expectedToken: process.env.BEARER_TOKEN,
+});
 
 // ----------------------------
 // SERVER STARTUP
