@@ -423,9 +423,9 @@ async function main(): Promise<void> {
                 --muted: #666666;
                 --border: #eeeeee;
                 --primary: #2563eb;
-                --success: #10b981;
-                --warning: #f59e0b;
-                --error: #ef4444;
+                --success: #15803d;
+                --warning: #b45309;
+                --error: #b91c1c;
               }
               @media (prefers-color-scheme: dark) {
                 :root {
@@ -433,6 +433,9 @@ async function main(): Promise<void> {
                   --text: #f1f5f9;
                   --muted: #94a3b8;
                   --border: #1e293b;
+                  --success: #10b981;
+                  --warning: #f59e0b;
+                  --error: #ef4444;
                 }
               }
               body {
@@ -506,7 +509,7 @@ async function main(): Promise<void> {
               </header>
 
               <div class="status-line">
-                <div class="dot" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
+                <div class="dot" aria-hidden="true" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
                 <span style="color: ${statusColor}">${statusText}</span>
               </div>
 
@@ -517,7 +520,7 @@ async function main(): Promise<void> {
                 ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
               </dl>
 
-              <div style="margin-bottom: 8px; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</div>
+              <h2 style="margin: 0 0 8px 0; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</h2>
               <ul class="endpoints">
                 <li class="ep-row">
                   <span class="method" style="color: var(--primary)">ALL</span>
