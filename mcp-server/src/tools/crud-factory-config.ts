@@ -62,18 +62,24 @@ import { RuleDataSchema } from './manage-entity/types.js';
 // ----------------------------
 
 const CreateCategorySchema = z.object({
-  name: z.string().min(1, 'Category name is required'),
-  groupId: z.string().uuid('Group ID must be a valid UUID'),
+  name: z
+    .string()
+    .min(1, 'Category name is required')
+    .describe('Name of the new category (e.g., "Groceries", "Rent").'),
+  groupId: z
+    .string()
+    .uuid('Group ID must be a valid UUID')
+    .describe('UUID of the category group to add the category to. Use get-grouped-categories to find group IDs.'),
 });
 
 const UpdateCategorySchema = z.object({
-  id: z.string().uuid('Category ID must be a valid UUID'),
-  name: z.string().min(1).optional(),
-  groupId: z.string().uuid().optional(),
+  id: z.string().uuid('Category ID must be a valid UUID').describe('UUID of the category to update.'),
+  name: z.string().min(1).optional().describe('New name for the category.'),
+  groupId: z.string().uuid().optional().describe('New category group UUID to move the category to.'),
 });
 
 const DeleteCategorySchema = z.object({
-  id: z.string().uuid('Category ID must be a valid UUID'),
+  id: z.string().uuid('Category ID must be a valid UUID').describe('UUID of the category to delete.'),
 });
 
 // ----------------------------
@@ -81,18 +87,18 @@ const DeleteCategorySchema = z.object({
 // ----------------------------
 
 const CreatePayeeSchema = z.object({
-  name: z.string().min(1, 'Payee name is required'),
-  transferAccount: z.string().optional(),
+  name: z.string().min(1, 'Payee name is required').describe('Name of the new payee/merchant.'),
+  transferAccount: z.string().optional().describe('Account UUID if this is a transfer payee.'),
 });
 
 const UpdatePayeeSchema = z.object({
-  id: z.string().uuid('Payee ID must be a valid UUID'),
-  name: z.string().min(1).optional(),
-  transferAccount: z.string().optional(),
+  id: z.string().uuid('Payee ID must be a valid UUID').describe('UUID of the payee to update.'),
+  name: z.string().min(1).optional().describe('New name for the payee.'),
+  transferAccount: z.string().optional().describe('New account UUID for transfer payee.'),
 });
 
 const DeletePayeeSchema = z.object({
-  id: z.string().uuid('Payee ID must be a valid UUID'),
+  id: z.string().uuid('Payee ID must be a valid UUID').describe('UUID of the payee to delete.'),
 });
 
 // ----------------------------
@@ -140,16 +146,19 @@ const DeleteRuleSchema = z.object({
 // ----------------------------
 
 const CreateCategoryGroupSchema = z.object({
-  name: z.string().min(1, 'Category group name is required'),
+  name: z
+    .string()
+    .min(1, 'Category group name is required')
+    .describe('Name of the new category group (e.g., "Fixed Expenses").'),
 });
 
 const UpdateCategoryGroupSchema = z.object({
-  id: z.string().uuid('Category group ID must be a valid UUID'),
-  name: z.string().min(1).optional(),
+  id: z.string().uuid('Category group ID must be a valid UUID').describe('UUID of the category group to update.'),
+  name: z.string().min(1).optional().describe('New name for the category group.'),
 });
 
 const DeleteCategoryGroupSchema = z.object({
-  id: z.string().uuid('Category group ID must be a valid UUID'),
+  id: z.string().uuid('Category group ID must be a valid UUID').describe('UUID of the category group to delete.'),
 });
 
 // ----------------------------
