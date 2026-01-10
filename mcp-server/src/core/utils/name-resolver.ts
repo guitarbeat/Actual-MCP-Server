@@ -3,6 +3,11 @@ import { fetchAllCategories } from '../data/fetch-categories.js';
 import { fetchAllPayees } from '../data/fetch-payees.js';
 import type { Account, Category, Payee } from '../types/domain.js';
 
+// Remove emojis using Unicode ranges
+// This covers most emoji ranges: Emoticons, Miscellaneous Symbols, Dingbats, etc.
+const EMOJI_REGEX =
+  /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu;
+
 /**
  * Utility class for resolving entity names to IDs with caching support.
  * Handles both UUID pass-through and name-to-ID lookup for accounts, categories, and payees.
@@ -33,11 +38,7 @@ export class NameResolver {
    * @returns Normalized name (lowercase, emojis removed, trimmed)
    */
   private normalizeName(name: string): string {
-    // Remove emojis using Unicode ranges
-    // This covers most emoji ranges: Emoticons, Miscellaneous Symbols, Dingbats, etc.
-    const emojiRegex =
-      /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu;
-    return name.replace(emojiRegex, '').trim().toLowerCase();
+    return name.replace(EMOJI_REGEX, '').trim().toLowerCase();
   }
 
   /**
@@ -63,18 +64,25 @@ export class NameResolver {
       return this.accountCache.get(normalizedInput)!;
     }
 
-    // Fetch and search using normalized comparison
+    // Fetch all accounts
     const accounts = await fetchAllAccounts();
-    const account = accounts.find((a: Account) => this.normalizeName(a.name) === normalizedInput);
 
-    if (!account) {
-      const availableAccounts = accounts.map((a: Account) => a.name).join(', ');
-      throw new Error(`Account '${nameOrId}' not found. Available accounts: ${availableAccounts || 'none'}`);
+    // Bulk warm the cache with all accounts to optimize subsequent lookups
+    for (const account of accounts) {
+      const normName = this.normalizeName(account.name);
+      // Only set if not already present to preserve first-match behavior (similar to find)
+      if (!this.accountCache.has(normName)) {
+        this.accountCache.set(normName, account.id);
+      }
     }
 
-    // Cache the result using normalized name
-    this.accountCache.set(normalizedInput, account.id);
-    return account.id;
+    // Check cache again after warming
+    if (this.accountCache.has(normalizedInput)) {
+      return this.accountCache.get(normalizedInput)!;
+    }
+
+    const availableAccounts = accounts.map((a: Account) => a.name).join(', ');
+    throw new Error(`Account '${nameOrId}' not found. Available accounts: ${availableAccounts || 'none'}`);
   }
 
   /**
@@ -100,18 +108,24 @@ export class NameResolver {
       return this.categoryCache.get(normalizedInput)!;
     }
 
-    // Fetch and search using normalized comparison
+    // Fetch all categories
     const categories = await fetchAllCategories();
-    const category = categories.find((c: Category) => this.normalizeName(c.name) === normalizedInput);
 
-    if (!category) {
-      const availableCategories = categories.map((c: Category) => c.name).join(', ');
-      throw new Error(`Category '${nameOrId}' not found. Available categories: ${availableCategories || 'none'}`);
+    // Bulk warm the cache with all categories
+    for (const category of categories) {
+      const normName = this.normalizeName(category.name);
+      if (!this.categoryCache.has(normName)) {
+        this.categoryCache.set(normName, category.id);
+      }
     }
 
-    // Cache the result using normalized name
-    this.categoryCache.set(normalizedInput, category.id);
-    return category.id;
+    // Check cache again
+    if (this.categoryCache.has(normalizedInput)) {
+      return this.categoryCache.get(normalizedInput)!;
+    }
+
+    const availableCategories = categories.map((c: Category) => c.name).join(', ');
+    throw new Error(`Category '${nameOrId}' not found. Available categories: ${availableCategories || 'none'}`);
   }
 
   /**
@@ -137,18 +151,24 @@ export class NameResolver {
       return this.payeeCache.get(normalizedInput)!;
     }
 
-    // Fetch and search using normalized comparison
+    // Fetch all payees
     const payees = await fetchAllPayees();
-    const payee = payees.find((p: Payee) => this.normalizeName(p.name) === normalizedInput);
 
-    if (!payee) {
-      const availablePayees = payees.map((p: Payee) => p.name).join(', ');
-      throw new Error(`Payee '${nameOrId}' not found. Available payees: ${availablePayees || 'none'}`);
+    // Bulk warm the cache
+    for (const payee of payees) {
+      const normName = this.normalizeName(payee.name);
+      if (!this.payeeCache.has(normName)) {
+        this.payeeCache.set(normName, payee.id);
+      }
     }
 
-    // Cache the result using normalized name
-    this.payeeCache.set(normalizedInput, payee.id);
-    return payee.id;
+    // Check cache again
+    if (this.payeeCache.has(normalizedInput)) {
+      return this.payeeCache.get(normalizedInput)!;
+    }
+
+    const availablePayees = payees.map((p: Payee) => p.name).join(', ');
+    throw new Error(`Payee '${nameOrId}' not found. Available payees: ${availablePayees || 'none'}`);
   }
 
   /**
