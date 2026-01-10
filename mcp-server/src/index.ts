@@ -19,6 +19,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import dotenv from 'dotenv';
 import type { NextFunction, Request, Response } from 'express';
 import { initActualApi, shutdownActualApi } from './core/api/actual-client.js';
+import { timingSafeStringEqual } from './core/auth/crypto.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
@@ -116,7 +117,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
-  if (token !== expectedToken) {
+  if (!timingSafeStringEqual(token, expectedToken)) {
     console.error('[AUTH] ❌ Invalid token (token mismatch)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
