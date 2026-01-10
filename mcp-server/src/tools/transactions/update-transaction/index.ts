@@ -11,17 +11,23 @@ import { TransactionHandler } from '../../manage-entity/entity-handlers/transact
 
 // Transaction update schema
 const UpdateTransactionSchema = z.object({
-  id: z.string().uuid('Transaction ID must be a valid UUID'),
-  account: z.string().optional(),
+  id: z.string().uuid('Transaction ID must be a valid UUID').describe('The unique ID of the transaction to update'),
+  account: z.string().optional().describe('New account name'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-    .optional(),
-  amount: z.number().optional(),
-  payee: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-  cleared: z.boolean().optional(),
+    .optional()
+    .describe('New transaction date in YYYY-MM-DD format'),
+  amount: z
+    .number()
+    .optional()
+    .describe(
+      'New transaction amount. Negative for expenses, positive for income. Values < 1000 are treated as dollars, values >= 1000 as cents.'
+    ),
+  payee: z.string().optional().describe('New payee name'),
+  category: z.string().optional().describe('New category name'),
+  notes: z.string().optional().describe('New notes'),
+  cleared: z.boolean().optional().describe('New cleared status'),
 });
 
 export const schema = {
