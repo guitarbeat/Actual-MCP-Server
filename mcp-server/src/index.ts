@@ -395,12 +395,12 @@ async function main(): Promise<void> {
       const initializing = isInitializing();
 
       const getStatusDetails = () => {
-        if (initialized) return { color: '#10b981', text: 'Connected' };
-        if (initializing) return { color: '#f59e0b', text: 'Initializing...' };
-        return { color: '#ef4444', text: 'Disconnected' };
+        if (initialized) return { type: 'success', text: 'Connected' };
+        if (initializing) return { type: 'warning', text: 'Initializing...' };
+        return { type: 'error', text: 'Disconnected' };
       };
 
-      const { color: statusColor, text: statusText } = getStatusDetails();
+      const { type: statusType, text: statusText } = getStatusDetails();
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
@@ -415,6 +415,7 @@ async function main(): Promise<void> {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            ${initializing ? '<meta http-equiv="refresh" content="3">' : ''}
             <title>Actual Budget MCP</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
             <style>
@@ -447,6 +448,11 @@ async function main(): Promise<void> {
                 color: var(--text);
                 line-height: 1.4;
               }
+              @keyframes pulse {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(1.2); }
+                100% { opacity: 1; transform: scale(1); }
+              }
               .container { max-width: 600px; margin: 0 auto; }
               header {
                 display: flex;
@@ -466,6 +472,17 @@ async function main(): Promise<void> {
                 margin-bottom: 20px;
               }
               .dot { width: 8px; height: 8px; border-radius: 50%; }
+              .dot.pulsing { animation: pulse 2s infinite ease-in-out; }
+
+              /* Status colors */
+              .status-success { color: var(--success); }
+              .status-warning { color: var(--warning); }
+              .status-error { color: var(--error); }
+
+              .dot.success { background-color: var(--success); box-shadow: 0 0 0 2px var(--success); opacity: 0.8; }
+              .dot.warning { background-color: var(--warning); box-shadow: 0 0 0 2px var(--warning); opacity: 0.8; }
+              .dot.error { background-color: var(--error); box-shadow: 0 0 0 2px var(--error); opacity: 0.8; }
+
               .grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -510,8 +527,8 @@ async function main(): Promise<void> {
               </header>
 
               <div class="status-line">
-                <div class="dot" aria-hidden="true" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
-                <span style="color: ${statusColor}">${statusText}</span>
+                <div class="dot ${statusType} ${initializing ? 'pulsing' : ''}" aria-hidden="true"></div>
+                <span class="status-${statusType}">${statusText}</span>
               </div>
 
               <dl class="grid">
