@@ -1031,7 +1031,7 @@ export async function runImport(file: string, _importType?: string): Promise<unk
 /**
  * Batch budget updates (ensures API is initialized)
  */
-export async function batchBudgetUpdates(callback: () => Promise<unknown>): Promise<unknown> {
+export async function batchBudgetUpdates(callback: () => Promise<void>): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.batchBudgetUpdates === 'function') {
       return api.batchBudgetUpdates(callback);
