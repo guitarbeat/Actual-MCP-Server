@@ -1,5 +1,5 @@
-import { timingSafeEqual } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
+import { timingSafeStringEqual } from './index.js';
 
 interface BearerAuthOptions {
   enableBearer: boolean;
@@ -15,19 +15,27 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
       return;
     }
 
+    // Also support query parameter for auth
+    const tokenFromQuery = req.query.token || req.query.apiKey || req.query.authToken;
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      console.error('[AUTH] ❌ Missing or invalid Authorization header');
+    let token: string | undefined;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (typeof tokenFromQuery === 'string') {
+      token = tokenFromQuery;
+    }
+
+    if (!token) {
+      console.error('[AUTH] ❌ Missing or invalid Authorization header or token parameter');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
         error: 'Authentication required',
-        message: 'Authorization header with Bearer token is required',
+        message: 'Authorization header with Bearer token or token query parameter is required',
         code: -32000,
       });
       return;
     }
-
-    const token = authHeader.substring(7);
 
     if (!expectedToken) {
       console.error('[AUTH] ❌ BEARER_TOKEN environment variable not set');
@@ -40,11 +48,7 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
     }
 
     // Secure comparison to prevent timing attacks
-    const tokenBuffer = Buffer.from(token);
-    const expectedBuffer = Buffer.from(expectedToken);
-
-    // timingSafeEqual requires buffers of same length
-    if (tokenBuffer.length !== expectedBuffer.length || !timingSafeEqual(tokenBuffer, expectedBuffer)) {
+    if (!timingSafeStringEqual(token, expectedToken)) {
       // The console error message is intentionally generic to avoid leaking information.
       console.error('[AUTH] ❌ Invalid token provided');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
