@@ -580,4 +580,49 @@ describe('Auto-load functionality', () => {
       ).rejects.toThrow('importTransactions reported errors: duplicate transaction; invalid amount');
     });
   });
+
+  describe('batchBudgetUpdates', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        } as any,
+      ]);
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      // Setup batchBudgetUpdates mock
+      (api as any).batchBudgetUpdates = vi.fn().mockImplementation(async (cb) => {
+        return cb();
+      });
+    });
+
+    it('should call API initialization before batch updates', async () => {
+      const callback = vi.fn().mockResolvedValue(undefined);
+      await actualApi.batchBudgetUpdates(callback);
+
+      expect(api.init).toHaveBeenCalled();
+    });
+
+    it('should call api.batchBudgetUpdates with the callback', async () => {
+      const callback = vi.fn().mockResolvedValue('result');
+      const result = await actualApi.batchBudgetUpdates(callback);
+
+      expect((api as any).batchBudgetUpdates).toHaveBeenCalledWith(callback);
+      expect(callback).toHaveBeenCalled();
+      expect(result).toBe('result');
+    });
+
+    it('should throw if api.batchBudgetUpdates is not a function', async () => {
+      (api as any).batchBudgetUpdates = undefined;
+      const callback = vi.fn().mockResolvedValue(undefined);
+
+      await expect(actualApi.batchBudgetUpdates(callback)).rejects.toThrow(
+        'batchBudgetUpdates method is not available in this version of the API'
+      );
+    });
+  });
 });
