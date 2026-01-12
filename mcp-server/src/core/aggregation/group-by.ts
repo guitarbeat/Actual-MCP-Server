@@ -1,5 +1,4 @@
 // Aggregates category spendings into groups and sorts them
-import { groupBy, orderBy, sumBy } from 'lodash-es';
 import type { CategorySpending, GroupSpending } from '../types/domain.js';
 
 /**
@@ -14,28 +13,34 @@ export class GroupAggregator {
    * @returns Array of group spending data, sorted by total
    */
   aggregateAndSort(spendingByCategory: Record<string, CategorySpending>): GroupSpending[] {
-    const categories = Object.values(spendingByCategory);
-    const grouped = groupBy(categories, 'group');
+    const groups = new Map<string, GroupSpending>();
 
-    // Optimization: Iterate entries once to build groups, avoiding mapValues object creation
-    // and multiple iterations over the groups array.
-    // Performance impact: Reduces iterations from O(3N) to O(2N) roughly, and avoids intermediate objects.
-    const groups: GroupSpending[] = [];
+    // Single pass to group and sum
+    for (const cat of Object.values(spendingByCategory)) {
+      let group = groups.get(cat.group);
+      if (!group) {
+        group = {
+          name: cat.group,
+          total: 0,
+          categories: []
+        };
+        groups.set(cat.group, group);
+      }
+      group.total += cat.total;
+      group.categories.push(cat);
+    }
 
-    for (const [groupName, categoryList] of Object.entries(grouped)) {
-      // Calculate total and sort categories in one step
-      const total = sumBy(categoryList, 'total');
-      const sortedCategories = orderBy(categoryList, [(cat) => Math.abs(cat.total)], ['desc']);
+    const result = Array.from(groups.values());
 
-      groups.push({
-        name: groupName,
-        total,
-        categories: sortedCategories,
-      });
+    // Sort categories within groups
+    for (const group of result) {
+      group.categories.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
     }
 
     // Sort groups by absolute total (descending)
-    return orderBy(groups, [(group) => Math.abs(group.total)], ['desc']);
+    result.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+
+    return result;
   }
 
   /**
