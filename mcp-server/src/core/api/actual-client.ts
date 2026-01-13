@@ -1026,11 +1026,10 @@ export async function runImport(file: string, _importType?: string): Promise<unk
 /**
  * Batch budget updates (ensures API is initialized)
  */
-export async function batchBudgetUpdates(_updates: Array<Record<string, unknown>>): Promise<unknown> {
+export async function batchBudgetUpdates(callback: () => Promise<void>): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.batchBudgetUpdates === 'function') {
-      // * API signature changed - batchBudgetUpdates now takes a function
-      return api.batchBudgetUpdates(() => Promise.resolve());
+      return api.batchBudgetUpdates(callback);
     }
     throw new Error('batchBudgetUpdates method is not available in this version of the API');
   });
