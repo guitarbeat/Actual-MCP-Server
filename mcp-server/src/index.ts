@@ -415,6 +415,7 @@ async function main(): Promise<void> {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            ${initializing ? '<meta http-equiv="refresh" content="3">' : ''}
             <title>Actual Budget MCP</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
             <style>
@@ -466,6 +467,11 @@ async function main(): Promise<void> {
                 margin-bottom: 20px;
               }
               .dot { width: 8px; height: 8px; border-radius: 50%; }
+              @keyframes pulse {
+                0% { box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.7); }
+                100% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+              }
+              .pulse { animation: pulse 2s infinite; }
               .grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -510,7 +516,7 @@ async function main(): Promise<void> {
               </header>
 
               <div class="status-line">
-                <div class="dot" aria-hidden="true" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
+                <div class="dot ${initializing ? 'pulse' : ''}" aria-hidden="true" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
                 <span style="color: ${statusColor}">${statusText}</span>
               </div>
 
