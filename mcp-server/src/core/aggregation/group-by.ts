@@ -1,6 +1,25 @@
 // Aggregates category spendings into groups and sorts them
-import { groupBy, orderBy, sumBy } from 'lodash-es';
 import type { CategorySpending, GroupSpending } from '../types/domain.js';
+import { sortBy } from './sort-by.js';
+import { sumBy } from './sum-by.js';
+
+/**
+ * Group an array of items by a key.
+ *
+ * @param array - The array to group
+ * @param key - The key to group by
+ * @returns Record of grouped items
+ */
+function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
+  return array.reduce((acc, item) => {
+    const groupKey = String(item[key]);
+    if (!acc[groupKey]) {
+      acc[groupKey] = [];
+    }
+    acc[groupKey].push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
+}
 
 /**
  * Aggregates category spending data into groups and sorts by total spending.
@@ -25,7 +44,7 @@ export class GroupAggregator {
     for (const [groupName, categoryList] of Object.entries(grouped)) {
       // Calculate total and sort categories in one step
       const total = sumBy(categoryList, 'total');
-      const sortedCategories = orderBy(categoryList, [(cat) => Math.abs(cat.total)], ['desc']);
+      const sortedCategories = sortBy(categoryList, [(cat) => Math.abs(cat.total)], ['desc']);
 
       groups.push({
         name: groupName,
@@ -35,7 +54,7 @@ export class GroupAggregator {
     }
 
     // Sort groups by absolute total (descending)
-    return orderBy(groups, [(group) => Math.abs(group.total)], ['desc']);
+    return sortBy(groups, [(group) => Math.abs(group.total)], ['desc']);
   }
 
   /**
