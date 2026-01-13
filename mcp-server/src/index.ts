@@ -650,7 +650,8 @@ process.on('unhandledRejection', (reason: unknown, _promise: Promise<unknown>) =
     if (reason instanceof Error) {
       errorMessage = reason.message || 'Unknown error';
       console.error(`[UNHANDLED REJECTION] ${errorMessage}`);
-      if (reason.stack) {
+      // Only log stack trace in non-production environments to avoid information leakage
+      if (reason.stack && process.env.NODE_ENV !== 'production') {
         console.error(`[UNHANDLED REJECTION] Stack: ${reason.stack}`);
       }
     } else if (typeof reason === 'string') {
