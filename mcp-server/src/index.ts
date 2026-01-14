@@ -506,6 +506,16 @@ async function main(): Promise<void> {
                 text-align: center;
               }
               footer a { color: var(--primary); text-decoration: none; margin: 0 10px; }
+
+              /* Keyboard accessibility & Interaction */
+              *:focus-visible {
+                outline: 2px solid var(--primary);
+                outline-offset: 2px;
+                border-radius: 2px;
+              }
+              a:hover {
+                text-decoration: underline;
+              }
             </style>
           </head>
           <body>
