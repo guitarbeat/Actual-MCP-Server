@@ -395,12 +395,12 @@ async function main(): Promise<void> {
       const initializing = isInitializing();
 
       const getStatusDetails = () => {
-        if (initialized) return { color: '#10b981', text: 'Connected' };
-        if (initializing) return { color: '#f59e0b', text: 'Initializing...' };
-        return { color: '#ef4444', text: 'Disconnected' };
+        if (initialized) return { type: 'success', text: 'Connected' };
+        if (initializing) return { type: 'warning', text: 'Initializing...' };
+        return { type: 'error', text: 'Disconnected' };
       };
 
-      const { color: statusColor, text: statusText } = getStatusDetails();
+      const { type: statusType, text: statusText } = getStatusDetails();
 
       const renderStat = (label: string, value: string | number) => `
         <div class="item">
@@ -459,6 +459,11 @@ async function main(): Promise<void> {
               }
               h1 { margin: 0; font-size: 20px; }
               .version { font-size: 12px; color: var(--muted); }
+              *:focus-visible {
+                outline: 2px solid var(--primary);
+                outline-offset: 2px;
+                border-radius: 2px;
+              }
               .status-line {
                 display: flex;
                 align-items: center;
@@ -468,8 +473,8 @@ async function main(): Promise<void> {
               }
               .dot { width: 8px; height: 8px; border-radius: 50%; }
               @keyframes pulse {
-                0% { box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.7); }
-                100% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+                0% { box-shadow: 0 0 0 0px color-mix(in srgb, var(--warning), transparent 30%); }
+                100% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--warning), transparent 100%); }
               }
               .pulse { animation: pulse 2s infinite; }
               .grid {
@@ -516,8 +521,8 @@ async function main(): Promise<void> {
               </header>
 
               <div class="status-line">
-                <div class="dot ${initializing ? 'pulse' : ''}" aria-hidden="true" style="background: ${statusColor}; border: 2px solid ${statusColor}44"></div>
-                <span style="color: ${statusColor}">${statusText}</span>
+                <div class="dot ${initializing ? 'pulse' : ''}" aria-hidden="true" style="background: var(--${statusType}); border: 2px solid color-mix(in srgb, var(--${statusType}), transparent 73%)"></div>
+                <span style="color: var(--${statusType})">${statusText}</span>
               </div>
 
               <dl class="grid">
