@@ -180,12 +180,13 @@ function formatStructuredMessage(level: string, args: unknown[]): string {
  * @param args - Console arguments to format
  * @returns Formatted message string with all arguments joined by spaces
  */
-function formatMessage(args: unknown[]): string {
+export function formatMessage(args: unknown[]): string {
   return args
     .map((arg) => {
       if (arg instanceof Error) {
-        // Include stack trace for Error objects
-        return `${arg.message}${arg.stack ? `\n${arg.stack}` : ''}`;
+        // Include stack trace for Error objects unless in production
+        const showStack = process.env.NODE_ENV !== 'production';
+        return `${arg.message}${showStack && arg.stack ? `\n${arg.stack}` : ''}`;
       }
       if (typeof arg === 'object' && arg !== null) {
         try {
