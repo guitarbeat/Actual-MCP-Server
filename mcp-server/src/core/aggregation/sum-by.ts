@@ -7,11 +7,27 @@
  * @returns The sum
  */
 export function sumBy<T>(array: T[], iteratee: ((item: T) => number) | keyof T): number {
-  return array.reduce((sum, item) => {
-    const value = typeof iteratee === 'function'
-      ? iteratee(item)
-      : (item[iteratee] as unknown as number);
-    // Handle null/undefined by treating as 0
-    return sum + (value || 0);
-  }, 0);
+  let sum = 0;
+
+  // Use a standard loop instead of reduce for better performance on large arrays
+  // and hoist the type check to avoid checking it on every iteration.
+  if (typeof iteratee === 'function') {
+    for (const item of array) {
+      const value = iteratee(item);
+      if (value) {
+        sum += value;
+      }
+    }
+  } else {
+    for (const item of array) {
+      // Cast to unknown then number to handle potential runtime type mismatches
+      // gracefully (e.g., if the property exists but is null/undefined)
+      const value = item[iteratee] as unknown as number;
+      if (value) {
+        sum += value;
+      }
+    }
+  }
+
+  return sum;
 }
