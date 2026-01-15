@@ -31,6 +31,7 @@ import {
 import { createBearerAuth } from './core/auth/bearer-auth.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
+import { corsMiddleware } from './core/transport/cors.js';
 import { securityHeaders } from './core/transport/security-headers.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
 import { escapeHtml } from './core/utils/html-utils.js';
@@ -359,21 +360,8 @@ async function main(): Promise<void> {
     // * Security Headers
     app.use(securityHeaders);
 
-    // * CORS middleware for cross-origin requests (Poke MCP runs in browser)
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-MCP-Connection-ID');
-      res.setHeader('Access-Control-Expose-Headers', 'X-MCP-Connection-ID');
-
-      // Handle preflight requests
-      if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-      }
-
-      next();
-    });
+    // * CORS middleware (Strict origin validation)
+    app.use(corsMiddleware);
     // * Store SSE transports by session ID for proper session isolation
     // * Each SSE connection gets its own transport instance for proper session isolation already moved to top-level
 
