@@ -388,6 +388,43 @@ async function main(): Promise<void> {
       res.send(svg);
     });
 
+    // * Dashboard interaction script
+    app.get('/dashboard.js', (_req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'application/javascript');
+      res.send(`
+        document.addEventListener('DOMContentLoaded', () => {
+          const toast = document.getElementById('toast');
+          let toastTimeout;
+
+          function showToast(message) {
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toast.textContent = message;
+            toast.classList.add('show');
+            toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
+          }
+
+          document.querySelectorAll('.path[data-copy]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const text = btn.getAttribute('data-copy');
+              if (!text) return;
+
+              try {
+                await navigator.clipboard.writeText(text);
+                showToast('Copied to clipboard');
+
+                // Visual feedback on button
+                btn.classList.add('copied');
+                setTimeout(() => btn.classList.remove('copied'), 1000);
+              } catch (err) {
+                console.error('Failed to copy', err);
+                showToast('Failed to copy');
+              }
+            });
+          });
+        });
+      `);
+    });
+
     // * Dashboard renderer to keep route complexity low
     function renderDashboard(): string {
       const stats = getInitializationStats();
@@ -521,6 +558,70 @@ async function main(): Promise<void> {
               a:hover {
                 text-decoration: underline;
               }
+
+              /* Toast Notification */
+              #toast {
+                position: fixed;
+                bottom: 24px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100px);
+                background: var(--text);
+                color: var(--bg);
+                padding: 10px 20px;
+                border-radius: 50px;
+                font-size: 14px;
+                font-weight: 500;
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                pointer-events: none;
+                z-index: 100;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+              }
+              #toast.show {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+              }
+
+              /* Clickable Paths */
+              button.path {
+                font-family: monospace;
+                flex: 1;
+                background: none;
+                border: none;
+                text-align: left;
+                padding: 4px 8px;
+                margin: -4px -8px;
+                border-radius: 4px;
+                color: inherit;
+                cursor: pointer;
+                font-size: inherit;
+                transition: background-color 0.2s;
+              }
+              button.path:hover {
+                background-color: color-mix(in srgb, var(--text), transparent 95%);
+                color: var(--primary);
+              }
+              button.path:active {
+                background-color: color-mix(in srgb, var(--text), transparent 90%);
+              }
+              button.path.copied {
+                color: var(--success);
+              }
+              /* Add a copy icon hint on hover */
+              button.path::after {
+                content: '📋';
+                font-size: 12px;
+                margin-left: 8px;
+                opacity: 0;
+                transition: opacity 0.2s;
+              }
+              button.path:hover::after {
+                opacity: 0.5;
+              }
+              button.path.copied::after {
+                content: '✓';
+                opacity: 1;
+              }
             </style>
           </head>
           <body>
@@ -546,17 +647,17 @@ async function main(): Promise<void> {
               <ul class="endpoints">
                 <li class="ep-row">
                   <span class="method" style="color: var(--primary)">ALL</span>
-                  <span class="path">/mcp</span>
+                  <button class="path" data-copy="/mcp" aria-label="Copy /mcp endpoint">/mcp</button>
                   <span class="desc">Streamable Connection</span>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--success)">GET</span>
-                  <span class="path">/sse</span>
+                  <button class="path" data-copy="/sse" aria-label="Copy /sse endpoint">/sse</button>
                   <span class="desc">Event Stream</span>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--warning)">GET</span>
-                  <span class="path">/health</span>
+                  <button class="path" data-copy="/health" aria-label="Copy /health endpoint">/health</button>
                   <span class="desc">Health Check</span>
                 </li>
               </ul>
@@ -566,6 +667,8 @@ async function main(): Promise<void> {
                 <a href="/health">Live JSON</a>
               </footer>
             </div>
+            <div id="toast" aria-live="polite"></div>
+            <script src="/dashboard.js"></script>
           </body>
         </html>
       `;
