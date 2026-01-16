@@ -521,7 +521,26 @@ async function main(): Promise<void> {
               a:hover {
                 text-decoration: underline;
               }
+              .copy-btn {
+                background: none;
+                border: none;
+                padding: 4px;
+                cursor: pointer;
+                color: var(--muted);
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                transition: all 0.2s;
+              }
+              .copy-btn:hover {
+                color: var(--primary);
+                background-color: var(--border);
+              }
+              .copy-btn.copied {
+                color: var(--success);
+              }
             </style>
+            <script src="/dashboard.js" defer></script>
           </head>
           <body>
             <div class="container">
@@ -546,30 +565,77 @@ async function main(): Promise<void> {
               <ul class="endpoints">
                 <li class="ep-row">
                   <span class="method" style="color: var(--primary)">ALL</span>
-                  <span class="path">/mcp</span>
+                  <code class="path">/mcp</code>
+                  <button class="copy-btn" data-copy="/mcp" aria-label="Copy path" title="Copy path">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
                   <span class="desc">Streamable Connection</span>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--success)">GET</span>
-                  <span class="path">/sse</span>
+                  <code class="path">/sse</code>
+                  <button class="copy-btn" data-copy="/sse" aria-label="Copy path" title="Copy path">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
                   <span class="desc">Event Stream</span>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--warning)">GET</span>
-                  <span class="path">/health</span>
+                  <code class="path">/health</code>
+                  <button class="copy-btn" data-copy="/health" aria-label="Copy path" title="Copy path">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
                   <span class="desc">Health Check</span>
                 </li>
               </ul>
 
               <footer>
-                <a href="https://github.com/guitarbeat/actual-mcp">GitHub</a>
-                <a href="/health">Live JSON</a>
+                <a href="https://github.com/guitarbeat/actual-mcp" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="/health" target="_blank" rel="noopener noreferrer">Live JSON</a>
               </footer>
             </div>
           </body>
         </html>
       `;
     }
+
+    // * Dashboard interactivity script
+    app.get('/dashboard.js', (_req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'application/javascript');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(`
+        document.addEventListener('click', async (e) => {
+          const btn = e.target.closest('.copy-btn');
+          if (!btn) return;
+          if (btn.classList.contains('copied')) return;
+          const text = btn.dataset.copy;
+          if (!text) return;
+          try {
+            await navigator.clipboard.writeText(text);
+            const icon = btn.querySelector('svg');
+            const original = icon.innerHTML;
+            // Checkmark icon
+            icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              icon.innerHTML = original;
+              btn.classList.remove('copied');
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        });
+      `);
+    });
 
     // * Root route - Condensed & Universal Dashboard
     app.get('/', (_req: Request, res: Response) => {
