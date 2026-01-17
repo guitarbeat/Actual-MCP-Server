@@ -1,0 +1,13 @@
+
+> actual-mcp@1.5.0 test:unit
+> vitest run src/tools/get-transactions/input-parser.test.ts
+
+
+ RUN  v3.2.4 /app/upstream-version
+
+ ✓ src/tools/get-transactions/input-parser.test.ts (5 tests) 7ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  23:45:13
+   Duration  402ms (transform 57ms, setup 0ms, collect 53ms, tests 7ms, environment 0ms, prepare 92ms)
