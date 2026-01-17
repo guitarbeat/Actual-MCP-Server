@@ -28,11 +28,14 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   // - default-src 'self': Only allow resources from the same origin by default
   // - img-src 'self' data:: Allow images from self and data URIs (for favicons/assets)
   // - style-src 'self' 'unsafe-inline': Allow inline styles (required for dashboard)
-  // - script-src 'self': Only allow scripts from self (dashboard has no scripts currently)
+  // - script-src 'none': No scripts allowed (dashboard uses server-side rendering + meta refresh)
+  // - object-src 'none': Prevent <object>, <embed>, <applet>
+  // - base-uri 'none': Prevent <base> tag hijacking
+  // - form-action 'self': Restrict form submissions (though none currently exist)
   // - frame-ancestors 'none': Prevent embedding in iframes (Clickjacking protection)
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none';"
+    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none';"
   );
 
   // Remove X-Powered-By header to hide server details

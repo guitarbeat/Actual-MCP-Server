@@ -19,7 +19,7 @@ describe('securityHeaders', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Security-Policy',
-      "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none';"
+      "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none';"
     );
     expect(res.removeHeader).toHaveBeenCalledWith('X-Powered-By');
     expect(next).toHaveBeenCalled();
