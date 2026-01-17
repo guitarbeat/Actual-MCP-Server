@@ -2,6 +2,7 @@
 import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
+import { timingSafeStringEqual } from './core/auth/index.js';
 /**
  * MCP Server for Actual Budget
  *
@@ -116,7 +117,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
-  if (token !== expectedToken) {
+  if (!timingSafeStringEqual(token, expectedToken)) {
     console.error('[AUTH] ❌ Invalid token (token mismatch)');
     res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
     res.status(401).json({
