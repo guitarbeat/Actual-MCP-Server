@@ -1,25 +1,5 @@
 // Aggregates category spendings into groups and sorts them
 import type { CategorySpending, GroupSpending } from '../types/domain.js';
-import { sortBy } from './sort-by.js';
-import { sumBy } from './sum-by.js';
-
-/**
- * Group an array of items by a key.
- *
- * @param array - The array to group
- * @param key - The key to group by
- * @returns Record of grouped items
- */
-function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
-  return array.reduce((acc, item) => {
-    const groupKey = String(item[key]);
-    if (!acc[groupKey]) {
-      acc[groupKey] = [];
-    }
-    acc[groupKey].push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
-}
 
 /**
  * Aggregates category spending data into groups and sorts by total spending.
@@ -33,28 +13,42 @@ export class GroupAggregator {
    * @returns Array of group spending data, sorted by total
    */
   aggregateAndSort(spendingByCategory: Record<string, CategorySpending>): GroupSpending[] {
+    // Optimization: Single pass aggregation
+    // Iterate over categories once to group them and calculate totals simultaneously.
+    const groupsMap: Record<string, GroupSpending> = {};
+
+    // Using Object.values is faster than iterating keys and looking up
     const categories = Object.values(spendingByCategory);
-    const grouped = groupBy(categories, 'group');
 
-    // Optimization: Iterate entries once to build groups, avoiding mapValues object creation
-    // and multiple iterations over the groups array.
-    // Performance impact: Reduces iterations from O(3N) to O(2N) roughly, and avoids intermediate objects.
-    const groups: GroupSpending[] = [];
+    for (const category of categories) {
+      const groupName = category.group;
+      // Direct property access is often faster than Map.get for string keys in hot paths
+      let group = groupsMap[groupName];
 
-    for (const [groupName, categoryList] of Object.entries(grouped)) {
-      // Calculate total and sort categories in one step
-      const total = sumBy(categoryList, 'total');
-      const sortedCategories = sortBy(categoryList, [(cat) => Math.abs(cat.total)], ['desc']);
+      if (!group) {
+        group = {
+          name: groupName,
+          total: 0,
+          categories: [],
+        };
+        groupsMap[groupName] = group;
+      }
 
-      groups.push({
-        name: groupName,
-        total,
-        categories: sortedCategories,
-      });
+      group.total += category.total;
+      group.categories.push(category);
+    }
+
+    // Convert to array and sort
+    const groups = Object.values(groupsMap);
+
+    // Sort categories within each group
+    // Optimization: Use native sort directly to avoid overhead of generic sortBy utility
+    for (const group of groups) {
+      group.categories.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
     }
 
     // Sort groups by absolute total (descending)
-    return sortBy(groups, [(group) => Math.abs(group.total)], ['desc']);
+    return groups.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
   }
 
   /**
