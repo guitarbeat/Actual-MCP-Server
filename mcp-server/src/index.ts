@@ -562,8 +562,8 @@ async function main(): Promise<void> {
               </ul>
 
               <footer>
-                <a href="https://github.com/guitarbeat/actual-mcp">GitHub</a>
-                <a href="/health">Live JSON</a>
+                <a href="https://github.com/guitarbeat/actual-mcp" target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub">GitHub</a>
+                <a href="/health" target="_blank" rel="noopener noreferrer" aria-label="View live health status JSON">Live JSON</a>
               </footer>
             </div>
           </body>
