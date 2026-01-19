@@ -71,19 +71,12 @@ describe('createBearerAuth', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('should call next() if token is provided via query parameter', () => {
+  it('should return 401 if token is provided via query parameter (not supported)', () => {
     const auth = createBearerAuth({ enableBearer: true, expectedToken: 'secret' });
     req.query = { authToken: 'secret' };
     auth(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalled();
-  });
-
-  it('should return 401 if invalid token is provided via query parameter', () => {
-    const auth = createBearerAuth({ enableBearer: true, expectedToken: 'secret' });
-    req.query = { authToken: 'wrong' };
-    auth(req as Request, res as Response, next);
     expect(statusMock).toHaveBeenCalledWith(401);
-    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication failed' }));
+    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication required' }));
     expect(next).not.toHaveBeenCalled();
   });
 });
