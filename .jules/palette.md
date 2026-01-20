@@ -9,3 +9,7 @@
 ## 2025-02-24 - Hardcoded Colors vs CSS Variables
 **Learning:** Returning hardcoded hex codes from JavaScript logic (e.g., `getStatusDetails`) breaks theme adaptability and often fails contrast checks in one of the modes. Using semantic class names or CSS variables allows the browser to handle theming and contrast correctly.
 **Action:** Return semantic types (e.g., 'success', 'warning') from JS logic and map them to CSS variables in the styles.
+
+## 2025-02-24 - Descriptive Links & External Targets
+**Learning:** Vague link text like "Live JSON" confuses users. Links to external sites (e.g., GitHub) from a dashboard should open in a new tab to preserve the user's context.
+**Action:** Use descriptive link text (e.g., "System Health") and always add `target="_blank"`, `rel="noopener noreferrer"`, and an `aria-label` when linking to external resources.
