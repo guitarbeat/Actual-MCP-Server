@@ -1,4 +1,3 @@
-
 /**
  * Sorts an array based on iteratees and orders.
  *
@@ -7,11 +6,7 @@
  * @param orders - Array of sort orders ('asc' or 'desc')
  * @returns The sorted array
  */
-export function sortBy<T>(
-  array: T[],
-  iteratees: ((item: T) => any)[],
-  orders: ('asc' | 'desc')[] = []
-): T[] {
+export function sortBy<T>(array: T[], iteratees: ((item: T) => any)[], orders: ('asc' | 'desc')[] = []): T[] {
   return [...array].sort((a, b) => {
     for (let i = 0; i < iteratees.length; i++) {
       const iteratee = iteratees[i];

@@ -1,4 +1,3 @@
-
 /**
  * Calculates the sum of values in an array derived by an iteratee.
  *
@@ -16,13 +15,13 @@ export function sumBy<T>(array: T[], iteratee: ((item: T) => number) | keyof T):
     for (const item of array) {
       const value = iteratee(item);
       // Handle null/undefined by treating as 0
-      sum += (value || 0);
+      sum += value || 0;
     }
   } else {
     for (const item of array) {
       const value = item[iteratee] as unknown as number;
       // Handle null/undefined by treating as 0
-      sum += (value || 0);
+      sum += value || 0;
     }
   }
   return sum;

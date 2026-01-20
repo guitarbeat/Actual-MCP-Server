@@ -12,3 +12,8 @@
 **Vulnerability:** The `unhandledRejection` handler in the main server entry point (`src/index.ts`) was logging full stack traces to the console regardless of the environment. In production, this can expose sensitive internal details (file paths, dependency versions, code structure) to unauthorized viewers of the logs.
 **Learning:** While stack traces are vital for debugging in development, they must be suppressed or securely handled in production. Consistency in logging practices is key—other parts of the system (like `response-builder.ts`) were already correctly checking `NODE_ENV`.
 **Prevention:** I updated the `unhandledRejection` handler to check `if (process.env.NODE_ENV !== 'production')` before logging stack traces. This enforces the "fail securely" principle by ensuring that errors in production do not reveal internal state.
+
+## 2024-05-26 - [Hidden Support for Insecure Auth Methods]
+**Vulnerability:** The centralized authentication middleware `createBearerAuth` explicitly supported query parameter authentication (`?token=...`), contradicting the assumption that it was a "secure, header-only" implementation. This re-introduced the very vulnerability (token leakage in logs/history) that previous refactors intended to eliminate.
+**Learning:** Trusting a "shared security module" without auditing its implementation can lead to false security. Vulnerabilities can hide in utility functions that try to be "too helpful" by supporting multiple insecure input methods.
+**Prevention:** I removed the query parameter extraction logic from `src/core/auth/bearer-auth.ts` and updated unit tests to explicitly verify that tokens provided via query parameters are ignored and rejected.
