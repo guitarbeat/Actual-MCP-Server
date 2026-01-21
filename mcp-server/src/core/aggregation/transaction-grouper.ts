@@ -9,29 +9,46 @@ export class TransactionGrouper {
     includeIncome: boolean
   ): Record<string, CategorySpending> {
     const spendingByCategory: Record<string, CategorySpending> = {};
-    transactions.forEach((transaction) => {
-      if (!transaction.category) return; // Skip uncategorized
+    const skippedCategories = new Set<string>();
+
+    for (const transaction of transactions) {
+      if (!transaction.category) continue; // Skip uncategorized
       const categoryId = transaction.category;
-      const categoryName = getCategoryName(categoryId);
+
+      // Fast path: already processed this category and it's valid
+      if (spendingByCategory[categoryId]) {
+        spendingByCategory[categoryId].total += transaction.amount;
+        spendingByCategory[categoryId].transactions += 1;
+        continue;
+      }
+
+      // Fast path: already processed this category and it should be skipped
+      if (skippedCategories.has(categoryId)) {
+        continue;
+      }
+
+      // Slow path: first time seeing this category
       const group = getGroupInfo(categoryId) || {
         name: 'Unknown Group',
         isIncome: false,
       };
+
       // Skip income categories if not requested
-      if (group.isIncome && !includeIncome) return;
-      if (!spendingByCategory[categoryId]) {
-        spendingByCategory[categoryId] = {
-          id: categoryId,
-          name: categoryName,
-          group: group.name,
-          isIncome: group.isIncome,
-          total: 0,
-          transactions: 0,
-        };
+      if (group.isIncome && !includeIncome) {
+        skippedCategories.add(categoryId);
+        continue;
       }
-      spendingByCategory[categoryId].total += transaction.amount;
-      spendingByCategory[categoryId].transactions += 1;
-    });
+
+      const categoryName = getCategoryName(categoryId);
+      spendingByCategory[categoryId] = {
+        id: categoryId,
+        name: categoryName,
+        group: group.name,
+        isIncome: group.isIncome,
+        total: transaction.amount,
+        transactions: 1,
+      };
+    }
     return spendingByCategory;
   }
 }
