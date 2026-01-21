@@ -15,23 +15,19 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
       return;
     }
 
-    // Also support query parameter for auth
-    const tokenFromQuery = req.query.token || req.query.apiKey || req.query.authToken;
     const authHeader = req.headers.authorization;
     let token: string | undefined;
 
     if (authHeader?.startsWith('Bearer ')) {
       token = authHeader.substring(7);
-    } else if (typeof tokenFromQuery === 'string') {
-      token = tokenFromQuery;
     }
 
     if (!token) {
-      console.error('[AUTH] ❌ Missing or invalid Authorization header or token parameter');
+      console.error('[AUTH] ❌ Missing or invalid Authorization header');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
         error: 'Authentication required',
-        message: 'Authorization header with Bearer token or token query parameter is required',
+        message: 'Authorization header with Bearer token is required',
         code: -32000,
       });
       return;
