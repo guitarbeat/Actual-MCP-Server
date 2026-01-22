@@ -18,8 +18,12 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
     const authHeader = req.headers.authorization;
     let token: string | undefined;
 
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
+    // Handle string or string[] header (though Authorization should be string)
+    // If it's an array (unlikely for Auth), take the first one
+    const headerValue = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+
+    if (headerValue && typeof headerValue === 'string' && headerValue.startsWith('Bearer ')) {
+      token = headerValue.substring(7);
     }
 
     if (!token) {
