@@ -498,10 +498,12 @@ async function main(): Promise<void> {
                 gap: 10px;
                 border-bottom: 1px solid var(--border);
                 font-size: 13px;
+                transition: background-color 0.2s ease;
               }
+              .ep-row:hover { background-color: color-mix(in srgb, var(--text), transparent 96%); }
               .ep-row:last-child { border-bottom: none; }
               .method { font-family: monospace; font-weight: bold; font-size: 11px; width: 35px; }
-              .path { font-family: monospace; flex: 1; }
+              .path { font-family: monospace; flex: 1; user-select: all; }
               .desc { color: var(--muted); font-size: 12px; }
               dl, dd, ul, li { margin: 0; padding: 0; }
               footer {
@@ -521,6 +523,10 @@ async function main(): Promise<void> {
               a:hover {
                 text-decoration: underline;
               }
+              ::selection {
+                background: color-mix(in srgb, var(--primary), transparent 80%);
+                color: var(--primary);
+              }
             </style>
           </head>
           <body>
@@ -530,7 +536,7 @@ async function main(): Promise<void> {
                 <span class="version">v${version}</span>
               </header>
 
-              <div class="status-line">
+              <div class="status-line" role="status">
                 <div class="dot ${initializing ? 'pulse' : ''}" aria-hidden="true" style="background: var(--${statusType}); border: 2px solid color-mix(in srgb, var(--${statusType}), transparent 73%)"></div>
                 <span style="color: var(--${statusType})">${statusText}</span>
               </div>
