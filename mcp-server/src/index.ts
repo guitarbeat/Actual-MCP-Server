@@ -389,7 +389,7 @@ async function main(): Promise<void> {
     });
 
     // * Dashboard renderer to keep route complexity low
-    function renderDashboard(): string {
+    function renderDashboard(nonce: string): string {
       const stats = getInitializationStats();
       const initialized = isInitialized();
       const initializing = isInitializing();
@@ -501,7 +501,22 @@ async function main(): Promise<void> {
               }
               .ep-row:last-child { border-bottom: none; }
               .method { font-family: monospace; font-weight: bold; font-size: 11px; width: 35px; }
-              .path { font-family: monospace; flex: 1; }
+              .path { font-family: monospace; flex: 1; cursor: pointer; position: relative; }
+              .path:hover { text-decoration: underline; text-decoration-style: dotted; }
+              .path::after {
+                content: 'Click to copy';
+                position: absolute;
+                right: 0;
+                font-size: 10px;
+                color: var(--muted);
+                opacity: 0;
+                transition: opacity 0.2s;
+                pointer-events: none;
+                background: var(--bg);
+                padding-left: 5px;
+              }
+              .path:hover::after { opacity: 1; }
+              .path.copied::after { content: 'Copied!'; color: var(--success); opacity: 1; }
               .desc { color: var(--muted); font-size: 12px; }
               dl, dd, ul, li { margin: 0; padding: 0; }
               footer {
@@ -546,17 +561,17 @@ async function main(): Promise<void> {
               <ul class="endpoints">
                 <li class="ep-row">
                   <span class="method" style="color: var(--primary)">ALL</span>
-                  <span class="path">/mcp</span>
+                  <span class="path" role="button" tabindex="0" title="Click to copy full URL" aria-label="Copy connection URL">/mcp</span>
                   <span class="desc">Streamable Connection</span>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--success)">GET</span>
-                  <span class="path">/sse</span>
+                  <span class="path" role="button" tabindex="0" title="Click to copy full URL" aria-label="Copy connection URL">/sse</span>
                   <span class="desc">Event Stream</span>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--warning)">GET</span>
-                  <span class="path">/health</span>
+                  <span class="path" role="button" tabindex="0" title="Click to copy full URL" aria-label="Copy connection URL">/health</span>
                   <span class="desc">Health Check</span>
                 </li>
               </ul>
@@ -566,6 +581,27 @@ async function main(): Promise<void> {
                 <a href="/health">System Health</a>
               </footer>
             </div>
+            <script nonce="${nonce}">
+              document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('.path').forEach(el => {
+                  const handleCopy = () => {
+                    const path = el.textContent.trim();
+                    const fullUrl = window.location.origin + path;
+                    navigator.clipboard.writeText(fullUrl).then(() => {
+                      el.classList.add('copied');
+                      setTimeout(() => el.classList.remove('copied'), 2000);
+                    }).catch(console.error);
+                  };
+                  el.addEventListener('click', handleCopy);
+                  el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleCopy();
+                    }
+                  });
+                });
+              });
+            </script>
           </body>
         </html>
       `;
@@ -575,7 +611,7 @@ async function main(): Promise<void> {
     app.get('/', (_req: Request, res: Response) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.send(renderDashboard());
+      res.send(renderDashboard(res.locals.nonce));
     });
 
     // * Health check route for deployment platforms
