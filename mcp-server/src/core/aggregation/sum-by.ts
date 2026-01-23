@@ -9,7 +9,7 @@
 export function sumBy<T>(array: T[], iteratee: ((item: T) => number) | keyof T): number {
   let sum = 0;
 
-  // Optimization: Check type of iteratee once outside the loop
+  // Optimization: Checks type of iteratee once outside the loop
   // Performance: ~5x faster than using reduce with type check inside loop
   // Benchmarked: ~450ms vs ~2265ms for 100M iterations
   if (typeof iteratee === 'function') {
