@@ -1,6 +1,6 @@
 
 /**
- * Sorts an array based on iteratees and orders.
+ * Sorts an array based on the provided iteratees and sort orders.
  *
  * @param array - The array to sort
  * @param iteratees - Array of functions to get values to sort by
