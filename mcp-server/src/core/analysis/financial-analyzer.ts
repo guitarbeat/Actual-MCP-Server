@@ -142,9 +142,12 @@ export async function findUncategorizedTransactions(month: string): Promise<Unca
   let totalAmount = 0;
   const payeeCounts: Record<string, number> = {};
 
-  for (const account of accounts) {
-    const transactions = await getTransactions(account.id, startDate, endDate);
+  // Fetch transactions in parallel for all accounts to improve performance
+  const transactionResults = await Promise.all(
+    accounts.map((account) => getTransactions(account.id, startDate, endDate))
+  );
 
+  for (const transactions of transactionResults) {
     for (const tx of transactions) {
       if (!tx.category) {
         count++;
