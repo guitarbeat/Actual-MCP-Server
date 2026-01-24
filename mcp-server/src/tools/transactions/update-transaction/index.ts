@@ -15,7 +15,11 @@ const UpdateTransactionSchema = z.object({
     .string()
     .uuid('Transaction ID must be a valid UUID')
     .describe('The unique identifier of the transaction to update (use get-transactions to find this).'),
-  account: z.string().optional().describe('New account name or UUID to move the transaction to.'),
+  account: z
+    .string()
+    .max(100, 'Account name must be less than 100 characters')
+    .optional()
+    .describe('New account name or UUID to move the transaction to.'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
@@ -25,9 +29,21 @@ const UpdateTransactionSchema = z.object({
     .number()
     .optional()
     .describe('New transaction amount in dollars. Negative for expenses, positive for income.'),
-  payee: z.string().optional().describe('New payee name. Pass an empty string to remove the payee.'),
-  category: z.string().optional().describe('New category name. Pass an empty string to remove the category.'),
-  notes: z.string().optional().describe('New notes or description.'),
+  payee: z
+    .string()
+    .max(100, 'Payee name must be less than 100 characters')
+    .optional()
+    .describe('New payee name. Pass an empty string to remove the payee.'),
+  category: z
+    .string()
+    .max(100, 'Category name must be less than 100 characters')
+    .optional()
+    .describe('New category name. Pass an empty string to remove the category.'),
+  notes: z
+    .string()
+    .max(500, 'Notes must be less than 500 characters')
+    .optional()
+    .describe('New notes or description.'),
   cleared: z.boolean().optional().describe('Update cleared status (true for cleared, false for uncleared).'),
 });
 

@@ -14,6 +14,7 @@ export const CreateTransactionSchema = z.object({
   account: z
     .string()
     .min(1, 'Account is required')
+    .max(100, 'Account name must be less than 100 characters')
     .describe('Account name (e.g., "Checking") or UUID to add the transaction to.'),
   date: z
     .string()
@@ -26,20 +27,34 @@ export const CreateTransactionSchema = z.object({
     ),
   payee: z
     .string()
+    .max(100, 'Payee name must be less than 100 characters')
     .optional()
     .describe('Name of the merchant, person, or entity (e.g., "Whole Foods", "Netflix", "John Smith").'),
   category: z
     .string()
+    .max(100, 'Category name must be less than 100 characters')
     .optional()
     .describe('Category to classify the transaction (e.g., "Groceries", "Rent", "Salary").'),
-  notes: z.string().optional().describe('Additional notes or description for the transaction.'),
+  notes: z
+    .string()
+    .max(500, 'Notes must be less than 500 characters')
+    .optional()
+    .describe('Additional notes or description for the transaction.'),
   cleared: z.boolean().optional().describe('Whether the transaction has cleared the bank. Defaults to false.'),
   subtransactions: z
     .array(
       z.object({
         amount: z.number().describe('Amount for this split part in dollars.'),
-        category: z.string().optional().describe('Category for this split part.'),
-        notes: z.string().optional().describe('Notes for this split part.'),
+        category: z
+          .string()
+          .max(100, 'Category name must be less than 100 characters')
+          .optional()
+          .describe('Category for this split part.'),
+        notes: z
+          .string()
+          .max(500, 'Notes must be less than 500 characters')
+          .optional()
+          .describe('Notes for this split part.'),
       })
     )
     .optional()

@@ -12,3 +12,8 @@
 **Vulnerability:** The `unhandledRejection` handler in the main server entry point (`src/index.ts`) was logging full stack traces to the console regardless of the environment. In production, this can expose sensitive internal details (file paths, dependency versions, code structure) to unauthorized viewers of the logs.
 **Learning:** While stack traces are vital for debugging in development, they must be suppressed or securely handled in production. Consistency in logging practices is key—other parts of the system (like `response-builder.ts`) were already correctly checking `NODE_ENV`.
 **Prevention:** I updated the `unhandledRejection` handler to check `if (process.env.NODE_ENV !== 'production')` before logging stack traces. This enforces the "fail securely" principle by ensuring that errors in production do not reveal internal state.
+
+## 2024-05-26 - [Unbounded Input Length Denial of Service]
+**Vulnerability:** Input schemas for transactions and other entities (Categories, Payees, Schedules) lacked maximum length constraints on string fields. This allowed potentially unlimited string input, posing a Denial of Service (DoS) risk through memory exhaustion or database instability.
+**Learning:** Zod schemas (`z.string()`) validate types but not dimensions by default. Input validation must explicitly define "reasonable" boundaries for all fields to prevent abuse, even in internal-facing tools.
+**Prevention:** I applied explicit `.max(100)` limits to name fields and `.max(500)` to note fields across `create-transaction`, `update-transaction`, and shared `manage-entity` schemas. Default-deny or "default-constrained" should be the mindset for all input definitions.

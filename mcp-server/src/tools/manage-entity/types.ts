@@ -146,7 +146,7 @@ export type ScheduleUpdateData = Partial<ScheduleData>;
  * Schema for category data validation
  */
 export const CategoryDataSchema = z.object({
-  name: z.string().min(1, 'Category name is required'),
+  name: z.string().min(1, 'Category name is required').max(100, 'Category name must be less than 100 characters'),
   groupId: z.string().uuid('Group ID must be a valid UUID'),
 });
 
@@ -154,14 +154,17 @@ export const CategoryDataSchema = z.object({
  * Schema for category group data validation
  */
 export const CategoryGroupDataSchema = z.object({
-  name: z.string().min(1, 'Category group name is required'),
+  name: z
+    .string()
+    .min(1, 'Category group name is required')
+    .max(100, 'Category group name must be less than 100 characters'),
 });
 
 /**
  * Schema for payee data validation
  */
 export const PayeeDataSchema = z.object({
-  name: z.string().min(1, 'Payee name is required'),
+  name: z.string().min(1, 'Payee name is required').max(100, 'Payee name must be less than 100 characters'),
   transferAccount: z.string().uuid('Transfer account must be a valid UUID').optional(),
 });
 
@@ -247,9 +250,22 @@ export const RecurConfigSchema = z.object({
  * Supports name resolution for account, payee, and category (like TransactionData)
  */
 export const ScheduleDataSchema = z.object({
-  name: z.string().min(1, 'Schedule name is recommended').optional(),
-  account: z.string().min(1, 'Account name or ID is required').nullable().optional(), // Name or ID
-  accountId: z.string().min(1, 'Account name or ID is required').optional(), // Name or ID (convenience field)
+  name: z
+    .string()
+    .min(1, 'Schedule name is recommended')
+    .max(100, 'Schedule name must be less than 100 characters')
+    .optional(),
+  account: z
+    .string()
+    .min(1, 'Account name or ID is required')
+    .max(100, 'Account name must be less than 100 characters')
+    .nullable()
+    .optional(), // Name or ID
+  accountId: z
+    .string()
+    .min(1, 'Account name or ID is required')
+    .max(100, 'Account name must be less than 100 characters')
+    .optional(), // Name or ID (convenience field)
   amount: z
     .union([
       z.number(), // Dollars or cents (auto-detected, like transactions)
@@ -263,9 +279,19 @@ export const ScheduleDataSchema = z.object({
   date: z
     .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'), RecurConfigSchema])
     .optional(),
-  payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
-  category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
-  notes: z.string().optional(),
+  payee: z
+    .string()
+    .min(1, 'Payee name or ID is required')
+    .max(100, 'Payee name must be less than 100 characters')
+    .nullable()
+    .optional(), // Name or ID
+  category: z
+    .string()
+    .min(1, 'Category name or ID is required')
+    .max(100, 'Category name must be less than 100 characters')
+    .nullable()
+    .optional(), // Name or ID
+  notes: z.string().max(500, 'Notes must be less than 500 characters').optional(),
   posts_transaction: z.boolean().optional(),
 });
 
