@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 
 /**
@@ -30,9 +31,12 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   // - style-src 'self' 'unsafe-inline': Allow inline styles (required for dashboard)
   // - script-src 'self': Only allow scripts from self (dashboard has no scripts currently)
   // - frame-ancestors 'none': Prevent embedding in iframes (Clickjacking protection)
+  const nonce = randomBytes(16).toString('base64');
+  res.locals.nonce = nonce;
+
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none';"
+    `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'nonce-${nonce}'; frame-ancestors 'none';`
   );
 
   // Remove X-Powered-By header to hide server details

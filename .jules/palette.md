@@ -9,3 +9,7 @@
 ## 2025-02-24 - Hardcoded Colors vs CSS Variables
 **Learning:** Returning hardcoded hex codes from JavaScript logic (e.g., `getStatusDetails`) breaks theme adaptability and often fails contrast checks in one of the modes. Using semantic class names or CSS variables allows the browser to handle theming and contrast correctly.
 **Action:** Return semantic types (e.g., 'success', 'warning') from JS logic and map them to CSS variables in the styles.
+
+## 2026-01-24 - Secure Inline Interactions
+**Learning:** Adding simple client-side interactions (like "click to copy") to a server-rendered page requires careful CSP handling. Nonces allow the script block to run, but `onclick` attributes are still blocked by `script-src` policies. Event listeners must be attached programmatically within the allowed script block.
+**Action:** Use `document.querySelectorAll` and `addEventListener` inside a nonced script block instead of inline event handlers (like `onclick`) to maintain strict CSP security while enabling interactivity.

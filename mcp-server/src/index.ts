@@ -389,7 +389,7 @@ async function main(): Promise<void> {
     });
 
     // * Dashboard renderer to keep route complexity low
-    function renderDashboard(): string {
+    function renderDashboard(nonce: string): string {
       const stats = getInitializationStats();
       const initialized = isInitialized();
       const initializing = isInitializing();
@@ -521,6 +521,23 @@ async function main(): Promise<void> {
               a:hover {
                 text-decoration: underline;
               }
+              .copy-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--muted);
+                padding: 4px;
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                transition: all 0.2s;
+              }
+              .copy-btn:hover {
+                color: var(--primary);
+                background: var(--border);
+              }
             </style>
           </head>
           <body>
@@ -548,16 +565,25 @@ async function main(): Promise<void> {
                   <span class="method" style="color: var(--primary)">ALL</span>
                   <span class="path">/mcp</span>
                   <span class="desc">Streamable Connection</span>
+                  <button class="copy-btn" data-copy-text="/mcp" aria-label="Copy path">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--success)">GET</span>
                   <span class="path">/sse</span>
                   <span class="desc">Event Stream</span>
+                  <button class="copy-btn" data-copy-text="/sse" aria-label="Copy path">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
                 </li>
                 <li class="ep-row">
                   <span class="method" style="color: var(--warning)">GET</span>
                   <span class="path">/health</span>
                   <span class="desc">Health Check</span>
+                  <button class="copy-btn" data-copy-text="/health" aria-label="Copy path">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
                 </li>
               </ul>
 
@@ -566,6 +592,28 @@ async function main(): Promise<void> {
                 <a href="/health">System Health</a>
               </footer>
             </div>
+            <script nonce="${nonce}">
+              function copyToClipboard(text, btn) {
+                navigator.clipboard.writeText(text).then(() => {
+                  const originalHtml = btn.innerHTML;
+                  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                  btn.style.color = 'var(--success)';
+                  setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.style.color = '';
+                  }, 2000);
+                }).catch(err => {
+                  console.error('Failed to copy:', err);
+                });
+              }
+
+              document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                  const text = btn.getAttribute('data-copy-text');
+                  if (text) copyToClipboard(text, btn);
+                });
+              });
+            </script>
           </body>
         </html>
       `;
@@ -575,7 +623,7 @@ async function main(): Promise<void> {
     app.get('/', (_req: Request, res: Response) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.send(renderDashboard());
+      res.send(renderDashboard(res.locals.nonce));
     });
 
     // * Health check route for deployment platforms
