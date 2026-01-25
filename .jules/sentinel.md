@@ -12,3 +12,8 @@
 **Vulnerability:** The `unhandledRejection` handler in the main server entry point (`src/index.ts`) was logging full stack traces to the console regardless of the environment. In production, this can expose sensitive internal details (file paths, dependency versions, code structure) to unauthorized viewers of the logs.
 **Learning:** While stack traces are vital for debugging in development, they must be suppressed or securely handled in production. Consistency in logging practices is key—other parts of the system (like `response-builder.ts`) were already correctly checking `NODE_ENV`.
 **Prevention:** I updated the `unhandledRejection` handler to check `if (process.env.NODE_ENV !== 'production')` before logging stack traces. This enforces the "fail securely" principle by ensuring that errors in production do not reveal internal state.
+
+## 2024-05-26 - [Inline Loose CORS Configuration]
+**Vulnerability:** The application was using an inline CORS middleware in `src/index.ts` that allowed all origins (`*`) by default. This exposed the local server to CSRF/interaction from malicious websites if authentication was disabled (which is the default).
+**Learning:** Security controls like CORS should not be implemented inline where they can be easily overlooked or simplified for convenience. A dedicated module ensures consistent and strict policy enforcement. Also, memory/documentation might drift from code reality (missing `cors.ts`).
+**Prevention:** I implemented a strict `corsMiddleware` in `src/core/transport/cors.ts` that defaults to blocking unknown origins, allowing only localhost and explicitly configured origins. The entry point now uses this shared middleware.
