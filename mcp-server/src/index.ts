@@ -378,7 +378,7 @@ async function main(): Promise<void> {
     });
 
     // * Dashboard renderer to keep route complexity low
-    function renderDashboard(): string {
+    function renderDashboard(nonce: string): string {
       const stats = getInitializationStats();
       const initialized = isInitialized();
       const initializing = isInitializing();
@@ -396,6 +396,21 @@ async function main(): Promise<void> {
           <dt class="label">${escapeHtml(label)}</dt>
           <dd class="val">${escapeHtml(value)}</dd>
         </div>
+      `;
+
+      const renderEndpoint = (method: string, color: string, path: string, desc: string) => `
+        <li class="ep-row">
+          <span class="method" style="color: var(--${color})">${method}</span>
+          <span class="path" style="flex: 0 0 auto">${path}</span>
+          <div class="tooltip-container">
+            <button class="copy-btn" data-path="${path}" aria-label="Copy ${path} URL">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+            <span class="tooltip-text" role="status" aria-live="polite">Copied!</span>
+          </div>
+          <div style="flex: 1"></div>
+          <span class="desc">${desc}</span>
+        </li>
       `;
 
       return `
@@ -510,6 +525,52 @@ async function main(): Promise<void> {
               a:hover {
                 text-decoration: underline;
               }
+              .copy-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 4px;
+                color: var(--muted);
+                border-radius: 4px;
+                display: inline-flex;
+                align-items: center;
+                transition: all 0.2s;
+                margin-left: 8px;
+              }
+              .copy-btn:hover {
+                color: var(--primary);
+                background-color: color-mix(in srgb, var(--primary), transparent 90%);
+              }
+              .copy-btn.copied {
+                color: var(--success);
+              }
+              .tooltip-container {
+                position: relative;
+                display: inline-flex;
+                vertical-align: middle;
+              }
+              .tooltip-text {
+                visibility: hidden;
+                width: 60px;
+                background-color: var(--text);
+                color: var(--bg);
+                text-align: center;
+                border-radius: 4px;
+                padding: 4px 0;
+                position: absolute;
+                z-index: 1;
+                bottom: 125%;
+                left: 50%;
+                margin-left: -30px;
+                font-size: 10px;
+                opacity: 0;
+                transition: opacity 0.3s;
+                pointer-events: none;
+              }
+              .tooltip-container.show-tooltip .tooltip-text {
+                visibility: visible;
+                opacity: 1;
+              }
             </style>
           </head>
           <body>
@@ -533,21 +594,9 @@ async function main(): Promise<void> {
 
               <h2 style="margin: 0 0 8px 0; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</h2>
               <ul class="endpoints">
-                <li class="ep-row">
-                  <span class="method" style="color: var(--primary)">ALL</span>
-                  <span class="path">/mcp</span>
-                  <span class="desc">Streamable Connection</span>
-                </li>
-                <li class="ep-row">
-                  <span class="method" style="color: var(--success)">GET</span>
-                  <span class="path">/sse</span>
-                  <span class="desc">Event Stream</span>
-                </li>
-                <li class="ep-row">
-                  <span class="method" style="color: var(--warning)">GET</span>
-                  <span class="path">/health</span>
-                  <span class="desc">Health Check</span>
-                </li>
+                ${renderEndpoint('ALL', 'primary', '/mcp', 'Streamable Connection')}
+                ${renderEndpoint('GET', 'success', '/sse', 'Event Stream')}
+                ${renderEndpoint('GET', 'warning', '/health', 'Health Check')}
               </ul>
 
               <footer>
@@ -555,6 +604,40 @@ async function main(): Promise<void> {
                 <a href="/health">System Health</a>
               </footer>
             </div>
+            <script nonce="${nonce}">
+              document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('.copy-btn').forEach(btn => {
+                  let timeoutId;
+                  btn.addEventListener('click', async () => {
+                    const path = btn.getAttribute('data-path');
+                    if (!path) return;
+
+                    const fullUrl = window.location.origin + path;
+
+                    try {
+                      await navigator.clipboard.writeText(fullUrl);
+
+                      // Visual feedback
+                      btn.classList.add('copied');
+                      const container = btn.closest('.tooltip-container');
+                      if (container) {
+                        container.classList.add('show-tooltip');
+
+                        if (timeoutId) clearTimeout(timeoutId);
+
+                        timeoutId = setTimeout(() => {
+                          container.classList.remove('show-tooltip');
+                          btn.classList.remove('copied');
+                          timeoutId = null;
+                        }, 2000);
+                      }
+                    } catch (err) {
+                      console.error('Failed to copy:', err);
+                    }
+                  });
+                });
+              });
+            </script>
           </body>
         </html>
       `;
@@ -564,7 +647,7 @@ async function main(): Promise<void> {
     app.get('/', (_req: Request, res: Response) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.send(renderDashboard());
+      res.send(renderDashboard(res.locals.nonce as string));
     });
 
     // * Health check route for deployment platforms

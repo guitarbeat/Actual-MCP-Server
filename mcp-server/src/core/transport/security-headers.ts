@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 
 /**
@@ -24,15 +25,19 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   // Control referrer information
   res.setHeader('Referrer-Policy', 'no-referrer');
 
+  // Generate a nonce for inline scripts
+  const nonce = randomBytes(16).toString('base64');
+  res.locals.nonce = nonce;
+
   // Content Security Policy
   // - default-src 'self': Only allow resources from the same origin by default
   // - img-src 'self' data:: Allow images from self and data URIs (for favicons/assets)
   // - style-src 'self' 'unsafe-inline': Allow inline styles (required for dashboard)
-  // - script-src 'self': Only allow scripts from self (dashboard has no scripts currently)
+  // - script-src 'self': Only allow scripts from self and those with the correct nonce
   // - frame-ancestors 'none': Prevent embedding in iframes (Clickjacking protection)
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none';"
+    `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'nonce-${nonce}'; frame-ancestors 'none';`
   );
 
   // Remove X-Powered-By header to hide server details
