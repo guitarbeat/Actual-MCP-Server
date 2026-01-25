@@ -1,4 +1,3 @@
-
 /**
  * Sorts an array based on the provided iteratees and sort orders.
  *
@@ -7,25 +6,31 @@
  * @param orders - Array of sort orders ('asc' or 'desc')
  * @returns The sorted array
  */
-export function sortBy<T>(
-  array: T[],
-  iteratees: ((item: T) => any)[],
-  orders: ('asc' | 'desc')[] = []
-): T[] {
+export function sortBy<T>(array: T[], iteratees: ((item: T) => unknown)[], orders: ('asc' | 'desc')[] = []): T[] {
   return [...array].sort((a, b) => {
     for (let i = 0; i < iteratees.length; i++) {
       const iteratee = iteratees[i];
       const order = orders[i] || 'asc';
       const valA = iteratee(a);
       const valB = iteratee(b);
+      const result = compare(valA, valB, order);
 
-      if (valA < valB) {
-        return order === 'asc' ? -1 : 1;
-      }
-      if (valA > valB) {
-        return order === 'asc' ? 1 : -1;
+      if (result !== 0) {
+        return result;
       }
     }
     return 0;
   });
+}
+
+function compare(a: unknown, b: unknown, order: 'asc' | 'desc'): number {
+  // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+  if ((a as any) < (b as any)) {
+    return order === 'asc' ? -1 : 1;
+  }
+  // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+  if ((a as any) > (b as any)) {
+    return order === 'asc' ? 1 : -1;
+  }
+  return 0;
 }
