@@ -10,6 +10,25 @@ import { formatDate, getDateRange } from '../formatting/index.js';
 // TYPES
 // ----------------------------
 
+export interface BudgetCategory {
+  id: string;
+  name: string;
+  budgeted?: number;
+  spent?: number;
+}
+
+export interface BudgetCategoryGroup {
+  id: string;
+  name: string;
+  categories?: BudgetCategory[];
+}
+
+export interface BudgetMonthData {
+  incomeAvailable?: number;
+  toBudget?: number;
+  categoryGroups?: BudgetCategoryGroup[];
+}
+
 export interface OverspendingItem {
   categoryId: string;
   categoryName: string;
@@ -85,19 +104,13 @@ function getPreviousMonth(month: string): string {
 /**
  * Analyze categories where spending exceeds budget
  */
-export async function analyzeOverspending(month: string): Promise<OverspendingItem[]> {
-  const budgetData = (await getBudgetMonth(month)) as {
-    categoryGroups?: Array<{
-      id: string;
-      name: string;
-      categories?: Array<{
-        id: string;
-        name: string;
-        budgeted?: number;
-        spent?: number;
-      }>;
-    }>;
-  };
+export async function analyzeOverspending(
+  month: string,
+  budgetDataPromise?: Promise<BudgetMonthData>
+): Promise<OverspendingItem[]> {
+  const budgetData = budgetDataPromise
+    ? await budgetDataPromise
+    : ((await getBudgetMonth(month)) as unknown as BudgetMonthData);
 
   const overspending: OverspendingItem[] = [];
 
@@ -254,7 +267,10 @@ export async function getUpcomingSchedulesSummary(days = 14): Promise<UpcomingSc
 /**
  * Calculate spending trends
  */
-export async function calculateTrends(month: string): Promise<TrendsSummary> {
+export async function calculateTrends(
+  month: string,
+  currentBudgetPromise?: Promise<BudgetMonthData>
+): Promise<TrendsSummary> {
   const currentMonthStart = `${month}-01`;
   const { startDate: _currentStart, endDate: _currentEnd } = getDateRange(currentMonthStart);
 
@@ -263,22 +279,14 @@ export async function calculateTrends(month: string): Promise<TrendsSummary> {
   const { startDate: _prevStart, endDate: _prevEnd } = getDateRange(prevMonthStart, `${prevMonth}-31`); // Rough end is fine as API filters
 
   const [currentBudget, previousBudget] = await Promise.all([
-    getBudgetMonth(month) as Promise<{
-      incomeAvailable?: number;
-      toBudget?: number;
-      categoryGroups?: Array<{ categories?: Array<{ spent?: number }> }>;
-    }>,
-    getBudgetMonth(prevMonth) as Promise<{
-      incomeAvailable?: number;
-      toBudget?: number;
-      categoryGroups?: Array<{ categories?: Array<{ spent?: number }> }>;
-    }>,
+    currentBudgetPromise
+      ? currentBudgetPromise
+      : (getBudgetMonth(month) as unknown as Promise<BudgetMonthData>),
+    getBudgetMonth(prevMonth) as unknown as Promise<BudgetMonthData>,
   ]);
 
   // Calculate total spending for each month
-  const calculateSpending = (budget: {
-    categoryGroups?: Array<{ categories?: Array<{ spent?: number }> }>;
-  }): number => {
+  const calculateSpending = (budget: BudgetMonthData): number => {
     let total = 0;
     for (const group of budget?.categoryGroups ?? []) {
       for (const category of group?.categories ?? []) {
@@ -319,13 +327,17 @@ export async function generateInsightsSummary(
   const targetMonth = month ?? getCurrentMonth();
   const { includeSchedules = true, scheduleDays = 14 } = options;
 
+  // Optimization: Fetch budget data once and share it between analyses
+  // This reduces the number of calls to getBudgetMonth from 2 to 1
+  const budgetPromise = getBudgetMonth(targetMonth) as unknown as Promise<BudgetMonthData>;
+
   // Run all analyses in parallel for performance
   const [overspending, uncategorized, accountHealth, upcomingSchedules, trends] = await Promise.all([
-    analyzeOverspending(targetMonth),
+    analyzeOverspending(targetMonth, budgetPromise),
     findUncategorizedTransactions(targetMonth),
     getAccountHealthSummary(),
     includeSchedules ? getUpcomingSchedulesSummary(scheduleDays) : Promise.resolve([]),
-    calculateTrends(targetMonth),
+    calculateTrends(targetMonth, budgetPromise),
   ]);
 
   // Generate human-readable summary
