@@ -17,3 +17,7 @@
 ## 2026-01-25 - Accessible Status Feedback
 **Learning:** Visual-only tooltips for transient states (like "Copied!") are invisible to screen readers. Adding `role="status"` and `aria-live="polite"` makes these updates accessible without disrupting the user flow.
 **Action:** Ensure all temporary visual feedback elements include appropriate ARIA roles and live region attributes.
+
+## 2026-01-26 - Respecting Reduced Motion Preferences
+**Learning:** CSS animations like pulsing indicators can be distracting or harmful to users with vestibular disorders. Always wrapping continuous animations in `@media (prefers-reduced-motion: no-preference)` ensures they are only shown to users who haven't requested reduced motion.
+**Action:** Wrap all decorative, continuous animations in this media query.

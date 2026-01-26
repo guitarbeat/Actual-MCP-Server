@@ -480,7 +480,10 @@ async function main(): Promise<void> {
                 0% { box-shadow: 0 0 0 0px color-mix(in srgb, var(--warning), transparent 30%); }
                 100% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--warning), transparent 100%); }
               }
-              .pulse { animation: pulse 2s infinite; }
+              .pulse { }
+              @media (prefers-reduced-motion: no-preference) {
+                .pulse { animation: pulse 2s infinite; }
+              }
               .grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -601,7 +604,7 @@ async function main(): Promise<void> {
 
               <footer>
                 <a href="https://github.com/guitarbeat/actual-mcp" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository (opens in a new tab)">GitHub</a>
-                <a href="/health">System Health</a>
+                <a href="/health" target="_blank" rel="noopener noreferrer" aria-label="System Health (opens in a new tab)">System Health</a>
               </footer>
             </div>
             <script nonce="${nonce}">
