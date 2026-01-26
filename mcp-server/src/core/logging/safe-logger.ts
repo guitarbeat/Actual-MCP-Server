@@ -184,8 +184,9 @@ function formatMessage(args: unknown[]): string {
   return args
     .map((arg) => {
       if (arg instanceof Error) {
-        // Include stack trace for Error objects
-        return `${arg.message}${arg.stack ? `\n${arg.stack}` : ''}`;
+        // Include stack trace for Error objects only in non-production environments
+        const stack = process.env.NODE_ENV !== 'production' && arg.stack ? `\n${arg.stack}` : '';
+        return `${arg.message}${stack}`;
       }
       if (typeof arg === 'object' && arg !== null) {
         try {
