@@ -11,14 +11,16 @@ import { sumBy } from './sum-by.js';
  * @returns Record of grouped items
  */
 function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
-  return array.reduce((acc, item) => {
+  // Optimization: Use for...of loop instead of reduce to avoid function call overhead
+  const result: Record<string, T[]> = {};
+  for (const item of array) {
     const groupKey = String(item[key]);
-    if (!acc[groupKey]) {
-      acc[groupKey] = [];
+    if (!result[groupKey]) {
+      result[groupKey] = [];
     }
-    acc[groupKey].push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
+    result[groupKey].push(item);
+  }
+  return result;
 }
 
 /**
@@ -64,9 +66,11 @@ export class GroupAggregator {
    * @returns Record mapping IDs to items
    */
   byId<T extends { id: string }>(list: T[]): Record<string, T> {
-    return list.reduce<Record<string, T>>((acc, item) => {
-      acc[item.id] = item;
-      return acc;
-    }, {});
+    // Optimization: Use for...of loop instead of reduce to avoid function call overhead
+    const result: Record<string, T> = {};
+    for (const item of list) {
+      result[item.id] = item;
+    }
+    return result;
   }
 }
