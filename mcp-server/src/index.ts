@@ -452,6 +452,19 @@ async function main(): Promise<void> {
                 color: var(--text);
                 line-height: 1.4;
               }
+              /* Keyboard accessibility */
+              *:focus-visible {
+                outline: 2px solid var(--primary);
+                outline-offset: 2px;
+                border-radius: 2px;
+              }
+
+              @keyframes pulse {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(1.2); }
+                100% { opacity: 1; transform: scale(1); }
+              }
+
               .container { max-width: 600px; margin: 0 auto; }
               header {
                 display: flex;
@@ -463,11 +476,6 @@ async function main(): Promise<void> {
               }
               h1 { margin: 0; font-size: 20px; }
               .version { font-size: 12px; color: var(--muted); }
-              *:focus-visible {
-                outline: 2px solid var(--primary);
-                outline-offset: 2px;
-                border-radius: 2px;
-              }
               .status-line {
                 display: flex;
                 align-items: center;
@@ -476,11 +484,17 @@ async function main(): Promise<void> {
                 margin-bottom: 20px;
               }
               .dot { width: 8px; height: 8px; border-radius: 50%; }
-              @keyframes pulse {
-                0% { box-shadow: 0 0 0 0px color-mix(in srgb, var(--warning), transparent 30%); }
-                100% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--warning), transparent 100%); }
-              }
-              .pulse { animation: pulse 2s infinite; }
+              .dot.pulsing { animation: pulse 2s infinite ease-in-out; }
+
+              /* Status colors */
+              .status-success { color: var(--success); }
+              .status-warning { color: var(--warning); }
+              .status-error { color: var(--error); }
+
+              .dot.success { background-color: var(--success); box-shadow: 0 0 0 2px var(--success); opacity: 0.8; }
+              .dot.warning { background-color: var(--warning); box-shadow: 0 0 0 2px var(--warning); opacity: 0.8; }
+              .dot.error { background-color: var(--error); box-shadow: 0 0 0 2px var(--error); opacity: 0.8; }
+
               .grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -515,13 +529,6 @@ async function main(): Promise<void> {
                 text-align: center;
               }
               footer a { color: var(--primary); text-decoration: none; margin: 0 10px; }
-
-              /* Keyboard accessibility & Interaction */
-              *:focus-visible {
-                outline: 2px solid var(--primary);
-                outline-offset: 2px;
-                border-radius: 2px;
-              }
               a:hover {
                 text-decoration: underline;
               }
@@ -580,9 +587,9 @@ async function main(): Promise<void> {
                 <span class="version">v${version}</span>
               </header>
 
-              <div class="status-line">
-                <div class="dot ${initializing ? 'pulse' : ''}" aria-hidden="true" style="background: var(--${statusType}); border: 2px solid color-mix(in srgb, var(--${statusType}), transparent 73%)"></div>
-                <span style="color: var(--${statusType})">${statusText}</span>
+                            <div class="status-line">
+                <div class="dot ${statusType} ${initializing ? 'pulsing' : ''}" aria-hidden="true"></div>
+                <span class="status-${statusType}">${statusText}</span>
               </div>
 
               <dl class="grid">
