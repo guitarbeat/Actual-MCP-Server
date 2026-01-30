@@ -15,8 +15,11 @@ export const createBearerAuthMiddleware = (enableBearer: boolean) => {
     }
 
     const authHeader = req.headers.authorization;
+    // Handle string or string[] header (though Authorization should be string)
+    // If it's an array (unlikely for Auth), take the first one
+    const headerValue = Array.isArray(authHeader) ? authHeader[0] : authHeader;
 
-    if (!authHeader) {
+    if (!headerValue) {
       console.error('[AUTH] ❌ Missing Authorization header');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
@@ -27,7 +30,7 @@ export const createBearerAuthMiddleware = (enableBearer: boolean) => {
       return;
     }
 
-    if (!authHeader.startsWith('Bearer ')) {
+    if (!headerValue.startsWith('Bearer ')) {
       console.error('[AUTH] ❌ Invalid Authorization header format');
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
@@ -38,7 +41,7 @@ export const createBearerAuthMiddleware = (enableBearer: boolean) => {
       return;
     }
 
-    const token = authHeader.substring(7); // Remove "Bearer " prefix
+    const token = headerValue.substring(7); // Remove "Bearer " prefix
     const expectedToken = process.env.BEARER_TOKEN;
 
     if (!expectedToken) {
