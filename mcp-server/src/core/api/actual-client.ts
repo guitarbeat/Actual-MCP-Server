@@ -1048,11 +1048,31 @@ export async function runQuery(query: string): Promise<unknown> {
       throw new Error(`Invalid query format. Expected JSON string. Error: ${error}`);
     }
 
-    if (api.internal && typeof api.internal.send === 'function') {
-      return api.internal.send('api/query', { query: queryState });
+    if (!queryState || typeof queryState !== 'object') {
+      throw new Error('Invalid query format. Expected JSON object.');
     }
 
-    throw new Error('api.internal.send is not available');
+    // Construct a Query object using the public api.q helper
+    // We expect the state to have a table property, defaulting to 'transactions' if missing
+    const state = queryState as { table?: string };
+    const table = state.table || 'transactions';
+
+    const q = api.q(table);
+
+    // Hydrate the query state manually
+    // This allows using the raw state passed from the client
+    (q as any).state = queryState;
+
+    if (typeof api.aqlQuery === 'function') {
+      return api.aqlQuery(q);
+    }
+
+    // Fallback for older API versions
+    if (typeof api.runQuery === 'function') {
+      return api.runQuery(q);
+    }
+
+    throw new Error('No query method available in API');
   });
 }
 
