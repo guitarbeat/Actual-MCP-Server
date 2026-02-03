@@ -1013,11 +1013,13 @@ export async function runBankSync(accountId?: string): Promise<unknown> {
 
 /**
  * Run import (ensures API is initialized)
+ * @param file - The name of the budget to import into (switch to)
+ * @param callback - Function to run during the import context
  */
-export async function runImport(file: string, _importType?: string): Promise<unknown> {
+export async function runImport(file: string, callback?: () => Promise<void>): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.runImport === 'function') {
-      return api.runImport(file, () => Promise.resolve());
+      return api.runImport(file, callback || (() => Promise.resolve()));
     }
     throw new Error('runImport method is not available in this version of the API');
   });
