@@ -56,6 +56,7 @@ const {
     port,
     'test-resources': testResources,
     'test-custom': testCustom,
+    host,
   },
 } = parseArgs({
   options: {
@@ -66,6 +67,7 @@ const {
     port: { type: 'string' },
     'test-resources': { type: 'boolean', default: false },
     'test-custom': { type: 'boolean', default: false },
+    host: { type: 'string' },
   },
   allowPositionals: true,
 });
@@ -347,11 +349,16 @@ async function main(): Promise<void> {
 
   validateEnv();
   if (useSse) {
+    // Determine binding host
+    // If bearer auth is enabled, default to 0.0.0.0 (all interfaces)
+    // If bearer auth is disabled, default to 127.0.0.1 (localhost only) for security
+    const bindHost = host || (enableBearer ? '0.0.0.0' : '127.0.0.1');
+
     // * Use SDK's createMcpExpressApp for DNS rebinding protection and modern setup
     // * Note: We bind to '0.0.0.0' for production deployments
     // * When bearer authentication is enabled, it provides security instead of host header validation
     const app = createMcpExpressApp({
-      host: '0.0.0.0', // Allow binding to all interfaces for production
+      host: bindHost,
       // * When bearer authentication is enabled, allow localhost connections
       // * Bearer auth provides security instead of host header validation
       allowedHosts: undefined, // Allow all hosts (bearer auth provides security)
@@ -680,8 +687,13 @@ async function main(): Promise<void> {
       }
     });
 
-    app.listen(resolvedPort, '0.0.0.0', () => {
-      console.error(`[SSE] 🚀 MCP Server listening on port ${resolvedPort}`);
+    app.listen(resolvedPort, bindHost, () => {
+      console.error(`[SSE] 🚀 MCP Server listening on port ${resolvedPort} (host: ${bindHost})`);
+      if (!enableBearer && bindHost === '127.0.0.1') {
+        console.error(
+          '[SSE] ⚠️  Binding to localhost only. To allow external connections, use --enable-bearer or --host 0.0.0.0'
+        );
+      }
     });
 
     // * Initialize API after server starts listening on port
