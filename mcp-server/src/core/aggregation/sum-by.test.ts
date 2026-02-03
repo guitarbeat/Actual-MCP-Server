@@ -30,4 +30,21 @@ describe('sumBy', () => {
     const data = [{ val: -10 }, { val: 5 }];
     expect(sumBy(data, 'val')).toBe(-5);
   });
+
+  it('should coerce string values to numbers', () => {
+    const data = [{ val: '10' }, { val: '20' }];
+    // biome-ignore lint/suspicious/noExplicitAny: Testing runtime behavior
+    expect(sumBy(data as any, 'val')).toBe(30);
+  });
+
+  it('should handle non-numeric strings by treating them as 0', () => {
+    const data = [{ val: 'abc' }, { val: 10 }];
+    // biome-ignore lint/suspicious/noExplicitAny: Testing runtime behavior
+    expect(sumBy(data as any, 'val')).toBe(10);
+  });
+
+  it('should handle NaN by treating it as 0', () => {
+    const data = [{ val: NaN }, { val: 10 }];
+    expect(sumBy(data, 'val')).toBe(10);
+  });
 });
