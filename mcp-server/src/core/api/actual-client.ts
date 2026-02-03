@@ -1061,15 +1061,18 @@ export async function runQuery(query: string): Promise<unknown> {
 
     // Hydrate the query state manually
     // This allows using the raw state passed from the client
+    // biome-ignore lint/suspicious/noExplicitAny: Internal API requires manual state hydration
     (q as any).state = queryState;
 
     if (typeof api.aqlQuery === 'function') {
-      return api.aqlQuery(q);
+      // biome-ignore lint/suspicious/noExplicitAny: Internal API type mismatch
+      return api.aqlQuery(q as any);
     }
 
     // Fallback for older API versions
     if (typeof api.runQuery === 'function') {
-      return api.runQuery(q);
+      // biome-ignore lint/suspicious/noExplicitAny: Internal API type mismatch
+      return api.runQuery(q as any);
     }
 
     throw new Error('No query method available in API');
