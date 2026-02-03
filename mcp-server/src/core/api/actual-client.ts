@@ -1040,12 +1040,19 @@ export async function batchBudgetUpdates(callback: () => Promise<void>): Promise
  */
 export async function runQuery(query: string): Promise<unknown> {
   return ensureConnection(async () => {
-    if (typeof api.runQuery === 'function') {
-      // * API signature changed - runQuery now takes query string directly or different format
-      // Cast through unknown to handle API signature mismatch (Query type vs string)
-      return (api.runQuery as unknown as (q: string) => Promise<unknown>)(query);
+    // Parse the query string (assuming it's a JSON string of the query state)
+    let queryState: unknown;
+    try {
+      queryState = JSON.parse(query);
+    } catch (error) {
+      throw new Error(`Invalid query format. Expected JSON string. Error: ${error}`);
     }
-    throw new Error('runQuery method is not available in this version of the API');
+
+    if (api.internal && typeof api.internal.send === 'function') {
+      return api.internal.send('api/query', { query: queryState });
+    }
+
+    throw new Error('api.internal.send is not available');
   });
 }
 

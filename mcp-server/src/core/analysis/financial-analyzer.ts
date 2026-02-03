@@ -279,9 +279,7 @@ export async function calculateTrends(
   const { startDate: _prevStart, endDate: _prevEnd } = getDateRange(prevMonthStart, `${prevMonth}-31`); // Rough end is fine as API filters
 
   const [currentBudget, previousBudget] = await Promise.all([
-    currentBudgetPromise
-      ? currentBudgetPromise
-      : (getBudgetMonth(month) as unknown as Promise<BudgetMonthData>),
+    currentBudgetPromise ? currentBudgetPromise : (getBudgetMonth(month) as unknown as Promise<BudgetMonthData>),
     getBudgetMonth(prevMonth) as unknown as Promise<BudgetMonthData>,
   ]);
 
