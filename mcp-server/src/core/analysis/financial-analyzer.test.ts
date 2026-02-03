@@ -1,10 +1,10 @@
 
-import { describe, it, vi, expect, afterEach } from 'vitest';
-import { findUncategorizedTransactions } from './financial-analyzer';
-import * as actualClient from '../api/actual-client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as actualClient from '../api/actual-client.js';
+import { findUncategorizedTransactions } from './financial-analyzer.js';
 
 // Mock the API client
-vi.mock('../api/actual-client', () => ({
+vi.mock('../api/actual-client.js', () => ({
   getAccounts: vi.fn(),
   getTransactions: vi.fn(),
   getBudgetMonth: vi.fn(),
@@ -26,7 +26,7 @@ describe('Financial Analyzer', () => {
       ] as any);
 
       // Mock transactions
-      vi.mocked(actualClient.getTransactions).mockImplementation(async (accountId) => {
+      vi.mocked(actualClient.getTransactions).mockImplementation(async (accountId: string) => {
         if (accountId === 'acc1') {
           return [
              { id: 'tx1', amount: -100, category: null, payee: 'Amazon' },
