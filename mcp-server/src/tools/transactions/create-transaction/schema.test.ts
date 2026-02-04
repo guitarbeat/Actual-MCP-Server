@@ -55,4 +55,48 @@ describe('CreateTransactionSchema', () => {
     const result = CreateTransactionSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
   });
+
+  it('should fail when account name is too long', () => {
+    const invalidData = {
+      account: 'a'.repeat(101),
+      date: '2023-10-27',
+      amount: 100.0,
+    };
+
+    const result = CreateTransactionSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain('Account name must be less than 100 characters');
+    }
+  });
+
+  it('should fail when payee name is too long', () => {
+    const invalidData = {
+      account: 'Checking',
+      date: '2023-10-27',
+      amount: 100.0,
+      payee: 'a'.repeat(101),
+    };
+
+    const result = CreateTransactionSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain('Payee name must be less than 100 characters');
+    }
+  });
+
+  it('should fail when notes are too long', () => {
+    const invalidData = {
+      account: 'Checking',
+      date: '2023-10-27',
+      amount: 100.0,
+      notes: 'a'.repeat(501),
+    };
+
+    const result = CreateTransactionSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain('Notes must be less than 500 characters');
+    }
+  });
 });
