@@ -146,7 +146,7 @@ export type ScheduleUpdateData = Partial<ScheduleData>;
  * Schema for category data validation
  */
 export const CategoryDataSchema = z.object({
-  name: z.string().min(1, 'Category name is required'),
+  name: z.string().min(1, 'Category name is required').max(100, 'Category name must be less than 100 characters'),
   groupId: z.string().uuid('Group ID must be a valid UUID'),
 });
 
@@ -154,14 +154,17 @@ export const CategoryDataSchema = z.object({
  * Schema for category group data validation
  */
 export const CategoryGroupDataSchema = z.object({
-  name: z.string().min(1, 'Category group name is required'),
+  name: z
+    .string()
+    .min(1, 'Category group name is required')
+    .max(100, 'Category group name must be less than 100 characters'),
 });
 
 /**
  * Schema for payee data validation
  */
 export const PayeeDataSchema = z.object({
-  name: z.string().min(1, 'Payee name is required'),
+  name: z.string().min(1, 'Payee name is required').max(100, 'Payee name must be less than 100 characters'),
   transferAccount: z.string().uuid('Transfer account must be a valid UUID').optional(),
 });
 
@@ -188,7 +191,12 @@ export const RuleConditionSchema = z.object({
     'matches',
     'hasTags',
   ]),
-  value: z.union([z.string(), z.number(), z.array(z.string()), z.array(z.number())]),
+  value: z.union([
+    z.string().max(200, 'Condition value must be less than 200 characters'),
+    z.number(),
+    z.array(z.string().max(200, 'Condition value must be less than 200 characters')),
+    z.array(z.number()),
+  ]),
 });
 
 /**
@@ -197,7 +205,12 @@ export const RuleConditionSchema = z.object({
 export const RuleActionSchema = z.object({
   field: z.enum(['account', 'category', 'date', 'payee', 'amount', 'cleared', 'notes']).nullable(),
   op: z.enum(['set', 'prepend-notes', 'append-notes', 'set-split-amount']),
-  value: z.union([z.boolean(), z.string(), z.number(), z.null()]),
+  value: z.union([
+    z.boolean(),
+    z.string().max(500, 'Action value must be less than 500 characters'),
+    z.number(),
+    z.null(),
+  ]),
   options: z
     .object({
       splitIndex: z.number().optional(),
