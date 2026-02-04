@@ -65,6 +65,7 @@ const CreateCategorySchema = z.object({
   name: z
     .string()
     .min(1, 'Category name is required')
+    .max(100, 'Category name must be less than 100 characters')
     .describe('Name of the new category (e.g., "Groceries", "Rent").'),
   groupId: z
     .string()
@@ -74,7 +75,12 @@ const CreateCategorySchema = z.object({
 
 const UpdateCategorySchema = z.object({
   id: z.string().uuid('Category ID must be a valid UUID').describe('UUID of the category to update.'),
-  name: z.string().min(1).optional().describe('New name for the category.'),
+  name: z
+    .string()
+    .min(1)
+    .max(100, 'Category name must be less than 100 characters')
+    .optional()
+    .describe('New name for the category.'),
   groupId: z.string().uuid().optional().describe('New category group UUID to move the category to.'),
 });
 
@@ -87,13 +93,22 @@ const DeleteCategorySchema = z.object({
 // ----------------------------
 
 const CreatePayeeSchema = z.object({
-  name: z.string().min(1, 'Payee name is required').describe('Name of the new payee/merchant.'),
+  name: z
+    .string()
+    .min(1, 'Payee name is required')
+    .max(100, 'Payee name must be less than 100 characters')
+    .describe('Name of the new payee/merchant.'),
   transferAccount: z.string().optional().describe('Account UUID if this is a transfer payee.'),
 });
 
 const UpdatePayeeSchema = z.object({
   id: z.string().uuid('Payee ID must be a valid UUID').describe('UUID of the payee to update.'),
-  name: z.string().min(1).optional().describe('New name for the payee.'),
+  name: z
+    .string()
+    .min(1)
+    .max(100, 'Payee name must be less than 100 characters')
+    .optional()
+    .describe('New name for the payee.'),
   transferAccount: z.string().optional().describe('New account UUID for transfer payee.'),
 });
 
@@ -106,7 +121,7 @@ const DeletePayeeSchema = z.object({
 // ----------------------------
 
 const CreateAccountSchema = z.object({
-  name: z.string().min(1, 'Account name is required'),
+  name: z.string().min(1, 'Account name is required').max(100, 'Account name must be less than 100 characters'),
   type: z.enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'], {
     errorMap: () => ({
       message: 'Account type must be one of: checking, savings, credit, investment, mortgage, debt, other',
@@ -118,7 +133,7 @@ const CreateAccountSchema = z.object({
 
 const UpdateAccountSchema = z.object({
   id: z.string().uuid('Account ID must be a valid UUID'),
-  name: z.string().min(1).optional(),
+  name: z.string().min(1).max(100, 'Account name must be less than 100 characters').optional(),
   type: z.enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other']).optional(),
   offbudget: z.boolean().optional(),
 });
@@ -149,12 +164,18 @@ const CreateCategoryGroupSchema = z.object({
   name: z
     .string()
     .min(1, 'Category group name is required')
+    .max(100, 'Category group name must be less than 100 characters')
     .describe('Name of the new category group (e.g., "Fixed Expenses").'),
 });
 
 const UpdateCategoryGroupSchema = z.object({
   id: z.string().uuid('Category group ID must be a valid UUID').describe('UUID of the category group to update.'),
-  name: z.string().min(1).optional().describe('New name for the category group.'),
+  name: z
+    .string()
+    .min(1)
+    .max(100, 'Category group name must be less than 100 characters')
+    .optional()
+    .describe('New name for the category group.'),
 });
 
 const DeleteCategoryGroupSchema = z.object({
