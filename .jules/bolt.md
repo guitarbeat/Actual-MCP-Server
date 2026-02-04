@@ -13,3 +13,7 @@ This journal records critical performance learnings, anti-patterns, and architec
 ## 2026-01-25 - [Promise.all Concurrency]
 **Learning:** Using `await` inside a `Promise.all` array element (e.g., `[await task1(), task2()]`) blocks the construction of the array and prevents `task2` from starting until `task1` completes, defeating the purpose of parallelism.
 **Action:** Always start promises *before* `Promise.all` or pass the promise itself (e.g., `[task1Promise, task2Promise]`) without `await`ing it inside the array literal.
+
+## 2024-05-24 - sortBy Single-Iteratee Optimization
+**Learning:** `sortBy` is a critical utility used in hot paths like `aggregateAndSort`. The generic implementation with a loop over iteratees adds significant overhead. A fast path for the single-iteratee case (which is very common) avoids this overhead.
+**Action:** Always check for "fast path" opportunities in generic utility functions that handle arrays or collections.
