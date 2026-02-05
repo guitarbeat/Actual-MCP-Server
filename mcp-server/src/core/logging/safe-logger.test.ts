@@ -38,4 +38,32 @@ describe('formatMessage', () => {
     expect(result).toContain('Test error');
     expect(result).not.toContain(error.stack);
   });
+
+  it('should redact sensitive keys in objects', () => {
+    const data = {
+      username: 'jdoe',
+      password: 'secretPassword123',
+      apiKey: 'xyz-123',
+      nested: {
+        accessToken: 'token-abc',
+        publicData: 'visible',
+      },
+    };
+    const result = formatMessage([data]);
+
+    expect(result).toContain('jdoe');
+    expect(result).toContain('[REDACTED]');
+    expect(result).not.toContain('secretPassword123');
+    expect(result).not.toContain('xyz-123');
+    expect(result).not.toContain('token-abc');
+    expect(result).toContain('visible');
+  });
+
+  it('should redact Bearer tokens in strings', () => {
+    const str = 'Request failed with Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+    const result = formatMessage([str]);
+
+    expect(result).toContain('Request failed with Authorization: Bearer [REDACTED]');
+    expect(result).not.toContain('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9');
+  });
 });

@@ -34,6 +34,32 @@ const performanceEnabled = process.env.DEBUG_PERFORMANCE === 'true';
 const performanceMetrics: Map<string, { start: number; end?: number; duration?: number }> = new Map();
 
 /**
+ * Regex pattern for sensitive keys to be redacted.
+ * Matches common credentials like password, token, secret, key, auth, bearer.
+ */
+const SENSITIVE_KEYS_PATTERN = /pass(word|phrase)|token|secret|(private|api|access).?key|auth(orization)?|bearer|credential/i;
+
+/**
+ * Redacts sensitive data from objects during JSON stringification.
+ * Replaces values of keys matching SENSITIVE_KEYS_PATTERN with [REDACTED].
+ */
+function sensitiveDataReplacer(key: string, value: unknown): unknown {
+  if (SENSITIVE_KEYS_PATTERN.test(key)) {
+    return '[REDACTED]';
+  }
+  return value;
+}
+
+/**
+ * Redacts sensitive patterns from strings.
+ * e.g. "Bearer eyJ..." -> "Bearer [REDACTED]"
+ */
+function redactString(str: string): string {
+  // Redact Bearer tokens
+  return str.replace(/(Bearer\s+)([a-zA-Z0-9\-\._~\+\/]+=*)/g, '$1[REDACTED]');
+}
+
+/**
  * Setup safe logging for stdio mode.
  * Overrides console methods to route logs through MCP logging protocol,
  * preventing JSON-RPC corruption from direct console output.
@@ -190,13 +216,13 @@ export function formatMessage(args: unknown[]): string {
       }
       if (typeof arg === 'object' && arg !== null) {
         try {
-          // Attempt to stringify objects, fall back to String() if circular reference
-          return JSON.stringify(arg, null, 2);
+          // Attempt to stringify objects with sensitive data redaction
+          return JSON.stringify(arg, sensitiveDataReplacer, 2);
         } catch {
           return String(arg);
         }
       }
-      return String(arg);
+      return redactString(String(arg));
     })
     .join(' ');
 }
