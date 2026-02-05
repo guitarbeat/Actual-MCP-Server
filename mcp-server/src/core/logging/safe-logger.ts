@@ -37,7 +37,8 @@ const performanceMetrics: Map<string, { start: number; end?: number; duration?: 
  * Regex pattern for sensitive keys to be redacted.
  * Matches common credentials like password, token, secret, key, auth, bearer.
  */
-const SENSITIVE_KEYS_PATTERN = /pass(word|phrase)|token|secret|(private|api|access).?key|auth(orization)?|bearer|credential/i;
+const SENSITIVE_KEYS_PATTERN =
+  /pass(word|phrase)|token|secret|(private|api|access).?key|auth(orization)?|bearer|credential/i;
 
 /**
  * Redacts sensitive data from objects during JSON stringification.
@@ -56,7 +57,7 @@ function sensitiveDataReplacer(key: string, value: unknown): unknown {
  */
 function redactString(str: string): string {
   // Redact Bearer tokens
-  return str.replace(/(Bearer\s+)([a-zA-Z0-9\-\._~\+\/]+=*)/g, '$1[REDACTED]');
+  return str.replace(/(Bearer\s+)([a-zA-Z0-9\-._~+/]+=*)/g, '$1[REDACTED]');
 }
 
 /**
