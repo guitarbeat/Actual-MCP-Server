@@ -7,6 +7,28 @@
  * @returns The sorted array
  */
 export function sortBy<T>(array: T[], iteratees: ((item: T) => unknown)[], orders: ('asc' | 'desc')[] = []): T[] {
+  // Optimization: Fast path for single iteratee to avoid loop overhead
+  if (iteratees.length === 1) {
+    const iteratee = iteratees[0];
+    const order = orders[0] || 'asc';
+    const isAsc = order === 'asc';
+
+    return [...array].sort((a, b) => {
+      // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+      const valA = iteratee(a) as any;
+      // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+      const valB = iteratee(b) as any;
+
+      if (valA < valB) {
+        return isAsc ? -1 : 1;
+      }
+      if (valA > valB) {
+        return isAsc ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
   return [...array].sort((a, b) => {
     for (let i = 0; i < iteratees.length; i++) {
       const iteratee = iteratees[i];
