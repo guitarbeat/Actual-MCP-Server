@@ -33,6 +33,36 @@ const requestIdStorage = new AsyncLocalStorage<string | null>();
 const performanceEnabled = process.env.DEBUG_PERFORMANCE === 'true';
 const performanceMetrics: Map<string, { start: number; end?: number; duration?: number }> = new Map();
 
+// Sensitive data patterns for redaction
+const SENSITIVE_KEY_REGEX =
+  /pass(word|phrase)|(?<!(input|output|max|total)_)token|secret|(private|api|access).?key|authorization|bearer|credential/i;
+const BEARER_TOKEN_REGEX = /Bearer\s+([a-zA-Z0-9._-]+)/gi;
+
+/**
+ * Redacts sensitive information from objects and strings.
+ * Used as a JSON.stringify replacer or standalone value processor.
+ *
+ * @param key - The object key (if applicable)
+ * @param value - The value to check and potentially redact
+ * @returns The original value or a redacted string
+ */
+function redactValue(key: string, value: unknown): unknown {
+  // Redact based on key name
+  if (key && SENSITIVE_KEY_REGEX.test(key)) {
+    return '[REDACTED]';
+  }
+
+  // Redact sensitive patterns in string values
+  if (typeof value === 'string') {
+    // Redact Bearer tokens
+    if (value.match(BEARER_TOKEN_REGEX)) {
+      return value.replace(BEARER_TOKEN_REGEX, 'Bearer [REDACTED]');
+    }
+  }
+
+  return value;
+}
+
 /**
  * Setup safe logging for stdio mode.
  * Overrides console methods to route logs through MCP logging protocol,
@@ -190,11 +220,17 @@ export function formatMessage(args: unknown[]): string {
       }
       if (typeof arg === 'object' && arg !== null) {
         try {
-          // Attempt to stringify objects, fall back to String() if circular reference
-          return JSON.stringify(arg, null, 2);
+          // Attempt to stringify objects with redaction
+          return JSON.stringify(arg, redactValue, 2);
         } catch {
+          // Fallback to basic string representation if stringify fails
+          // We can't easily redact here without string parsing, but this case is rare (circular refs)
           return String(arg);
         }
+      }
+      // Handle primitive strings that might contain sensitive data
+      if (typeof arg === 'string') {
+        return String(redactValue('', arg));
       }
       return String(arg);
     })
