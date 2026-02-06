@@ -3,7 +3,8 @@
 // Server-side analysis to reduce context window load
 // ----------------------------
 
-import { getAccountBalance, getAccounts, getBudgetMonth, getSchedules, getTransactions } from '../api/actual-client.js';
+import { q } from '@actual-app/api';
+import { getAccountBalance, getAccounts, getBudgetMonth, getSchedules, runAQL } from '../api/actual-client.js';
 import { formatDate, getDateRange } from '../formatting/index.js';
 
 // ----------------------------
@@ -149,28 +150,32 @@ export async function findUncategorizedTransactions(month: string): Promise<Unca
   const startOfMonth = `${month}-01`;
   const endOfMonth = formatDate(new Date()); // Or calculate end of the specific month
   const { startDate, endDate } = getDateRange(startOfMonth, endOfMonth);
-  const accounts = await getAccounts();
+
+  // Optimization: Use AQL to fetch only uncategorized transactions instead of fetching all transactions
+  // This significantly reduces data transfer and processing overhead.
+  const query = q('transactions')
+    .filter({
+      date: { $gte: startDate, $lte: endDate },
+      category: null,
+      is_parent: false, // Exclude parent transactions to avoid double counting
+    })
+    .select(['amount', 'payee.name']);
+
+  // biome-ignore lint/suspicious/noExplicitAny: Dealing with external API response type
+  const result = (await runAQL(query)) as { data: Array<{ amount: number; payee: { name: string } | null }> };
+  const data = result.data;
 
   let count = 0;
   let totalAmount = 0;
   const payeeCounts: Record<string, number> = {};
 
-  // Fetch transactions in parallel for all accounts to improve performance
-  const transactionResults = await Promise.all(
-    accounts.map((account) => getTransactions(account.id, startDate, endDate))
-  );
+  for (const tx of data) {
+    count++;
+    totalAmount += Math.abs(tx.amount);
 
-  for (const transactions of transactionResults) {
-    for (const tx of transactions) {
-      if (!tx.category) {
-        count++;
-        totalAmount += Math.abs(tx.amount);
-
-        // Track payee frequency
-        const payeeName = tx.payee || 'Unknown';
-        payeeCounts[payeeName] = (payeeCounts[payeeName] || 0) + 1;
-      }
-    }
+    // Track payee frequency
+    const payeeName = tx.payee?.name || 'Unknown';
+    payeeCounts[payeeName] = (payeeCounts[payeeName] || 0) + 1;
   }
 
   // Get top 5 payees by frequency
