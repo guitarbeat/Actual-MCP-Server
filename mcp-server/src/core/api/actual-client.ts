@@ -1036,6 +1036,16 @@ export async function batchBudgetUpdates(callback: () => Promise<void>): Promise
 }
 
 /**
+ * Run an AQL query (ensures API is initialized)
+ */
+export async function runAQL(query: unknown): Promise<unknown> {
+  return ensureConnection(async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: Workaround for type mismatch in actual-app/api
+    return api.runQuery(query as any);
+  });
+}
+
+/**
  * Run an ActualQL query (ensures API is initialized)
  */
 export async function runQuery(query: string): Promise<unknown> {
