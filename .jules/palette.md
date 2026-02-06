@@ -17,3 +17,7 @@
 ## 2026-01-25 - Accessible Status Feedback
 **Learning:** Visual-only tooltips for transient states (like "Copied!") are invisible to screen readers. Adding `role="status"` and `aria-live="polite"` makes these updates accessible without disrupting the user flow.
 **Action:** Ensure all temporary visual feedback elements include appropriate ARIA roles and live region attributes.
+
+## 2026-02-06 - Visual Confirmation for Actions
+**Learning:** For actions like "Copy to Clipboard", a tooltip is often insufficient for immediate visual confirmation. Swapping the icon (e.g., Copy -> Checkmark) provides an unmistakable, delightful confirmation that works well even without reading text.
+**Action:** Implement icon state swaps for binary actions (copy, save, like) to provide strong visual feedback, ensuring accessible text/tooltips remain for screen readers.
