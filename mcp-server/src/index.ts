@@ -110,6 +110,13 @@ const sseTransports: Map<string, SSEServerTransport> = new Map();
 
 /**
  * Handle SSE connection setup
+ *
+ * Establishes a Server-Sent Events connection for real-time communication
+ * with the MCP client. Each connection gets a unique session ID and
+ * its own Transport instance.
+ *
+ * @param req - Express Request object
+ * @param res - Express Response object
  */
 function handleSseConnection(req: Request, res: Response): void {
   const clientIp = req.ip || req.socket.remoteAddress;
@@ -335,7 +342,12 @@ async function initializeApi(testResources: boolean, testCustom: boolean, useSse
   }
 }
 
-// Start the server
+/**
+ * Main application entry point
+ *
+ * Handles transport initialization (Stdio or HTTP/SSE),
+ * server startup, and connection to Actual Budget API.
+ */
 async function main(): Promise<void> {
   if (testResources) {
     await runResourceTest();
@@ -702,7 +714,10 @@ async function main(): Promise<void> {
   }
 }
 
-// Setup handlers on the server instance BEFORE main() runs
+/**
+ * Setup handlers on the server instance BEFORE main() runs
+ * This ensures all capabilities are registered before the server starts
+ */
 setupResources(server);
 setupTools(server, enableWrite, enableNini);
 setupPrompts(server);
