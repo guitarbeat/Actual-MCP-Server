@@ -34,7 +34,8 @@ const performanceEnabled = process.env.DEBUG_PERFORMANCE === 'true';
 const performanceMetrics: Map<string, { start: number; end?: number; duration?: number }> = new Map();
 
 // Sensitive data patterns for redaction
-const SENSITIVE_KEY_REGEX = /pass(word|phrase)|(?<!(input|output|max|total)_)token|secret|(private|api|access).?key|authorization|bearer|credential/i;
+const SENSITIVE_KEY_REGEX =
+  /pass(word|phrase)|(?<!(input|output|max|total)_)token|secret|(private|api|access).?key|authorization|bearer|credential/i;
 const BEARER_TOKEN_REGEX = /Bearer\s+([a-zA-Z0-9._-]+)/gi;
 
 /**
