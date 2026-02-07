@@ -17,3 +17,8 @@
 **Vulnerability:** The application was using an inline CORS middleware in `src/index.ts` that allowed all origins (`*`) by default. This exposed the local server to CSRF/interaction from malicious websites if authentication was disabled (which is the default).
 **Learning:** Security controls like CORS should not be implemented inline where they can be easily overlooked or simplified for convenience. A dedicated module ensures consistent and strict policy enforcement. Also, memory/documentation might drift from code reality (missing `cors.ts`).
 **Prevention:** I implemented a strict `corsMiddleware` in `src/core/transport/cors.ts` that defaults to blocking unknown origins, allowing only localhost and explicitly configured origins. The entry point now uses this shared middleware.
+
+## 2024-05-27 - [Sensitive Error Information Leakage]
+**Vulnerability:** The application was exposing raw error messages in HTTP 500 responses, potentially leaking sensitive information (e.g., database credentials, file paths) to clients. This occurred in both the `StreamableHTTPHandler` and the main `index.ts` error handling logic.
+**Learning:** Defaulting to `error.message` for internal server errors is a common but dangerous pattern. Security-critical applications must explicitly sanitize error messages exposed to the client, while preserving detailed logs for server-side debugging.
+**Prevention:** I implemented a "fail secure" error handling strategy in `mcp-server/src/core/transport/streamable-http-handler.ts` and `mcp-server/src/index.ts`. All 500-level errors now return a generic "Internal server error" message, while specific, safe 4xx errors are still allowed to pass through. A regression test was added to enforce this behavior.
