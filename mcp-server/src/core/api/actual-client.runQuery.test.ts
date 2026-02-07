@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import api from '@actual-app/api';
 
@@ -19,6 +18,10 @@ vi.mock('node:os', () => ({
 // Mock api
 vi.mock('@actual-app/api', () => {
   const send = vi.fn().mockResolvedValue('success');
+  const aqlQuery = vi.fn().mockResolvedValue('success');
+  // q returns a dummy object that we can attach state to
+  const q = vi.fn().mockImplementation((table) => ({ state: { table } }));
+
   return {
     default: {
       init: vi.fn().mockResolvedValue(undefined),
@@ -29,6 +32,8 @@ vi.mock('@actual-app/api', () => {
       internal: {
         send,
       },
+      aqlQuery,
+      q,
     },
   };
 });
@@ -51,14 +56,15 @@ describe('runQuery', () => {
     await shutdownActualApi();
   });
 
-  it('should parse JSON query and call api.internal.send', async () => {
+  it('should parse JSON query and call api.aqlQuery', async () => {
     const query = JSON.stringify({ table: 'transactions', select: ['id'] });
 
     const result = await runQuery(query);
 
-    expect(api.internal.send).toHaveBeenCalledWith('api/query', {
-      query: { table: 'transactions', select: ['id'] },
-    });
+    expect(api.q).toHaveBeenCalledWith('transactions');
+    expect(api.aqlQuery).toHaveBeenCalledWith(expect.objectContaining({
+      state: expect.objectContaining({ table: 'transactions', select: ['id'] })
+    }));
     expect(result).toBe('success');
   });
 
@@ -66,6 +72,12 @@ describe('runQuery', () => {
     const query = 'invalid json';
 
     await expect(runQuery(query)).rejects.toThrow('Invalid query format. Expected JSON string');
-    expect(api.internal.send).not.toHaveBeenCalled();
+    expect(api.aqlQuery).not.toHaveBeenCalled();
+  });
+
+  it('should throw error for non-object JSON', async () => {
+    await expect(runQuery('null')).rejects.toThrow('Invalid query format. Expected JSON object');
+    await expect(runQuery('123')).rejects.toThrow('Invalid query format. Expected JSON object');
+    await expect(runQuery('"string"')).rejects.toThrow('Invalid query format. Expected JSON object');
   });
 });
