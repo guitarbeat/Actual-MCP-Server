@@ -24,7 +24,32 @@ If you find these tools helpful and want to support their ongoing development, f
 
 ## 🛠️ Setup
 
-Please refer to the `README.md` in each subdirectory for specific setup instructions.
+Each project in this repository is managed independently. Please refer to the `README.md` in each subdirectory for specific setup instructions.
+
+### Prerequisites
+
+- Node.js >= 20.0.0
+- npm (latest stable)
+
+### Quick Start
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/guitarbeat/actual-mcp.git
+   cd actual-mcp
+   ```
+
+2. **Install dependencies for MCP Server:**
+   ```bash
+   cd mcp-server
+   npm install
+   ```
+
+3. **Install dependencies for Statement Processor:**
+   ```bash
+   cd ../statement-processor
+   npm install
+   ```
 
 ## 📈 Deployment
 
