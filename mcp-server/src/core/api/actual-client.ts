@@ -137,11 +137,13 @@ async function initializeApiConnection(): Promise<void> {
   }
   // * Removed JSON log to stdout - this was being interpreted as JSON-RPC in stdio mode
   // * Configuration details are logged via MCP logging if needed
-  await api.init({
+  const config = {
     dataDir,
     serverURL: process.env.ACTUAL_SERVER_URL,
     password: process.env.ACTUAL_PASSWORD,
-  });
+  };
+  // biome-ignore lint/suspicious/noExplicitAny: API types mismatch with env vars
+  await api.init(config as any);
 }
 
 /**
