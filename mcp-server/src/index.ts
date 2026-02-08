@@ -214,7 +214,8 @@ async function handleSseMessages(req: Request, res: Response): Promise<void> {
     if (!res.headersSent) {
       res.status(500).json({
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        // SECURITY: Do not leak error details to the client
+        message: 'Internal server error',
       });
     }
   }
@@ -233,20 +234,25 @@ function mapMcpError(error: unknown, sessionId: string, res: Response): void {
   let errorMessage = 'Internal server error';
 
   if (error instanceof Error) {
-    errorMessage = error.message;
     if (error.message.includes('session')) {
       errorCode = -32001;
       statusCode = 400;
+      errorMessage = error.message;
     } else if (error.message.includes('parse') || error.message.includes('JSON')) {
       errorCode = -32005;
       statusCode = 400;
+      errorMessage = error.message;
     } else if (error.message.includes('method')) {
       errorCode = -32002;
       statusCode = 404;
+      errorMessage = error.message;
     } else if (error.message.includes('parameter')) {
       errorCode = -32003;
       statusCode = 400;
+      errorMessage = error.message;
     }
+    // SECURITY: If we fall through to 500, we use the default 'Internal server error' message
+    // instead of error.message to avoid leaking sensitive information.
   }
 
   res.status(statusCode).json({
