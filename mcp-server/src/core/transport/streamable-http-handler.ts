@@ -51,12 +51,13 @@ export class StreamableHTTPHandler {
     } catch (error) {
       console.error('[StreamableHTTPHandler] Error handling request:', error);
       if (!res.headersSent) {
+        // SECURITY: Do not leak error details to the client
         this.sendErrorResponse(
           res,
           500,
           -32603,
-          'Internal server error',
-          error instanceof Error ? error.message : 'Unknown error'
+          'Internal server error'
+          // Data field omitted to prevent leaking sensitive information
         );
       }
     }
