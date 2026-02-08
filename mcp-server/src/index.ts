@@ -542,6 +542,10 @@ async function main(): Promise<void> {
                 gap: 10px;
                 border-bottom: 1px solid var(--border);
                 font-size: 13px;
+                transition: background-color 0.2s ease;
+              }
+              .ep-row:hover {
+                background-color: color-mix(in srgb, var(--text), transparent 96%);
               }
               .ep-row:last-child { border-bottom: none; }
               .method { font-family: monospace; font-weight: bold; font-size: 11px; width: 35px; }
@@ -562,7 +566,7 @@ async function main(): Promise<void> {
                 background: none;
                 border: none;
                 cursor: pointer;
-                padding: 6px;
+                padding: 8px;
                 color: var(--muted);
                 border-radius: 4px;
                 display: inline-flex;
