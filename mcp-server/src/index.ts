@@ -589,6 +589,13 @@ async function main(): Promise<void> {
                 visibility: visible;
                 opacity: 1;
               }
+
+              @media (hover: hover) {
+                .tooltip-container:hover .tooltip-text {
+                  visibility: visible;
+                  opacity: 1;
+                }
+              }
             </style>
           </head>
           <body>
@@ -639,6 +646,10 @@ async function main(): Promise<void> {
                       btn.classList.add('copied');
                       const container = btn.closest('.tooltip-container');
                       if (container) {
+                        const tooltipText = container.querySelector('.tooltip-text');
+                        const originalText = 'Copy';
+
+                        if (tooltipText) tooltipText.textContent = 'Copied!';
                         container.classList.add('show-tooltip');
 
                         if (timeoutId) clearTimeout(timeoutId);
@@ -646,6 +657,7 @@ async function main(): Promise<void> {
                         timeoutId = setTimeout(() => {
                           container.classList.remove('show-tooltip');
                           btn.classList.remove('copied');
+                          if (tooltipText) tooltipText.textContent = originalText;
                           timeoutId = null;
                         }, 2000);
                       }

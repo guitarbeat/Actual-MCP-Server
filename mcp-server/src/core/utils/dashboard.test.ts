@@ -44,6 +44,7 @@ describe('dashboard utils', () => {
       expect(result).toContain('<span class="method" style="color: var(--success)">GET</span>');
       expect(result).toContain('<span class="path" style="flex: 0 0 auto">/api</span>');
       expect(result).toContain('data-path="/api"');
+      expect(result).toContain('<span class="tooltip-text" role="status" aria-live="polite">Copy</span>');
       expect(result).toContain('<span class="desc">Description</span>');
     });
   });
