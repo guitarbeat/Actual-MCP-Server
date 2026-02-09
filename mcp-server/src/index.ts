@@ -34,7 +34,7 @@ import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-log
 import { corsMiddleware } from './core/transport/cors.js';
 import { securityHeaders } from './core/transport/security-headers.js';
 import { StreamableHTTPHandler } from './core/transport/streamable-http-handler.js';
-import { escapeHtml } from './core/utils/html-utils.js';
+import { renderEndpoint, renderStat } from './core/utils/dashboard.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
@@ -415,29 +415,6 @@ async function main(): Promise<void> {
       };
 
       const { type: statusType, text: statusText } = getStatusDetails();
-
-      const renderStat = (label: string, value: string | number) => `
-        <div class="item">
-          <dt class="label">${escapeHtml(label)}</dt>
-          <dd class="val">${escapeHtml(value)}</dd>
-        </div>
-      `;
-
-      const renderEndpoint = (method: string, color: string, path: string, desc: string) => `
-        <li class="ep-row">
-          <span class="method" style="color: var(--${color})">${method}</span>
-          <span class="path" style="flex: 0 0 auto">${path}</span>
-          <div class="tooltip-container">
-            <button class="copy-btn" data-path="${path}" aria-label="Copy ${path} URL">
-              <svg class="icon-copy" aria-hidden="true" focusable="false" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              <svg class="icon-check" aria-hidden="true" focusable="false" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </button>
-            <span class="tooltip-text" role="status" aria-live="polite">Copied!</span>
-          </div>
-          <div style="flex: 1"></div>
-          <span class="desc">${desc}</span>
-        </li>
-      `;
 
       return `
         <!DOCTYPE html>
