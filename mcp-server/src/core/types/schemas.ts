@@ -131,8 +131,21 @@ export const BalanceHistoryArgsSchema = z.object({
 });
 
 export const FinancialInsightsArgsSchema = z.object({
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  month: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format')
+    .optional()
+    .describe('Month to analyze in YYYY-MM format. Defaults to current month.'),
+  includeSchedules: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Include upcoming scheduled transactions. Default: true.'),
+  scheduleDays: z
+    .number()
+    .optional()
+    .default(14)
+    .describe('Number of days ahead to look for scheduled transactions. Default: 14.'),
 });
 
 export const BudgetReviewArgsSchema = z.object({

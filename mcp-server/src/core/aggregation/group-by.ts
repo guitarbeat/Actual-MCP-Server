@@ -24,7 +24,7 @@ export class GroupAggregator {
 
     // Direct iteration over record keys to avoid Object.values/Object.entries array allocation
     for (const key in spendingByCategory) {
-      if (Object.prototype.hasOwnProperty.call(spendingByCategory, key)) {
+      if (Object.hasOwn(spendingByCategory, key)) {
         const category = spendingByCategory[key];
         const groupName = category.group;
         let group = groupsMap.get(groupName);
