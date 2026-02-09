@@ -554,7 +554,7 @@ export async function createPayee(args: Record<string, unknown>): Promise<string
       throw new Error('Payee name is required');
     }
     const result = await api.createPayee(args as Omit<APIPayeeEntity, 'id'>);
-    cacheService.invalidate('payees:all');
+    cacheService.invalidatePattern('payees:*');
     return result;
   });
 }
@@ -565,7 +565,7 @@ export async function createPayee(args: Record<string, unknown>): Promise<string
 export async function updatePayee(id: string, args: Record<string, unknown>): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.updatePayee(id, args);
-    cacheService.invalidate('payees:all');
+    cacheService.invalidatePattern('payees:*');
     return result;
   });
 }
@@ -576,7 +576,7 @@ export async function updatePayee(id: string, args: Record<string, unknown>): Pr
 export async function deletePayee(id: string): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.deletePayee(id);
-    cacheService.invalidate('payees:all');
+    cacheService.invalidatePattern('payees:*');
     return result;
   });
 }
@@ -608,7 +608,7 @@ export async function deleteRule(id: string): Promise<boolean> {
 export async function createCategory(args: Record<string, unknown>): Promise<string> {
   return ensureConnection(async () => {
     const result = await api.createCategory(args as Omit<APICategoryEntity, 'id'>);
-    cacheService.invalidate('categories:all');
+    cacheService.invalidatePattern('categories:*');
     return result;
   });
 }
@@ -619,7 +619,7 @@ export async function createCategory(args: Record<string, unknown>): Promise<str
 export async function updateCategory(id: string, args: Record<string, unknown>): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.updateCategory(id, args);
-    cacheService.invalidate('categories:all');
+    cacheService.invalidatePattern('categories:*');
     return result;
   });
 }
@@ -630,7 +630,7 @@ export async function updateCategory(id: string, args: Record<string, unknown>):
 export async function deleteCategory(id: string): Promise<{ error?: string }> {
   return ensureConnection(async () => {
     const result = await api.deleteCategory(id);
-    cacheService.invalidate('categories:all');
+    cacheService.invalidatePattern('categories:*');
     return result;
   });
 }
@@ -641,7 +641,7 @@ export async function deleteCategory(id: string): Promise<{ error?: string }> {
 export async function createCategoryGroup(args: Record<string, unknown>): Promise<string> {
   return ensureConnection(async () => {
     const result = await api.createCategoryGroup(args as Omit<APICategoryGroupEntity, 'id'>);
-    cacheService.invalidate('categoryGroups:all');
+    cacheService.invalidatePattern('categoryGroups:*');
     return result;
   });
 }
@@ -652,7 +652,7 @@ export async function createCategoryGroup(args: Record<string, unknown>): Promis
 export async function updateCategoryGroup(id: string, args: Record<string, unknown>): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.updateCategoryGroup(id, args);
-    cacheService.invalidate('categoryGroups:all');
+    cacheService.invalidatePattern('categoryGroups:*');
     return result;
   });
 }
@@ -663,7 +663,7 @@ export async function updateCategoryGroup(id: string, args: Record<string, unkno
 export async function deleteCategoryGroup(id: string): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.deleteCategoryGroup(id);
-    cacheService.invalidate('categoryGroups:all');
+    cacheService.invalidatePattern('categoryGroups:*');
     return result;
   });
 }
@@ -940,7 +940,7 @@ export async function getSchedules(): Promise<unknown[]> {
 export async function mergePayees(targetId: string, sourceIds: string[]): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.mergePayees(targetId, sourceIds);
-    cacheService.invalidate('payees:all');
+    cacheService.invalidatePattern('payees:*');
     return result;
   });
 }
