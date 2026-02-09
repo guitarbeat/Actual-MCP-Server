@@ -33,7 +33,7 @@ export const schema = {
   inputSchema: zodToJsonSchema(FinancialInsightsArgsSchema) as ToolInput,
 };
 
-type FinancialInsightsArgs = z.infer<typeof FinancialInsightsArgsSchema>;
+type FinancialInsightsArgs = z.input<typeof FinancialInsightsArgsSchema>;
 
 /**
  * Format the insights summary for display
