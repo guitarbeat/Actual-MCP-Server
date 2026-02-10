@@ -61,7 +61,7 @@ export class CacheService {
     }
 
     const cached = this.get<T>(key);
-    if (cached !== null) {
+    if (cached !== undefined) {
       this.hits++;
       return cached;
     }
@@ -91,11 +91,10 @@ export class CacheService {
    * Get data from cache if exists and not expired.
    *
    * @param key - Cache key
-   * @returns Cached data or null if not found/expired
+   * @returns Cached data or undefined if not found/expired
    */
-  private get<T>(key: string): T | null {
-    const value = this.cache.get(key) as T | undefined;
-    return value ?? null;
+  private get<T>(key: string): T | undefined {
+    return this.cache.get(key) as T | undefined;
   }
 
   /**
