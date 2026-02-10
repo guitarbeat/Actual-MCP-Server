@@ -377,9 +377,10 @@ async function main(): Promise<void> {
     // * When bearer authentication is enabled, it provides security instead of host header validation
     const app = createMcpExpressApp({
       host: bindHost,
-      // * When bearer authentication is enabled, allow localhost connections
-      // * Bearer auth provides security instead of host header validation
-      allowedHosts: undefined, // Allow all hosts (bearer auth provides security)
+      // * When bearer authentication is enabled, allow all connections
+      // * Bearer auth provides security instead of host header validation.
+      // * When bearer auth is disabled, restrict to localhost for security.
+      allowedHosts: enableBearer ? undefined : ['localhost', '127.0.0.1'],
     });
 
     // * Security Headers
@@ -678,7 +679,8 @@ async function main(): Promise<void> {
 
     // * Streamable HTTP transport endpoint - modern MCP transport
     // Create a single handler instance for all /mcp requests
-    const streamableHandler = new StreamableHTTPHandler(server);
+    // Enable DNS rebinding protection when bearer auth is disabled (binding to localhost)
+    const streamableHandler = new StreamableHTTPHandler(server, !enableBearer);
 
     // Handle all HTTP methods for /mcp endpoint (GET, POST, DELETE)
     app.all('/mcp', bearerAuth, async (req: Request, res: Response) => {

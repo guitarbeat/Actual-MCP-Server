@@ -128,7 +128,7 @@ const CreateAccountSchema = z.object({
     }),
   }),
   offbudget: z.boolean().optional(),
-  initialBalance: z.number().optional(), // In cents
+  initialBalance: z.number().int().optional(), // In cents
 });
 
 const UpdateAccountSchema = z.object({
