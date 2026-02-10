@@ -18,9 +18,11 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 export class StreamableHTTPHandler {
   private transports: Map<string, StreamableHTTPServerTransport> = new Map();
   private server: Server;
+  private enableDnsRebindingProtection: boolean;
 
-  constructor(server: Server) {
+  constructor(server: Server, enableDnsRebindingProtection: boolean = false) {
     this.server = server;
+    this.enableDnsRebindingProtection = enableDnsRebindingProtection;
   }
 
   /**
@@ -71,7 +73,7 @@ export class StreamableHTTPHandler {
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       enableJsonResponse: false,
-      enableDnsRebindingProtection: false,
+      enableDnsRebindingProtection: this.enableDnsRebindingProtection,
       onsessioninitialized: (sid: string) => {
         console.error(`[StreamableHTTPHandler] Session initialized: ${sid}`);
         if (transportRef.current) {

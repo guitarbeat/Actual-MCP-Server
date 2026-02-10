@@ -193,9 +193,9 @@ export const RuleConditionSchema = z.object({
   ]),
   value: z.union([
     z.string().max(200, 'Condition value must be less than 200 characters'),
-    z.number(),
+    z.number().finite(),
     z.array(z.string().max(200, 'Condition value must be less than 200 characters')),
-    z.array(z.number()),
+    z.array(z.number().finite()),
   ]),
 });
 
@@ -208,7 +208,7 @@ export const RuleActionSchema = z.object({
   value: z.union([
     z.boolean(),
     z.string().max(500, 'Action value must be less than 500 characters'),
-    z.number(),
+    z.number().finite(),
     z.null(),
   ]),
   options: z
@@ -278,7 +278,7 @@ export const ScheduleDataSchema = z.object({
     .optional(),
   payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
   category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
-  notes: z.string().optional(),
+  notes: z.string().max(500, 'Notes must be less than 500 characters').optional(),
   posts_transaction: z.boolean().optional(),
 });
 
