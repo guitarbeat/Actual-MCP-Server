@@ -1,6 +1,5 @@
 // Aggregates category spendings into groups and sorts them
 import type { CategorySpending, GroupSpending } from '../types/domain.js';
-import { sortBy } from './sort-by.js';
 
 /**
  * Aggregates category spending data into groups and sorts by total spending.
@@ -44,17 +43,20 @@ export class GroupAggregator {
 
     for (const [groupName, { total, categories }] of groupsMap) {
       // Sort categories within the group
-      const sortedCategories = sortBy(categories, [(cat) => Math.abs(cat.total)], ['desc']);
+      // Optimization: Sort in-place to avoid allocating new array
+      categories.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
 
       groups.push({
         name: groupName,
         total,
-        categories: sortedCategories,
+        categories,
       });
     }
 
     // Sort groups by absolute total (descending)
-    return sortBy(groups, [(group) => Math.abs(group.total)], ['desc']);
+    // Optimization: Sort in-place to avoid allocating new array
+    groups.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+    return groups;
   }
 
   /**
