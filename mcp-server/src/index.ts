@@ -631,6 +631,7 @@ async function main(): Promise<void> {
 
                 <dl class="grid">
                   ${renderStat('Port', resolvedPort)}
+                  ${renderStat('Host', bindHost)}
                   ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
                   ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
                   ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
