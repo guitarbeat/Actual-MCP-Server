@@ -463,6 +463,20 @@ async function main(): Promise<void> {
                 border-radius: 2px;
               }
 
+              .skip-link {
+                position: absolute;
+                top: -40px;
+                left: 0;
+                background: var(--primary);
+                color: white;
+                padding: 8px;
+                z-index: 100;
+                transition: top 0.2s;
+              }
+              .skip-link:focus {
+                top: 0;
+              }
+
               @keyframes pulse {
                 0% { opacity: 1; transform: scale(1); }
                 50% { opacity: 0.5; transform: scale(1.2); }
@@ -545,6 +559,8 @@ async function main(): Promise<void> {
                 border: none;
                 cursor: pointer;
                 padding: 8px;
+                min-width: 32px;
+                min-height: 32px;
                 color: var(--muted);
                 border-radius: 4px;
                 display: inline-flex;
@@ -590,33 +606,43 @@ async function main(): Promise<void> {
                 visibility: visible;
                 opacity: 1;
               }
+
+              .section-title {
+                margin: 0 0 8px 0;
+                font-size: 12px;
+                font-weight: bold;
+                color: var(--muted);
+              }
             </style>
           </head>
           <body>
+            <a href="#main-content" class="skip-link">Skip to main content</a>
             <div class="container">
               <header>
                 <h1>Actual Budget MCP</h1>
                 <span class="version">v${version}</span>
               </header>
 
-                            <div class="status-line">
-                <div class="dot ${statusType} ${initializing ? 'pulsing' : ''}" aria-hidden="true"></div>
-                <span class="status-${statusType}">${statusText}</span>
-              </div>
+              <main id="main-content" tabindex="-1">
+                <div class="status-line">
+                  <div class="dot ${statusType} ${initializing ? 'pulsing' : ''}" aria-hidden="true"></div>
+                  <span class="status-${statusType}">${statusText}</span>
+                </div>
 
-              <dl class="grid">
-                ${renderStat('Port', resolvedPort)}
-                ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
-                ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
-                ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
-              </dl>
+                <dl class="grid">
+                  ${renderStat('Port', resolvedPort)}
+                  ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
+                  ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
+                  ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
+                </dl>
 
-              <h2 style="margin: 0 0 8px 0; font-size: 12px; font-weight: bold; color: var(--muted);">ENDPOINTS</h2>
-              <ul class="endpoints">
-                ${renderEndpoint('ALL', 'primary', '/mcp', 'Streamable Connection')}
-                ${renderEndpoint('GET', 'success', '/sse', 'Event Stream')}
-                ${renderEndpoint('GET', 'warning', '/health', 'Health Check')}
-              </ul>
+                <h2 class="section-title">ENDPOINTS</h2>
+                <ul class="endpoints">
+                  ${renderEndpoint('ALL', 'primary', '/mcp', 'Streamable Connection')}
+                  ${renderEndpoint('GET', 'success', '/sse', 'Event Stream')}
+                  ${renderEndpoint('GET', 'warning', '/health', 'Health Check')}
+                </ul>
+              </main>
 
               <footer>
                 <a href="https://github.com/guitarbeat/actual-mcp" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository (opens in a new tab)">GitHub</a>
