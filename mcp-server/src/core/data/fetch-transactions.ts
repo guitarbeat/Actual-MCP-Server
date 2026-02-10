@@ -1,12 +1,9 @@
 import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
 import { getTransactions } from '../../core/api/actual-client.js';
-import { GroupAggregator } from '../aggregation/group-by.js';
 import type { Account, Category, Payee, Transaction } from '../types/domain.js';
 import { nameResolver } from '../utils/name-resolver.js';
-import { fetchAllCategories } from './fetch-categories.js';
-import { fetchAllPayees } from './fetch-payees.js';
-
-const groupAggregator = new GroupAggregator();
+import { fetchAllCategoriesMap } from './fetch-categories.js';
+import { fetchAllPayeesMap } from './fetch-payees.js';
 
 interface TransactionLookupOptions {
   includePayees: boolean;
@@ -19,13 +16,12 @@ export interface TransactionLookups {
 }
 
 async function _buildTransactionLookups(options: TransactionLookupOptions): Promise<TransactionLookups> {
-  const [payees, categories] = await Promise.all([
-    options.includePayees ? fetchAllPayees() : Promise.resolve<Payee[]>([]),
-    options.includeCategories ? fetchAllCategories() : Promise.resolve<Category[]>([]),
+  // Optimization: Use cached maps to avoid rebuilding them on every call
+  // This reduces CPU usage and memory allocations when enriching large batches of transactions
+  const [payeesById, categoriesById] = await Promise.all([
+    options.includePayees ? fetchAllPayeesMap() : Promise.resolve<Record<string, Payee>>({}),
+    options.includeCategories ? fetchAllCategoriesMap() : Promise.resolve<Record<string, Category>>({}),
   ]);
-
-  const payeesById: Record<string, Payee> = options.includePayees ? groupAggregator.byId(payees) : {};
-  const categoriesById: Record<string, Category> = options.includeCategories ? groupAggregator.byId(categories) : {};
 
   return { payeesById, categoriesById };
 }
