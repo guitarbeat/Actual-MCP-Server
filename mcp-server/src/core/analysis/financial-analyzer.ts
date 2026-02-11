@@ -161,7 +161,6 @@ export async function findUncategorizedTransactions(month: string): Promise<Unca
     })
     .select(['amount', 'payee.name']);
 
-  // biome-ignore lint/suspicious/noExplicitAny: Dealing with external API response type
   const result = (await runAQL(query)) as { data: Array<{ amount: number; payee: { name: string } | null }> };
   const data = result.data;
 

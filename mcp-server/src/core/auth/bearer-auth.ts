@@ -31,7 +31,8 @@ export const createBearerAuth = (options: BearerAuthOptions) => {
       res.setHeader('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');
       res.status(401).json({
         error: 'Authentication required',
-        message: 'Authentication must be provided via the Authorization: Bearer <token> header. Query parameters are not supported.',
+        message:
+          'Authentication must be provided via the Authorization: Bearer <token> header. Query parameters are not supported.',
         code: -32000,
       });
       return;
