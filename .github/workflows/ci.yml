@@ -19,28 +19,33 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: mcp-server/package-lock.json
+        cache: 'pnpm'
+        cache-dependency-path: mcp-server/pnpm-lock.yaml
 
     - name: Install Dependencies
       working-directory: ./mcp-server
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Run Linter & Type Check
       working-directory: ./mcp-server
-      run: npm run quality
+      run: pnpm run quality
 
     - name: Build
       working-directory: ./mcp-server
-      run: npm run build
+      run: pnpm run build
 
     - name: Run Tests
       working-directory: ./mcp-server
-      run: npm test
+      run: pnpm test
 
   check-version-bump:
     runs-on: ubuntu-latest
