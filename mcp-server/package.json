@@ -44,11 +44,11 @@
     "csv-parse": "^6.1.0",
     "csv-stringify": "^6.6.0",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.2.4",
-    "express": "^5.2.1",
-    "lru-cache": "^11.2.5",
-    "openai": "^6.18.0",
-    "zod": "^3.25.76",
+    "dotenv": "^16.4.7",
+    "express": "^5.0.1",
+    "lru-cache": "^10.4.3",
+    "openai": "^4.71.0",
+    "zod": "^3.23.8",
     "zod-to-json-schema": "^3.25.1"
   },
   "devDependencies": {
@@ -66,7 +66,7 @@
     "jiti": "^2.6.1",
     "lint-staged": "^16.2.6",
     "tsx": "^4.19.4",
-    "typescript": "^5.7.2",
+    "typescript": "~5.5.4",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   },
