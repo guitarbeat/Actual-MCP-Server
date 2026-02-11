@@ -61,5 +61,11 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction):
     return;
   }
 
+  // Reject requests from unauthorized origins
+  if (!isAllowed) {
+    res.status(403).json({ error: 'Origin not allowed' });
+    return;
+  }
+
   next();
 };
