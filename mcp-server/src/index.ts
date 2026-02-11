@@ -504,6 +504,15 @@ async function main(): Promise<void> {
               .dot { width: 8px; height: 8px; border-radius: 50%; }
               .dot.pulsing { animation: pulse 2s infinite ease-in-out; }
 
+              @media (prefers-reduced-motion: reduce) {
+                .dot.pulsing { animation: none; opacity: 0.5; }
+                *, *::before, *::after {
+                  transition-duration: 0.01ms !important;
+                  animation-duration: 0.01ms !important;
+                  animation-iteration-count: 1 !important;
+                }
+              }
+
               /* Status colors */
               .status-success { color: var(--success); }
               .status-warning { color: var(--warning); }
@@ -613,6 +622,16 @@ async function main(): Promise<void> {
                 font-weight: bold;
                 color: var(--muted);
               }
+
+              .error-hint {
+                font-size: 12px;
+                color: var(--error);
+                margin-top: -15px;
+                margin-bottom: 20px;
+                background: color-mix(in srgb, var(--error), transparent 90%);
+                padding: 8px 12px;
+                border-radius: 4px;
+              }
             </style>
           </head>
           <body>
@@ -628,6 +647,11 @@ async function main(): Promise<void> {
                   <div class="dot ${statusType} ${initializing ? 'pulsing' : ''}" aria-hidden="true"></div>
                   <span class="status-${statusType}">${statusText}</span>
                 </div>
+                ${
+                  statusType === 'error'
+                    ? `<p class="error-hint">Check server logs for connection details. Ensure Actual Budget is running and credentials are correct.</p>`
+                    : ''
+                }
 
                 <dl class="grid">
                   ${renderStat('Port', resolvedPort)}
