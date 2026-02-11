@@ -64,10 +64,13 @@ export class GetAccountsDataFetcher {
       accounts = accounts.filter((a) => !a.closed);
     }
 
-    // Fetch balance for each account
-    for (const account of accounts) {
-      account.balance = await getAccountBalance(account.id);
-    }
+    // Fetch balance for each account in parallel
+    // Optimization: Use Promise.all to fetch balances concurrently instead of sequentially
+    await Promise.all(
+      accounts.map(async (account) => {
+        account.balance = await getAccountBalance(account.id);
+      })
+    );
 
     return accounts as AccountWithBalance[];
   }
