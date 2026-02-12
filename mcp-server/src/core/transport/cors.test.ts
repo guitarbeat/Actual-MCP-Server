@@ -16,6 +16,7 @@ describe('corsMiddleware', () => {
       setHeader: vi.fn(),
       status: vi.fn().mockReturnThis(),
       end: vi.fn(),
+      json: vi.fn(),
       removeHeader: vi.fn(),
     };
     next = vi.fn();
@@ -60,7 +61,9 @@ describe('corsMiddleware', () => {
     req.headers!.origin = 'https://evil.com';
     corsMiddleware(req as Request, res as Response, next);
     expect(res.setHeader).not.toHaveBeenCalledWith('Access-Control-Allow-Origin', expect.anything());
-    expect(next).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Origin not allowed' });
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('handles OPTIONS preflight for allowed origin', () => {
@@ -87,6 +90,8 @@ describe('corsMiddleware', () => {
     req.headers!.origin = 'invalid-url';
     corsMiddleware(req as Request, res as Response, next);
     expect(res.setHeader).not.toHaveBeenCalledWith('Access-Control-Allow-Origin', expect.anything());
-    expect(next).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Origin not allowed' });
+    expect(next).not.toHaveBeenCalled();
   });
 });
