@@ -613,6 +613,19 @@ async function main(): Promise<void> {
                 font-weight: bold;
                 color: var(--muted);
               }
+
+              .error-hint {
+                background: color-mix(in srgb, var(--error), transparent 90%);
+                color: var(--error);
+                padding: 12px;
+                border-radius: 6px;
+                font-size: 13px;
+                margin-bottom: 20px;
+                border: 1px solid color-mix(in srgb, var(--error), transparent 80%);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              }
             </style>
           </head>
           <body>
@@ -628,6 +641,17 @@ async function main(): Promise<void> {
                   <div class="dot ${statusType} ${initializing ? 'pulsing' : ''}" aria-hidden="true"></div>
                   <span class="status-${statusType}">${statusText}</span>
                 </div>
+
+                ${
+                  statusType === 'error'
+                    ? `
+                  <div class="error-hint" role="alert">
+                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>Connection failed. Check server logs for details.</span>
+                  </div>
+                `
+                    : ''
+                }
 
                 <dl class="grid">
                   ${renderStat('Port', resolvedPort)}
