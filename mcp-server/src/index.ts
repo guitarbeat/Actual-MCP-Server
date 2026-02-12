@@ -426,7 +426,7 @@ async function main(): Promise<void> {
             ${initializing ? '<meta http-equiv="refresh" content="3">' : ''}
             <title>Actual Budget MCP</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
-            <style>
+            <style nonce="${nonce}">
               :root {
                 --bg: #ffffff;
                 --text: #1a1a1a;
@@ -613,6 +613,16 @@ async function main(): Promise<void> {
                 font-weight: bold;
                 color: var(--muted);
               }
+
+              /* Text color utilities */
+              .text-primary { color: var(--primary); }
+              .text-success { color: var(--success); }
+              .text-warning { color: var(--warning); }
+              .text-error { color: var(--error); }
+
+              /* Flex utilities */
+              .flex-none { flex: 0 0 auto; }
+              .flex-1 { flex: 1; }
             </style>
           </head>
           <body>

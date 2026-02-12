@@ -9,8 +9,8 @@ export const renderStat = (label: string, value: string | number) => `
 
 export const renderEndpoint = (method: string, color: string, path: string, desc: string) => `
   <li class="ep-row">
-    <span class="method" style="color: var(--${escapeHtml(color)})">${escapeHtml(method)}</span>
-    <span class="path" style="flex: 0 0 auto">${escapeHtml(path)}</span>
+    <span class="method text-${escapeHtml(color)}">${escapeHtml(method)}</span>
+    <span class="path flex-none">${escapeHtml(path)}</span>
     <div class="tooltip-container">
       <button class="copy-btn" data-path="${escapeHtml(path)}" aria-label="Copy ${escapeHtml(path)} URL">
         <svg class="icon-copy" aria-hidden="true" focusable="false" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -18,7 +18,7 @@ export const renderEndpoint = (method: string, color: string, path: string, desc
       </button>
       <span class="tooltip-text" role="status" aria-live="polite">Copied!</span>
     </div>
-    <div style="flex: 1"></div>
+    <div class="flex-1"></div>
     <span class="desc">${escapeHtml(desc)}</span>
   </li>
 `;
