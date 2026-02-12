@@ -6,6 +6,38 @@
 import { z } from 'zod';
 
 // ----------------------------
+// Common Validation Schemas
+// ----------------------------
+
+/**
+ * Schema for UUID validation
+ */
+export const UUIDSchema = z.string().uuid();
+
+/**
+ * Schema for date string validation (YYYY-MM-DD format)
+ */
+export const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/**
+ * Schema for month string validation (YYYY-MM format)
+ */
+export const MonthSchema = z.string().regex(/^\d{4}-\d{2}$/);
+
+/**
+ * Schema for amount validation (in cents)
+ */
+export const AmountSchema = z.number().int();
+
+/**
+ * Schema for optional date range
+ */
+export const DateRangeSchema = z.object({
+  startDate: DateSchema.optional(),
+  endDate: DateSchema.optional(),
+});
+
+// ----------------------------
 // Tool Argument Schemas
 // ----------------------------
 
@@ -131,8 +163,9 @@ export const BalanceHistoryArgsSchema = z.object({
 });
 
 export const FinancialInsightsArgsSchema = z.object({
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  month: MonthSchema.optional().describe('Month to analyze in YYYY-MM format. Defaults to current month.'),
+  includeSchedules: z.boolean().optional().describe('Include upcoming scheduled transactions. Default: true.'),
+  scheduleDays: z.number().optional().describe('Number of days ahead to look for scheduled transactions. Default: 14.'),
 });
 
 export const BudgetReviewArgsSchema = z.object({
@@ -293,35 +326,3 @@ export const DeleteScheduleArgsSchema = z.object({
 });
 
 export const GetSchedulesArgsSchema = z.object({});
-
-// ----------------------------
-// Common Validation Schemas
-// ----------------------------
-
-/**
- * Schema for UUID validation
- */
-export const UUIDSchema = z.string().uuid();
-
-/**
- * Schema for date string validation (YYYY-MM-DD format)
- */
-export const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-
-/**
- * Schema for month string validation (YYYY-MM format)
- */
-export const MonthSchema = z.string().regex(/^\d{4}-\d{2}$/);
-
-/**
- * Schema for amount validation (in cents)
- */
-export const AmountSchema = z.number().int();
-
-/**
- * Schema for optional date range
- */
-export const DateRangeSchema = z.object({
-  startDate: DateSchema.optional(),
-  endDate: DateSchema.optional(),
-});
