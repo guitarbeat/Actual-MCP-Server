@@ -28,8 +28,8 @@ describe('dashboard utils', () => {
       // Method escaping
       expect(result).toContain('&lt;script&gt;');
 
-      // Color escaping (prevents breaking out of style attribute or var())
-      expect(result).toContain('var(--primary&quot; style=&quot;bad)');
+      // Color escaping (prevents breaking out of class attribute)
+      expect(result).toContain('text-primary&quot; style=&quot;bad');
 
       // Path escaping (prevents breaking out of data-path attribute)
       expect(result).toContain('data-path="/path&quot; onclick=&quot;alert(1)"');
@@ -41,9 +41,10 @@ describe('dashboard utils', () => {
 
     it('should render correctly with safe values', () => {
       const result = renderEndpoint('GET', 'success', '/api', 'Description');
-      expect(result).toContain('<span class="method" style="color: var(--success)">GET</span>');
-      expect(result).toContain('<span class="path" style="flex: 0 0 auto">/api</span>');
+      expect(result).toContain('<span class="method text-success">GET</span>');
+      expect(result).toContain('<span class="path flex-none">/api</span>');
       expect(result).toContain('data-path="/api"');
+      expect(result).toContain('<div class="flex-1"></div>');
       expect(result).toContain('<span class="desc">Description</span>');
     });
   });
