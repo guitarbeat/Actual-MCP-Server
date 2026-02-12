@@ -32,12 +32,12 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   // Content Security Policy
   // - default-src 'self': Only allow resources from the same origin by default
   // - img-src 'self' data:: Allow images from self and data URIs (for favicons/assets)
-  // - style-src 'self' 'unsafe-inline': Allow inline styles (required for dashboard)
+  // - style-src 'self' 'nonce-${nonce}': Allow inline styles only with the correct nonce
   // - script-src 'self': Only allow scripts from self and those with the correct nonce
   // - frame-ancestors 'none': Prevent embedding in iframes (Clickjacking protection)
   res.setHeader(
     'Content-Security-Policy',
-    `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'nonce-${nonce}'; frame-ancestors 'none';`
+    `default-src 'self'; img-src 'self' data:; style-src 'self' 'nonce-${nonce}'; script-src 'self' 'nonce-${nonce}'; frame-ancestors 'none';`
   );
 
   // Remove X-Powered-By header to hide server details
