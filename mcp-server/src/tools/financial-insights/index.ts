@@ -3,9 +3,12 @@
 // Pre-analyzed financial summary to reduce context window load
 // ----------------------------
 
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { type FinancialInsightsSummary, generateInsightsSummary } from '../../core/analysis/financial-analyzer.js';
 import { formatAmount } from '../../core/formatting/index.js';
 import { errorFromCatch, successWithJson } from '../../core/response/index.js';
+import type { ToolInput } from '../../core/types/index.js';
+import { FinancialInsightsArgsSchema } from '../../core/types/schemas.js';
 
 export const schema = {
   name: 'get-financial-insights',
@@ -27,31 +30,8 @@ export const schema = {
     '- Specific month: {"month": "2024-01"}\\n' +
     '- Extended forecast: {"scheduleDays": 30}\\n\\n' +
     'NOTE: This tool performs server-side analysis to provide concise insights.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      month: {
-        type: 'string',
-        description: 'Month to analyze in YYYY-MM format. Defaults to current month.',
-      },
-      includeSchedules: {
-        type: 'boolean',
-        description: 'Include upcoming scheduled transactions. Default: true.',
-      },
-      scheduleDays: {
-        type: 'number',
-        description: 'Number of days ahead to look for scheduled transactions. Default: 14.',
-      },
-    },
-    required: [],
-  },
+  inputSchema: zodToJsonSchema(FinancialInsightsArgsSchema) as ToolInput,
 };
-
-interface FinancialInsightsArgs {
-  month?: string;
-  includeSchedules?: boolean;
-  scheduleDays?: number;
-}
 
 /**
  * Format the insights summary for display
@@ -105,12 +85,13 @@ function formatInsights(insights: FinancialInsightsSummary): object {
  * Handler for the get-financial-insights tool
  */
 export async function handler(
-  args: FinancialInsightsArgs
+  args: unknown
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const insights = await generateInsightsSummary(args.month, {
-      includeSchedules: args.includeSchedules,
-      scheduleDays: args.scheduleDays,
+    const input = FinancialInsightsArgsSchema.parse(args);
+    const insights = await generateInsightsSummary(input.month, {
+      includeSchedules: input.includeSchedules,
+      scheduleDays: input.scheduleDays,
     });
 
     return successWithJson(formatInsights(insights));
