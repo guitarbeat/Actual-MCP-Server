@@ -2,11 +2,7 @@ import { fetchAllAccounts } from '../data/fetch-accounts.js';
 import { fetchAllCategories } from '../data/fetch-categories.js';
 import { fetchAllPayees } from '../data/fetch-payees.js';
 import type { Account, Category, Payee } from '../types/domain.js';
-
-// Remove emojis using Unicode ranges
-// This covers most emoji ranges: Emoticons, Miscellaneous Symbols, Dingbats, etc.
-const EMOJI_REGEX =
-  /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]/gu;
+import { isId, normalizeName } from './name-utils.js';
 
 /**
  * Utility class for resolving entity names to IDs with caching support.
@@ -16,30 +12,6 @@ export class NameResolver {
   private accountCache: Map<string, string> = new Map();
   private categoryCache: Map<string, string> = new Map();
   private payeeCache: Map<string, string> = new Map();
-
-  /**
-   * Check if a string looks like a UUID/ID (contains hyphens or is alphanumeric).
-   * Actual Budget uses various ID formats, so we use a permissive check.
-   *
-   * @param value - String to check
-   * @returns True if the value appears to be an ID
-   */
-  private isId(value: string): boolean {
-    // IDs typically contain hyphens or are long alphanumeric strings
-    // This is a permissive check to avoid false negatives
-    return value.includes('-') || (value.length > 20 && /^[a-zA-Z0-9]+$/.test(value));
-  }
-
-  /**
-   * Normalize a name for comparison by removing emojis and trimming whitespace.
-   * This allows matching "Chase Checking" with "🏦 Chase Checking".
-   *
-   * @param name - Name to normalize
-   * @returns Normalized name (lowercase, emojis removed, trimmed)
-   */
-  private normalizeName(name: string): string {
-    return name.replace(EMOJI_REGEX, '').trim().toLowerCase();
-  }
 
   /**
    * Resolve an account name or ID to an account ID.
@@ -52,12 +24,12 @@ export class NameResolver {
    */
   async resolveAccount(nameOrId: string): Promise<string> {
     // Pass through if already an ID
-    if (this.isId(nameOrId)) {
+    if (isId(nameOrId)) {
       return nameOrId;
     }
 
     // Normalize the input for comparison (remove emojis, lowercase)
-    const normalizedInput = this.normalizeName(nameOrId);
+    const normalizedInput = normalizeName(nameOrId);
 
     // Check cache using normalized name
     if (this.accountCache.has(normalizedInput)) {
@@ -69,7 +41,7 @@ export class NameResolver {
 
     // Bulk warm the cache with all accounts to optimize subsequent lookups
     for (const account of accounts) {
-      const normName = this.normalizeName(account.name);
+      const normName = normalizeName(account.name);
       // Only set if not already present to preserve first-match behavior (similar to find)
       if (!this.accountCache.has(normName)) {
         this.accountCache.set(normName, account.id);
@@ -96,12 +68,12 @@ export class NameResolver {
    */
   async resolveCategory(nameOrId: string): Promise<string> {
     // Pass through if already an ID
-    if (this.isId(nameOrId)) {
+    if (isId(nameOrId)) {
       return nameOrId;
     }
 
     // Normalize the input for comparison (remove emojis, lowercase)
-    const normalizedInput = this.normalizeName(nameOrId);
+    const normalizedInput = normalizeName(nameOrId);
 
     // Check cache using normalized name
     if (this.categoryCache.has(normalizedInput)) {
@@ -113,7 +85,7 @@ export class NameResolver {
 
     // Bulk warm the cache with all categories
     for (const category of categories) {
-      const normName = this.normalizeName(category.name);
+      const normName = normalizeName(category.name);
       if (!this.categoryCache.has(normName)) {
         this.categoryCache.set(normName, category.id);
       }
@@ -139,12 +111,12 @@ export class NameResolver {
    */
   async resolvePayee(nameOrId: string): Promise<string> {
     // Pass through if already an ID
-    if (this.isId(nameOrId)) {
+    if (isId(nameOrId)) {
       return nameOrId;
     }
 
     // Normalize the input for comparison (remove emojis, lowercase)
-    const normalizedInput = this.normalizeName(nameOrId);
+    const normalizedInput = normalizeName(nameOrId);
 
     // Check cache using normalized name
     if (this.payeeCache.has(normalizedInput)) {
@@ -156,7 +128,7 @@ export class NameResolver {
 
     // Bulk warm the cache
     for (const payee of payees) {
-      const normName = this.normalizeName(payee.name);
+      const normName = normalizeName(payee.name);
       if (!this.payeeCache.has(normName)) {
         this.payeeCache.set(normName, payee.id);
       }
