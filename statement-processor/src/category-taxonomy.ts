@@ -14,10 +14,7 @@ export const CATEGORY_TAXONOMY = {
     'Income: Personal Transfer',
     'Income: Other',
   ],
-  housing: [
-    'Housing: Rent',
-    'Housing: Mortgage',
-  ],
+  housing: ['Housing: Rent', 'Housing: Mortgage'],
   utilities: [
     'Utilities: Internet/Cable',
     'Utilities: Electric',
@@ -31,11 +28,7 @@ export const CATEGORY_TAXONOMY = {
     'Transportation: Parking',
     'Transportation: Car Payment',
   ],
-  food: [
-    'Food: Groceries',
-    'Food: Dining Out',
-    'Food: Coffee/Snacks',
-  ],
+  food: ['Food: Groceries', 'Food: Dining Out', 'Food: Coffee/Snacks'],
   shopping: [
     'Shopping: General',
     'Shopping: Clothing',
@@ -47,27 +40,15 @@ export const CATEGORY_TAXONOMY = {
     'Entertainment: Events',
     'Entertainment: Hobbies',
   ],
-  healthcare: [
-    'Healthcare: Medical',
-    'Healthcare: Pharmacy',
-    'Healthcare: Insurance',
-  ],
+  healthcare: ['Healthcare: Medical', 'Healthcare: Pharmacy', 'Healthcare: Insurance'],
   debtPayment: [
     'Debt Payment: Credit Card',
     'Debt Payment: Student Loan',
     'Debt Payment: Personal Loan',
   ],
-  fees: [
-    'Fees: Bank Fees',
-    'Fees: Service Fees',
-  ],
-  transfer: [
-    'Transfer: Internal',
-    'Transfer: Savings',
-  ],
-  uncategorized: [
-    'Uncategorized',
-  ],
+  fees: ['Fees: Bank Fees', 'Fees: Service Fees'],
+  transfer: ['Transfer: Internal', 'Transfer: Savings'],
+  uncategorized: ['Uncategorized'],
 } as const;
 
 /**
@@ -87,16 +68,16 @@ export function isValidCategory(category: string): boolean {
  */
 export function normalizeCategory(category: string): string {
   const normalized = category.trim();
-  
+
   // Try exact match first
   if (isValidCategory(normalized)) {
     return normalized;
   }
-  
+
   // Try case-insensitive match
   const lowerCategory = normalized.toLowerCase();
-  const match = ALL_CATEGORIES.find(cat => cat.toLowerCase() === lowerCategory);
-  
+  const match = ALL_CATEGORIES.find((cat) => cat.toLowerCase() === lowerCategory);
+
   return match || 'Uncategorized';
 }
 

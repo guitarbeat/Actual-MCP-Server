@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import api from '@actual-app/api';
 
+// Import after mocking
+import { runQuery, initActualApi, shutdownActualApi } from './actual-client.js';
+
 // Mock fs and os
 vi.mock('node:fs', () => ({
   default: {
@@ -38,9 +41,6 @@ vi.mock('@actual-app/api', () => {
   };
 });
 
-// Import after mocking
-import { runQuery, initActualApi, shutdownActualApi } from './actual-client.js';
-
 describe('runQuery', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -62,9 +62,11 @@ describe('runQuery', () => {
     const result = await runQuery(query);
 
     expect(api.q).toHaveBeenCalledWith('transactions');
-    expect(api.aqlQuery).toHaveBeenCalledWith(expect.objectContaining({
-      state: expect.objectContaining({ table: 'transactions', select: ['id'] })
-    }));
+    expect(api.aqlQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        state: expect.objectContaining({ table: 'transactions', select: ['id'] }),
+      }),
+    );
     expect(result).toBe('success');
   });
 
@@ -78,6 +80,8 @@ describe('runQuery', () => {
   it('should throw error for non-object JSON', async () => {
     await expect(runQuery('null')).rejects.toThrow('Invalid query format. Expected JSON object');
     await expect(runQuery('123')).rejects.toThrow('Invalid query format. Expected JSON object');
-    await expect(runQuery('"string"')).rejects.toThrow('Invalid query format. Expected JSON object');
+    await expect(runQuery('"string"')).rejects.toThrow(
+      'Invalid query format. Expected JSON object',
+    );
   });
 });

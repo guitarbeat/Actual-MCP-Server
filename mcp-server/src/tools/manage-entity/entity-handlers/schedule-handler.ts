@@ -69,7 +69,7 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
 
   private async applyScheduleTransformations(
     apiData: Record<string, unknown>,
-    validated: ScheduleData | ScheduleUpdateData
+    validated: ScheduleData | ScheduleUpdateData,
   ): Promise<void> {
     await this.resolveScheduleAccounts(apiData, validated);
     if (validated.name !== undefined) apiData.name = validated.name;
@@ -86,16 +86,19 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
     }
 
     if (validated.category !== undefined) {
-      apiData.category = validated.category ? await nameResolver.resolveCategory(validated.category) : null;
+      apiData.category = validated.category
+        ? await nameResolver.resolveCategory(validated.category)
+        : null;
     }
 
     if (validated.notes !== undefined) apiData.notes = validated.notes;
-    if (validated.posts_transaction !== undefined) apiData.posts_transaction = validated.posts_transaction;
+    if (validated.posts_transaction !== undefined)
+      apiData.posts_transaction = validated.posts_transaction;
   }
 
   private async resolveScheduleAccounts(
     apiData: Record<string, unknown>,
-    validated: ScheduleData | ScheduleUpdateData
+    validated: ScheduleData | ScheduleUpdateData,
   ): Promise<void> {
     if ('accountId' in validated && validated.accountId) {
       apiData.account = await nameResolver.resolveAccount(validated.accountId);
@@ -146,7 +149,8 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
   }
 
   private handleScheduleApiError(operation: Operation, error: unknown): never {
-    const message = error instanceof Error ? error.message : typeof error === 'string' ? error : undefined;
+    const message =
+      error instanceof Error ? error.message : typeof error === 'string' ? error : undefined;
 
     if (message?.includes(API_UNAVAILABLE_ERROR_FRAGMENT)) {
       throw EntityErrorBuilder.unsupportedFeature('schedule', operation);

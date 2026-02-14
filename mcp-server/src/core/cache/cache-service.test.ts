@@ -35,7 +35,10 @@ describe('CacheService', () => {
       return 'data';
     });
 
-    const promises = [cacheService.getOrFetch('key1', fetchFn), cacheService.getOrFetch('key2', fetchFn)];
+    const promises = [
+      cacheService.getOrFetch('key1', fetchFn),
+      cacheService.getOrFetch('key2', fetchFn),
+    ];
 
     const results = await Promise.all(promises);
 
