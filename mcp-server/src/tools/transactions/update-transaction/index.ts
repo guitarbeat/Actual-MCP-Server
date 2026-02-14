@@ -14,7 +14,9 @@ const UpdateTransactionSchema = z.object({
   id: z
     .string()
     .uuid('Transaction ID must be a valid UUID')
-    .describe('The unique identifier of the transaction to update (use get-transactions to find this).'),
+    .describe(
+      'The unique identifier of the transaction to update (use get-transactions to find this).',
+    ),
   account: z
     .string()
     .max(100, 'Account name must be less than 100 characters')
@@ -39,8 +41,15 @@ const UpdateTransactionSchema = z.object({
     .max(100, 'Category name must be less than 100 characters')
     .optional()
     .describe('New category name. Pass an empty string to remove the category.'),
-  notes: z.string().max(500, 'Notes must be less than 500 characters').optional().describe('New notes or description.'),
-  cleared: z.boolean().optional().describe('Update cleared status (true for cleared, false for uncleared).'),
+  notes: z
+    .string()
+    .max(500, 'Notes must be less than 500 characters')
+    .optional()
+    .describe('New notes or description.'),
+  cleared: z
+    .boolean()
+    .optional()
+    .describe('Update cleared status (true for cleared, false for uncleared).'),
 });
 
 export const schema = {

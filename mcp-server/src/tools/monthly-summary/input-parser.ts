@@ -6,7 +6,9 @@ export class MonthlySummaryInputParser {
     const argsObj = args as Record<string, unknown>;
     const months = typeof argsObj.months === 'number' && argsObj.months > 0 ? argsObj.months : 3;
     const accountId =
-      typeof argsObj.accountId === 'string' && argsObj.accountId.length > 0 ? argsObj.accountId : undefined;
+      typeof argsObj.accountId === 'string' && argsObj.accountId.length > 0
+        ? argsObj.accountId
+        : undefined;
     return { months, accountId };
   }
 }

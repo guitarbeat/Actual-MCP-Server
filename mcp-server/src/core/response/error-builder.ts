@@ -46,7 +46,10 @@ function getFieldSuggestion(field: string): string {
  * @param options - Additional context for the validation error
  * @returns A validation error response
  */
-export function validationError(message: string, options: ValidationErrorOptions = {}): MCPResponse {
+export function validationError(
+  message: string,
+  options: ValidationErrorOptions = {},
+): MCPResponse {
   const { field, value, expected } = options;
 
   let detailedMessage = message;
@@ -55,7 +58,9 @@ export function validationError(message: string, options: ValidationErrorOptions
   }
   if (value !== undefined) {
     const valueStr =
-      typeof value === 'string' && value.length > 100 ? `${value.substring(0, 100)}...` : JSON.stringify(value);
+      typeof value === 'string' && value.length > 100
+        ? `${value.substring(0, 100)}...`
+        : JSON.stringify(value);
     detailedMessage += ` (received: ${valueStr})`;
   }
   if (expected) {
@@ -76,7 +81,11 @@ export function validationError(message: string, options: ValidationErrorOptions
  * @param options - Additional options for the error
  * @returns A not found error response
  */
-export function notFoundError(entityType: string, entityId: string, options: NotFoundErrorOptions = {}): MCPResponse {
+export function notFoundError(
+  entityType: string,
+  entityId: string,
+  options: NotFoundErrorOptions = {},
+): MCPResponse {
   const message = `${entityType} with ID '${entityId}' not found`;
 
   // Provide specific tool suggestions based on entity type
@@ -108,10 +117,18 @@ export function notFoundError(entityType: string, entityId: string, options: Not
  * @returns Specific troubleshooting suggestion
  */
 function getTroubleshootingSuggestion(errorStr: string): string {
-  if (errorStr.includes('connection') || errorStr.includes('econnrefused') || errorStr.includes('network')) {
+  if (
+    errorStr.includes('connection') ||
+    errorStr.includes('econnrefused') ||
+    errorStr.includes('network')
+  ) {
     return 'Connection failed: Verify ACTUAL_SERVER_URL is correct and the Actual Budget server is running. You can verify connectivity by opening the URL in a browser or using curl.';
   }
-  if (errorStr.includes('auth') || errorStr.includes('password') || errorStr.includes('unauthorized')) {
+  if (
+    errorStr.includes('auth') ||
+    errorStr.includes('password') ||
+    errorStr.includes('unauthorized')
+  ) {
     return 'Authentication failed: Verify ACTUAL_PASSWORD is correct and matches your Actual Budget server password. Check that the server requires authentication.';
   }
   if (errorStr.includes('timeout')) {
@@ -120,7 +137,11 @@ function getTroubleshootingSuggestion(errorStr: string): string {
   if (errorStr.includes('not found') || errorStr.includes('404')) {
     return 'Resource not found: The requested entity may have been deleted or the ID is invalid. Use listing tools to verify the resource exists.';
   }
-  if (errorStr.includes('permission') || errorStr.includes('forbidden') || errorStr.includes('403')) {
+  if (
+    errorStr.includes('permission') ||
+    errorStr.includes('forbidden') ||
+    errorStr.includes('403')
+  ) {
     return 'Permission denied: This operation may require write access. Ensure the server is started with --enable-write flag if modifying data.';
   }
   return 'Verify the Actual Budget server is running and accessible. Check server logs for more details.';
@@ -133,7 +154,11 @@ function getTroubleshootingSuggestion(errorStr: string): string {
  * @param options - Additional context options
  * @returns Detailed error message
  */
-function buildDetailedMessage(message: string, errorDetails: string, options: ApiErrorOptions): string {
+function buildDetailedMessage(
+  message: string,
+  errorDetails: string,
+  options: ApiErrorOptions,
+): string {
   let detailedMessage = `${message}: ${errorDetails}`;
 
   if (options.operation) {
@@ -143,7 +168,9 @@ function buildDetailedMessage(message: string, errorDetails: string, options: Ap
   // Include additional context from options
   const contextKeys = Object.keys(options).filter((key) => key !== 'operation');
   if (contextKeys.length > 0) {
-    const contextStr = contextKeys.map((key) => `${key}=${JSON.stringify(options[key])}`).join(', ');
+    const contextStr = contextKeys
+      .map((key) => `${key}=${JSON.stringify(options[key])}`)
+      .join(', ');
     detailedMessage += ` (context: ${contextStr})`;
   }
 
@@ -157,7 +184,11 @@ function buildDetailedMessage(message: string, errorDetails: string, options: Ap
  * @param options - Additional context for the API error
  * @returns An API error response
  */
-export function apiError(message: string, err: unknown, options: ApiErrorOptions = {}): MCPResponse {
+export function apiError(
+  message: string,
+  err: unknown,
+  options: ApiErrorOptions = {},
+): MCPResponse {
   const errorDetails = err instanceof Error ? err.message : String(err);
   const detailedMessage = buildDetailedMessage(message, errorDetails, options);
   const errorStr = errorDetails.toLowerCase();
@@ -172,7 +203,10 @@ export function apiError(message: string, err: unknown, options: ApiErrorOptions
  * @param options - Additional options for the error
  * @returns A permission error response
  */
-export function permissionError(toolName: string, options: PermissionErrorOptions = {}): MCPResponse {
+export function permissionError(
+  toolName: string,
+  options: PermissionErrorOptions = {},
+): MCPResponse {
   const reason = options.reason ?? 'Write access not enabled';
   const message = `Tool '${toolName}' requires write permission: ${reason}`;
 
@@ -190,7 +224,10 @@ export function permissionError(toolName: string, options: PermissionErrorOption
  * @param options - Additional options for the unsupported feature error
  * @returns An error response indicating the feature is unavailable
  */
-export function unsupportedFeatureError(feature: string, options: UnsupportedFeatureOptions = {}): MCPResponse {
+export function unsupportedFeatureError(
+  feature: string,
+  options: UnsupportedFeatureOptions = {},
+): MCPResponse {
   const message = `${feature} is not supported by this Actual Budget server.`;
   const suggestion =
     options.suggestion ??

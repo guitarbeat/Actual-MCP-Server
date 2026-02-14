@@ -10,7 +10,9 @@ import { CSVImportConfig } from './types.js';
 export function loadConfig(): CSVImportConfig {
   return {
     inputFile: process.env.CSV_INPUT_FILE || 'ChaseChecking.CSV',
-    outputFile: process.env.CSV_OUTPUT_FILE || `ChaseChecking_Cleaned_${new Date().toISOString().split('T')[0]}.csv`,
+    outputFile:
+      process.env.CSV_OUTPUT_FILE ||
+      `ChaseChecking_Cleaned_${new Date().toISOString().split('T')[0]}.csv`,
     llmModel: process.env.LLM_MODEL || 'gpt-4o-mini',
     llmApiKey: process.env.LLM_API_KEY || '',
     batchSize: parseInt(process.env.LLM_BATCH_SIZE || '10', 10),

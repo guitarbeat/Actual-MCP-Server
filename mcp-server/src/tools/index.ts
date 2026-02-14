@@ -83,7 +83,7 @@ interface CategorizedToolDefinition {
  */
 function wrapHandler(
   // biome-ignore lint/suspicious/noExplicitAny: Handler functions have various typed signatures that all accept objects; runtime validation is done via Zod
-  handler: ((args: any) => Promise<MCPResponse>) | (() => Promise<MCPResponse>)
+  handler: ((args: any) => Promise<MCPResponse>) | (() => Promise<MCPResponse>),
 ): (args: Record<string, unknown>) => Promise<MCPResponse> {
   return async (args: Record<string, unknown>): Promise<MCPResponse> => {
     // If handler takes no args, call it without args
@@ -325,7 +325,7 @@ export const setupTools = (server: Server, enableWrite: boolean, enableNini = fa
       if (!tool) {
         return error(
           `Unknown tool '${name}'`,
-          'Call list-tools to inspect supported tool names before retrying this request.'
+          'Call list-tools to inspect supported tool names before retrying this request.',
         );
       }
 
@@ -333,7 +333,7 @@ export const setupTools = (server: Server, enableWrite: boolean, enableNini = fa
       if (tool.requiresWrite && !enableWrite) {
         return error(
           `Tool '${name}' requires write permission`,
-          'Start the server with the --enable-write flag to enable write operations.'
+          'Start the server with the --enable-write flag to enable write operations.',
         );
       }
 
@@ -341,7 +341,7 @@ export const setupTools = (server: Server, enableWrite: boolean, enableNini = fa
       if (tool.category === 'nini' && !enableNini) {
         return error(
           `Tool '${name}' requires nini features to be enabled`,
-          'Start the server with the --enable-nini flag to enable advanced features.'
+          'Start the server with the --enable-nini flag to enable advanced features.',
         );
       }
 

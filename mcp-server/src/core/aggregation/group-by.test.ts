@@ -7,11 +7,46 @@ describe('GroupAggregator', () => {
     const aggregator = new GroupAggregator();
 
     const spending: Record<string, CategorySpending> = {
-      cat1: { id: 'cat1', name: 'Food', group: 'Living', isIncome: false, total: -5000, transactions: 2 },
-      cat2: { id: 'cat2', name: 'Rent', group: 'Living', isIncome: false, total: -100000, transactions: 1 },
-      cat3: { id: 'cat3', name: 'Salary', group: 'Income', isIncome: true, total: 200000, transactions: 1 },
-      cat4: { id: 'cat4', name: 'Bonus', group: 'Income', isIncome: true, total: 50000, transactions: 1 },
-      cat5: { id: 'cat5', name: 'Fun', group: 'Entertainment', isIncome: false, total: -2000, transactions: 5 },
+      cat1: {
+        id: 'cat1',
+        name: 'Food',
+        group: 'Living',
+        isIncome: false,
+        total: -5000,
+        transactions: 2,
+      },
+      cat2: {
+        id: 'cat2',
+        name: 'Rent',
+        group: 'Living',
+        isIncome: false,
+        total: -100000,
+        transactions: 1,
+      },
+      cat3: {
+        id: 'cat3',
+        name: 'Salary',
+        group: 'Income',
+        isIncome: true,
+        total: 200000,
+        transactions: 1,
+      },
+      cat4: {
+        id: 'cat4',
+        name: 'Bonus',
+        group: 'Income',
+        isIncome: true,
+        total: 50000,
+        transactions: 1,
+      },
+      cat5: {
+        id: 'cat5',
+        name: 'Fun',
+        group: 'Entertainment',
+        isIncome: false,
+        total: -2000,
+        transactions: 5,
+      },
     };
 
     const result = aggregator.aggregateAndSort(spending);
@@ -48,7 +83,14 @@ describe('GroupAggregator', () => {
   it('should handle single category', () => {
     const aggregator = new GroupAggregator();
     const spending: Record<string, CategorySpending> = {
-      cat1: { id: 'cat1', name: 'Food', group: 'Living', isIncome: false, total: -5000, transactions: 2 },
+      cat1: {
+        id: 'cat1',
+        name: 'Food',
+        group: 'Living',
+        isIncome: false,
+        total: -5000,
+        transactions: 2,
+      },
     };
     const result = aggregator.aggregateAndSort(spending);
     expect(result).toHaveLength(1);

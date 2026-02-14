@@ -16,7 +16,7 @@ export interface ResolvedAccountSelection {
  */
 export async function resolveAccountSelection(
   accounts: Account[],
-  reference: string | undefined
+  reference: string | undefined,
 ): Promise<ResolvedAccountSelection> {
   if (!reference) {
     return {};

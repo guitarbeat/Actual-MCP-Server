@@ -17,7 +17,9 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
  */
 export class StreamableHTTPHandler {
   private transports: Map<string, StreamableHTTPServerTransport> = new Map();
+
   private server: Server;
+
   private enableDnsRebindingProtection: boolean;
 
   constructor(server: Server, enableDnsRebindingProtection: boolean = false) {
@@ -39,7 +41,11 @@ export class StreamableHTTPHandler {
   /**
    * Handle an incoming Streamable HTTP request
    */
-  async handleRequest(req: IncomingMessage, res: ServerResponse, parsedBody?: unknown): Promise<void> {
+  async handleRequest(
+    req: IncomingMessage,
+    res: ServerResponse,
+    parsedBody?: unknown,
+  ): Promise<void> {
     try {
       const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
@@ -58,7 +64,7 @@ export class StreamableHTTPHandler {
           res,
           500,
           -32603,
-          'Internal server error'
+          'Internal server error',
           // Data field omitted to prevent leaking sensitive information
         );
       }
@@ -68,8 +74,14 @@ export class StreamableHTTPHandler {
   /**
    * Handle initialization of a new session
    */
-  private async handleNewSession(req: IncomingMessage, res: ServerResponse, parsedBody: unknown): Promise<void> {
-    const transportRef: { current: StreamableHTTPServerTransport | undefined } = { current: undefined };
+  private async handleNewSession(
+    req: IncomingMessage,
+    res: ServerResponse,
+    parsedBody: unknown,
+  ): Promise<void> {
+    const transportRef: { current: StreamableHTTPServerTransport | undefined } = {
+      current: undefined,
+    };
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       enableJsonResponse: false,
@@ -102,7 +114,7 @@ export class StreamableHTTPHandler {
     sessionId: string,
     req: IncomingMessage,
     res: ServerResponse,
-    parsedBody?: unknown
+    parsedBody?: unknown,
   ): Promise<void> {
     const transport = this.transports.get(sessionId);
 
@@ -122,7 +134,7 @@ export class StreamableHTTPHandler {
     statusCode: number,
     code: number,
     message: string,
-    data?: unknown
+    data?: unknown,
   ): void {
     if (res.headersSent) return;
 
@@ -133,7 +145,7 @@ export class StreamableHTTPHandler {
         jsonrpc: '2.0',
         error: { code, message, data },
         id: null,
-      })
+      }),
     );
   }
 

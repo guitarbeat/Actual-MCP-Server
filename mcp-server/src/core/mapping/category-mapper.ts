@@ -7,8 +7,11 @@ import type { Category, CategoryGroup, CategoryGroupInfo } from '../types/domain
  */
 export class CategoryMapper {
   categoryNames: Record<string, string> = {};
+
   groupNames: Record<string, string> = {};
+
   categoryToGroup: Record<string, CategoryGroupInfo> = {};
+
   investmentCategories: Set<string> = new Set();
 
   /**
@@ -28,7 +31,8 @@ export class CategoryMapper {
       const groupName = this.groupNames[cat.group_id] || 'Unknown Group';
       const isIncome = !!cat.is_income;
       const isSavingsOrInvestment =
-        groupName.toLowerCase().includes('investment') || groupName.toLowerCase().includes('savings');
+        groupName.toLowerCase().includes('investment') ||
+        groupName.toLowerCase().includes('savings');
       this.categoryToGroup[cat.id] = {
         id: cat.group_id,
         name: groupName,

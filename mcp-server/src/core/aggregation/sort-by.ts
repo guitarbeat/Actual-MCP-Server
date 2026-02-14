@@ -6,7 +6,11 @@
  * @param orders - Array of sort orders ('asc' or 'desc')
  * @returns The sorted array
  */
-export function sortBy<T>(array: T[], iteratees: ((item: T) => unknown)[], orders: ('asc' | 'desc')[] = []): T[] {
+export function sortBy<T>(
+  array: T[],
+  iteratees: ((item: T) => unknown)[],
+  orders: ('asc' | 'desc')[] = [],
+): T[] {
   // Optimization: Fast path for single iteratee (very common case)
   // Performance: ~15% faster by avoiding loop overhead and function calls
   if (iteratees.length === 1) {
