@@ -53,6 +53,7 @@ function displayProgress(stage: string, current: number, total: number): void {
 /**
  * Display summary statistics
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function displaySummary(result: any, elapsedTime: number): void {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`📊 Processing Summary`);

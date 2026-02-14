@@ -62,6 +62,7 @@ If you want to filter from a specific date, you need to know your balance on tha
 4. If there are multiple transactions on that date, use the balance BEFORE the first one
 
 Example:
+
 ```
 Date: 08/01/2025
 First transaction: +$2,650.01 (payroll)
@@ -80,16 +81,19 @@ python3 verify_balance.py
 ## Troubleshooting
 
 ### Balance doesn't match
+
 - Make sure you calculated the starting balance correctly
 - Check if there are multiple transactions on your start date
 - Use the balance BEFORE the first transaction of the day
 
 ### API errors
+
 - Verify your API key is correct
 - Check you have credits/quota remaining
 - Try a different model (gemini-2.0-flash-exp is fast and cheap)
 
 ### Missing transactions
+
 - Check your start date filter
 - Verify the Chase CSV has all expected transactions
 - Look for any error messages in the output
@@ -110,6 +114,7 @@ python3 verify_balance.py
 ## Output Format
 
 The tool generates a CSV file with the following columns:
+
 - Date (YYYY-MM-DD)
 - Payee (cleaned name)
 - Category (AI-suggested)
