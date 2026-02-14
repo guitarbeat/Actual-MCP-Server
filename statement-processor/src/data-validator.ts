@@ -1,6 +1,6 @@
 /**
  * Data Validator - Comprehensive validation for transaction data
- * 
+ *
  * Validates transaction amounts, required fields, and warns on suspicious data
  */
 
@@ -24,19 +24,23 @@ export interface ValidationSummary {
   invalidTransactions: number;
   totalWarnings: number;
   errors: Array<{ index: number; transaction: ChaseTransaction; errors: string[] }>;
-  warnings: Array<{ index: number; transaction: ChaseTransaction | ProcessedTransaction; warnings: string[] }>;
+  warnings: Array<{
+    index: number;
+    transaction: ChaseTransaction | ProcessedTransaction;
+    warnings: string[];
+  }>;
 }
 
 /**
  * Validate a raw Chase transaction
- * 
+ *
  * @param transaction - Raw Chase transaction to validate
  * @param index - Transaction index for error reporting
  * @returns Validation result with errors and warnings
  */
 export function validateChaseTransaction(
   transaction: ChaseTransaction,
-  index: number
+  index: number,
 ): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -64,17 +68,23 @@ export function validateChaseTransaction(
   } else {
     // Warn on zero amounts
     if (transaction.amount === 0) {
-      warnings.push(`Transaction ${index + 1} (${transaction.postingDate} - ${transaction.description}): Amount is zero`);
+      warnings.push(
+        `Transaction ${index + 1} (${transaction.postingDate} - ${transaction.description}): Amount is zero`,
+      );
     }
 
     // Warn on extremely large amounts (> $100,000)
     if (Math.abs(transaction.amount) > 100000) {
-      warnings.push(`Transaction ${index + 1} (${transaction.postingDate} - ${transaction.description}): Very large amount: $${transaction.amount.toFixed(2)}`);
+      warnings.push(
+        `Transaction ${index + 1} (${transaction.postingDate} - ${transaction.description}): Very large amount: $${transaction.amount.toFixed(2)}`,
+      );
     }
 
     // Warn on very small amounts (< $0.01)
     if (Math.abs(transaction.amount) > 0 && Math.abs(transaction.amount) < 0.01) {
-      warnings.push(`Transaction ${index + 1} (${transaction.postingDate} - ${transaction.description}): Very small amount: $${transaction.amount.toFixed(2)}`);
+      warnings.push(
+        `Transaction ${index + 1} (${transaction.postingDate} - ${transaction.description}): Very small amount: $${transaction.amount.toFixed(2)}`,
+      );
     }
   }
 
@@ -84,24 +94,32 @@ export function validateChaseTransaction(
   } else {
     // Warn on negative balances
     if (transaction.balance < 0) {
-      warnings.push(`Transaction ${index + 1} (${transaction.postingDate}): Negative balance: $${transaction.balance.toFixed(2)}`);
+      warnings.push(
+        `Transaction ${index + 1} (${transaction.postingDate}): Negative balance: $${transaction.balance.toFixed(2)}`,
+      );
     }
 
     // Warn on extremely large balances (> $1,000,000)
     if (transaction.balance > 1000000) {
-      warnings.push(`Transaction ${index + 1} (${transaction.postingDate}): Very large balance: $${transaction.balance.toFixed(2)}`);
+      warnings.push(
+        `Transaction ${index + 1} (${transaction.postingDate}): Very large balance: $${transaction.balance.toFixed(2)}`,
+      );
     }
   }
 
   // Validate date format (MM/DD/YYYY)
   if (transaction.postingDate && !transaction.postingDate.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-    errors.push(`Transaction ${index + 1}: Invalid date format "${transaction.postingDate}". Expected MM/DD/YYYY`);
+    errors.push(
+      `Transaction ${index + 1}: Invalid date format "${transaction.postingDate}". Expected MM/DD/YYYY`,
+    );
   }
 
   // Validate details field contains expected values
   const validDetails = ['DEBIT', 'CREDIT', 'DSLIP', 'CHECK'];
   if (transaction.details && !validDetails.includes(transaction.details.toUpperCase())) {
-    warnings.push(`Transaction ${index + 1}: Unexpected details value "${transaction.details}". Expected one of: ${validDetails.join(', ')}`);
+    warnings.push(
+      `Transaction ${index + 1}: Unexpected details value "${transaction.details}". Expected one of: ${validDetails.join(', ')}`,
+    );
   }
 
   return {
@@ -113,13 +131,11 @@ export function validateChaseTransaction(
 
 /**
  * Validate all raw Chase transactions
- * 
+ *
  * @param transactions - Array of raw Chase transactions
  * @returns Validation summary with all errors and warnings
  */
-export function validateChaseTransactions(
-  transactions: ChaseTransaction[]
-): ValidationSummary {
+export function validateChaseTransactions(transactions: ChaseTransaction[]): ValidationSummary {
   const summary: ValidationSummary = {
     totalTransactions: transactions.length,
     validTransactions: 0,
@@ -158,14 +174,14 @@ export function validateChaseTransactions(
 
 /**
  * Validate a processed transaction
- * 
+ *
  * @param transaction - Processed transaction to validate
  * @param index - Transaction index for error reporting
  * @returns Validation result with errors and warnings
  */
 export function validateProcessedTransaction(
   transaction: ProcessedTransaction,
-  index: number
+  index: number,
 ): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -174,7 +190,9 @@ export function validateProcessedTransaction(
   if (!transaction.date || transaction.date.trim() === '') {
     errors.push(`Transaction ${index + 1}: Date is empty`);
   } else if (!transaction.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    errors.push(`Transaction ${index + 1}: Invalid date format "${transaction.date}". Expected YYYY-MM-DD`);
+    errors.push(
+      `Transaction ${index + 1}: Invalid date format "${transaction.date}". Expected YYYY-MM-DD`,
+    );
   }
 
   if (!transaction.payee || transaction.payee.trim() === '') {
@@ -191,12 +209,16 @@ export function validateProcessedTransaction(
   } else {
     // Warn on zero amounts
     if (transaction.amount === 0) {
-      warnings.push(`Transaction ${index + 1} (${transaction.date} - ${transaction.payee}): Amount is zero`);
+      warnings.push(
+        `Transaction ${index + 1} (${transaction.date} - ${transaction.payee}): Amount is zero`,
+      );
     }
 
     // Warn on extremely large amounts
     if (Math.abs(transaction.amount) > 100000) {
-      warnings.push(`Transaction ${index + 1} (${transaction.date} - ${transaction.payee}): Very large amount: $${transaction.amount.toFixed(2)}`);
+      warnings.push(
+        `Transaction ${index + 1} (${transaction.date} - ${transaction.payee}): Very large amount: $${transaction.amount.toFixed(2)}`,
+      );
     }
   }
 
@@ -209,12 +231,12 @@ export function validateProcessedTransaction(
 
 /**
  * Validate all processed transactions
- * 
+ *
  * @param transactions - Array of processed transactions
  * @returns Validation summary with all errors and warnings
  */
 export function validateProcessedTransactions(
-  transactions: ProcessedTransaction[]
+  transactions: ProcessedTransaction[],
 ): ValidationSummary {
   const summary: ValidationSummary = {
     totalTransactions: transactions.length,
@@ -254,19 +276,19 @@ export function validateProcessedTransactions(
 
 /**
  * Validate starting balance entry
- * 
+ *
  * @param startingBalance - Starting balance entry to validate
  * @returns Validation result with errors and warnings
  */
-export function validateStartingBalance(
-  startingBalance: StartingBalanceEntry
-): ValidationResult {
+export function validateStartingBalance(startingBalance: StartingBalanceEntry): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   // Validate date format
   if (!startingBalance.date || !startingBalance.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    errors.push(`Starting balance: Invalid date format "${startingBalance.date}". Expected YYYY-MM-DD`);
+    errors.push(
+      `Starting balance: Invalid date format "${startingBalance.date}". Expected YYYY-MM-DD`,
+    );
   }
 
   // Validate payee
@@ -308,7 +330,7 @@ export function validateStartingBalance(
 
 /**
  * Display validation summary to console
- * 
+ *
  * @param summary - Validation summary to display
  * @param label - Label for the validation (e.g., "Raw Transactions", "Processed Transactions")
  */
@@ -316,11 +338,11 @@ export function displayValidationSummary(summary: ValidationSummary, label: stri
   console.log(`\n📋 ${label} Validation:`);
   console.log(`   Total: ${summary.totalTransactions}`);
   console.log(`   Valid: ${summary.validTransactions}`);
-  
+
   if (summary.invalidTransactions > 0) {
     console.log(`   Invalid: ${summary.invalidTransactions}`);
   }
-  
+
   if (summary.totalWarnings > 0) {
     console.log(`   Warnings: ${summary.totalWarnings}`);
   }
@@ -330,7 +352,7 @@ export function displayValidationSummary(summary: ValidationSummary, label: stri
     console.log(`\n❌ Validation Errors:`);
     summary.errors.slice(0, 5).forEach(({ index, errors }) => {
       console.log(`   Transaction ${index + 1}:`);
-      errors.forEach(error => {
+      errors.forEach((error) => {
         console.log(`     - ${error}`);
       });
     });
@@ -344,12 +366,14 @@ export function displayValidationSummary(summary: ValidationSummary, label: stri
     console.log(`\n⚠️  Validation Warnings:`);
     const warningsToShow = summary.warnings.slice(0, 10);
     warningsToShow.forEach(({ warnings }) => {
-      warnings.forEach(warning => {
+      warnings.forEach((warning) => {
         console.log(`   - ${warning}`);
       });
     });
     if (summary.warnings.length > 10) {
-      const remainingWarnings = summary.warnings.slice(10).reduce((sum, w) => sum + w.warnings.length, 0);
+      const remainingWarnings = summary.warnings
+        .slice(10)
+        .reduce((sum, w) => sum + w.warnings.length, 0);
       console.log(`   ... and ${remainingWarnings} more warnings`);
     }
   }
@@ -357,13 +381,11 @@ export function displayValidationSummary(summary: ValidationSummary, label: stri
 
 /**
  * Check for balance consistency across transactions
- * 
+ *
  * @param transactions - Array of raw Chase transactions (must be sorted chronologically)
  * @returns Validation result with errors and warnings
  */
-export function validateBalanceConsistency(
-  transactions: ChaseTransaction[]
-): ValidationResult {
+export function validateBalanceConsistency(transactions: ChaseTransaction[]): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -382,12 +404,12 @@ export function validateBalanceConsistency(
 
     // Allow for small floating-point differences (< $0.01)
     const difference = Math.abs(expectedBalance - actualBalance);
-    
+
     if (difference > 0.01) {
       warnings.push(
         `Balance inconsistency at transaction ${i + 1} (${currentTransaction.postingDate}): ` +
-        `Expected $${expectedBalance.toFixed(2)}, found $${actualBalance.toFixed(2)} ` +
-        `(difference: $${difference.toFixed(2)})`
+          `Expected $${expectedBalance.toFixed(2)}, found $${actualBalance.toFixed(2)} ` +
+          `(difference: $${difference.toFixed(2)})`,
       );
     }
   }

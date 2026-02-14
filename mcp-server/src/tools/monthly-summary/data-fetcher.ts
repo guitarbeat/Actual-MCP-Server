@@ -1,6 +1,9 @@
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import { fetchAllCategories } from '../../core/data/fetch-categories.js';
-import { fetchAllOnBudgetTransactions, fetchTransactionsForAccount } from '../../core/data/fetch-transactions.js';
+import {
+  fetchAllOnBudgetTransactions,
+  fetchTransactionsForAccount,
+} from '../../core/data/fetch-transactions.js';
 import type { Account, Category, Transaction } from '../../core/types/domain.js';
 import { resolveAccountSelection } from '../../core/utils/account-selector.js';
 
@@ -12,7 +15,7 @@ export class MonthlySummaryDataFetcher {
   async fetchAll(
     accountId: string | undefined,
     start: string,
-    end: string
+    end: string,
   ): Promise<{
     accounts: Account[];
     categories: Category[];
@@ -25,7 +28,9 @@ export class MonthlySummaryDataFetcher {
 
     let transactions: Transaction[] = [];
     if (resolvedAccountId) {
-      transactions = await fetchTransactionsForAccount(resolvedAccountId, start, end, { accountIdIsResolved: true });
+      transactions = await fetchTransactionsForAccount(resolvedAccountId, start, end, {
+        accountIdIsResolved: true,
+      });
     } else {
       transactions = await fetchAllOnBudgetTransactions(accounts, start, end);
     }

@@ -63,7 +63,7 @@ function validateMonthFormat(month: string): void {
 }
 
 export async function handler(
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     if (args.month) {
@@ -83,7 +83,8 @@ export async function handler(
         if (errorMessage.includes('not found') || errorMessage.includes('Not found')) {
           return errorFromCatch(`Budget data not found for month ${args.month}`, {
             fallbackMessage: 'Failed to retrieve budget data',
-            suggestion: 'Use the get-budget-month tool without a month parameter to list available months.',
+            suggestion:
+              'Use the get-budget-month tool without a month parameter to list available months.',
           });
         }
         // Re-throw to be caught by outer catch

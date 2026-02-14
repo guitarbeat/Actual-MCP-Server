@@ -10,7 +10,7 @@ import type { NextFunction, Request, Response } from 'express';
  * - Blocks requests from other origins by not setting Access-Control-Allow-Origin
  */
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  const origin = req.headers.origin;
+  const { origin } = req.headers;
   const allowedOrigins = (process.env.MCP_ALLOWED_ORIGINS || '')
     .split(',')
     .map((o) => o.trim())
@@ -26,7 +26,7 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction):
 
   try {
     const originUrl = new URL(origin);
-    const hostname = originUrl.hostname;
+    const { hostname } = originUrl;
 
     // Allow localhost and 127.0.0.1
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -44,7 +44,10 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction):
   if (isAllowed) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-MCP-Connection-ID');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, X-MCP-Connection-ID',
+    );
     res.setHeader('Access-Control-Expose-Headers', 'X-MCP-Connection-ID');
     res.setHeader('Vary', 'Origin');
   }

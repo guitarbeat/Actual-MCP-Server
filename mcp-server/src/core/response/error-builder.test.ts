@@ -69,7 +69,9 @@ describe('Error Builder', () => {
       });
 
       const payload = getPayload(result);
-      expect(payload.suggestion).toContain("allows partial matching (e.g., 'groc' matches 'Groceries')");
+      expect(payload.suggestion).toContain(
+        "allows partial matching (e.g., 'groc' matches 'Groceries')",
+      );
     });
 
     it('should provide specific suggestion for payeeName', () => {
@@ -78,7 +80,9 @@ describe('Error Builder', () => {
       });
 
       const payload = getPayload(result);
-      expect(payload.suggestion).toContain("allows partial matching (e.g., 'amazon' matches 'Amazon.com')");
+      expect(payload.suggestion).toContain(
+        "allows partial matching (e.g., 'amazon' matches 'Amazon.com')",
+      );
     });
   });
 

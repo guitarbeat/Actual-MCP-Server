@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /**
  * Main entry point for Chase CSV Import Preparation Tool
- * 
+ *
  * This is the CLI application that users run to transform Chase CSV files
  * into cleaned, categorized CSV files ready for Actual Budget import.
  */
 
-import { parseCommandLineArgs, validateCLIOptions, cliOptionsToConfig, displayHelp } from './cli.js';
+import {
+  parseCommandLineArgs,
+  validateCLIOptions,
+  cliOptionsToConfig,
+  displayHelp,
+} from './cli.js';
 import { processChaseCSV } from './process-statement-logic.js';
 import { CSVImportError, formatErrorForUser } from './handle-errors.js';
 
@@ -20,7 +25,7 @@ function formatElapsedTime(ms: number): string {
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  
+
   if (minutes > 0) {
     return `${minutes}m ${remainingSeconds}s`;
   }
@@ -35,10 +40,10 @@ function displayProgress(stage: string, current: number, total: number): void {
   const barLength = 30;
   const filledLength = Math.floor((current / total) * barLength);
   const bar = '█'.repeat(filledLength) + '░'.repeat(barLength - filledLength);
-  
+
   // Clear line and write progress
   process.stdout.write(`\r   ${stage}: [${bar}] ${percentage}% (${current}/${total})`);
-  
+
   // Add newline when complete
   if (current === total) {
     process.stdout.write('\n');
@@ -54,11 +59,13 @@ function displaySummary(result: any, elapsedTime: number): void {
   console.log(`${'='.repeat(60)}`);
   console.log(`Input file:           ${result.inputFile}`);
   console.log(`Output file:          ${result.outputFile}`);
-  console.log(`Transactions:         ${result.transactionsProcessed} processed, ${result.transactionsFailed} failed`);
+  console.log(
+    `Transactions:         ${result.transactionsProcessed} processed, ${result.transactionsFailed} failed`,
+  );
   console.log(`Starting balance:     $${result.startingBalance.toFixed(2)}`);
   console.log(`Processing time:      ${formatElapsedTime(elapsedTime)}`);
   console.log(`${'='.repeat(60)}`);
-  
+
   if (result.errors.length > 0) {
     console.log(`\n⚠️  Warnings and errors:`);
     result.errors.slice(0, 5).forEach((error: string, index: number) => {
@@ -107,7 +114,7 @@ async function main(): Promise<void> {
 
     // Start processing
     const startTime = Date.now();
-    
+
     const result = await processChaseCSV(config, (stage, current, total) => {
       displayProgress(stage, current, total);
     });
@@ -118,13 +125,13 @@ async function main(): Promise<void> {
     if (result.success) {
       console.log(`\n✅ Success! CSV file has been processed and saved.`);
       displaySummary(result, elapsedTime);
-      
+
       console.log(`\n💡 Next steps:`);
       console.log(`   1. Open Actual Budget`);
       console.log(`   2. Go to your checking account`);
       console.log(`   3. Click "Import" and select: ${result.outputFile}`);
       console.log(`   4. Review and confirm the imported transactions\n`);
-      
+
       process.exit(0);
     } else {
       console.error(`\n❌ Processing failed!`);
@@ -140,7 +147,7 @@ async function main(): Promise<void> {
     // Handle errors with user-friendly messages
     if (error instanceof CSVImportError) {
       console.error(`\n${formatErrorForUser(error)}`);
-      
+
       // Show technical details in verbose mode or for debugging
       if (process.env.DEBUG === 'true' && error.originalError) {
         console.error(`\nTechnical details:`);
@@ -148,13 +155,13 @@ async function main(): Promise<void> {
       }
     } else {
       console.error(`\n❌ Fatal error: ${error instanceof Error ? error.message : String(error)}`);
-      
+
       if (error instanceof Error && error.stack && process.env.DEBUG === 'true') {
         console.error(`\nStack trace:`);
         console.error(error.stack);
       }
     }
-    
+
     console.error(`\nFor help, run: npm run csv-import -- --help\n`);
     process.exit(1);
   }

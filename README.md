@@ -1,5 +1,9 @@
 # Actual Budget MCP & Utilities 💰
 
+[![CI](https://github.com/guitarbeat/actual-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/guitarbeat/actual-mcp/actions/workflows/ci.yml)
+[![code style: airbnb](https://img.shields.io/badge/code%20style-airbnb-blue.svg)](https://github.com/airbnb/javascript)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+
 This repository contains a suite of tools designed to enhance your [Actual Budget](https://actualbudget.com/) experience, specifically bridging the gap between your local budget and modern AI tools.
 
 ## 🚀 Projects
