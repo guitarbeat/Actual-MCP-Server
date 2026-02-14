@@ -70,22 +70,34 @@ const CreateCategorySchema = z.object({
   groupId: z
     .string()
     .uuid('Group ID must be a valid UUID')
-    .describe('UUID of the category group to add the category to. Use get-grouped-categories to find group IDs.'),
+    .describe(
+      'UUID of the category group to add the category to. Use get-grouped-categories to find group IDs.',
+    ),
 });
 
 const UpdateCategorySchema = z.object({
-  id: z.string().uuid('Category ID must be a valid UUID').describe('UUID of the category to update.'),
+  id: z
+    .string()
+    .uuid('Category ID must be a valid UUID')
+    .describe('UUID of the category to update.'),
   name: z
     .string()
     .min(1)
     .max(100, 'Category name must be less than 100 characters')
     .optional()
     .describe('New name for the category.'),
-  groupId: z.string().uuid().optional().describe('New category group UUID to move the category to.'),
+  groupId: z
+    .string()
+    .uuid()
+    .optional()
+    .describe('New category group UUID to move the category to.'),
 });
 
 const DeleteCategorySchema = z.object({
-  id: z.string().uuid('Category ID must be a valid UUID').describe('UUID of the category to delete.'),
+  id: z
+    .string()
+    .uuid('Category ID must be a valid UUID')
+    .describe('UUID of the category to delete.'),
 });
 
 // ----------------------------
@@ -121,10 +133,14 @@ const DeletePayeeSchema = z.object({
 // ----------------------------
 
 const CreateAccountSchema = z.object({
-  name: z.string().min(1, 'Account name is required').max(100, 'Account name must be less than 100 characters'),
+  name: z
+    .string()
+    .min(1, 'Account name is required')
+    .max(100, 'Account name must be less than 100 characters'),
   type: z.enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'], {
     errorMap: () => ({
-      message: 'Account type must be one of: checking, savings, credit, investment, mortgage, debt, other',
+      message:
+        'Account type must be one of: checking, savings, credit, investment, mortgage, debt, other',
     }),
   }),
   offbudget: z.boolean().optional(),
@@ -134,7 +150,9 @@ const CreateAccountSchema = z.object({
 const UpdateAccountSchema = z.object({
   id: z.string().uuid('Account ID must be a valid UUID'),
   name: z.string().min(1).max(100, 'Account name must be less than 100 characters').optional(),
-  type: z.enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other']).optional(),
+  type: z
+    .enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'])
+    .optional(),
   offbudget: z.boolean().optional(),
 });
 
@@ -169,7 +187,10 @@ const CreateCategoryGroupSchema = z.object({
 });
 
 const UpdateCategoryGroupSchema = z.object({
-  id: z.string().uuid('Category group ID must be a valid UUID').describe('UUID of the category group to update.'),
+  id: z
+    .string()
+    .uuid('Category group ID must be a valid UUID')
+    .describe('UUID of the category group to update.'),
   name: z
     .string()
     .min(1)
@@ -179,7 +200,10 @@ const UpdateCategoryGroupSchema = z.object({
 });
 
 const DeleteCategoryGroupSchema = z.object({
-  id: z.string().uuid('Category group ID must be a valid UUID').describe('UUID of the category group to delete.'),
+  id: z
+    .string()
+    .uuid('Category group ID must be a valid UUID')
+    .describe('UUID of the category group to delete.'),
 });
 
 // ----------------------------
@@ -584,7 +608,12 @@ export const entityConfigurations = {
       requiresWrite: true,
       category: 'core' as const,
     },
-  } satisfies EntityCRUDConfig<typeof RuleDataSchema, typeof UpdateRuleSchema, typeof DeleteRuleSchema, RuleHandler>,
+  } satisfies EntityCRUDConfig<
+    typeof RuleDataSchema,
+    typeof UpdateRuleSchema,
+    typeof DeleteRuleSchema,
+    RuleHandler
+  >,
 
   categoryGroup: {
     entityName: 'category-group',

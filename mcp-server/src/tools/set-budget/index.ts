@@ -69,7 +69,7 @@ export const schema = {
  * @returns Success or error response
  */
 export async function handler(
-  args: SetBudgetArgs
+  args: SetBudgetArgs,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     // Validate arguments
@@ -94,7 +94,7 @@ export async function handler(
     }
 
     return successWithJson(
-      `Successfully updated budget for category '${parsedArgs.category}' in ${parsedArgs.month}: ${operations.join(', ')}`
+      `Successfully updated budget for category '${parsedArgs.category}' in ${parsedArgs.month}: ${operations.join(', ')}`,
     );
   } catch (err) {
     // NameResolver already provides helpful error messages with available categories

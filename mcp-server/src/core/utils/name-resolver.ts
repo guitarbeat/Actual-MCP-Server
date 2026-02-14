@@ -14,7 +14,9 @@ const EMOJI_REGEX =
  */
 export class NameResolver {
   private accountCache: Map<string, string> = new Map();
+
   private categoryCache: Map<string, string> = new Map();
+
   private payeeCache: Map<string, string> = new Map();
 
   /**
@@ -82,7 +84,9 @@ export class NameResolver {
     }
 
     const availableAccounts = accounts.map((a: Account) => a.name).join(', ');
-    throw new Error(`Account '${nameOrId}' not found. Available accounts: ${availableAccounts || 'none'}`);
+    throw new Error(
+      `Account '${nameOrId}' not found. Available accounts: ${availableAccounts || 'none'}`,
+    );
   }
 
   /**
@@ -125,7 +129,9 @@ export class NameResolver {
     }
 
     const availableCategories = categories.map((c: Category) => c.name).join(', ');
-    throw new Error(`Category '${nameOrId}' not found. Available categories: ${availableCategories || 'none'}`);
+    throw new Error(
+      `Category '${nameOrId}' not found. Available categories: ${availableCategories || 'none'}`,
+    );
   }
 
   /**
@@ -168,7 +174,9 @@ export class NameResolver {
     }
 
     const availablePayees = payees.map((p: Payee) => p.name).join(', ');
-    throw new Error(`Payee '${nameOrId}' not found. Available payees: ${availablePayees || 'none'}`);
+    throw new Error(
+      `Payee '${nameOrId}' not found. Available payees: ${availablePayees || 'none'}`,
+    );
   }
 
   /**

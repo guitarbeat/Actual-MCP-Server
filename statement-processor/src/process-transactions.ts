@@ -10,7 +10,7 @@ import { CategorizationEngine } from './categorize-transactions.js';
 /**
  * Convert date from MM/DD/YYYY to YYYY-MM-DD format
  * Uses date-fns for parsing and validation to match patterns used elsewhere in the codebase.
- * 
+ *
  * @param dateStr - Date string in MM/DD/YYYY format
  * @returns Date string in YYYY-MM-DD format
  * @throws Error if date format is invalid or date is not valid (e.g., Feb 30)
@@ -23,7 +23,7 @@ export function convertDateFormat(dateStr: string): string {
   }
 
   const [month, day, year] = parts;
-  
+
   // Validate parts are numeric
   const monthNum = parseInt(month, 10);
   const dayNum = parseInt(day, 10);
@@ -55,14 +55,14 @@ export function convertDateFormat(dateStr: string): string {
 
 /**
  * Process a single transaction through the complete pipeline
- * 
+ *
  * @param transaction - Raw Chase transaction
  * @param categorizationEngine - Engine for categorizing transactions
  * @returns Processed transaction ready for CSV output
  */
 export async function processTransaction(
   transaction: ChaseTransaction,
-  categorizationEngine: CategorizationEngine
+  categorizationEngine: CategorizationEngine,
 ): Promise<ProcessedTransaction> {
   // Convert date format from MM/DD/YYYY to YYYY-MM-DD
   const date = convertDateFormat(transaction.postingDate);
@@ -73,12 +73,12 @@ export async function processTransaction(
   // Call LLM Categorization Engine for category
   const categorySuggestion = await categorizationEngine.categorizeTransaction(
     transaction,
-    cleanedPayee.payee
+    cleanedPayee.payee,
   );
 
   // Combine original description with notes
   // The cleanedPayee.notes already includes the original description
-  const notes = cleanedPayee.notes;
+  const { notes } = cleanedPayee;
 
   return {
     date,
@@ -111,7 +111,7 @@ export interface ProcessingStats {
 
 /**
  * Process all transactions sequentially with error handling
- * 
+ *
  * @param transactions - Array of raw Chase transactions
  * @param categorizationEngine - Engine for categorizing transactions
  * @param onProgress - Optional callback for progress updates
@@ -120,7 +120,7 @@ export interface ProcessingStats {
 export async function processAllTransactions(
   transactions: ChaseTransaction[],
   categorizationEngine: CategorizationEngine,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
 ): Promise<{ processed: ProcessedTransaction[]; stats: ProcessingStats }> {
   const processed: ProcessedTransaction[] = [];
   const stats: ProcessingStats = {
@@ -141,9 +141,11 @@ export async function processAllTransactions(
       // Log warning but continue processing
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.warn(
-        `⚠️  Failed to process transaction ${i + 1}/${transactions.length}: ${errorMessage}`
+        `⚠️  Failed to process transaction ${i + 1}/${transactions.length}: ${errorMessage}`,
       );
-      console.warn(`   Transaction details: ${transaction.postingDate} - ${transaction.description}`);
+      console.warn(
+        `   Transaction details: ${transaction.postingDate} - ${transaction.description}`,
+      );
 
       stats.failed++;
       stats.errors.push({
@@ -161,7 +163,7 @@ export async function processAllTransactions(
   // Log summary
   if (stats.failed > 0) {
     console.warn(
-      `\n⚠️  Processing complete: ${stats.successful} successful, ${stats.failed} failed`
+      `\n⚠️  Processing complete: ${stats.successful} successful, ${stats.failed} failed`,
     );
   }
 

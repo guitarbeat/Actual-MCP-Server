@@ -8,7 +8,8 @@ import type { ContentItem, ErrorContext, ErrorPayload, MCPResponse } from './typ
 /**
  * Default error suggestion when no specific suggestion can be inferred
  */
-const DEFAULT_SUGGESTION = 'Check the Actual Budget server logs and verify the provided arguments before retrying.';
+const DEFAULT_SUGGESTION =
+  'Check the Actual Budget server logs and verify the provided arguments before retrying.';
 
 /**
  * Log level prefix for error messages
@@ -18,15 +19,18 @@ const ERROR_LOG_PREFIX = '[ERROR]';
 const suggestionMatchers: Array<{ test: RegExp; suggestion: string }> = [
   {
     test: /accountId/i,
-    suggestion: 'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
+    suggestion:
+      'Use the get-accounts tool to list available accounts and retry with a valid accountId.',
   },
   {
     test: /categoryId/i,
-    suggestion: 'Use the get-grouped-categories tool to inspect valid category IDs before retrying.',
+    suggestion:
+      'Use the get-grouped-categories tool to inspect valid category IDs before retrying.',
   },
   {
     test: /scheduleId/i,
-    suggestion: 'Use the get-schedules tool to list existing schedules and reuse one of the returned IDs.',
+    suggestion:
+      'Use the get-schedules tool to list existing schedules and reuse one of the returned IDs.',
   },
   {
     test: /payeeId|targetPayeeId|sourcePayeeIds/i,
@@ -52,11 +56,13 @@ const suggestionMatchers: Array<{ test: RegExp; suggestion: string }> = [
   },
   {
     test: /rule/i,
-    suggestion: 'Provide the recurrence rule identifier (e.g., "monthly"). Run get-schedules to review valid examples.',
+    suggestion:
+      'Provide the recurrence rule identifier (e.g., "monthly"). Run get-schedules to review valid examples.',
   },
   {
     test: /filePath/i,
-    suggestion: 'Ensure the provided file path is accessible to the server (e.g., /data/import.qif).',
+    suggestion:
+      'Ensure the provided file path is accessible to the server (e.g., /data/import.qif).',
   },
   {
     test: /enabled/i,
@@ -64,15 +70,18 @@ const suggestionMatchers: Array<{ test: RegExp; suggestion: string }> = [
   },
   {
     test: /name/i,
-    suggestion: 'Provide the name as descriptive text and reuse IDs from the relevant listing tool if needed.',
+    suggestion:
+      'Provide the name as descriptive text and reuse IDs from the relevant listing tool if needed.',
   },
   {
     test: /type/i,
-    suggestion: 'Use one of the supported types noted in the error message or documentation for this tool.',
+    suggestion:
+      'Use one of the supported types noted in the error message or documentation for this tool.',
   },
   {
     test: /query/i,
-    suggestion: 'Provide a SQL query string and review Actual Budget query documentation for syntax guidance.',
+    suggestion:
+      'Provide a SQL query string and review Actual Budget query documentation for syntax guidance.',
   },
 ];
 

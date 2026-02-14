@@ -40,12 +40,14 @@ export const schema = {
 };
 
 export async function handler(
-  args: z.infer<typeof HoldBudgetSchema>
+  args: z.infer<typeof HoldBudgetSchema>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     const validated = HoldBudgetSchema.parse(args);
     await holdBudgetForNextMonth(validated.month, validated.amount);
-    return successWithJson(`Successfully held budget amount ${validated.amount} cents for month ${validated.month}`);
+    return successWithJson(
+      `Successfully held budget amount ${validated.amount} cents for month ${validated.month}`,
+    );
   } catch (error) {
     return errorFromCatch(error, {
       fallbackMessage: 'Failed to hold budget',

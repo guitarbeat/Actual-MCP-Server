@@ -201,7 +201,9 @@ export function createCRUDTools<
   TUpdateSchema extends z.ZodType,
   TDeleteSchema extends z.ZodType,
   THandler extends EntityHandler,
->(config: EntityCRUDConfig<TCreateSchema, TUpdateSchema, TDeleteSchema, THandler>): CategorizedToolDefinition[] {
+>(
+  config: EntityCRUDConfig<TCreateSchema, TUpdateSchema, TDeleteSchema, THandler>,
+): CategorizedToolDefinition[] {
   const {
     entityName,
     displayName,
@@ -226,7 +228,7 @@ export function createCRUDTools<
         handler.invalidateCache();
 
         // Extract name from validated data if available for better success message
-        const name = (validated as Record<string, unknown>).name;
+        const { name } = validated as Record<string, unknown>;
         const successMessage =
           name && typeof name === 'string'
             ? `Successfully created ${displayName} "${name}" with id ${entityId}`

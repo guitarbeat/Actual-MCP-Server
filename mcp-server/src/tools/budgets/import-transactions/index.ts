@@ -51,7 +51,7 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     const { source, accountId } = args;
@@ -66,7 +66,9 @@ export async function handler(
     const accountIdStr = accountId && typeof accountId === 'string' ? accountId : undefined;
     await runBankSync(accountIdStr);
     return successWithJson(
-      accountIdStr ? `Successfully synced bank account ${accountIdStr}` : 'Successfully synced all bank accounts'
+      accountIdStr
+        ? `Successfully synced bank account ${accountIdStr}`
+        : 'Successfully synced all bank accounts',
     );
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);

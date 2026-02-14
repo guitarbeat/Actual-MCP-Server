@@ -37,7 +37,7 @@ export const SetBudgetArgsSchema = z
       .number()
       .optional()
       .describe(
-        'Budget amount (dollars or cents, auto-detected). Supports negative amounts for moving money from categories.'
+        'Budget amount (dollars or cents, auto-detected). Supports negative amounts for moving money from categories.',
       ),
     carryover: z.boolean().optional().describe('Enable or disable budget carryover'),
   })

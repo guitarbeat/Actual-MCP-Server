@@ -24,10 +24,14 @@ export interface CacheStats {
 export class CacheService {
   // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
   private cache: LRUCache<string, any>;
+
   // biome-ignore lint/suspicious/noExplicitAny: Pending promises can resolve to any type
   private pendingPromises: Map<string, Promise<any>>;
+
   private hits: number;
+
   private misses: number;
+
   private readonly enabled: boolean;
 
   constructor() {
