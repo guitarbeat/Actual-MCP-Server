@@ -52,7 +52,7 @@ module.exports = {
     'no-void': 'off',
     'no-inner-declarations': 'off',
     'no-restricted-globals': 'off',
-    'radix': 'off',
+    radix: 'off',
     '@typescript-eslint/naming-convention': [
       'error',
       {

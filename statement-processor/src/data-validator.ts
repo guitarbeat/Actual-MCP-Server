@@ -256,6 +256,7 @@ export function validateProcessedTransactions(
       summary.invalidTransactions++;
       summary.errors.push({
         index,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         transaction: transaction as any,
         errors: result.errors,
       });

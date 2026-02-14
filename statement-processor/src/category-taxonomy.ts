@@ -60,6 +60,7 @@ export const ALL_CATEGORIES = Object.values(CATEGORY_TAXONOMY).flat();
  * Validate if a category is in the taxonomy
  */
 export function isValidCategory(category: string): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return ALL_CATEGORIES.includes(category as any);
 }
 
