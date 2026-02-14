@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import fs from 'node:fs';
+import api from '@actual-app/api';
 import * as actualApi from './core/api/actual-client.js';
+import { cacheService } from './core/cache/cache-service.js';
 
 // Mock the @actual-app/api module
 vi.mock('@actual-app/api', () => ({
@@ -21,10 +25,6 @@ vi.mock('fs', () => ({
     mkdirSync: vi.fn(),
   },
 }));
-
-import fs from 'node:fs';
-import api from '@actual-app/api';
-import { cacheService } from './core/cache/cache-service.js';
 
 // Mock cache service
 vi.mock('./core/cache/cache-service.js', () => ({
@@ -158,7 +158,9 @@ describe('Auto-load functionality', () => {
       delete process.env.ACTUAL_BUDGET_SYNC_ID;
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([{ id: 'local-budget-id', name: 'Local Budget' } as any]);
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        { id: 'local-budget-id', name: 'Local Budget' } as any,
+      ]);
       vi.mocked(api.init).mockResolvedValue(undefined as any);
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
@@ -430,7 +432,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api).updateTransaction = mockUpdateTransaction;
 
       await expect(actualApi.updateTransaction('invalid-id', { amount: 5000 })).rejects.toThrow(
-        'Transaction not found'
+        'Transaction not found',
       );
     });
   });
@@ -472,7 +474,9 @@ describe('Auto-load functionality', () => {
     it('should handle deletion errors', async () => {
       vi.mocked(api.deleteTransaction).mockRejectedValue(new Error('Transaction not found'));
 
-      await expect(actualApi.deleteTransaction('invalid-id')).rejects.toThrow('Transaction not found');
+      await expect(actualApi.deleteTransaction('invalid-id')).rejects.toThrow(
+        'Transaction not found',
+      );
     });
   });
 
@@ -513,7 +517,7 @@ describe('Auto-load functionality', () => {
             date: '2024-01-10',
           }),
         ],
-        undefined
+        undefined,
       );
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
       expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
@@ -529,7 +533,7 @@ describe('Auto-load functionality', () => {
             amount: -1234,
           },
         ],
-        { defaultCleared: true }
+        { defaultCleared: true },
       );
 
       expect(api.importTransactions).toHaveBeenCalledWith(
@@ -541,7 +545,7 @@ describe('Auto-load functionality', () => {
             date: '2024-01-10',
           }),
         ],
-        { defaultCleared: true }
+        { defaultCleared: true },
       );
       expect(result).toEqual({ added: ['txn-1'], updated: [] });
     });
@@ -559,7 +563,7 @@ describe('Auto-load functionality', () => {
             date: '2024-01-10',
             amount: -1234,
           },
-        ])
+        ]),
       ).rejects.toThrow('importTransactions reported errors: duplicate transaction');
     });
 
@@ -576,8 +580,10 @@ describe('Auto-load functionality', () => {
             date: '2024-01-10',
             amount: -1234,
           },
-        ])
-      ).rejects.toThrow('importTransactions reported errors: duplicate transaction; invalid amount');
+        ]),
+      ).rejects.toThrow(
+        'importTransactions reported errors: duplicate transaction; invalid amount',
+      );
     });
   });
 
@@ -621,7 +627,7 @@ describe('Auto-load functionality', () => {
       const callback = vi.fn().mockResolvedValue(undefined);
 
       await expect(actualApi.batchBudgetUpdates(callback)).rejects.toThrow(
-        'batchBudgetUpdates method is not available in this version of the API'
+        'batchBudgetUpdates method is not available in this version of the API',
       );
     });
   });

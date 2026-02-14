@@ -35,7 +35,7 @@ export const schema = {
 };
 
 export async function handler(
-  args: z.infer<typeof ResetBudgetHoldSchema>
+  args: z.infer<typeof ResetBudgetHoldSchema>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     const validated = ResetBudgetHoldSchema.parse(args);

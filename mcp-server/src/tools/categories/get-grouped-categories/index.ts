@@ -5,7 +5,10 @@
 import { fetchAllCategoryGroups } from '../../../core/data/fetch-categories.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 import type { CategoryGroup } from '../../../core/types/domain.js';
-import { type GetGroupedCategoriesArgs, GetGroupedCategoriesArgsSchema } from '../../../core/types/index.js';
+import {
+  type GetGroupedCategoriesArgs,
+  GetGroupedCategoriesArgsSchema,
+} from '../../../core/types/index.js';
 
 export const schema = {
   name: 'get-grouped-categories',
@@ -30,7 +33,7 @@ export const schema = {
 };
 
 export async function handler(
-  args: GetGroupedCategoriesArgs | undefined = undefined
+  args: GetGroupedCategoriesArgs | undefined = undefined,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     GetGroupedCategoriesArgsSchema.parse(args ?? {});

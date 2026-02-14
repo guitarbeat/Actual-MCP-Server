@@ -5,7 +5,7 @@ export class MonthlySummaryTransactionAggregator {
   aggregate(
     transactions: Transaction[],
     incomeCategories: Set<string>,
-    investmentSavingsCategories: Set<string>
+    investmentSavingsCategories: Set<string>,
   ): MonthData[] {
     const monthlyData: Record<string, MonthData> = {};
 
@@ -47,6 +47,8 @@ export class MonthlySummaryTransactionAggregator {
       monthlyData[yearMonth].transactions += 1;
     });
 
-    return Object.values(monthlyData).sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month));
+    return Object.values(monthlyData).sort((a, b) =>
+      a.year !== b.year ? a.year - b.year : a.month - b.month,
+    );
   }
 }

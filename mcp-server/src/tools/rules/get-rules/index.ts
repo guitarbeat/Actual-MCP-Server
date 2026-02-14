@@ -99,7 +99,7 @@ function ruleMatchesCategory(rule: RuleEntity, categoryId: string): boolean {
 }
 
 export async function handler(
-  args: Record<string, unknown> = {}
+  args: Record<string, unknown> = {},
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     // Validate payeeId type first if provided
@@ -140,7 +140,8 @@ export async function handler(
   } catch (err) {
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to retrieve rules',
-      suggestion: 'Check the Actual Budget server logs and verify the provided arguments before retrying.',
+      suggestion:
+        'Check the Actual Budget server logs and verify the provided arguments before retrying.',
     });
   }
 }

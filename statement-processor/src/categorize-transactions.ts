@@ -8,7 +8,6 @@ import { CategorizationCache } from './categorization-cache.js';
 import { categorizeByPattern, shouldSkipLLM } from './categorize-with-patterns.js';
 import { categorizeWithLLM } from './categorize-with-llm.js';
 import { cleanPayeeName } from './clean-payee-name.js';
-import { CSVImportError } from './handle-errors.js';
 
 export interface CategorizationEngineConfig {
   llmClient: LLMClient;
@@ -30,8 +29,11 @@ export interface CategorizationProgress {
  */
 export class CategorizationEngine {
   private llmClient: LLMClient;
+
   private cache: CategorizationCache;
+
   private batchSize: number;
+
   private rateLimitDelay: number;
 
   constructor(config: CategorizationEngineConfig) {
@@ -46,7 +48,7 @@ export class CategorizationEngine {
    */
   async categorizeTransaction(
     transaction: ChaseTransaction,
-    cleanedPayee: string
+    cleanedPayee: string,
   ): Promise<CategorySuggestion> {
     // Check cache first
     const cached = this.cache.get(cleanedPayee, transaction.amount);
@@ -74,7 +76,7 @@ export class CategorizationEngine {
     } catch (error) {
       // Fallback to pattern match or uncategorized on LLM error
       console.warn(`⚠️  LLM categorization failed for "${cleanedPayee}", using fallback`);
-      
+
       if (patternMatch) {
         // Use pattern match even if confidence is low
         const fallbackSuggestion: CategorySuggestion = {
@@ -85,7 +87,7 @@ export class CategorizationEngine {
         this.cache.set(cleanedPayee, transaction.amount, fallbackSuggestion);
         return fallbackSuggestion;
       }
-      
+
       // Last resort: uncategorized
       const uncategorizedSuggestion: CategorySuggestion = {
         category: 'Uncategorized',
@@ -102,7 +104,7 @@ export class CategorizationEngine {
    */
   async categorizeTransactions(
     transactions: ChaseTransaction[],
-    onProgress?: (progress: CategorizationProgress) => void
+    onProgress?: (progress: CategorizationProgress) => void,
   ): Promise<Map<ChaseTransaction, CategorySuggestion>> {
     const results = new Map<ChaseTransaction, CategorySuggestion>();
     const progress: CategorizationProgress = {
@@ -116,11 +118,11 @@ export class CategorizationEngine {
     // Process in batches
     for (let i = 0; i < transactions.length; i += this.batchSize) {
       const batch = transactions.slice(i, i + this.batchSize);
-      
+
       // Process batch concurrently
       const batchPromises = batch.map(async (transaction) => {
         const cleanedPayee = cleanPayeeName(transaction.description, transaction.type).payee;
-        
+
         // Check if cached
         const cached = this.cache.get(cleanedPayee, transaction.amount);
         if (cached) {
@@ -150,7 +152,7 @@ export class CategorizationEngine {
         } catch (error) {
           // Fallback to pattern match or uncategorized
           console.warn(`⚠️  LLM categorization failed for "${cleanedPayee}", using fallback`);
-          
+
           if (patternMatch) {
             const fallbackSuggestion: CategorySuggestion = {
               category: patternMatch.category,
@@ -161,7 +163,7 @@ export class CategorizationEngine {
             progress.patternMatched++;
             return { transaction, suggestion: fallbackSuggestion };
           }
-          
+
           // Last resort: uncategorized
           const uncategorizedSuggestion: CategorySuggestion = {
             category: 'Uncategorized',
@@ -174,7 +176,7 @@ export class CategorizationEngine {
       });
 
       const batchResults = await Promise.all(batchPromises);
-      
+
       // Store results
       for (const { transaction, suggestion } of batchResults) {
         results.set(transaction, suggestion);
@@ -213,6 +215,6 @@ export class CategorizationEngine {
    * Sleep for a specified duration
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

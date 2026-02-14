@@ -23,13 +23,15 @@ export const CreateTransactionSchema = z.object({
   amount: z
     .number()
     .describe(
-      'Transaction amount in dollars. Use negative values for expenses (e.g., -50.00) and positive values for income (e.g., 2000.00).'
+      'Transaction amount in dollars. Use negative values for expenses (e.g., -50.00) and positive values for income (e.g., 2000.00).',
     ),
   payee: z
     .string()
     .max(100, 'Payee name must be less than 100 characters')
     .optional()
-    .describe('Name of the merchant, person, or entity (e.g., "Whole Foods", "Netflix", "John Smith").'),
+    .describe(
+      'Name of the merchant, person, or entity (e.g., "Whole Foods", "Netflix", "John Smith").',
+    ),
   category: z
     .string()
     .max(100, 'Category name must be less than 100 characters')
@@ -40,7 +42,10 @@ export const CreateTransactionSchema = z.object({
     .max(500, 'Notes must be less than 500 characters')
     .optional()
     .describe('Additional notes or description for the transaction.'),
-  cleared: z.boolean().optional().describe('Whether the transaction has cleared the bank. Defaults to false.'),
+  cleared: z
+    .boolean()
+    .optional()
+    .describe('Whether the transaction has cleared the bank. Defaults to false.'),
   subtransactions: z
     .array(
       z.object({
@@ -55,11 +60,11 @@ export const CreateTransactionSchema = z.object({
           .max(500, 'Notes must be less than 500 characters')
           .optional()
           .describe('Notes for this split part.'),
-      })
+      }),
     )
     .optional()
     .describe(
-      'List of sub-transactions for split transactions. The sum of sub-transaction amounts must match the total amount.'
+      'List of sub-transactions for split transactions. The sum of sub-transaction amounts must match the total amount.',
     ),
 });
 
