@@ -1,6 +1,6 @@
 /**
  * Chase CSV Import Preparation Tool
- * 
+ *
  * Transforms Chase checking account CSV exports into cleaned, categorized CSV files
  * optimized for Actual Budget import.
  */

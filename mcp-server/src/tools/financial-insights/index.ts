@@ -4,7 +4,10 @@
 // ----------------------------
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { type FinancialInsightsSummary, generateInsightsSummary } from '../../core/analysis/financial-analyzer.js';
+import {
+  type FinancialInsightsSummary,
+  generateInsightsSummary,
+} from '../../core/analysis/financial-analyzer.js';
 import { formatAmount } from '../../core/formatting/index.js';
 import { errorFromCatch, successWithJson } from '../../core/response/index.js';
 import type { ToolInput } from '../../core/types/index.js';
@@ -76,7 +79,8 @@ function formatInsights(insights: FinancialInsightsSummary): object {
       thisMonth: formatAmount(insights.trends.currentMonthSpending),
       lastMonth: formatAmount(insights.trends.previousMonthSpending),
       change: `${insights.trends.spendingChange > 0 ? '+' : ''}${insights.trends.spendingChange.toFixed(1)}%`,
-      savingsRate: insights.trends.savingsRate !== null ? `${insights.trends.savingsRate.toFixed(1)}%` : 'N/A',
+      savingsRate:
+        insights.trends.savingsRate !== null ? `${insights.trends.savingsRate.toFixed(1)}%` : 'N/A',
     },
   };
 }
@@ -85,7 +89,7 @@ function formatInsights(insights: FinancialInsightsSummary): object {
  * Handler for the get-financial-insights tool
  */
 export async function handler(
-  args: unknown
+  args: unknown,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     const input = FinancialInsightsArgsSchema.parse(args);

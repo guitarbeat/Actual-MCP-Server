@@ -18,15 +18,15 @@ describe('FinancialInsightsArgsSchema', () => {
 
   it('should reject invalid month format', () => {
     const invalidInputs = [
-      '2023-1',       // Too short
-      '2023-100',     // Too long
-      '23-10',        // Short year
-      '2023/10',      // Wrong separator
+      '2023-1', // Too short
+      '2023-100', // Too long
+      '23-10', // Short year
+      '2023/10', // Wrong separator
       'October 2023', // Name
       // SQL/AQL Injection attempts
       "2023-10' OR 1=1",
-      "2023-10; DROP TABLE users",
-      "2023-10\nDELETE FROM transactions",
+      '2023-10; DROP TABLE users',
+      '2023-10\nDELETE FROM transactions',
     ];
 
     for (const input of invalidInputs) {
@@ -48,7 +48,7 @@ describe('FinancialInsightsArgsSchema', () => {
   it('should reject invalid types for other fields', () => {
     const invalidData = {
       includeSchedules: 'yes', // should be boolean
-      scheduleDays: '30',      // should be number
+      scheduleDays: '30', // should be number
     };
     const result = FinancialInsightsArgsSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
