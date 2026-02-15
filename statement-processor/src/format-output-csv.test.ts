@@ -34,12 +34,12 @@ describe('formatTransactionsToCSV', () => {
     const csv = formatTransactionsToCSV(mockStartingBalance, maliciousTransactions);
 
     // Check if sanitization was applied (prepend ')
-    expect(csv).toContain('\'=1+1');
-    expect(csv).toContain('\'+Groceries');
-    expect(csv).toContain('\'@malicious');
-    expect(csv).toContain('\'-Test');
-    expect(csv).toContain('\'\tTab');
-    expect(csv).toContain('\'\rReturn');
+    expect(csv).toContain("'=1+1");
+    expect(csv).toContain("'+Groceries");
+    expect(csv).toContain("'@malicious");
+    expect(csv).toContain("'-Test");
+    expect(csv).toContain("'\tTab");
+    expect(csv).toContain("'\rReturn");
   });
 
   it('should not modify safe fields', () => {
@@ -59,6 +59,6 @@ describe('formatTransactionsToCSV', () => {
     expect(csv).toContain('"Safe Payee"');
     expect(csv).toContain('"Food"');
     expect(csv).toContain('"Just notes"');
-    expect(csv).not.toContain('\'Safe Payee');
+    expect(csv).not.toContain("'Safe Payee");
   });
 });
