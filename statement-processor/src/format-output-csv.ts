@@ -29,6 +29,25 @@ interface CSVRow {
 }
 
 /**
+ * Sanitize a field for CSV output to prevent formula injection
+ *
+ * Prepends a single quote to fields starting with characters that could be interpreted as formulas
+ * by spreadsheet software (=, +, -, @, tab, carriage return).
+ *
+ * @param value - The string value to sanitize
+ * @returns Sanitized string safe for CSV
+ */
+function sanitizeCSVField(value: string): string {
+  if (!value) return value;
+  // Check for formula triggers: =, +, -, @, tab (\t), carriage return (\r)
+  const triggers = ['=', '+', '-', '@', '\t', '\r'];
+  if (triggers.some((trigger) => value.startsWith(trigger))) {
+    return `'${value}`;
+  }
+  return value;
+}
+
+/**
  * Format processed transactions into CSV string
  *
  * Generates a CSV with the following structure:
@@ -50,9 +69,9 @@ export function formatTransactionsToCSV(
   // Add starting balance as first row
   rows.push({
     Date: startingBalance.date,
-    Payee: startingBalance.payee,
-    Category: startingBalance.category,
-    Notes: startingBalance.notes,
+    Payee: sanitizeCSVField(startingBalance.payee),
+    Category: sanitizeCSVField(startingBalance.category),
+    Notes: sanitizeCSVField(startingBalance.notes),
     Amount: startingBalance.amount,
   });
 
@@ -60,9 +79,9 @@ export function formatTransactionsToCSV(
   for (const transaction of transactions) {
     rows.push({
       Date: transaction.date,
-      Payee: transaction.payee,
-      Category: transaction.category,
-      Notes: transaction.notes,
+      Payee: sanitizeCSVField(transaction.payee),
+      Category: sanitizeCSVField(transaction.category),
+      Notes: sanitizeCSVField(transaction.notes),
       Amount: transaction.amount,
     });
   }
