@@ -1,6 +1,49 @@
+# Dependencies
 node_modules
+
+# Build output
 build
+dist
+
+# Environment / secrets
 .env
+.env.*
+
+# VCS / IDE
 .git
+.github
+.gitignore
+.vscode
+.idea
+.cursor
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Tests / coverage
+coverage
+*.test.ts
+vitest.config.ts
+
+# Linting & formatting config (not needed at runtime)
+.eslintrc.cjs
+.eslintcache
+.prettierrc
+.prettierignore
+.husky
+
+# Docs (not needed in image)
+README.md
+MCP_INSPECTOR_GUIDE.md
+CONTRIBUTING.md
+CLAUDE.md
+LICENSE
+*.md
+
+# Logs
 *.log
+
+# Docker
+Dockerfile
+.dockerignore
