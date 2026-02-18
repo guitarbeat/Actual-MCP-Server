@@ -1,4 +1,3 @@
-
 import { describe, it, vi, expect, afterEach } from 'vitest';
 import { findUncategorizedTransactions } from './financial-analyzer.js';
 import * as actualClient from '../api/actual-client.js';

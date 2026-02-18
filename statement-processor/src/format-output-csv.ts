@@ -1,6 +1,6 @@
 /**
  * CSV Formatter for Chase CSV Import Tool
- * 
+ *
  * Generates the final cleaned CSV file with proper formatting, quoting, and encoding.
  */
 
@@ -8,7 +8,14 @@ import { stringify } from 'csv-stringify/sync';
 import { writeFile } from 'fs/promises';
 import { format } from 'date-fns';
 import { ProcessedTransaction, StartingBalanceEntry } from './types.js';
-import { validateOutputFile, validateProcessedTransactions, validateTransactionAmounts, checkOutputFileOverwrite, CSVImportError, ErrorType } from './handle-errors.js';
+import {
+  validateOutputFile,
+  validateProcessedTransactions,
+  validateTransactionAmounts,
+  checkOutputFileOverwrite,
+  CSVImportError,
+  ErrorType,
+} from './handle-errors.js';
 
 /**
  * CSV row representing a transaction in the output format
@@ -22,20 +29,39 @@ interface CSVRow {
 }
 
 /**
+ * Sanitize a field for CSV output to prevent formula injection
+ *
+ * Prepends a single quote to fields starting with characters that could be interpreted as formulas
+ * by spreadsheet software (=, +, -, @, tab, carriage return).
+ *
+ * @param value - The string value to sanitize
+ * @returns Sanitized string safe for CSV
+ */
+function sanitizeCSVField(value: string): string {
+  if (!value) return value;
+  // Check for formula triggers: =, +, -, @, tab (\t), carriage return (\r)
+  const triggers = ['=', '+', '-', '@', '\t', '\r'];
+  if (triggers.some((trigger) => value.startsWith(trigger))) {
+    return `'${value}`;
+  }
+  return value;
+}
+
+/**
  * Format processed transactions into CSV string
- * 
+ *
  * Generates a CSV with the following structure:
  * - Header row: Date,Payee,Category,Notes,Amount
  * - Starting balance as first data row
  * - All processed transactions in chronological order
- * 
+ *
  * @param startingBalance - Starting balance entry
  * @param transactions - Array of processed transactions (should be sorted chronologically)
  * @returns CSV string with proper formatting and quoting
  */
 export function formatTransactionsToCSV(
   startingBalance: StartingBalanceEntry,
-  transactions: ProcessedTransaction[]
+  transactions: ProcessedTransaction[],
 ): string {
   // Create array of CSV rows
   const rows: CSVRow[] = [];
@@ -43,9 +69,9 @@ export function formatTransactionsToCSV(
   // Add starting balance as first row
   rows.push({
     Date: startingBalance.date,
-    Payee: startingBalance.payee,
-    Category: startingBalance.category,
-    Notes: startingBalance.notes,
+    Payee: sanitizeCSVField(startingBalance.payee),
+    Category: sanitizeCSVField(startingBalance.category),
+    Notes: sanitizeCSVField(startingBalance.notes),
     Amount: startingBalance.amount,
   });
 
@@ -53,9 +79,9 @@ export function formatTransactionsToCSV(
   for (const transaction of transactions) {
     rows.push({
       Date: transaction.date,
-      Payee: transaction.payee,
-      Category: transaction.category,
-      Notes: transaction.notes,
+      Payee: sanitizeCSVField(transaction.payee),
+      Category: sanitizeCSVField(transaction.category),
+      Notes: sanitizeCSVField(transaction.notes),
       Amount: transaction.amount,
     });
   }
@@ -75,9 +101,9 @@ export function formatTransactionsToCSV(
 
 /**
  * Generate output filename with descriptive naming convention
- * 
+ *
  * Format: ChaseChecking_Cleaned_YYYY-MM-DD.csv
- * 
+ *
  * @param baseFilename - Optional base filename (defaults to "ChaseChecking")
  * @returns Descriptive filename with current date
  */
@@ -88,7 +114,7 @@ export function generateOutputFilename(baseFilename: string = 'ChaseChecking'): 
 
 /**
  * Write CSV content to file with UTF-8 encoding
- * 
+ *
  * @param csvContent - CSV string content
  * @param outputPath - Path where the file should be written
  * @throws Error if file write fails
@@ -96,10 +122,10 @@ export function generateOutputFilename(baseFilename: string = 'ChaseChecking'): 
 export async function writeCSVToFile(csvContent: string, outputPath: string): Promise<void> {
   // Validate output file path before writing
   validateOutputFile(outputPath);
-  
+
   // Check if we're overwriting an existing file
   checkOutputFileOverwrite(outputPath);
-  
+
   try {
     await writeFile(outputPath, csvContent, { encoding: 'utf-8' });
   } catch (error) {
@@ -108,19 +134,19 @@ export async function writeCSVToFile(csvContent: string, outputPath: string): Pr
       `Failed to write CSV file to ${outputPath}: ${error instanceof Error ? error.message : String(error)}`,
       `Could not write the output file "${outputPath}". Please check that you have write permissions and sufficient disk space.`,
       error as Error,
-      { outputPath }
+      { outputPath },
     );
   }
 }
 
 /**
  * Format and write cleaned CSV file
- * 
+ *
  * This is the main entry point for CSV formatting. It combines all the steps:
  * 1. Validate processed transactions
  * 2. Format transactions into CSV string
  * 3. Write to file with proper encoding
- * 
+ *
  * @param startingBalance - Starting balance entry
  * @param transactions - Array of processed transactions
  * @param outputPath - Path where the file should be written
@@ -129,11 +155,11 @@ export async function writeCSVToFile(csvContent: string, outputPath: string): Pr
 export async function formatAndWriteCSV(
   startingBalance: StartingBalanceEntry,
   transactions: ProcessedTransaction[],
-  outputPath: string
+  outputPath: string,
 ): Promise<void> {
   // Validate processed transactions before writing
   validateProcessedTransactions(transactions, startingBalance);
-  
+
   // Validate transaction amounts for suspicious patterns (warnings only)
   validateTransactionAmounts(transactions);
 

@@ -32,7 +32,9 @@ export const schema = {
   },
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export async function handler(): Promise<
+  ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>
+> {
   try {
     const budgets = await getBudgets();
     return successWithJson(budgets);

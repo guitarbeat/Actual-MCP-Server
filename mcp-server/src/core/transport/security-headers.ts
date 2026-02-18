@@ -37,7 +37,7 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   // - frame-ancestors 'none': Prevent embedding in iframes (Clickjacking protection)
   res.setHeader(
     'Content-Security-Policy',
-    `default-src 'self'; img-src 'self' data:; style-src 'self' 'nonce-${nonce}'; script-src 'self' 'nonce-${nonce}'; frame-ancestors 'none';`
+    `default-src 'self'; img-src 'self' data:; style-src 'self' 'nonce-${nonce}'; script-src 'self' 'nonce-${nonce}'; frame-ancestors 'none';`,
   );
 
   // Remove X-Powered-By header to hide server details

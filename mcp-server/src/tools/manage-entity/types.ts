@@ -13,7 +13,14 @@ import type { Operation } from './entity-handlers/base-handler.js';
 /**
  * Supported entity types for the manage-entity tool
  */
-export type EntityType = 'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule' | 'transaction' | 'account';
+export type EntityType =
+  | 'category'
+  | 'categoryGroup'
+  | 'payee'
+  | 'rule'
+  | 'schedule'
+  | 'transaction'
+  | 'account';
 
 // ----------------------------
 // Entity-Specific Data Types
@@ -146,7 +153,10 @@ export type ScheduleUpdateData = Partial<ScheduleData>;
  * Schema for category data validation
  */
 export const CategoryDataSchema = z.object({
-  name: z.string().min(1, 'Category name is required').max(100, 'Category name must be less than 100 characters'),
+  name: z
+    .string()
+    .min(1, 'Category name is required')
+    .max(100, 'Category name must be less than 100 characters'),
   groupId: z.string().uuid('Group ID must be a valid UUID'),
 });
 
@@ -164,7 +174,10 @@ export const CategoryGroupDataSchema = z.object({
  * Schema for payee data validation
  */
 export const PayeeDataSchema = z.object({
-  name: z.string().min(1, 'Payee name is required').max(100, 'Payee name must be less than 100 characters'),
+  name: z
+    .string()
+    .min(1, 'Payee name is required')
+    .max(100, 'Payee name must be less than 100 characters'),
   transferAccount: z.string().uuid('Transfer account must be a valid UUID').optional(),
 });
 
@@ -274,7 +287,10 @@ export const ScheduleDataSchema = z.object({
     .optional(),
   amountOp: z.enum(['is', 'isapprox', 'isbetween']).optional(),
   date: z
-    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'), RecurConfigSchema])
+    .union([
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+      RecurConfigSchema,
+    ])
     .optional(),
   payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
   category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
@@ -314,7 +330,14 @@ export interface TransactionData {
 /**
  * Account type enum
  */
-export type AccountType = 'checking' | 'savings' | 'credit' | 'investment' | 'mortgage' | 'debt' | 'other';
+export type AccountType =
+  | 'checking'
+  | 'savings'
+  | 'credit'
+  | 'investment'
+  | 'mortgage'
+  | 'debt'
+  | 'other';
 
 /**
  * Data required to create or update an account

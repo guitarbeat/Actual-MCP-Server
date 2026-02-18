@@ -26,7 +26,10 @@ export function formatDate(date: Date | string | undefined | null): string {
  * @param endDate - Optional end date string
  * @returns Object with startDate and endDate strings (defaults to 3 months ago to today)
  */
-export function getDateRange(startDate?: string, endDate?: string): { startDate: string; endDate: string } {
+export function getDateRange(
+  startDate?: string,
+  endDate?: string,
+): { startDate: string; endDate: string } {
   const today = new Date();
   const defaultStartDate = subMonths(today, 3); // 3 months ago by default
 
