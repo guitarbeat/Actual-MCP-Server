@@ -1,5 +1,9 @@
 import { getSchedules } from '../../../core/api/actual-client.js';
-import { errorFromCatch, successWithJson, unsupportedFeatureError } from '../../../core/response/index.js';
+import {
+  errorFromCatch,
+  successWithJson,
+  unsupportedFeatureError,
+} from '../../../core/response/index.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
 const METHOD_NOT_FUNCTION_FRAGMENT = 'is not a function';
@@ -33,7 +37,7 @@ export const schema = {
 };
 
 export async function handler(
-  _args: Record<string, unknown>
+  _args: Record<string, unknown>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     const schedules = await getSchedules();
@@ -55,7 +59,8 @@ export async function handler(
 
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to retrieve schedules from Actual.',
-      suggestion: 'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
+      suggestion:
+        'Verify the Actual Budget server is reachable and that your user can read schedules before retrying.',
     });
   }
 }

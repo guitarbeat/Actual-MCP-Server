@@ -12,7 +12,10 @@ import { createHash, timingSafeEqual } from 'node:crypto';
  * @param b The second string to compare (e.g., the expected token)
  * @returns True if the strings are equal, false otherwise
  */
-export function timingSafeStringEqual(a: string | undefined | null, b: string | undefined | null): boolean {
+export function timingSafeStringEqual(
+  a: string | undefined | null,
+  b: string | undefined | null,
+): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') {
     return false;
   }

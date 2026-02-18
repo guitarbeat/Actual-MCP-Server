@@ -14,7 +14,14 @@ import type { Operation } from '../entity-handlers/base-handler.js';
 /**
  * Entity types supported by the manage-entity tool
  */
-export type EntityType = 'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule' | 'transaction' | 'account';
+export type EntityType =
+  | 'category'
+  | 'categoryGroup'
+  | 'payee'
+  | 'rule'
+  | 'schedule'
+  | 'transaction'
+  | 'account';
 
 /**
  * Entity-specific error builder for manage-entity tool
@@ -156,7 +163,8 @@ export const EntityErrorBuilder = {
 
     if (missingParam === 'id') {
       message = `'id' is required for ${operation} operations`;
-      suggestion = 'Provide the entity ID to update or delete. Use listing tools to find valid IDs.';
+      suggestion =
+        'Provide the entity ID to update or delete. Use listing tools to find valid IDs.';
     } else if (missingParam === 'data') {
       message = `'data' is required for ${operation} operations`;
       suggestion = `Provide the entity data object with required fields for ${operation} operation.`;
