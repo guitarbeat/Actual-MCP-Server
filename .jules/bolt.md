@@ -17,3 +17,7 @@ This journal records critical performance learnings, anti-patterns, and architec
 ## 2026-02-08 - [Object Iteration vs Array Allocation]
 **Learning:** When aggregating data from a large object (Record), using `for...in` loop is significantly faster (~15%) than `Object.values()` or `Object.entries()` because it avoids allocating an intermediate array of keys or values.
 **Action:** For performance-critical loops over large objects, prefer `for...in` combined with incremental processing (e.g. summing) to minimize allocations and passes.
+
+## 2026-02-15 - [In-Place Sorting]
+**Learning:** `Array.prototype.sort` is significantly more memory-efficient than immutable sort utilities (like `sortBy`) for locally-constructed arrays because it avoids creating intermediate copies.
+**Action:** Use in-place `sort` for aggregators and data transformers where the array is owned by the current scope, reserving `sortBy` only for cases where immutability of the input is required.
