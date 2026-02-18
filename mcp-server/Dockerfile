@@ -15,17 +15,26 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --froze
 COPY . ./
 RUN pnpm run build
 
-# Prune dev dependencies after build
-RUN pnpm prune --prod
-
 # ---- Release ----
 FROM node:20-alpine AS release
 
 WORKDIR /app
 
+# Enable pnpm + build tools for native addon compilation
+RUN corepack enable && corepack prepare pnpm@latest --activate && \
+    apk add --no-cache python3 make g++
+
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-lock.yaml ./
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
+
+ENV NODE_ENV=production
+
+# Install prod deps WITH scripts so better-sqlite3 compiles natively
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --prod --frozen-lockfile
+
+# Clean up build tools to reduce image size
+RUN apk del python3 make g++
 
 EXPOSE 3000
 ENTRYPOINT ["node", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
