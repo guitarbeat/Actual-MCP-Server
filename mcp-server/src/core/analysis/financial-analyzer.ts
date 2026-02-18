@@ -4,7 +4,13 @@
 // ----------------------------
 
 import { q } from '@actual-app/api';
-import { getAccountBalance, getAccounts, getBudgetMonth, getSchedules, runAQL } from '../api/actual-client.js';
+import {
+  getAccountBalance,
+  getAccounts,
+  getBudgetMonth,
+  getSchedules,
+  runAQL,
+} from '../api/actual-client.js';
 import { formatDate, getDateRange } from '../formatting/index.js';
 
 // ----------------------------
@@ -107,7 +113,7 @@ function getPreviousMonth(month: string): string {
  */
 export async function analyzeOverspending(
   month: string,
-  budgetDataPromise?: Promise<BudgetMonthData>
+  budgetDataPromise?: Promise<BudgetMonthData>,
 ): Promise<OverspendingItem[]> {
   const budgetData = budgetDataPromise
     ? await budgetDataPromise
@@ -161,9 +167,10 @@ export async function findUncategorizedTransactions(month: string): Promise<Unca
     })
     .select(['amount', 'payee.name']);
 
-  // biome-ignore lint/suspicious/noExplicitAny: Dealing with external API response type
-  const result = (await runAQL(query)) as { data: Array<{ amount: number; payee: { name: string } | null }> };
-  const data = result.data;
+  const result = (await runAQL(query)) as {
+    data: Array<{ amount: number; payee: { name: string } | null }>;
+  };
+  const { data } = result;
 
   let count = 0;
   let totalAmount = 0;
@@ -274,17 +281,20 @@ export async function getUpcomingSchedulesSummary(days = 14): Promise<UpcomingSc
  */
 export async function calculateTrends(
   month: string,
-  currentBudgetPromise?: Promise<BudgetMonthData>
+  currentBudgetPromise?: Promise<BudgetMonthData>,
 ): Promise<TrendsSummary> {
   const currentMonthStart = `${month}-01`;
   const { startDate: _currentStart, endDate: _currentEnd } = getDateRange(currentMonthStart);
 
   const prevMonth = getPreviousMonth(month);
   const prevMonthStart = `${prevMonth}-01`;
-  const { startDate: _prevStart, endDate: _prevEnd } = getDateRange(prevMonthStart, `${prevMonth}-31`); // Rough end is fine as API filters
+  const { startDate: _prevStart, endDate: _prevEnd } = getDateRange(
+    prevMonthStart,
+    `${prevMonth}-31`,
+  ); // Rough end is fine as API filters
 
   const [currentBudget, previousBudget] = await Promise.all([
-    currentBudgetPromise ? currentBudgetPromise : (getBudgetMonth(month) as unknown as Promise<BudgetMonthData>),
+    currentBudgetPromise || (getBudgetMonth(month) as unknown as Promise<BudgetMonthData>),
     getBudgetMonth(prevMonth) as unknown as Promise<BudgetMonthData>,
   ]);
 
@@ -302,7 +312,9 @@ export async function calculateTrends(
   const currentMonthSpending = calculateSpending(currentBudget);
   const previousMonthSpending = calculateSpending(previousBudget);
   const spendingChange =
-    previousMonthSpending > 0 ? ((currentMonthSpending - previousMonthSpending) / previousMonthSpending) * 100 : 0;
+    previousMonthSpending > 0
+      ? ((currentMonthSpending - previousMonthSpending) / previousMonthSpending) * 100
+      : 0;
 
   // Calculate savings rate if income is available
   const income = currentBudget?.incomeAvailable ?? currentBudget?.toBudget ?? 0;
@@ -325,7 +337,7 @@ export async function calculateTrends(
  */
 export async function generateInsightsSummary(
   month?: string,
-  options: { includeSchedules?: boolean; scheduleDays?: number } = {}
+  options: { includeSchedules?: boolean; scheduleDays?: number } = {},
 ): Promise<FinancialInsightsSummary> {
   const targetMonth = month ?? getCurrentMonth();
   const { includeSchedules = true, scheduleDays = 14 } = options;
@@ -335,13 +347,15 @@ export async function generateInsightsSummary(
   const budgetPromise = getBudgetMonth(targetMonth) as unknown as Promise<BudgetMonthData>;
 
   // Run all analyses in parallel for performance
-  const [overspending, uncategorized, accountHealth, upcomingSchedules, trends] = await Promise.all([
-    analyzeOverspending(targetMonth, budgetPromise),
-    findUncategorizedTransactions(targetMonth),
-    getAccountHealthSummary(),
-    includeSchedules ? getUpcomingSchedulesSummary(scheduleDays) : Promise.resolve([]),
-    calculateTrends(targetMonth, budgetPromise),
-  ]);
+  const [overspending, uncategorized, accountHealth, upcomingSchedules, trends] = await Promise.all(
+    [
+      analyzeOverspending(targetMonth, budgetPromise),
+      findUncategorizedTransactions(targetMonth),
+      getAccountHealthSummary(),
+      includeSchedules ? getUpcomingSchedulesSummary(scheduleDays) : Promise.resolve([]),
+      calculateTrends(targetMonth, budgetPromise),
+    ],
+  );
 
   // Generate human-readable summary
   const summaryParts: string[] = [];
@@ -364,7 +378,9 @@ export async function generateInsightsSummary(
 
   if (trends.spendingChange !== 0) {
     const direction = trends.spendingChange > 0 ? 'up' : 'down';
-    summaryParts.push(`spending ${direction} ${Math.abs(trends.spendingChange).toFixed(1)}% vs last month`);
+    summaryParts.push(
+      `spending ${direction} ${Math.abs(trends.spendingChange).toFixed(1)}% vs last month`,
+    );
   }
 
   const summary = summaryParts.length > 0 ? summaryParts.join(', ') : 'No issues detected';

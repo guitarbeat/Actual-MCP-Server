@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * CLI Interface for Chase CSV Import Preparation Tool
- * 
+ *
  * Accepts command-line arguments for input/output files and configuration options.
  */
 
@@ -148,9 +148,12 @@ export function parseCommandLineArgs(argv: string[]): CLIOptions {
     const llmApiKey = values['api-key'] || process.env.LLM_API_KEY || '';
     const batchSize = parseInt(values['batch-size'] || process.env.LLM_BATCH_SIZE || '10', 10);
     const rateLimitDelay = parseInt(values.delay || process.env.LLM_RATE_LIMIT_DELAY || '1000', 10);
-    const enableCaching = values.cache !== false && process.env.ENABLE_CATEGORIZATION_CACHE !== 'false';
+    const enableCaching =
+      values.cache !== false && process.env.ENABLE_CATEGORIZATION_CACHE !== 'false';
     const startDate = values['start-date'];
-    const startingBalance = values['starting-balance'] ? parseFloat(values['starting-balance']) : undefined;
+    const startingBalance = values['starting-balance']
+      ? parseFloat(values['starting-balance'])
+      : undefined;
 
     return {
       inputFile,
@@ -165,7 +168,9 @@ export function parseCommandLineArgs(argv: string[]): CLIOptions {
       help: false,
     };
   } catch (error) {
-    throw new Error(`Failed to parse command-line arguments: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to parse command-line arguments: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -180,7 +185,9 @@ export function validateCLIOptions(options: CLIOptions): void {
   }
 
   if (!options.llmApiKey) {
-    errors.push('LLM API key is required. Set LLM_API_KEY environment variable or use -k/--api-key option.');
+    errors.push(
+      'LLM API key is required. Set LLM_API_KEY environment variable or use -k/--api-key option.',
+    );
   }
 
   if (options.batchSize < 1 || options.batchSize > 100) {
@@ -207,7 +214,7 @@ export function validateCLIOptions(options: CLIOptions): void {
   }
 
   if (errors.length > 0) {
-    throw new Error(`Invalid configuration:\n${errors.map(e => `  - ${e}`).join('\n')}`);
+    throw new Error(`Invalid configuration:\n${errors.map((e) => `  - ${e}`).join('\n')}`);
   }
 }
 

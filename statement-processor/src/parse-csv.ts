@@ -23,7 +23,7 @@ const EXPECTED_HEADERS = [
 
 /**
  * Parse a Chase CSV file and return an array of transactions
- * 
+ *
  * @param filePath - Path to the Chase CSV file
  * @returns Array of parsed ChaseTransaction objects
  * @throws Error if file cannot be read or CSV structure is invalid
@@ -69,12 +69,12 @@ export function parseChaseCSV(filePath: string): ChaseTransaction[] {
 
   for (let i = 1; i < records.length; i++) {
     const row = records[i];
-    
+
     // Skip completely empty rows
-    if (row.every(cell => !cell || cell.trim() === '')) {
+    if (row.every((cell) => !cell || cell.trim() === '')) {
       continue;
     }
-    
+
     try {
       const transaction = parseTransactionRow(row, i + 1);
       transactions.push(transaction);
@@ -82,21 +82,30 @@ export function parseChaseCSV(filePath: string): ChaseTransaction[] {
       skippedCount++;
       const errorMsg = `Row ${i + 1}: ${error instanceof Error ? error.message : String(error)}`;
       errors.push(errorMsg);
-      console.warn(`⚠️  Skipping invalid row ${i + 1}: ${error instanceof Error ? error.message : String(error)}`);
-      
+      console.warn(
+        `⚠️  Skipping invalid row ${i + 1}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
       // Log the problematic row data for debugging (first 3 columns only to avoid clutter)
-      const rowPreview = row.slice(0, 3).map(cell => `"${cell}"`).join(', ');
+      const rowPreview = row
+        .slice(0, 3)
+        .map((cell) => `"${cell}"`)
+        .join(', ');
       console.warn(`   Row data preview: ${rowPreview}...`);
     }
   }
 
   // Log summary of parsing results
   if (skippedCount > 0) {
-    console.warn(`\n⚠️  Parsing complete: ${transactions.length} valid transactions, ${skippedCount} rows skipped`);
+    console.warn(
+      `\n⚠️  Parsing complete: ${transactions.length} valid transactions, ${skippedCount} rows skipped`,
+    );
   }
 
   if (transactions.length === 0 && errors.length > 0) {
-    throw new Error(`No valid transactions found. All ${errors.length} rows had errors:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... and ${errors.length - 5} more errors` : ''}`);
+    throw new Error(
+      `No valid transactions found. All ${errors.length} rows had errors:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... and ${errors.length - 5} more errors` : ''}`,
+    );
   }
 
   if (transactions.length === 0) {
@@ -107,11 +116,11 @@ export function parseChaseCSV(filePath: string): ChaseTransaction[] {
   transactions.sort((a, b) => {
     const dateA = parseDateString(a.postingDate);
     const dateB = parseDateString(b.postingDate);
-    
+
     if (!dateA || !dateB) {
       return 0; // Keep original order if dates can't be parsed
     }
-    
+
     return dateA.getTime() - dateB.getTime();
   });
 
@@ -125,14 +134,14 @@ function validateHeaders(headers: string[]): void {
   if (headers.length !== EXPECTED_HEADERS.length) {
     throw new Error(
       `Invalid CSV structure: Expected ${EXPECTED_HEADERS.length} columns, found ${headers.length}. ` +
-      `Expected headers: ${EXPECTED_HEADERS.join(', ')}`
+        `Expected headers: ${EXPECTED_HEADERS.join(', ')}`,
     );
   }
 
   for (let i = 0; i < EXPECTED_HEADERS.length; i++) {
     if (headers[i] !== EXPECTED_HEADERS[i]) {
       throw new Error(
-        `Invalid CSV header at column ${i + 1}: Expected "${EXPECTED_HEADERS[i]}", found "${headers[i]}"`
+        `Invalid CSV header at column ${i + 1}: Expected "${EXPECTED_HEADERS[i]}", found "${headers[i]}"`,
       );
     }
   }
@@ -141,12 +150,12 @@ function validateHeaders(headers: string[]): void {
 /**
  * Parse a single transaction row into a ChaseTransaction object
  */
-function parseTransactionRow(row: string[], rowNumber: number): ChaseTransaction {
+function parseTransactionRow(row: string[], _rowNumber: number): ChaseTransaction {
   // Validate row has minimum required columns
   if (row.length < EXPECTED_HEADERS.length) {
     const missingCount = EXPECTED_HEADERS.length - row.length;
     throw new Error(
-      `Invalid row structure: Expected ${EXPECTED_HEADERS.length} columns, found ${row.length}. Missing ${missingCount} column(s).`
+      `Invalid row structure: Expected ${EXPECTED_HEADERS.length} columns, found ${row.length}. Missing ${missingCount} column(s).`,
     );
   }
 
@@ -203,7 +212,7 @@ function parseTransactionRow(row: string[], rowNumber: number): ChaseTransaction
 
 /**
  * Parse a date string in MM/DD/YYYY format
- * 
+ *
  * @param dateStr - Date string to parse
  * @returns Date object if valid, null otherwise
  */

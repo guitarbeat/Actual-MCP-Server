@@ -1,6 +1,6 @@
 /**
  * Comprehensive error handling for CSV Import Tool
- * 
+ *
  * Provides centralized error handling, validation, and user-friendly error messages
  */
 
@@ -31,8 +31,11 @@ export enum ErrorType {
  */
 export class CSVImportError extends Error {
   public readonly type: ErrorType;
+
   public readonly userMessage: string;
+
   public readonly originalError?: Error;
+
   public readonly context?: Record<string, unknown>;
 
   constructor(
@@ -40,7 +43,7 @@ export class CSVImportError extends Error {
     message: string,
     userMessage: string,
     originalError?: Error,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'CSVImportError';
@@ -67,7 +70,7 @@ export function validateInputFile(filePath: string): void {
       `Input file not found: ${filePath}`,
       `The input file "${filePath}" does not exist. Please check the file path and try again.`,
       undefined,
-      { filePath }
+      { filePath },
     );
   }
 
@@ -80,7 +83,7 @@ export function validateInputFile(filePath: string): void {
       `Cannot read input file: ${filePath}`,
       `Permission denied: Cannot read the file "${filePath}". Please check file permissions.`,
       error as Error,
-      { filePath }
+      { filePath },
     );
   }
 }
@@ -98,7 +101,7 @@ export function validateOutputFile(filePath: string): void {
       `Output directory does not exist: ${dir}`,
       `The output directory "${dir}" does not exist. Please create it or specify a different output path.`,
       undefined,
-      { filePath, directory: dir }
+      { filePath, directory: dir },
     );
   }
 
@@ -111,7 +114,7 @@ export function validateOutputFile(filePath: string): void {
       `Cannot write to output directory: ${dir}`,
       `Permission denied: Cannot write to directory "${dir}". Please check directory permissions.`,
       error as Error,
-      { filePath, directory: dir }
+      { filePath, directory: dir },
     );
   }
 
@@ -125,7 +128,7 @@ export function validateOutputFile(filePath: string): void {
         `Cannot overwrite output file: ${filePath}`,
         `Permission denied: Cannot overwrite the file "${filePath}". Please check file permissions or specify a different output path.`,
         error as Error,
-        { filePath }
+        { filePath },
       );
     }
   }
@@ -136,13 +139,13 @@ export function validateOutputFile(filePath: string): void {
  */
 export function handleCSVParseError(error: unknown, filePath: string): never {
   const originalError = error as Error;
-  
+
   throw new CSVImportError(
     ErrorType.CSV_PARSE_ERROR,
     `Failed to parse CSV file: ${originalError.message}`,
     `The CSV file "${filePath}" could not be parsed. Please ensure it's a valid Chase CSV export file.`,
     originalError,
-    { filePath }
+    { filePath },
   );
 }
 
@@ -154,13 +157,17 @@ export function handleLLMError(error: unknown, context?: Record<string, unknown>
   const errorMessage = originalError.message.toLowerCase();
 
   // Authentication errors
-  if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('api key')) {
+  if (
+    errorMessage.includes('401') ||
+    errorMessage.includes('unauthorized') ||
+    errorMessage.includes('api key')
+  ) {
     return new CSVImportError(
       ErrorType.LLM_AUTH_ERROR,
       `LLM API authentication failed: ${originalError.message}`,
       'Invalid or missing API key. Please check your LLM_API_KEY environment variable or --api-key option.',
       originalError,
-      context
+      context,
     );
   }
 
@@ -171,7 +178,7 @@ export function handleLLMError(error: unknown, context?: Record<string, unknown>
       `LLM API rate limit exceeded: ${originalError.message}`,
       'API rate limit exceeded. Try reducing the batch size with --batch-size or increasing the delay with --delay.',
       originalError,
-      context
+      context,
     );
   }
 
@@ -182,7 +189,7 @@ export function handleLLMError(error: unknown, context?: Record<string, unknown>
       `LLM API request timed out: ${originalError.message}`,
       'API request timed out. This may be due to network issues or high API load. The tool will retry automatically.',
       originalError,
-      context
+      context,
     );
   }
 
@@ -192,7 +199,7 @@ export function handleLLMError(error: unknown, context?: Record<string, unknown>
     `LLM API error: ${originalError.message}`,
     'An error occurred while communicating with the LLM API. The tool will use fallback categorization for affected transactions.',
     originalError,
-    context
+    context,
   );
 }
 
@@ -201,7 +208,7 @@ export function handleLLMError(error: unknown, context?: Record<string, unknown>
  */
 export function validateProcessedTransactions(
   transactions: ProcessedTransaction[],
-  startingBalance: StartingBalanceEntry
+  startingBalance: StartingBalanceEntry,
 ): void {
   const errors: string[] = [];
 
@@ -220,7 +227,9 @@ export function validateProcessedTransactions(
 
     // Validate date format (YYYY-MM-DD)
     if (!transaction.date || !transaction.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      errors.push(`Transaction ${txNum}: Invalid date format "${transaction.date}". Expected YYYY-MM-DD.`);
+      errors.push(
+        `Transaction ${txNum}: Invalid date format "${transaction.date}". Expected YYYY-MM-DD.`,
+      );
     }
 
     // Validate payee is not empty
@@ -235,7 +244,9 @@ export function validateProcessedTransactions(
 
     // Validate amount is a valid number
     if (!isFinite(transaction.amount)) {
-      errors.push(`Transaction ${txNum}: Invalid amount "${transaction.amount}". Must be a finite number.`);
+      errors.push(
+        `Transaction ${txNum}: Invalid amount "${transaction.amount}". Must be a finite number.`,
+      );
     }
 
     // Warn on suspicious amounts (but don't fail)
@@ -251,7 +262,7 @@ export function validateProcessedTransactions(
       `Data validation failed: ${errors.length} error(s) found`,
       `Output validation failed. ${errors.length} transaction(s) have invalid data:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... and ${errors.length - 5} more errors` : ''}`,
       undefined,
-      { errorCount: errors.length, errors }
+      { errorCount: errors.length, errors },
     );
   }
 }
@@ -267,19 +278,23 @@ export function validateTransactionAmounts(transactions: ProcessedTransaction[])
 
     // Check for zero amounts
     if (transaction.amount === 0) {
-      warnings.push(`Transaction ${txNum} (${transaction.date} - ${transaction.payee}): Amount is zero`);
+      warnings.push(
+        `Transaction ${txNum} (${transaction.date} - ${transaction.payee}): Amount is zero`,
+      );
     }
 
     // Check for extremely large amounts
     if (Math.abs(transaction.amount) > 100000) {
-      warnings.push(`Transaction ${txNum} (${transaction.date} - ${transaction.payee}): Very large amount: ${transaction.amount}`);
+      warnings.push(
+        `Transaction ${txNum} (${transaction.date} - ${transaction.payee}): Very large amount: ${transaction.amount}`,
+      );
     }
   });
 
   // Log warnings if any found
   if (warnings.length > 0) {
     console.warn(`\n⚠️  Data validation warnings (${warnings.length}):`);
-    warnings.slice(0, 10).forEach(warning => {
+    warnings.slice(0, 10).forEach((warning) => {
       console.warn(`   ${warning}`);
     });
     if (warnings.length > 10) {
@@ -293,7 +308,9 @@ export function validateTransactionAmounts(transactions: ProcessedTransaction[])
  */
 export function checkOutputFileOverwrite(filePath: string): void {
   if (existsSync(filePath)) {
-    console.warn(`\n⚠️  Warning: Output file "${filePath}" already exists and will be overwritten.`);
+    console.warn(
+      `\n⚠️  Warning: Output file "${filePath}" already exists and will be overwritten.`,
+    );
   }
 }
 
@@ -303,7 +320,7 @@ export function checkOutputFileOverwrite(filePath: string): void {
 export function formatErrorForUser(error: unknown): string {
   if (error instanceof CSVImportError) {
     let message = `❌ ${error.userMessage}`;
-    
+
     if (error.context) {
       const contextStr = Object.entries(error.context)
         .map(([key, value]) => `  ${key}: ${value}`)
@@ -312,7 +329,7 @@ export function formatErrorForUser(error: unknown): string {
         message += `\n\nDetails:\n${contextStr}`;
       }
     }
-    
+
     return message;
   }
 
@@ -347,7 +364,9 @@ export function validateConfiguration(config: {
 
   // Validate API key
   if (!config.llmApiKey || config.llmApiKey.trim() === '') {
-    errors.push('LLM API key is required. Set LLM_API_KEY environment variable or use --api-key option');
+    errors.push(
+      'LLM API key is required. Set LLM_API_KEY environment variable or use --api-key option',
+    );
   }
 
   // Validate batch size
@@ -364,9 +383,9 @@ export function validateConfiguration(config: {
     throw new CSVImportError(
       ErrorType.CONFIGURATION_ERROR,
       `Configuration validation failed: ${errors.join(', ')}`,
-      `Invalid configuration:\n${errors.map(e => `  - ${e}`).join('\n')}`,
+      `Invalid configuration:\n${errors.map((e) => `  - ${e}`).join('\n')}`,
       undefined,
-      { errors }
+      { errors },
     );
   }
 }

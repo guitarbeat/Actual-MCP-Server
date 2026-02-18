@@ -38,7 +38,7 @@ describe('Bearer Auth Middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Authentication required',
-      })
+      }),
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -51,7 +51,7 @@ describe('Bearer Auth Middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         message: "Authorization header must start with 'Bearer '",
-      })
+      }),
     );
   });
 
@@ -64,7 +64,7 @@ describe('Bearer Auth Middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Server configuration error',
-      })
+      }),
     );
   });
 
@@ -76,7 +76,7 @@ describe('Bearer Auth Middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         message: 'Invalid bearer token',
-      })
+      }),
     );
   });
 

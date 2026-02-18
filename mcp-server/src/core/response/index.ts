@@ -30,4 +30,10 @@ export {
   validationError,
 } from './error-builder.js';
 // Response builders
-export { error, errorFromCatch, success, successWithContent, successWithJson } from './response-builder.js';
+export {
+  error,
+  errorFromCatch,
+  success,
+  successWithContent,
+  successWithJson,
+} from './response-builder.js';

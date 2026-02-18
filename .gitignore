@@ -25,3 +25,4 @@ yarn-error.log*
 *.log
 upstream-comparison
 .smart-coding-cache
+.eslintcache

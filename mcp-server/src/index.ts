@@ -79,7 +79,7 @@ const {
 const server = new Server(
   {
     name: 'Actual Budget',
-    version: version,
+    version,
   },
   {
     capabilities: {
@@ -88,10 +88,14 @@ const server = new Server(
       prompts: {},
       logging: {},
     },
-  }
+  },
 );
 
-const resolvedPort = port ? parseInt(port, 10) : process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const resolvedPort = port
+  ? parseInt(port, 10)
+  : process.env.PORT
+    ? parseInt(process.env.PORT, 10)
+    : 3000;
 
 // Bearer authentication middleware
 const bearerAuth = createBearerAuth({
@@ -320,7 +324,11 @@ function validateEnv(): void {
 /**
  * Initialize Actual Budget API if not in test mode
  */
-async function initializeApi(testResources: boolean, testCustom: boolean, useSse: boolean): Promise<void> {
+async function initializeApi(
+  testResources: boolean,
+  testCustom: boolean,
+  useSse: boolean,
+): Promise<void> {
   if (testResources || testCustom) return;
 
   // * CRITICAL: In stdio mode, setup safe logging BEFORE initialization
@@ -338,13 +346,19 @@ async function initializeApi(testResources: boolean, testCustom: boolean, useSse
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStr = errorMessage.toLowerCase();
 
-    if (errorStr.includes('out of sync') || errorStr.includes('out-of-sync') || errorStr.includes('migration')) {
-      console.error('ℹ️  Actual Budget server is currently out of sync or migrating. This is normal during a rebuild.');
+    if (
+      errorStr.includes('out of sync') ||
+      errorStr.includes('out-of-sync') ||
+      errorStr.includes('migration')
+    ) {
+      console.error(
+        'ℹ️  Actual Budget server is currently out of sync or migrating. This is normal during a rebuild.',
+      );
       console.error('   The MCP server will continue to retry connection in the background.');
     } else {
       console.error('✗ Failed to initialize Actual Budget API:', error);
       console.error(
-        'Server is running but Actual Budget connection failed. Will retry on next request.\n\nCommon causes:\n  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD\n  - Actual Budget server is not running or not accessible\n  - Network connectivity issues\n  - Invalid ACTUAL_BUDGET_SYNC_ID'
+        'Server is running but Actual Budget connection failed. Will retry on next request.\n\nCommon causes:\n  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD\n  - Actual Budget server is not running or not accessible\n  - Network connectivity issues\n  - Invalid ACTUAL_BUDGET_SYNC_ID',
       );
     }
   }
@@ -426,7 +440,7 @@ async function main(): Promise<void> {
             ${initializing ? '<meta http-equiv="refresh" content="3">' : ''}
             <title>Actual Budget MCP</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.ico">
-            <style>
+            <style nonce="${nonce}">
               :root {
                 --bg: #ffffff;
                 --text: #1a1a1a;
@@ -626,6 +640,15 @@ async function main(): Promise<void> {
                 align-items: center;
                 gap: 8px;
               }
+              /* Text color utilities */
+              .text-primary { color: var(--primary); }
+              .text-success { color: var(--success); }
+              .text-warning { color: var(--warning); }
+              .text-error { color: var(--error); }
+
+              /* Flex utilities */
+              .flex-none { flex: 0 0 auto; }
+              .flex-1 { flex: 1; }
             </style>
           </head>
           <body>
@@ -655,6 +678,7 @@ async function main(): Promise<void> {
 
                 <dl class="grid">
                   ${renderStat('Port', resolvedPort)}
+                  ${renderStat('Host', bindHost)}
                   ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
                   ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
                   ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
@@ -734,7 +758,9 @@ async function main(): Promise<void> {
 
     // Handle all HTTP methods for /mcp endpoint (GET, POST, DELETE)
     app.all('/mcp', bearerAuth, async (req: Request, res: Response) => {
-      const sessionId = (req.headers['mcp-session-id'] || req.headers['x-session-id'] || 'unknown') as string;
+      const sessionId = (req.headers['mcp-session-id'] ||
+        req.headers['x-session-id'] ||
+        'unknown') as string;
       try {
         await streamableHandler.handleRequest(req, res, req.body);
       } catch (error) {
@@ -747,7 +773,7 @@ async function main(): Promise<void> {
       console.error(`[SSE] 🚀 MCP Server listening on port ${resolvedPort} (host: ${bindHost})`);
       if (!enableBearer && bindHost === '127.0.0.1') {
         console.error(
-          '[SSE] ⚠️  Binding to localhost only. To allow external connections, use --enable-bearer or --host 0.0.0.0'
+          '[SSE] ⚠️  Binding to localhost only. To allow external connections, use --enable-bearer or --host 0.0.0.0',
         );
       }
     });

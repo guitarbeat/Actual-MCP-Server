@@ -36,7 +36,13 @@ describe('createBearerAuth', () => {
     const auth = createBearerAuth({ enableBearer: true, expectedToken: 'secret' });
     auth(req as Request, res as Response, next);
     expect(statusMock).toHaveBeenCalledWith(401);
-    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication required' }));
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Authentication required',
+        message:
+          'Authentication must be provided via the Authorization: Bearer <token> header. Query parameters are not supported.',
+      }),
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -45,7 +51,9 @@ describe('createBearerAuth', () => {
     req.headers = { authorization: 'Bearer token' };
     auth(req as Request, res as Response, next);
     expect(statusMock).toHaveBeenCalledWith(500);
-    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Server configuration error' }));
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'Server configuration error' }),
+    );
   });
 
   it('should return 401 if token length mismatch', () => {
@@ -53,7 +61,9 @@ describe('createBearerAuth', () => {
     req.headers = { authorization: 'Bearer longertoken' };
     auth(req as Request, res as Response, next);
     expect(statusMock).toHaveBeenCalledWith(401);
-    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication failed' }));
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'Authentication failed' }),
+    );
   });
 
   it('should return 401 if token content mismatch (same length)', () => {
@@ -61,7 +71,9 @@ describe('createBearerAuth', () => {
     req.headers = { authorization: 'Bearer secres' }; // same length
     auth(req as Request, res as Response, next);
     expect(statusMock).toHaveBeenCalledWith(401);
-    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication failed' }));
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'Authentication failed' }),
+    );
   });
 
   it('should call next() if token matches', () => {
@@ -73,10 +85,16 @@ describe('createBearerAuth', () => {
 
   it('should return 401 if token is provided via query parameter (not supported)', () => {
     const auth = createBearerAuth({ enableBearer: true, expectedToken: 'secret' });
-    req.query = { authToken: 'secret' };
+    req.query = { token: 'secret' }; // Most common query param name for tokens
     auth(req as Request, res as Response, next);
     expect(statusMock).toHaveBeenCalledWith(401);
-    expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication required' }));
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Authentication required',
+        message:
+          'Authentication must be provided via the Authorization: Bearer <token> header. Query parameters are not supported.',
+      }),
+    );
     expect(next).not.toHaveBeenCalled();
   });
 });

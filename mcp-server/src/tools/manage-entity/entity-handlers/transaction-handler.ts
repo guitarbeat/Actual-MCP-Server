@@ -2,7 +2,11 @@
 // TRANSACTION ENTITY HANDLER
 // ----------------------------
 
-import { deleteTransaction, importTransactions, updateTransaction } from '../../../core/api/actual-client.js';
+import {
+  deleteTransaction,
+  importTransactions,
+  updateTransaction,
+} from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
@@ -73,7 +77,10 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
   /**
    * Normalize transaction data: resolve names to IDs and convert amounts to cents
    */
-  private async normalizeData(data: TransactionData, isCreate: boolean): Promise<NormalizedTransactionData> {
+  private async normalizeData(
+    data: TransactionData,
+    isCreate: boolean,
+  ): Promise<NormalizedTransactionData> {
     if (isCreate) {
       this.validateCreateData(data);
     }
@@ -105,16 +112,16 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
   }
 
   private async normalizeSubtransactions(
-    subtransactions: TransactionData['subtransactions']
+    subtransactions: TransactionData['subtransactions'],
   ): Promise<Array<{ amount: number; categoryId: string | null; notes?: string }>> {
     if (!subtransactions) return [];
 
-    return await Promise.all(
+    return Promise.all(
       subtransactions.map(async (sub) => ({
         amount: convertAmountToCents(sub.amount),
         categoryId: sub.category ? await nameResolver.resolveCategory(sub.category) : null,
         notes: sub.notes,
-      }))
+      })),
     );
   }
 
@@ -146,7 +153,9 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
     const importResult = await importTransactions(normalized.accountId, [transaction]);
 
     if (importResult.errors?.length) {
-      const errorMessages = importResult.errors.map((err: { message: string }) => err.message).join('; ');
+      const errorMessages = importResult.errors
+        .map((err: { message: string }) => err.message)
+        .join('; ');
       throw new Error(`Failed to create transaction: ${errorMessages}`);
     }
 

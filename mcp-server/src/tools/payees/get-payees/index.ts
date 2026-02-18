@@ -48,7 +48,7 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     // Validate payeeId type first if provided
@@ -71,27 +71,26 @@ export async function handler(
     if (args.payeeId) {
       const rules = await getPayeeRules(args.payeeId as string);
       return successWithJson(rules);
-    } else {
-      let payees: Payee[] = await fetchAllPayees();
-
-      // Filter by search term if provided
-      if (args.search) {
-        const searchLower = (args.search as string).toLowerCase();
-        payees = payees.filter((payee) => payee.name.toLowerCase().includes(searchLower));
-      }
-
-      // Apply limit if provided
-      if (args.limit !== undefined) {
-        payees = payees.slice(0, args.limit as number);
-      }
-
-      const structured = payees.map((payee) => ({
-        id: payee.id,
-        name: payee.name,
-        transfer_acct: payee.transfer_acct || '(not a transfer payee)',
-      }));
-      return successWithJson(structured);
     }
+    let payees: Payee[] = await fetchAllPayees();
+
+    // Filter by search term if provided
+    if (args.search) {
+      const searchLower = (args.search as string).toLowerCase();
+      payees = payees.filter((payee) => payee.name.toLowerCase().includes(searchLower));
+    }
+
+    // Apply limit if provided
+    if (args.limit !== undefined) {
+      payees = payees.slice(0, args.limit as number);
+    }
+
+    const structured = payees.map((payee) => ({
+      id: payee.id,
+      name: payee.name,
+      transfer_acct: payee.transfer_acct || '(not a transfer payee)',
+    }));
+    return successWithJson(structured);
   } catch (err) {
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to retrieve payees',
