@@ -92,9 +92,11 @@ Date,Payee,Category,Notes,Amount
 The tool uses a comprehensive category taxonomy including:
 
 ### Income Categories
+
 - Income: Salary, Freelance/Contract, Interest, Refund, Personal Transfer, Other
 
 ### Expense Categories
+
 - Housing: Rent, Mortgage
 - Utilities: Internet/Cable, Electric, Gas, Water, Phone
 - Transportation: Gas, Public Transit, Parking, Car Payment
@@ -130,12 +132,14 @@ export LLM_API_KEY="sk-..."
 ### Rate Limiting
 
 If you encounter rate limiting errors, try:
+
 - Reducing batch size: `-b 5`
 - Increasing delay: `-d 2000`
 
 ### Malformed CSV
 
 If the CSV parser fails, check that:
+
 - The file is a valid Chase CSV export
 - All required columns are present
 - The file is not corrupted

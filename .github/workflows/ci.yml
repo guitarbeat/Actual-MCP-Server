@@ -2,71 +2,72 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, master]
   pull_request:
-    branches: [ main ]
+    branches: [main, master]
 
 jobs:
-  build-and-test:
+  mcp-server:
+    name: MCP Server
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20.x]
+    defaults:
+      run:
+        working-directory: mcp-server
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: mcp-server/package-lock.json
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
-    - name: Install Dependencies
-      working-directory: ./mcp-server
-      run: npm ci
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: mcp-server/pnpm-lock.yaml
 
-    - name: Run Linter & Type Check
-      working-directory: ./mcp-server
-      run: npm run quality
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-    - name: Build
-      working-directory: ./mcp-server
-      run: npm run build
+      - name: Lint
+        run: pnpm run lint
 
-    - name: Run Tests
-      working-directory: ./mcp-server
-      run: npm test
+      - name: Format Check
+        run: pnpm run format:check
 
-  check-version-bump:
+      - name: Test
+        run: pnpm run test
+
+  statement-processor:
+    name: Statement Processor
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: statement-processor
+
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Check package.json version change
-      working-directory: ./mcp-server
-      run: |
-        # Fetch the base branch to compare against
-        git fetch origin ${{ github.base_ref }}
-        
-        # Get versions
-        CURRENT_VERSION=$(node -p "require('./package.json').version")
-        BASE_VERSION=$(git show origin/${{ github.base_ref }}:mcp-server/package.json | jq -r .version)
-        
-        echo "Current version: $CURRENT_VERSION"
-        echo "Base version: $BASE_VERSION"
-        
-        if [ "$CURRENT_VERSION" = "$BASE_VERSION" ]; then
-          echo "::warning::Version number in package.json has not been updated."
-          # You can uncomment the exit 1 to enforce this as a hard failure
-          # exit 1 
-        else
-          echo "✅ Version updated from $BASE_VERSION to $CURRENT_VERSION"
-        fi
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: statement-processor/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format Check
+        run: npm run format:check
+
+      - name: Test
+        run: npm run test

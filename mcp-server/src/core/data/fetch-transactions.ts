@@ -15,12 +15,16 @@ export interface TransactionLookups {
   categoriesById: Record<string, Category>;
 }
 
-async function _buildTransactionLookups(options: TransactionLookupOptions): Promise<TransactionLookups> {
+async function _buildTransactionLookups(
+  options: TransactionLookupOptions,
+): Promise<TransactionLookups> {
   // Optimization: Use cached maps to avoid rebuilding them on every call
   // This reduces CPU usage and memory allocations when enriching large batches of transactions
   const [payeesById, categoriesById] = await Promise.all([
     options.includePayees ? fetchAllPayeesMap() : Promise.resolve<Record<string, Payee>>({}),
-    options.includeCategories ? fetchAllCategoriesMap() : Promise.resolve<Record<string, Category>>({}),
+    options.includeCategories
+      ? fetchAllCategoriesMap()
+      : Promise.resolve<Record<string, Category>>({}),
   ]);
 
   return { payeesById, categoriesById };
@@ -36,7 +40,7 @@ async function _buildTransactionLookups(options: TransactionLookupOptions): Prom
  */
 async function _enrichTransactions(
   transactions: TransactionEntity[],
-  lookups?: TransactionLookups
+  lookups?: TransactionLookups,
 ): Promise<Transaction[]> {
   if (transactions.length === 0) {
     return transactions;
@@ -59,9 +63,12 @@ async function _enrichTransactions(
     }));
 
   return transactions.map((transaction: TransactionEntity) => {
-    const payeeName = needsPayees && transaction.payee ? payeesById[transaction.payee]?.name : undefined;
+    const payeeName =
+      needsPayees && transaction.payee ? payeesById[transaction.payee]?.name : undefined;
     const categoryName =
-      needsCategories && transaction.category ? categoriesById[transaction.category]?.name : undefined;
+      needsCategories && transaction.category
+        ? categoriesById[transaction.category]?.name
+        : undefined;
 
     const enriched: Transaction = { ...transaction };
 
@@ -88,7 +95,7 @@ async function _enrichTransactions(
  */
 export async function enrichTransactionsBatch(
   transactions: TransactionEntity[],
-  lookups?: TransactionLookups
+  lookups?: TransactionLookups,
 ): Promise<Transaction[]> {
   if (transactions.length === 0) {
     return transactions;
@@ -121,9 +128,11 @@ export async function fetchTransactionsForAccount(
   accountIdOrName: string,
   start: string,
   end: string,
-  options: FetchTransactionsOptions = {}
+  options: FetchTransactionsOptions = {},
 ): Promise<Transaction[]> {
-  const accountId = options.accountIdIsResolved ? accountIdOrName : await nameResolver.resolveAccount(accountIdOrName);
+  const accountId = options.accountIdIsResolved
+    ? accountIdOrName
+    : await nameResolver.resolveAccount(accountIdOrName);
   const transactions = await getTransactions(accountId, start, end);
   return _enrichTransactions(transactions);
 }
@@ -141,7 +150,7 @@ export async function fetchTransactionsForAccount(
 export async function fetchAllOnBudgetTransactionsParallel(
   accounts: Account[],
   start: string,
-  end: string
+  end: string,
 ): Promise<{
   transactions: TransactionEntity[];
   errors?: Array<{ accountId: string; accountName: string; error: string }>;
@@ -158,8 +167,8 @@ export async function fetchAllOnBudgetTransactionsParallel(
       getTransactions(account.id, start, end).then((txs) => ({
         account,
         transactions: txs,
-      }))
-    )
+      })),
+    ),
   );
 
   const transactions: TransactionEntity[] = [];
@@ -189,7 +198,7 @@ export async function fetchAllOnBudgetTransactionsParallel(
 export async function fetchAllOnBudgetTransactions(
   accounts: Account[],
   start: string,
-  end: string
+  end: string,
 ): Promise<Transaction[]> {
   const result = await fetchAllOnBudgetTransactionsParallel(accounts, start, end);
 
@@ -202,7 +211,11 @@ export async function fetchAllOnBudgetTransactions(
   return enrichTransactionsBatch(result.transactions);
 }
 
-export async function fetchAllTransactions(accounts: Account[], start: string, end: string): Promise<Transaction[]> {
+export async function fetchAllTransactions(
+  accounts: Account[],
+  start: string,
+  end: string,
+): Promise<Transaction[]> {
   if (accounts.length === 0) {
     return [];
   }
@@ -213,8 +226,8 @@ export async function fetchAllTransactions(accounts: Account[], start: string, e
       getTransactions(account.id, start, end).then((txs) => ({
         account,
         transactions: txs,
-      }))
-    )
+      })),
+    ),
   );
 
   const transactions: TransactionEntity[] = [];

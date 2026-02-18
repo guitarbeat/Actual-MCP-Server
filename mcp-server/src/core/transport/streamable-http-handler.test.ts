@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { StreamableHTTPHandler } from './streamable-http-handler.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { IncomingMessage, ServerResponse } from 'node:http';
+import { StreamableHTTPHandler } from './streamable-http-handler.js';
 
 vi.mock('@modelcontextprotocol/sdk/server/index.js', () => ({
   Server: vi.fn().mockImplementation(() => ({
@@ -35,7 +35,9 @@ describe('StreamableHTTPHandler Security', () => {
   it('should sanitize error messages in 500 responses', async () => {
     // Mock handleNewSession to throw a sensitive error
     // We access the private method by casting to any
-    vi.spyOn(handler as any, 'handleNewSession').mockRejectedValue(new Error('Sensitive database password exposed!'));
+    vi.spyOn(handler as any, 'handleNewSession').mockRejectedValue(
+      new Error('Sensitive database password exposed!'),
+    );
 
     // Trigger the error by simulating an initialize request
     const body = {
@@ -43,8 +45,8 @@ describe('StreamableHTTPHandler Security', () => {
       params: {
         protocolVersion: '2024-11-05',
         capabilities: {},
-        clientInfo: { name: 'test', version: '1.0' }
-      }
+        clientInfo: { name: 'test', version: '1.0' },
+      },
     };
 
     await handler.handleRequest(req, res, body);
@@ -52,7 +54,9 @@ describe('StreamableHTTPHandler Security', () => {
     expect(res.statusCode).toBe(500);
 
     // VERIFY FIX: The sensitive error message should NOT be included in the response
-    expect(res.end).not.toHaveBeenCalledWith(expect.stringContaining('Sensitive database password exposed!'));
+    expect(res.end).not.toHaveBeenCalledWith(
+      expect.stringContaining('Sensitive database password exposed!'),
+    );
 
     // VERIFY FIX: The response should contain the generic error message
     expect(res.end).toHaveBeenCalledWith(expect.stringContaining('Internal server error'));

@@ -66,7 +66,9 @@ describe('CreateTransactionSchema', () => {
     const result = CreateTransactionSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('Account name must be less than 100 characters');
+      expect(result.error.issues[0].message).toContain(
+        'Account name must be less than 100 characters',
+      );
     }
   });
 
@@ -81,7 +83,9 @@ describe('CreateTransactionSchema', () => {
     const result = CreateTransactionSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('Payee name must be less than 100 characters');
+      expect(result.error.issues[0].message).toContain(
+        'Payee name must be less than 100 characters',
+      );
     }
   });
 
