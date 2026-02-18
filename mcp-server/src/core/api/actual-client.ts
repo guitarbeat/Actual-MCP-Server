@@ -1050,12 +1050,12 @@ export async function runBankSync(accountId?: string): Promise<unknown> {
 /**
  * Run import (ensures API is initialized)
  */
-export async function runImport(file: string, _importType?: string): Promise<unknown> {
+export async function runImport(budgetName: string, callback: () => Promise<void>): Promise<unknown> {
   return ensureConnection(async () => {
-    if (typeof api.runImport === 'function') {
-      return api.runImport(file, () => Promise.resolve());
+    if (typeof api.runImport === "function") {
+      return api.runImport(budgetName, callback);
     }
-    throw new Error('runImport method is not available in this version of the API');
+    throw new Error("runImport method is not available in this version of the API");
   });
 }
 
