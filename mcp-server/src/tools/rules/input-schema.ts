@@ -101,11 +101,13 @@ export const RuleInputSchema = {
           },
           options: {
             type: 'object',
-            description: 'Additional properties concerning splits. Only necessary if the rule is split.',
+            description:
+              'Additional properties concerning splits. Only necessary if the rule is split.',
             properties: {
               splitIndex: {
                 type: 'number',
-                description: 'Split index (counting from 1) to apply the action on. Use 0 to apply to all splits.',
+                description:
+                  'Split index (counting from 1) to apply the action on. Use 0 to apply to all splits.',
               },
               method: {
                 type: 'string',

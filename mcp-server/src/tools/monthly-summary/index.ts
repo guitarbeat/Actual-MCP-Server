@@ -3,8 +3,11 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { getDateRangeForMonths } from '../../core/formatting/index.js';
 import { CategoryClassifier } from '../../core/mapping/category-classifier.js';
 import { errorFromCatch, successWithContent } from '../../core/response/index.js';
-import type { ToolInput } from '../../core/types/index.js';
-import { type MonthlySummaryArgs, MonthlySummaryArgsSchema } from '../../core/types/index.js';
+import type {
+  ToolInput,
+  type MonthlySummaryArgs,
+  MonthlySummaryArgsSchema,
+} from '../../core/types/index.js';
 import { MonthlySummaryDataFetcher } from './data-fetcher.js';
 import { MonthlySummaryInputParser } from './input-parser.js';
 import { MonthlySummaryReportDataBuilder } from './report-data-builder.js';
@@ -27,13 +30,15 @@ export async function handler(args: MonthlySummaryArgs): Promise<CallToolResult>
     const { accounts, categories, transactions } = await new MonthlySummaryDataFetcher().fetchAll(
       input.accountId,
       start,
-      end
+      end,
     );
-    const { incomeCategories, investmentSavingsCategories } = new CategoryClassifier().classify(categories);
+    const { incomeCategories, investmentSavingsCategories } = new CategoryClassifier().classify(
+      categories,
+    );
     const sortedMonths = new MonthlySummaryTransactionAggregator().aggregate(
       transactions,
       incomeCategories,
-      investmentSavingsCategories
+      investmentSavingsCategories,
     );
     const averages = new MonthlySummaryCalculator().calculateAverages(sortedMonths);
     const reportData = new MonthlySummaryReportDataBuilder().build({

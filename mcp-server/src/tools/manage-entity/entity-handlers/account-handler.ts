@@ -17,7 +17,14 @@ import type { EntityHandler, Operation } from './base-handler.js';
 /**
  * Account type enum
  */
-export type AccountType = 'checking' | 'savings' | 'credit' | 'investment' | 'mortgage' | 'debt' | 'other';
+export type AccountType =
+  | 'checking'
+  | 'savings'
+  | 'credit'
+  | 'investment'
+  | 'mortgage'
+  | 'debt'
+  | 'other';
 
 /**
  * Account data structure for manage-entity tool
@@ -56,9 +63,19 @@ export class AccountHandler implements EntityHandler<AccountData, AccountData> {
     }
 
     // Validate account type
-    const validTypes: AccountType[] = ['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'];
+    const validTypes: AccountType[] = [
+      'checking',
+      'savings',
+      'credit',
+      'investment',
+      'mortgage',
+      'debt',
+      'other',
+    ];
     if (!validTypes.includes(data.type)) {
-      throw new Error(`Invalid account type '${data.type}'. Must be one of: ${validTypes.join(', ')}`);
+      throw new Error(
+        `Invalid account type '${data.type}'. Must be one of: ${validTypes.join(', ')}`,
+      );
     }
 
     // Build account object
@@ -98,9 +115,19 @@ export class AccountHandler implements EntityHandler<AccountData, AccountData> {
     }
     if (data.type !== undefined) {
       // Validate account type if provided
-      const validTypes: AccountType[] = ['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'];
+      const validTypes: AccountType[] = [
+        'checking',
+        'savings',
+        'credit',
+        'investment',
+        'mortgage',
+        'debt',
+        'other',
+      ];
       if (!validTypes.includes(data.type)) {
-        throw new Error(`Invalid account type '${data.type}'. Must be one of: ${validTypes.join(', ')}`);
+        throw new Error(
+          `Invalid account type '${data.type}'. Must be one of: ${validTypes.join(', ')}`,
+        );
       }
       updates.type = data.type;
     }

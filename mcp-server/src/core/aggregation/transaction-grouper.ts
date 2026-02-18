@@ -6,7 +6,7 @@ export class TransactionGrouper {
     transactions: Transaction[],
     getCategoryName: (categoryId: string) => string,
     getGroupInfo: (categoryId: string) => CategoryGroupInfo | undefined,
-    includeIncome: boolean
+    includeIncome: boolean,
   ): Record<string, CategorySpending> {
     const spendingByCategory: Record<string, CategorySpending> = {};
     const skippedCategories = new Set<string>();

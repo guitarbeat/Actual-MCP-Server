@@ -22,7 +22,8 @@ export class MonthlySummaryCalculator {
     const avgTraditionalSavings = avgIncome - avgExpenses - avgInvestments;
     const avgTotalSavings = avgTraditionalSavings + avgInvestments;
     const avgTraditionalSavingsRate = avgIncome > 0 ? (avgTraditionalSavings / avgIncome) * 100 : 0;
-    const avgTotalSavingsRate = avgIncome > 0 ? ((avgTraditionalSavings + avgInvestments) / avgIncome) * 100 : 0;
+    const avgTotalSavingsRate =
+      avgIncome > 0 ? ((avgTraditionalSavings + avgInvestments) / avgIncome) * 100 : 0;
 
     return {
       avgIncome,

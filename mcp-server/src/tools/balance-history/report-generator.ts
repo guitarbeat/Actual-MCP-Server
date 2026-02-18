@@ -5,7 +5,11 @@ import type { Account } from '../../core/types/index.js';
 import type { MonthBalance } from './balance-calculator.js';
 
 export class BalanceHistoryReportGenerator {
-  generate(account: Account | undefined, period: { start: string; end: string }, sortedMonths: MonthBalance[]): string {
+  generate(
+    account: Account | undefined,
+    period: { start: string; end: string },
+    sortedMonths: MonthBalance[],
+  ): string {
     let markdown = `# Balance History\n\n`;
     if (account) {
       markdown += `Account: ${account.name}\n`;
@@ -22,7 +26,9 @@ export class BalanceHistoryReportGenerator {
     }
 
     sortedMonths.forEach((month) => {
-      const monthName: string = new Date(month.year, month.month - 1, 1).toLocaleString('default', { month: 'long' });
+      const monthName: string = new Date(month.year, month.month - 1, 1).toLocaleString('default', {
+        month: 'long',
+      });
       const monthLabel = `${monthName} ${month.year}`;
       const balance: string = formatAmount(month.balance);
 

@@ -1,5 +1,8 @@
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { GetPromptRequestSchema, ListPromptsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import {
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
 
 // ----------------------------
 // PROMPTS
@@ -25,7 +28,8 @@ export const setupPrompts = (server: Server): void => {
         },
         {
           name: 'financial-health-check',
-          description: 'Perform a comprehensive check of financial health (balances, recent trends)',
+          description:
+            'Perform a comprehensive check of financial health (balances, recent trends)',
         },
       ],
     };
