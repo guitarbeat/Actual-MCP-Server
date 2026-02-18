@@ -20,7 +20,7 @@ export const DateSchema = z
       // Verify the date components match (catches invalid dates like Feb 30)
       return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
     },
-    { message: 'Invalid date' }
+    { message: 'Invalid date' },
   );
 
 /**

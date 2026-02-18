@@ -33,7 +33,9 @@ export class MonthlySummaryReportGenerator {
     markdown += `| ----- | ------ | ---------------- | ----------- | ------------------- | ------------- | ------------------ |\n`;
 
     sortedMonths.forEach((month: MonthData) => {
-      const monthName: string = new Date(month.year, month.month - 1, 1).toLocaleString('default', { month: 'long' });
+      const monthName: string = new Date(month.year, month.month - 1, 1).toLocaleString('default', {
+        month: 'long',
+      });
       const income: string = formatAmount(month.income);
       const expenses: string = formatAmount(month.expenses);
       const investments: string = formatAmount(month.investments);
@@ -44,7 +46,8 @@ export class MonthlySummaryReportGenerator {
       const savingsFormatted: string = formatAmount(traditionalSavings);
       const totalSavingsFormatted: string = formatAmount(totalSavings);
 
-      const savingsRate: string = month.income > 0 ? `${((totalSavings / month.income) * 100).toFixed(1)}%` : 'N/A';
+      const savingsRate: string =
+        month.income > 0 ? `${((totalSavings / month.income) * 100).toFixed(1)}%` : 'N/A';
 
       markdown += `| ${monthName} ${month.year} | ${income} | ${expenses} | ${investments} | ${savingsFormatted} | ${totalSavingsFormatted} | ${savingsRate} |\n`;
     });

@@ -132,7 +132,10 @@ async function handleAccountsResource(uri: string): Promise<ReadResourceResult> 
 /**
  * Handle individual account details
  */
-async function handleAccountDetailsResource(uri: string, accountId: string): Promise<ReadResourceResult> {
+async function handleAccountDetailsResource(
+  uri: string,
+  accountId: string,
+): Promise<ReadResourceResult> {
   const accounts: Account[] = await getAccounts();
   const account: Account | undefined = accounts.find((a) => a.id === accountId);
 
@@ -175,7 +178,10 @@ To view transactions for this account, use the get-transactions tool.`;
 /**
  * Handle account transactions
  */
-async function handleAccountTransactionsResource(uri: string, accountId: string): Promise<ReadResourceResult> {
+async function handleAccountTransactionsResource(
+  uri: string,
+  accountId: string,
+): Promise<ReadResourceResult> {
   const { startDate, endDate } = getDateRange();
   const transactions: Transaction[] = await getTransactions(accountId, startDate, endDate);
 
@@ -191,7 +197,8 @@ async function handleAccountTransactionsResource(uri: string, accountId: string)
     };
   }
 
-  const header = '| Date | Payee | Category | Amount | Notes |\n| ---- | ----- | -------- | ------ | ----- |\n';
+  const header =
+    '| Date | Payee | Category | Amount | Notes |\n| ---- | ----- | -------- | ------ | ----- |\n';
   const rows: string = transactions
     .map((t) => {
       const amount: string = formatAmount(t.amount);
@@ -229,7 +236,8 @@ export const setupResources = (server: Server): void => {
         {
           uri: 'actual://accounts',
           name: 'Accounts Directory',
-          description: 'Browse all accounts. Use the get-accounts tool for detailed account information and balances.',
+          description:
+            'Browse all accounts. Use the get-accounts tool for detailed account information and balances.',
           mimeType: 'text/markdown',
         },
         {
@@ -280,11 +288,11 @@ async function handleResourceRequest(uri: string): Promise<ReadResourceResult> {
   const pathParts = url.pathname.split('/').filter(Boolean);
 
   if (url.hostname === 'accounts') {
-    return await routeAccountsResource(uri, pathParts);
+    return routeAccountsResource(uri, pathParts);
   }
 
   if (url.hostname === 'budgets') {
-    return await routeBudgetsResource(uri, pathParts);
+    return routeBudgetsResource(uri, pathParts);
   }
 
   return {
@@ -295,14 +303,19 @@ async function handleResourceRequest(uri: string): Promise<ReadResourceResult> {
 /**
  * Route actual://accounts requests
  */
-async function routeAccountsResource(uri: string, pathParts: string[]): Promise<ReadResourceResult> {
-  if (pathParts.length === 0) return await handleAccountsResource(uri);
-  if (pathParts.length === 1) return await handleAccountDetailsResource(uri, pathParts[0]);
+async function routeAccountsResource(
+  uri: string,
+  pathParts: string[],
+): Promise<ReadResourceResult> {
+  if (pathParts.length === 0) return handleAccountsResource(uri);
+  if (pathParts.length === 1) return handleAccountDetailsResource(uri, pathParts[0]);
   if (pathParts.length === 2 && pathParts[1] === 'transactions') {
-    return await handleAccountTransactionsResource(uri, pathParts[0]);
+    return handleAccountTransactionsResource(uri, pathParts[0]);
   }
   return {
-    contents: [{ uri, text: `Error: Unrecognized account resource: ${uri}`, mimeType: 'text/plain' }],
+    contents: [
+      { uri, text: `Error: Unrecognized account resource: ${uri}`, mimeType: 'text/plain' },
+    ],
   };
 }
 
@@ -328,23 +341,35 @@ async function routeBudgetsResource(uri: string, pathParts: string[]): Promise<R
     const month = pathParts[0];
     if (!/^\d{4}-\d{2}$/.test(month)) {
       return {
-        contents: [{ uri, text: `Error: Invalid month format (YYYY-MM): ${month}`, mimeType: 'text/plain' }],
+        contents: [
+          { uri, text: `Error: Invalid month format (YYYY-MM): ${month}`, mimeType: 'text/plain' },
+        ],
       };
     }
     try {
       const budgetData = await getBudgetMonth(month);
       return {
-        contents: [{ uri, text: formatBudgetMonth(budgetData as BudgetMonthData, month), mimeType: 'text/markdown' }],
+        contents: [
+          {
+            uri,
+            text: formatBudgetMonth(budgetData as BudgetMonthData, month),
+            mimeType: 'text/markdown',
+          },
+        ],
       };
     } catch (_e) {
       return {
-        contents: [{ uri, text: `Error: Budget data not found for ${month}`, mimeType: 'text/plain' }],
+        contents: [
+          { uri, text: `Error: Budget data not found for ${month}`, mimeType: 'text/plain' },
+        ],
       };
     }
   }
 
   return {
-    contents: [{ uri, text: `Error: Unrecognized budget resource: ${uri}`, mimeType: 'text/plain' }],
+    contents: [
+      { uri, text: `Error: Unrecognized budget resource: ${uri}`, mimeType: 'text/plain' },
+    ],
   };
 }
 

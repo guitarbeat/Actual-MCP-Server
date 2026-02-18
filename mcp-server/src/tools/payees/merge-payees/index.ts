@@ -46,7 +46,7 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.targetPayeeId || typeof args.targetPayeeId !== 'string') {
@@ -63,7 +63,9 @@ export async function handler(
 
     await mergePayees(args.targetPayeeId as string, sourceIds);
 
-    return successWithJson(`Successfully merged payees ${sourceIds.join(', ')} into ${args.targetPayeeId}`);
+    return successWithJson(
+      `Successfully merged payees ${sourceIds.join(', ')} into ${args.targetPayeeId}`,
+    );
   } catch (err) {
     return errorFromCatch(err);
   }

@@ -13,7 +13,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Category name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Category name must be less than 100 characters',
+        );
       }
     });
 
@@ -25,7 +27,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = update.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Category name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Category name must be less than 100 characters',
+        );
       }
     });
   });
@@ -40,7 +44,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Payee name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Payee name must be less than 100 characters',
+        );
       }
     });
 
@@ -52,7 +58,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = update.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Payee name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Payee name must be less than 100 characters',
+        );
       }
     });
   });
@@ -68,7 +76,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Account name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Account name must be less than 100 characters',
+        );
       }
     });
 
@@ -80,7 +90,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = update.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Account name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Account name must be less than 100 characters',
+        );
       }
     });
   });
@@ -95,7 +107,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Category group name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Category group name must be less than 100 characters',
+        );
       }
     });
 
@@ -107,7 +121,9 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = update.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Category group name must be less than 100 characters');
+        expect(result.error.issues[0].message).toContain(
+          'Category group name must be less than 100 characters',
+        );
       }
     });
   });
@@ -128,19 +144,21 @@ describe('CRUD Factory Configuration Schemas', () => {
           },
         ],
         actions: [
-            {
-                field: 'category',
-                op: 'set',
-                value: '123',
-            }
-        ]
+          {
+            field: 'category',
+            op: 'set',
+            value: '123',
+          },
+        ],
       };
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-          // Zod error path is deeply nested
-          const issue = result.error.issues.find(i => i.message.includes('Condition value must be less than 200 characters'));
-          expect(issue).toBeDefined();
+        // Zod error path is deeply nested
+        const issue = result.error.issues.find((i) =>
+          i.message.includes('Condition value must be less than 200 characters'),
+        );
+        expect(issue).toBeDefined();
       }
     });
 
@@ -155,18 +173,20 @@ describe('CRUD Factory Configuration Schemas', () => {
           },
         ],
         actions: [
-            {
-                field: 'notes',
-                op: 'set',
-                value: 'a'.repeat(501),
-            }
-        ]
+          {
+            field: 'notes',
+            op: 'set',
+            value: 'a'.repeat(501),
+          },
+        ],
       };
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-         const issue = result.error.issues.find(i => i.message.includes('Action value must be less than 500 characters'));
-         expect(issue).toBeDefined();
+        const issue = result.error.issues.find((i) =>
+          i.message.includes('Action value must be less than 500 characters'),
+        );
+        expect(issue).toBeDefined();
       }
     });
   });

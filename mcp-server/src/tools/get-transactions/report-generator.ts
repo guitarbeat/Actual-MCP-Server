@@ -65,12 +65,15 @@ export class GetTransactionsReportGenerator {
         '- Adjusting the date range',
         '- Removing or relaxing amount filters',
         '- Checking different category or payee filters',
-        ''
+        '',
       );
     }
 
     // Add table (with empty row if no transactions)
-    const table = rows.length > 0 ? `${header}${rows}` : `${header}| _No matching transactions_ | — | — | — | — | — |`;
+    const table =
+      rows.length > 0
+        ? `${header}${rows}`
+        : `${header}| _No matching transactions_ | — | — | — | — | — |`;
     sections.push(table);
 
     return sections.join('\n');
