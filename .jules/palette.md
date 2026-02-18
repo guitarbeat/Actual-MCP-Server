@@ -21,3 +21,7 @@
 ## 2026-02-06 - Visual Confirmation for Actions
 **Learning:** For actions like "Copy to Clipboard", a tooltip is often insufficient for immediate visual confirmation. Swapping the icon (e.g., Copy -> Checkmark) provides an unmistakable, delightful confirmation that works well even without reading text.
 **Action:** Implement icon state swaps for binary actions (copy, save, like) to provide strong visual feedback, ensuring accessible text/tooltips remain for screen readers.
+
+## 2026-02-12 - Actionable Error Feedback in Dashboards
+**Learning:** Displaying a simple "Disconnected" status is insufficient UX. Users need actionable guidance (e.g., "Check server logs") and visual distinction (e.g., alert box) to resolve issues quickly.
+**Action:** Always accompany error statuses with a descriptive hint and use `role="alert"` to ensure screen readers prioritize the error message.
