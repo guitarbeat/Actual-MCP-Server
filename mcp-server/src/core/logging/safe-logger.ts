@@ -31,7 +31,8 @@ const requestIdStorage = new AsyncLocalStorage<string | null>();
 
 // Performance tracking
 const performanceEnabled = process.env.DEBUG_PERFORMANCE === 'true';
-const performanceMetrics: Map<string, { start: number; end?: number; duration?: number }> = new Map();
+const performanceMetrics: Map<string, { start: number; end?: number; duration?: number }> =
+  new Map();
 
 // Sensitive data patterns for redaction
 const SENSITIVE_KEY_REGEX =
@@ -174,7 +175,10 @@ export function withRequestId<T>(requestId: string | null, fn: () => T): T {
  * @param fn - Async function to run with the request ID in context
  * @returns Promise resolving to the result of the function
  */
-export async function withRequestIdAsync<T>(requestId: string | null, fn: () => Promise<T>): Promise<T> {
+export async function withRequestIdAsync<T>(
+  requestId: string | null,
+  fn: () => Promise<T>,
+): Promise<T> {
   return requestIdStorage.run(requestId, fn);
 }
 
@@ -260,7 +264,10 @@ export function startPerformanceTracking(operationId?: string): string {
  * @param operationName - Human-readable name for logging
  * @returns Duration in milliseconds, or undefined if tracking not enabled
  */
-export function endPerformanceTracking(operationId: string, operationName?: string): number | undefined {
+export function endPerformanceTracking(
+  operationId: string,
+  operationName?: string,
+): number | undefined {
   if (!performanceEnabled || !performanceMetrics.has(operationId)) {
     return undefined;
   }

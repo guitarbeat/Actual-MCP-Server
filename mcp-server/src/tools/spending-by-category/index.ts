@@ -5,8 +5,12 @@ import { GroupAggregator } from '../../core/aggregation/group-by.js';
 import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.js';
 import { CategoryMapper } from '../../core/mapping/category-mapper.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
-import type { ToolInput } from '../../core/types/index.js';
-import { type Account, type SpendingByCategoryArgs, SpendingByCategoryArgsSchema } from '../../core/types/index.js';
+import type {
+  ToolInput,
+  type Account,
+  type SpendingByCategoryArgs,
+  SpendingByCategoryArgsSchema,
+} from '../../core/types/index.js';
 import { SpendingByCategoryDataFetcher } from './data-fetcher.js';
 import type { SpendingByCategoryInput } from './input-parser.js';
 import { SpendingByCategoryInputParser } from './input-parser.js';
@@ -23,17 +27,14 @@ export async function handler(args: SpendingByCategoryArgs): Promise<CallToolRes
   try {
     const input: SpendingByCategoryInput = new SpendingByCategoryInputParser().parse(args);
     const { startDate, endDate, accountId, includeIncome } = input;
-    const { accounts, categories, categoryGroups, transactions } = await new SpendingByCategoryDataFetcher().fetchAll(
-      accountId,
-      startDate,
-      endDate
-    );
+    const { accounts, categories, categoryGroups, transactions } =
+      await new SpendingByCategoryDataFetcher().fetchAll(accountId, startDate, endDate);
     const categoryMapper = new CategoryMapper(categories, categoryGroups);
     const spendingByCategory = new TransactionGrouper().groupByCategory(
       transactions,
       (categoryId) => categoryMapper.getCategoryName(categoryId),
       (categoryId) => categoryMapper.getGroupInfo(categoryId),
-      includeIncome
+      includeIncome,
     );
     const sortedGroups = new GroupAggregator().aggregateAndSort(spendingByCategory);
 
@@ -47,7 +48,7 @@ export async function handler(args: SpendingByCategoryArgs): Promise<CallToolRes
       sortedGroups,
       { start: startDate, end: endDate },
       accountLabel,
-      includeIncome
+      includeIncome,
     );
     return success(markdown);
   } catch (err) {

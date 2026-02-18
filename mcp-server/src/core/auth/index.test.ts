@@ -5,7 +5,9 @@ describe('timingSafeStringEqual', () => {
   it('should return true for identical strings', () => {
     expect(timingSafeStringEqual('secret', 'secret')).toBe(true);
     expect(timingSafeStringEqual('', '')).toBe(true);
-    expect(timingSafeStringEqual('very-long-secret-key-12345', 'very-long-secret-key-12345')).toBe(true);
+    expect(timingSafeStringEqual('very-long-secret-key-12345', 'very-long-secret-key-12345')).toBe(
+      true,
+    );
   });
 
   it('should return false for different strings', () => {

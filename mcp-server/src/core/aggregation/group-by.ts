@@ -49,7 +49,7 @@ export class GroupAggregator {
       groups.push({
         name: groupName,
         total,
-        categories: categories, // categories is now sorted in-place
+        categories, // categories is now sorted in-place
       });
     }
 

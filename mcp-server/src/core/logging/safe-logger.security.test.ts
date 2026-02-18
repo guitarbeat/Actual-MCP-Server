@@ -8,8 +8,8 @@ describe('formatMessage Redaction', () => {
       password: 'secretPassword123',
       apiKey: 'sk_live_12345',
       nested: {
-        authorization: 'Bearer token123'
-      }
+        authorization: 'Bearer token123',
+      },
     };
 
     const result = formatMessage([sensitiveData]);
@@ -30,7 +30,7 @@ describe('formatMessage Redaction', () => {
     const safeData = {
       author: 'John Doe',
       authentication: 'public',
-      authority: 'admin'
+      authority: 'admin',
     };
 
     const result = formatMessage([safeData]);
@@ -46,7 +46,7 @@ describe('formatMessage Redaction', () => {
       input_tokens: 150,
       output_tokens: 50,
       max_tokens: 1000,
-      token: 'secret-value' // This SHOULD be redacted
+      token: 'secret-value', // This SHOULD be redacted
     };
 
     const result = formatMessage([usageData]);
