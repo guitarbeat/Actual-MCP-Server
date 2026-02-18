@@ -8,7 +8,10 @@ import type {
   APICategoryGroupEntity,
   APIPayeeEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
-import type { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
+import type {
+  RuleEntity,
+  TransactionEntity,
+} from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { BudgetFile } from '../types/index.js';
@@ -99,7 +102,7 @@ async function handleInitializationEarlyReturns(forceReconnect: boolean): Promis
     if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
       const timeSaved = initializationTime || 600; // Use actual time or estimate
       console.error(
-        `[PERF] ⚡ Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`
+        `[PERF] ⚡ Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
       );
     }
     return true;
@@ -160,7 +163,8 @@ async function downloadAndLoadBudget(): Promise<{
   }
 
   // Use specified budget or the first one
-  const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
+  const budgetId: string =
+    process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
   // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
   const budgetPassword: string | undefined =
     process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
@@ -179,7 +183,11 @@ async function downloadAndLoadBudget(): Promise<{
  * @param budgets - Budget files array
  * @param budgetId - Budget ID that was loaded
  */
-function logSuccessfulInitialization(startTime: number, budgets: BudgetFile[], budgetId: string): void {
+function logSuccessfulInitialization(
+  startTime: number,
+  budgets: BudgetFile[],
+  budgetId: string,
+): void {
   // Track initialization time for performance logging
   initializationTime = Date.now() - startTime;
   if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
@@ -251,7 +259,9 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     const budgetFetchStart = Date.now();
     const { budgetId, budgets } = await downloadAndLoadBudget();
     if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error(`[PERF] Budget list fetched and budget downloaded in ${Date.now() - budgetFetchStart}ms`);
+      console.error(
+        `[PERF] Budget list fetched and budget downloaded in ${Date.now() - budgetFetchStart}ms`,
+      );
     }
 
     initialized = true;
@@ -427,7 +437,11 @@ function isConnectionError(errorMessage: string): boolean {
  * @param maxRetries - Maximum number of retries
  * @returns True if should retry
  */
-async function handleConnectionErrorRetry(error: Error, attempt: number, maxRetries: number): Promise<boolean> {
+async function handleConnectionErrorRetry(
+  error: Error,
+  attempt: number,
+  maxRetries: number,
+): Promise<boolean> {
   const errorMessage = error.message.toLowerCase();
   if (!isConnectionError(errorMessage) || attempt >= maxRetries) {
     return false;
@@ -435,7 +449,7 @@ async function handleConnectionErrorRetry(error: Error, attempt: number, maxRetr
 
   if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
     console.error(
-      `[CONNECTION] Connection error detected, reconnecting (attempt ${attempt + 1}/${maxRetries + 1}): ${errorMessage}`
+      `[CONNECTION] Connection error detected, reconnecting (attempt ${attempt + 1}/${maxRetries + 1}): ${errorMessage}`,
     );
   }
 
@@ -493,7 +507,7 @@ export async function getCategories(): Promise<APICategoryEntity[]> {
       const result = await api.getCategories();
       // * Filter out category groups if API returns a union type
       return result.filter((item): item is APICategoryEntity => 'group_id' in item);
-    })
+    }),
   );
 }
 
@@ -501,7 +515,9 @@ export async function getCategories(): Promise<APICategoryEntity[]> {
  * Get all category groups (ensures API is initialized)
  */
 export async function getCategoryGroups(): Promise<APICategoryGroupEntity[]> {
-  return ensureConnection(() => cacheService.getOrFetch('categoryGroups:all', () => api.getCategoryGroups()));
+  return ensureConnection(() =>
+    cacheService.getOrFetch('categoryGroups:all', () => api.getCategoryGroups()),
+  );
 }
 
 /**
@@ -514,11 +530,15 @@ export async function getPayees(): Promise<APIPayeeEntity[]> {
 /**
  * Get transactions for a specific account and date range (ensures API is initialized)
  */
-export async function getTransactions(accountId: string, start: string, end: string): Promise<TransactionEntity[]> {
+export async function getTransactions(
+  accountId: string,
+  start: string,
+  end: string,
+): Promise<TransactionEntity[]> {
   return ensureConnection(() =>
     cacheService.getOrFetch(`transactions:${accountId}:${start}:${end}`, () =>
-      api.getTransactions(accountId, start, end)
-    )
+      api.getTransactions(accountId, start, end),
+    ),
   );
 }
 
@@ -649,7 +669,10 @@ export async function createCategoryGroup(args: Record<string, unknown>): Promis
 /**
  * Update a category group (ensures API is initialized)
  */
-export async function updateCategoryGroup(id: string, args: Record<string, unknown>): Promise<unknown> {
+export async function updateCategoryGroup(
+  id: string,
+  args: Record<string, unknown>,
+): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.updateCategoryGroup(id, args);
     cacheService.invalidatePattern('categoryGroups:*');
@@ -681,7 +704,7 @@ export async function addTransactions(
     notes?: string;
     cleared?: boolean;
   }>,
-  options?: { learnCategories?: boolean; runTransfers?: boolean }
+  options?: { learnCategories?: boolean; runTransfers?: boolean },
 ): Promise<'ok'> {
   return ensureConnection(async () => {
     // @ts-expect-error - Transactions array structure matches what Actual API expects internally
@@ -718,7 +741,7 @@ export async function importTransactions(
       notes?: string;
     }>;
   }>,
-  opts?: ImportTransactionsOpts
+  opts?: ImportTransactionsOpts,
 ): Promise<{
   errors?: Array<{ message: string }>;
   added: string[];
@@ -756,7 +779,10 @@ export async function importTransactions(
  * @param updates - Fields to update
  * @returns Promise that resolves when update is complete
  */
-export async function updateTransaction(id: string, updates: Record<string, unknown>): Promise<void> {
+export async function updateTransaction(
+  id: string,
+  updates: Record<string, unknown>,
+): Promise<void> {
   return ensureConnection(async () => {
     await api.updateTransaction(id, updates);
     cacheService.invalidatePattern('transactions:*');
@@ -850,7 +876,11 @@ export async function getBudgetMonth(month: string): Promise<unknown> {
 /**
  * Set budget amount for a category in a specific month (ensures API is initialized)
  */
-export async function setBudgetAmount(month: string, categoryId: string, amount: number): Promise<unknown> {
+export async function setBudgetAmount(
+  month: string,
+  categoryId: string,
+  amount: number,
+): Promise<unknown> {
   const opStart = Date.now();
   return ensureConnection(async () => {
     const result = await api.setBudgetAmount(month, categoryId, amount);
@@ -864,7 +894,11 @@ export async function setBudgetAmount(month: string, categoryId: string, amount:
 /**
  * Set budget carryover for a category in a specific month (ensures API is initialized)
  */
-export async function setBudgetCarryover(month: string, categoryId: string, flag: boolean): Promise<unknown> {
+export async function setBudgetCarryover(
+  month: string,
+  categoryId: string,
+  flag: boolean,
+): Promise<unknown> {
   const opStart = Date.now();
   return ensureConnection(async () => {
     const result = await api.setBudgetCarryover(month, categoryId, flag);

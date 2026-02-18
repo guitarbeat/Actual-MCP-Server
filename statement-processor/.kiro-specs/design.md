@@ -40,21 +40,23 @@ Cleaned CSV Output
 **Purpose**: Read and validate the Chase CSV file structure
 
 **Interface**:
+
 ```typescript
 interface ChaseTransaction {
-  details: string;           // DEBIT, CREDIT, DSLIP
-  postingDate: string;       // MM/DD/YYYY
-  description: string;       // Full transaction description
-  amount: number;            // Positive for credits, negative for debits
-  type: string;              // ACH_DEBIT, MISC_CREDIT, etc.
-  balance: number;           // Account balance after transaction
-  checkOrSlip: string;       // Check/slip number if applicable
+  details: string; // DEBIT, CREDIT, DSLIP
+  postingDate: string; // MM/DD/YYYY
+  description: string; // Full transaction description
+  amount: number; // Positive for credits, negative for debits
+  type: string; // ACH_DEBIT, MISC_CREDIT, etc.
+  balance: number; // Account balance after transaction
+  checkOrSlip: string; // Check/slip number if applicable
 }
 
-function parseChaseCSV(filePath: string): ChaseTransaction[]
+function parseChaseCSV(filePath: string): ChaseTransaction[];
 ```
 
 **Responsibilities**:
+
 - Read CSV file from disk
 - Parse header and validate expected columns
 - Convert each row into ChaseTransaction objects
@@ -66,16 +68,18 @@ function parseChaseCSV(filePath: string): ChaseTransaction[]
 **Purpose**: Extract clean, readable payee names from Chase descriptions
 
 **Interface**:
+
 ```typescript
 interface CleanedPayee {
-  payee: string;        // Cleaned payee name
-  notes: string;        // Additional details (IDs, reference numbers)
+  payee: string; // Cleaned payee name
+  notes: string; // Additional details (IDs, reference numbers)
 }
 
-function cleanPayeeName(description: string, type: string): CleanedPayee
+function cleanPayeeName(description: string, type: string): CleanedPayee;
 ```
 
 **Responsibilities**:
+
 - Extract primary merchant/payee name from description
 - Remove excessive whitespace and normalize formatting
 - Separate reference IDs (PPD ID, WEB ID) into notes
@@ -86,6 +90,7 @@ function cleanPayeeName(description: string, type: string): CleanedPayee
   - Check deposits: Format as "Check Deposit"
 
 **Cleaning Rules**:
+
 - Remove "PPD ID:", "WEB ID:", "CTX ID:" and their values → move to notes
 - Remove "PAYMENT", "AUTOPAY", "ONLINE PMT" suffixes
 - Extract person names from Zelle transactions
@@ -97,11 +102,12 @@ function cleanPayeeName(description: string, type: string): CleanedPayee
 **Purpose**: Intelligently categorize transactions using AI analysis
 
 **Interface**:
+
 ```typescript
 interface CategorySuggestion {
-  category: string;          // Suggested budget category
+  category: string; // Suggested budget category
   confidence: 'high' | 'medium' | 'low';
-  reasoning?: string;        // Optional explanation
+  reasoning?: string; // Optional explanation
 }
 
 function categorizeTransaction(
@@ -109,11 +115,12 @@ function categorizeTransaction(
   description: string,
   amount: number,
   type: string,
-  historicalContext?: ChaseTransaction[]
-): CategorySuggestion
+  historicalContext?: ChaseTransaction[],
+): CategorySuggestion;
 ```
 
 **Responsibilities**:
+
 - Analyze transaction details to suggest appropriate categories
 - Use pattern recognition for recurring transactions
 - Consider transaction type and amount for context (especially for multi-purpose payees like BILTPYMTS)
@@ -124,6 +131,7 @@ function categorizeTransaction(
 **Category Taxonomy**:
 
 Income Categories:
+
 - Income: Salary
 - Income: Freelance/Contract
 - Income: Interest
@@ -132,6 +140,7 @@ Income Categories:
 - Income: Other
 
 Expense Categories:
+
 - Housing: Rent
 - Housing: Mortgage
 - Utilities: Internet/Cable
@@ -188,6 +197,7 @@ The LLM will use a multi-step approach:
    - Look at historical patterns for the same payee
 
 4. **LLM Prompt Structure**:
+
 ```
 Analyze this transaction and suggest a budget category:
 - Payee: {payee}
@@ -214,6 +224,7 @@ Respond with just the category name from the taxonomy.
 **Purpose**: Calculate the starting balance for account reconciliation
 
 **Interface**:
+
 ```typescript
 interface StartingBalanceEntry {
   date: string;
@@ -223,16 +234,18 @@ interface StartingBalanceEntry {
   amount: number;
 }
 
-function calculateStartingBalance(transactions: ChaseTransaction[]): StartingBalanceEntry
+function calculateStartingBalance(transactions: ChaseTransaction[]): StartingBalanceEntry;
 ```
 
 **Responsibilities**:
+
 - Find the earliest transaction in the dataset
 - Calculate starting balance: `earliest_balance - earliest_amount`
 - Create a special transaction entry for the starting balance
 - Set date to one day before the earliest transaction
 
 **Calculation Logic**:
+
 ```
 Starting Balance = Balance After First Transaction - First Transaction Amount
 
@@ -246,22 +259,24 @@ Starting Balance = 32243.03 - 2351.69 = 29891.34
 **Purpose**: Orchestrate the transformation of each transaction
 
 **Interface**:
+
 ```typescript
 interface ProcessedTransaction {
-  date: string;              // YYYY-MM-DD format
-  payee: string;             // Cleaned payee name
-  category: string;          // LLM-suggested category
-  notes: string;             // Original description + reference IDs
-  amount: number;            // Transaction amount
+  date: string; // YYYY-MM-DD format
+  payee: string; // Cleaned payee name
+  category: string; // LLM-suggested category
+  notes: string; // Original description + reference IDs
+  amount: number; // Transaction amount
 }
 
 function processTransaction(
   transaction: ChaseTransaction,
-  llmClient: LLMClient
-): ProcessedTransaction
+  llmClient: LLMClient,
+): ProcessedTransaction;
 ```
 
 **Responsibilities**:
+
 - Convert date format from MM/DD/YYYY to YYYY-MM-DD
 - Call Payee Cleaner to extract payee and notes
 - Call LLM Categorization Engine for category suggestion
@@ -273,15 +288,17 @@ function processTransaction(
 **Purpose**: Generate the final cleaned CSV file
 
 **Interface**:
+
 ```typescript
 function formatCleanedCSV(
   startingBalance: StartingBalanceEntry,
   transactions: ProcessedTransaction[],
-  outputPath: string
-): void
+  outputPath: string,
+): void;
 ```
 
 **Responsibilities**:
+
 - Create CSV header: Date,Payee,Category,Notes,Amount
 - Add starting balance as first row
 - Add all processed transactions in chronological order
@@ -289,6 +306,7 @@ function formatCleanedCSV(
 - Write to output file with UTF-8 encoding
 
 **Output Format**:
+
 ```csv
 Date,Payee,Category,Notes,Amount
 2023-11-16,Starting Balance,Transfer: Internal,Opening balance for account,29891.34
@@ -300,18 +318,21 @@ Date,Payee,Category,Notes,Amount
 ## Data Models
 
 ### Input Model (Chase CSV)
+
 ```
 Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #
 CREDIT,11/17/2023,"FEI COMPANY DIRECT DEP PPD ID: 9111111101",2351.69,ACH_CREDIT,32243.03,,
 ```
 
 ### Output Model (Cleaned CSV)
+
 ```
 Date,Payee,Category,Notes,Amount
 2023-11-17,FEI Company,Income: Salary,"FEI COMPANY DIRECT DEP PPD ID: 9111111101",2351.69
 ```
 
 ### Internal Transaction Model
+
 ```typescript
 interface Transaction {
   // Input fields
@@ -320,7 +341,7 @@ interface Transaction {
   rawAmount: number;
   rawType: string;
   rawBalance: number;
-  
+
   // Processed fields
   date: string;
   payee: string;
@@ -333,23 +354,27 @@ interface Transaction {
 ## Error Handling
 
 ### CSV Parsing Errors
+
 - **Missing columns**: Throw error with clear message about expected format
 - **Invalid date format**: Log warning, attempt to parse, skip if unable
 - **Invalid amount**: Log warning, skip transaction
 - **Empty file**: Throw error indicating no transactions found
 
 ### LLM Categorization Errors
+
 - **API timeout**: Retry up to 3 times with exponential backoff
 - **Invalid response**: Default to "Uncategorized" category
 - **Rate limiting**: Implement batch processing with delays
 - **Connection error**: Log error, use fallback rule-based categorization
 
 ### File I/O Errors
+
 - **Input file not found**: Throw error with file path
 - **Output file write error**: Throw error with permissions check
 - **Encoding issues**: Use UTF-8 with BOM for compatibility
 
 ### Data Validation Errors
+
 - **Negative balance**: Log warning but continue processing
 - **Missing required fields**: Skip transaction and log warning
 - **Duplicate transactions**: Keep all, let Actual Budget handle deduplication
@@ -417,6 +442,7 @@ interface Transaction {
 ## Implementation Notes
 
 ### Technology Stack
+
 - **Language**: TypeScript/Node.js
 - **CSV Parsing**: `csv-parse` library
 - **CSV Writing**: `csv-stringify` library
@@ -424,12 +450,14 @@ interface Transaction {
 - **Date Handling**: `date-fns` library
 
 ### Performance Considerations
+
 - Process transactions in batches for LLM calls (10-20 at a time)
 - Cache category suggestions for identical payees
 - Stream large CSV files instead of loading entirely into memory
 - Implement progress reporting for long-running operations
 
 ### Configuration
+
 ```typescript
 interface Config {
   inputFile: string;
@@ -442,6 +470,7 @@ interface Config {
 ```
 
 ### Future Enhancements
+
 - Support for multiple bank formats (not just Chase)
 - Machine learning to improve categorization over time
 - User feedback loop to refine categories

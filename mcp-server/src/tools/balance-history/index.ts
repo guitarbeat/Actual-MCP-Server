@@ -3,8 +3,11 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { formatDate } from '../../core/formatting/index.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
-import type { ToolInput } from '../../core/types/index.js';
-import { type BalanceHistoryArgs, BalanceHistoryArgsSchema } from '../../core/types/index.js';
+import type {
+  ToolInput,
+  type BalanceHistoryArgs,
+  BalanceHistoryArgsSchema,
+} from '../../core/types/index.js';
 import { BalanceHistoryCalculator } from './balance-calculator.js';
 import { BalanceHistoryDataFetcher } from './data-fetcher.js';
 import { BalanceHistoryInputParser } from './input-parser.js';
@@ -43,13 +46,27 @@ export async function handler(args: BalanceHistoryArgs): Promise<CallToolResult>
     const end = formatDate(endDate);
 
     // Fetch data
-    const { account, accounts, transactions } = await new BalanceHistoryDataFetcher().fetchAll(accountId, start, end);
+    const { account, accounts, transactions } = await new BalanceHistoryDataFetcher().fetchAll(
+      accountId,
+      start,
+      end,
+    );
 
     // Calculate balance history
-    const sortedMonths = new BalanceHistoryCalculator().calculate(account, accounts, transactions, months, endDate);
+    const sortedMonths = new BalanceHistoryCalculator().calculate(
+      account,
+      accounts,
+      transactions,
+      months,
+      endDate,
+    );
 
     // Generate report
-    const markdown = new BalanceHistoryReportGenerator().generate(account, { start, end }, sortedMonths);
+    const markdown = new BalanceHistoryReportGenerator().generate(
+      account,
+      { start, end },
+      sortedMonths,
+    );
     return success(markdown);
   } catch (err) {
     return errorFromCatch(err, {

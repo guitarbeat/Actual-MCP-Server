@@ -66,7 +66,10 @@ export class BalanceHistoryCalculator {
   }
 
   // Helper function to generate all months in range
-  private generateMonthRange(endDate: Date, months: number): Array<{ year: number; month: number; yearMonth: string }> {
+  private generateMonthRange(
+    endDate: Date,
+    months: number,
+  ): Array<{ year: number; month: number; yearMonth: string }> {
     const monthsArray = [];
     const currentDate = new Date(endDate);
 
@@ -89,7 +92,7 @@ export class BalanceHistoryCalculator {
     accounts: Account[],
     transactions: Transaction[],
     months: number,
-    endDate: Date
+    endDate: Date,
   ): MonthBalance[] {
     // Sort transactions by date (newest first)
     const sortedTransactions: Transaction[] = [...transactions].sort((a, b) => {
@@ -145,68 +148,68 @@ export class BalanceHistoryCalculator {
       this.calculateChanges(sortedMonths);
 
       return sortedMonths;
-    } else {
-      // All-accounts mode
-      const balanceHistory: Record<string, Record<string, MonthBalance>> = {};
+    }
+    // All-accounts mode
+    const balanceHistory: Record<string, Record<string, MonthBalance>> = {};
 
-      const accountIndexMap = new Map(accounts.map((a, i) => [a.id, i]));
-      const runningBalances: number[] = accounts.map((a) => a.balance ?? 0);
+    const accountIndexMap = new Map(accounts.map((a, i) => [a.id, i]));
+    const runningBalances: number[] = accounts.map((a) => a.balance ?? 0);
 
-      // Initialize all accounts and all months
-      for (const acc of accounts) {
-        balanceHistory[acc.name] = {};
-        monthRange.forEach(({ year, month, yearMonth }) => {
-          balanceHistory[acc.name][yearMonth] = {
-            year,
-            month,
-            balance: acc.balance ?? 0,
-            transactions: 0,
-          };
-        });
-      }
+    // Initialize all accounts and all months
+    for (const acc of accounts) {
+      balanceHistory[acc.name] = {};
+      monthRange.forEach(({ year, month, yearMonth }) => {
+        balanceHistory[acc.name][yearMonth] = {
+          year,
+          month,
+          balance: acc.balance ?? 0,
+          transactions: 0,
+        };
+      });
+    }
 
-      // Process transactions
-      sortedTransactions.forEach((transaction) => {
-        const accIndex = accountIndexMap.get(transaction.account);
-        if (accIndex === undefined) return;
+    // Process transactions
+    sortedTransactions.forEach((transaction) => {
+      const accIndex = accountIndexMap.get(transaction.account);
+      if (accIndex === undefined) return;
 
-        const date = new Date(transaction.date);
-        const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const date = new Date(transaction.date);
+      const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-        runningBalances[accIndex] -= transaction.amount;
+      runningBalances[accIndex] -= transaction.amount;
 
-        // Update balance for this month and all previous months for this account
-        monthRange.forEach(({ yearMonth: monthKey }) => {
-          if (balanceHistory[accounts[accIndex].name][monthKey] && monthKey <= yearMonth) {
-            balanceHistory[accounts[accIndex].name][monthKey].balance = runningBalances[accIndex];
-          }
-        });
-
-        // Increment transaction count for the specific month
-        if (balanceHistory[accounts[accIndex].name][yearMonth]) {
-          balanceHistory[accounts[accIndex].name][yearMonth].transactions += 1;
+      // Update balance for this month and all previous months for this account
+      monthRange.forEach(({ yearMonth: monthKey }) => {
+        if (balanceHistory[accounts[accIndex].name][monthKey] && monthKey <= yearMonth) {
+          balanceHistory[accounts[accIndex].name][monthKey].balance = runningBalances[accIndex];
         }
       });
 
-      // Convert nested records to array with account names
-      const sortedMonths: MonthBalance[] = Object.entries(balanceHistory).flatMap(([accountName, months]) =>
+      // Increment transaction count for the specific month
+      if (balanceHistory[accounts[accIndex].name][yearMonth]) {
+        balanceHistory[accounts[accIndex].name][yearMonth].transactions += 1;
+      }
+    });
+
+    // Convert nested records to array with account names
+    const sortedMonths: MonthBalance[] = Object.entries(balanceHistory).flatMap(
+      ([accountName, months]) =>
         Object.values(months).map((month) => ({
           ...month,
           account: accountName,
-        }))
-      );
+        })),
+    );
 
-      // Sort by date (newest first) and then by account name
-      sortedMonths.sort((a, b) => {
-        if (a.year !== b.year) return b.year - a.year; // Reversed
-        if (a.month !== b.month) return b.month - a.month; // Reversed
-        return (a.account ?? '').localeCompare(b.account ?? '');
-      });
+    // Sort by date (newest first) and then by account name
+    sortedMonths.sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year; // Reversed
+      if (a.month !== b.month) return b.month - a.month; // Reversed
+      return (a.account ?? '').localeCompare(b.account ?? '');
+    });
 
-      // Calculate changes between months for each account
-      this.calculateChangesForMultipleAccounts(sortedMonths);
+    // Calculate changes between months for each account
+    this.calculateChangesForMultipleAccounts(sortedMonths);
 
-      return sortedMonths;
-    }
+    return sortedMonths;
   }
 }

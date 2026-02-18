@@ -5,8 +5,11 @@ import { getDateRange } from '../../core/formatting/index.js';
 import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
 import type { Transaction } from '../../core/types/domain.js';
-import type { ToolInput } from '../../core/types/index.js';
-import { type GetTransactionsArgs, GetTransactionsArgsSchema } from '../../core/types/index.js';
+import type {
+  ToolInput,
+  type GetTransactionsArgs,
+  GetTransactionsArgsSchema,
+} from '../../core/types/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsInputParser } from './input-parser.js';
@@ -24,7 +27,7 @@ function filterTransactions(
     payeeName?: string;
     excludeTransfers?: boolean;
     limit?: number;
-  }
+  },
 ): Transaction[] {
   let filtered = [...transactions];
   const { minAmount, maxAmount, categoryName, payeeName, excludeTransfers, limit } = criteria;
@@ -40,7 +43,9 @@ function filterTransactions(
     if (lowerCategory === 'uncategorized') {
       filtered = filtered.filter((t) => !t.category || t.category === null);
     } else {
-      filtered = filtered.filter((t) => (t.category_name || '').toLowerCase().includes(lowerCategory));
+      filtered = filtered.filter((t) =>
+        (t.category_name || '').toLowerCase().includes(lowerCategory),
+      );
     }
   }
   if (payeeName) {
@@ -102,8 +107,17 @@ export const schema = {
 export async function handler(args: GetTransactionsArgs): Promise<CallToolResult> {
   try {
     const input = new GetTransactionsInputParser().parse(args);
-    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit, excludeTransfers } =
-      input;
+    const {
+      accountId,
+      startDate,
+      endDate,
+      minAmount,
+      maxAmount,
+      categoryName,
+      payeeName,
+      limit,
+      excludeTransfers,
+    } = input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
     let resolvedAccountId: string;
@@ -119,8 +133,8 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
         onBudgetAccounts.map((acc) =>
           new GetTransactionsDataFetcher().fetch(acc.id, start, end, {
             accountIdIsResolved: true,
-          })
-        )
+          }),
+        ),
       );
       transactions = allTransactions.flat();
       resolvedAccountId = 'all';
@@ -142,10 +156,17 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     });
 
     const mapped = new TransactionMapper().map(filtered);
-    const appliedFilters = buildAppliedFilters({ minAmount, maxAmount, categoryName, payeeName, limit });
+    const appliedFilters = buildAppliedFilters({
+      minAmount,
+      maxAmount,
+      categoryName,
+      payeeName,
+      limit,
+    });
 
     // Generate summary if needed
-    const accountSummary = accountId.toLowerCase() === 'all' ? generateAccountSummary(filtered) : undefined;
+    const accountSummary =
+      accountId.toLowerCase() === 'all' ? generateAccountSummary(filtered) : undefined;
     const totalAmount = filtered.reduce((sum, t) => sum + t.amount, 0);
 
     const markdown = new GetTransactionsReportGenerator().generate(mapped, {

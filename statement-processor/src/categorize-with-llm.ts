@@ -33,10 +33,10 @@ function buildTransactionPrompt(
   description: string,
   amount: number,
   type: string,
-  date: string
+  date: string,
 ): string {
   const amountStr = amount >= 0 ? `+$${amount.toFixed(2)}` : `-$${Math.abs(amount).toFixed(2)}`;
-  
+
   return `Categorize this transaction:
 - Payee: ${payee}
 - Description: ${description}
@@ -53,7 +53,7 @@ Based on the payee name, transaction type, and amount, what is the most appropri
 export async function categorizeWithLLM(
   transaction: ChaseTransaction,
   cleanedPayee: string,
-  llmClient: LLMClient
+  llmClient: LLMClient,
 ): Promise<CategorySuggestion> {
   try {
     const systemPrompt = buildSystemPrompt();
@@ -62,7 +62,7 @@ export async function categorizeWithLLM(
       transaction.description,
       transaction.amount,
       transaction.type,
-      transaction.postingDate
+      transaction.postingDate,
     );
 
     const response = await llmClient.complete(userPrompt, systemPrompt);

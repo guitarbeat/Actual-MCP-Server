@@ -85,7 +85,9 @@ describe('CSV Import Configuration', () => {
       config.llmApiKey = 'test-key';
       config.rateLimitDelay = -1;
 
-      expect(() => validateConfig(config)).toThrow('LLM_RATE_LIMIT_DELAY must be between 0 and 60000 milliseconds');
+      expect(() => validateConfig(config)).toThrow(
+        'LLM_RATE_LIMIT_DELAY must be between 0 and 60000 milliseconds',
+      );
     });
 
     it('should throw error when rate limit delay is too large', () => {
@@ -93,7 +95,9 @@ describe('CSV Import Configuration', () => {
       config.llmApiKey = 'test-key';
       config.rateLimitDelay = 60001;
 
-      expect(() => validateConfig(config)).toThrow('LLM_RATE_LIMIT_DELAY must be between 0 and 60000 milliseconds');
+      expect(() => validateConfig(config)).toThrow(
+        'LLM_RATE_LIMIT_DELAY must be between 0 and 60000 milliseconds',
+      );
     });
 
     it('should not throw error with valid configuration', () => {

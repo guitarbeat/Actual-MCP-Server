@@ -27,7 +27,9 @@ export interface LLMResponse {
  */
 export class LLMClient {
   private client: OpenAI;
+
   private model: string;
+
   private maxRetries: number;
 
   constructor(config: LLMClientConfig) {
@@ -45,7 +47,7 @@ export class LLMClient {
    */
   async complete(prompt: string, systemPrompt?: string): Promise<LLMResponse> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 0; attempt < this.maxRetries; attempt++) {
       try {
         const response = await this.client.chat.completions.create({
@@ -59,18 +61,20 @@ export class LLMClient {
         });
 
         const content = response.choices[0]?.message?.content?.trim() || '';
-        
+
         return {
           content,
-          usage: response.usage ? {
-            promptTokens: response.usage.prompt_tokens,
-            completionTokens: response.usage.completion_tokens,
-            totalTokens: response.usage.total_tokens,
-          } : undefined,
+          usage: response.usage
+            ? {
+                promptTokens: response.usage.prompt_tokens,
+                completionTokens: response.usage.completion_tokens,
+                totalTokens: response.usage.total_tokens,
+              }
+            : undefined,
         };
       } catch (error) {
         lastError = error as Error;
-        
+
         // Don't retry on certain errors
         if (this.isNonRetryableError(error)) {
           // Wrap with our error handler for better error messages
@@ -79,18 +83,20 @@ export class LLMClient {
 
         // Exponential backoff: 1s, 2s, 4s
         if (attempt < this.maxRetries - 1) {
-          const delay = Math.pow(2, attempt) * 1000;
-          console.warn(`⚠️  LLM API call failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms...`);
+          const delay = 2 ** attempt * 1000;
+          console.warn(
+            `⚠️  LLM API call failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms...`,
+          );
           await this.sleep(delay);
         }
       }
     }
 
     // All retries exhausted, wrap the error
-    const wrappedError = handleLLMError(lastError!, { 
-      attempt: this.maxRetries, 
+    const wrappedError = handleLLMError(lastError!, {
+      attempt: this.maxRetries,
       maxRetries: this.maxRetries,
-      message: 'All retry attempts exhausted'
+      message: 'All retry attempts exhausted',
     });
     throw wrappedError;
   }
@@ -110,6 +116,6 @@ export class LLMClient {
    * Sleep for a specified duration
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
