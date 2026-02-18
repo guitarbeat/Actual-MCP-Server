@@ -26,7 +26,7 @@ COPY --from=builder /app/build ./build
 
 ENV NODE_ENV=production
 
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --prod --frozen-lockfile
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --prod --frozen-lockfile --ignore-scripts
 
 EXPOSE 3000
 ENTRYPOINT ["node", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
