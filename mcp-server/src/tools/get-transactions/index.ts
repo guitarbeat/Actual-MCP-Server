@@ -5,11 +5,8 @@ import { getDateRange } from '../../core/formatting/index.js';
 import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
 import type { Transaction } from '../../core/types/domain.js';
-import type {
-  ToolInput,
-  type GetTransactionsArgs,
-  GetTransactionsArgsSchema,
-} from '../../core/types/index.js';
+import { GetTransactionsArgsSchema } from '../../core/types/index.js';
+import type { ToolInput, GetTransactionsArgs } from '../../core/types/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsInputParser } from './input-parser.js';

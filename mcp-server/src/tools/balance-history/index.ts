@@ -3,11 +3,8 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { formatDate } from '../../core/formatting/index.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
-import type {
-  ToolInput,
-  type BalanceHistoryArgs,
-  BalanceHistoryArgsSchema,
-} from '../../core/types/index.js';
+import { BalanceHistoryArgsSchema } from '../../core/types/index.js';
+import type { ToolInput, BalanceHistoryArgs } from '../../core/types/index.js';
 import { BalanceHistoryCalculator } from './balance-calculator.js';
 import { BalanceHistoryDataFetcher } from './data-fetcher.js';
 import { BalanceHistoryInputParser } from './input-parser.js';
