@@ -53,7 +53,9 @@ export async function handler(args: ScheduleData): Promise<MCPResponse> {
     const handler = new ScheduleHandler();
     const scheduleId = await handler.create(validated);
     handler.invalidateCache();
-    return success(`Successfully created schedule "${validated.name || 'Unnamed'}" with id ${scheduleId}`);
+    return success(
+      `Successfully created schedule "${validated.name || 'Unnamed'}" with id ${scheduleId}`,
+    );
   } catch (error) {
     return errorFromCatch(error, {
       fallbackMessage: 'Failed to create schedule',

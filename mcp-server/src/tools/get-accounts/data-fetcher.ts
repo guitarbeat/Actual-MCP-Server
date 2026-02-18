@@ -69,11 +69,12 @@ export class GetAccountsDataFetcher {
     await Promise.all(
       accounts.map(async (account) => {
         account.balance = await getAccountBalance(account.id);
-      })
+      }),
     );
 
     return accounts as AccountWithBalance[];
   }
+
   private async resolveAccountsById(accounts: Account[], accountId: string): Promise<Account[]> {
     try {
       const resolvedId = await nameResolver.resolveAccount(accountId);
@@ -93,7 +94,9 @@ export class GetAccountsDataFetcher {
 
     if (matchedAccounts.length === 0) {
       const availableAccounts = (await fetchAllAccounts()).map((a: Account) => a.name).join(', ');
-      throw new Error(`Account '${accountId}' not found. Available accounts: ${availableAccounts || 'none'}`);
+      throw new Error(
+        `Account '${accountId}' not found. Available accounts: ${availableAccounts || 'none'}`,
+      );
     }
 
     return matchedAccounts;

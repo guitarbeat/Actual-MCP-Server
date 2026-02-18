@@ -34,7 +34,8 @@ export const schema = {
     properties: {
       budgetId: {
         type: 'string',
-        description: 'Budget sync ID (cloudFileId) or local ID. Use get-budgets to find available IDs.',
+        description:
+          'Budget sync ID (cloudFileId) or local ID. Use get-budgets to find available IDs.',
       },
       password: {
         type: 'string',
@@ -46,7 +47,7 @@ export const schema = {
 };
 
 export async function handler(
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     const { budgetId, password } = args;

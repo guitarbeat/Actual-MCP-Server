@@ -13,7 +13,9 @@ const DeleteTransactionSchema = z.object({
   id: z
     .string()
     .uuid('Transaction ID must be a valid UUID')
-    .describe('The unique identifier of the transaction to delete (use get-transactions to find this).'),
+    .describe(
+      'The unique identifier of the transaction to delete (use get-transactions to find this).',
+    ),
 });
 
 export const schema = {
