@@ -5,12 +5,8 @@ import { GroupAggregator } from '../../core/aggregation/group-by.js';
 import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.js';
 import { CategoryMapper } from '../../core/mapping/category-mapper.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
-import type {
-  ToolInput,
-  type Account,
-  type SpendingByCategoryArgs,
-  SpendingByCategoryArgsSchema,
-} from '../../core/types/index.js';
+import { SpendingByCategoryArgsSchema } from '../../core/types/index.js';
+import type { ToolInput, Account, SpendingByCategoryArgs } from '../../core/types/index.js';
 import { SpendingByCategoryDataFetcher } from './data-fetcher.js';
 import type { SpendingByCategoryInput } from './input-parser.js';
 import { SpendingByCategoryInputParser } from './input-parser.js';
