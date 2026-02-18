@@ -47,6 +47,7 @@ export interface SSETransportConnection {
  */
 export class TransportManager {
   private connections: Map<string, TransportConnection>;
+
   private sseTransports: Map<string, SSETransportConnection>;
 
   constructor() {
@@ -162,7 +163,9 @@ export class TransportManager {
    * Get count of active connections by type
    */
   getActiveTransportCountByType(type: TransportType): number {
-    return Array.from(this.connections.values()).filter((conn) => conn.isActive && conn.type === type).length;
+    return Array.from(this.connections.values()).filter(
+      (conn) => conn.isActive && conn.type === type,
+    ).length;
   }
 
   /**

@@ -7,7 +7,12 @@ interface FetchOptions {
 }
 
 export class GetTransactionsDataFetcher {
-  async fetch(accountId: string, start: string, end: string, options: FetchOptions = {}): Promise<Transaction[]> {
-    return await fetchTransactionsForAccount(accountId, start, end, options);
+  async fetch(
+    accountId: string,
+    start: string,
+    end: string,
+    options: FetchOptions = {},
+  ): Promise<Transaction[]> {
+    return fetchTransactionsForAccount(accountId, start, end, options);
   }
 }

@@ -10,6 +10,7 @@ import { CategorySuggestion } from './types.js';
  */
 export class CategorizationCache {
   private cache: Map<string, CategorySuggestion>;
+
   private enabled: boolean;
 
   constructor(enabled: boolean = true) {
@@ -24,14 +25,14 @@ export class CategorizationCache {
   private generateKey(payee: string, amount: number): string {
     // Normalize payee (lowercase, trim)
     const normalizedPayee = payee.toLowerCase().trim();
-    
+
     // For most payees, just use the payee name
     // For amount-sensitive payees, include amount range
     if (this.isAmountSensitivePayee(normalizedPayee)) {
       const amountRange = this.getAmountRange(amount);
       return `${normalizedPayee}:${amountRange}`;
     }
-    
+
     return normalizedPayee;
   }
 
@@ -40,7 +41,7 @@ export class CategorizationCache {
    */
   private isAmountSensitivePayee(payee: string): boolean {
     const amountSensitivePayees = ['bilt', 'biltpymts'];
-    return amountSensitivePayees.some(p => payee.includes(p));
+    return amountSensitivePayees.some((p) => payee.includes(p));
   }
 
   /**
@@ -48,7 +49,7 @@ export class CategorizationCache {
    */
   private getAmountRange(amount: number): string {
     const absAmount = Math.abs(amount);
-    
+
     if (absAmount < 100) return 'small';
     if (absAmount < 500) return 'medium';
     if (absAmount < 1000) return 'large';

@@ -8,7 +8,7 @@ export class SpendingByCategoryReportGenerator {
     sortedGroups: GroupSpending[],
     period: { start: string; end: string },
     accountLabel: string,
-    includeIncome: boolean
+    includeIncome: boolean,
   ): string {
     let markdown = `# Spending by Category\n\n`;
     markdown += `Period: ${period.start} to ${period.end}\n\n`;

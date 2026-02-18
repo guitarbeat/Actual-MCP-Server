@@ -6,7 +6,7 @@ import { CleanedPayee } from './types.js';
 
 /**
  * Clean a payee name from a Chase transaction description
- * 
+ *
  * @param description - Full transaction description from Chase CSV
  * @param type - Transaction type (ACH_DEBIT, MISC_CREDIT, etc.)
  * @returns CleanedPayee object with payee name and notes
@@ -23,7 +23,7 @@ export function cleanPayeeName(description: string, type: string): CleanedPayee 
 
   // Handle very long descriptions (truncate payee, keep full in notes)
   const MAX_PAYEE_LENGTH = 100;
-  
+
   // Handle special cases first (before any text manipulation)
   const specialCase = handleSpecialCases(trimmedDescription, type);
   if (specialCase) {
@@ -61,7 +61,7 @@ export function cleanPayeeName(description: string, type: string): CleanedPayee 
 
   // Truncate if too long
   if (payee.length > MAX_PAYEE_LENGTH) {
-    payee = payee.substring(0, MAX_PAYEE_LENGTH).trim() + '...';
+    payee = `${payee.substring(0, MAX_PAYEE_LENGTH).trim()}...`;
   }
 
   // If payee is empty after cleaning, use a fallback
@@ -84,11 +84,7 @@ function extractReferenceIds(description: string): { cleanedText: string; extrac
   let cleanedText = description;
 
   // Pattern to match reference IDs
-  const idPatterns = [
-    /PPD ID:\s*[\w\d]+/gi,
-    /WEB ID:\s*[\w\d]+/gi,
-    /CTX ID:\s*[\w\d]+/gi,
-  ];
+  const idPatterns = [/PPD ID:\s*[\w\d]+/gi, /WEB ID:\s*[\w\d]+/gi, /CTX ID:\s*[\w\d]+/gi];
 
   for (const pattern of idPatterns) {
     const matches = cleanedText.match(pattern);
@@ -231,7 +227,11 @@ function normalizeWhitespace(text: string): string {
 /**
  * Combine notes fields, avoiding duplication
  */
-function combineNotes(specialNotes: string, extractedIds: string, originalDescription: string): string {
+function combineNotes(
+  specialNotes: string,
+  extractedIds: string,
+  originalDescription: string,
+): string {
   const parts: string[] = [];
 
   if (extractedIds) {

@@ -33,7 +33,7 @@ export class ProtocolDetector {
    */
   detectTransport(req: IncomingMessage): TransportType {
     const method = req.method?.toUpperCase();
-    const url = req.url;
+    const { url } = req;
 
     if (!method || !url) {
       return TransportType.UNKNOWN;
@@ -69,7 +69,7 @@ export class ProtocolDetector {
    */
   validateRequest(req: IncomingMessage, transport: TransportType): ProtocolDetectionResult {
     const method = req.method?.toUpperCase();
-    const url = req.url;
+    const { url } = req;
 
     if (!method || !url) {
       return {
