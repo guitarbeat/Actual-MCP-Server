@@ -1086,42 +1086,12 @@ export async function runAQL(query: unknown): Promise<unknown> {
  */
 export async function runQuery(query: string): Promise<unknown> {
   return ensureConnection(async () => {
-    // Parse the query string (assuming it's a JSON string of the query state)
-    let queryState: unknown;
-    try {
-      queryState = JSON.parse(query);
-    } catch (error) {
-      throw new Error(`Invalid query format. Expected JSON string. Error: ${error}`);
-    }
-
-    if (!queryState || typeof queryState !== 'object') {
-      throw new Error('Invalid query format. Expected JSON object.');
-    }
-
-    // Construct a Query object using the public api.q helper
-    // We expect the state to have a table property, defaulting to 'transactions' if missing
-    const state = queryState as { table?: string };
-    const table = state.table || 'transactions';
-
-    const q = api.q(table);
-
-    // Hydrate the query state manually
-    // This allows using the raw state passed from the client
-    // biome-ignore lint/suspicious/noExplicitAny: Internal API requires manual state hydration
-    (q as any).state = queryState;
-
-    if (typeof api.aqlQuery === 'function') {
-      // biome-ignore lint/suspicious/noExplicitAny: Internal API type mismatch
-      return api.aqlQuery(q as any);
-    }
-
-    // Fallback for older API versions
     if (typeof api.runQuery === 'function') {
-      // biome-ignore lint/suspicious/noExplicitAny: Internal API type mismatch
-      return api.runQuery(q as any);
+      // * API signature changed - runQuery now takes query string directly or different format
+      // Cast through unknown to handle API signature mismatch (Query type vs string)
+      return (api.runQuery as unknown as (q: string) => Promise<unknown>)(query);
     }
-
-    throw new Error('No query method available in API');
+    throw new Error('runQuery method is not available in this version of the API');
   });
 }
 

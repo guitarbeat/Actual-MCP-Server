@@ -22,6 +22,7 @@ vi.mock('node:os', () => ({
 vi.mock('@actual-app/api', () => {
   const send = vi.fn().mockResolvedValue('success');
   const aqlQuery = vi.fn().mockResolvedValue('success');
+  const runQuery = vi.fn().mockResolvedValue('success');
   // q returns a dummy object that we can attach state to
   const q = vi.fn().mockImplementation((table) => ({ state: { table } }));
 
@@ -36,6 +37,7 @@ vi.mock('@actual-app/api', () => {
         send,
       },
       aqlQuery,
+      runQuery,
       q,
     },
   };
@@ -56,32 +58,12 @@ describe('runQuery', () => {
     await shutdownActualApi();
   });
 
-  it('should parse JSON query and call api.aqlQuery', async () => {
+  it('should pass query string directly to api.runQuery', async () => {
     const query = JSON.stringify({ table: 'transactions', select: ['id'] });
 
     const result = await runQuery(query);
 
-    expect(api.q).toHaveBeenCalledWith('transactions');
-    expect(api.aqlQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        state: expect.objectContaining({ table: 'transactions', select: ['id'] }),
-      }),
-    );
+    expect(api.runQuery).toHaveBeenCalledWith(query);
     expect(result).toBe('success');
-  });
-
-  it('should throw error for invalid JSON', async () => {
-    const query = 'invalid json';
-
-    await expect(runQuery(query)).rejects.toThrow('Invalid query format. Expected JSON string');
-    expect(api.aqlQuery).not.toHaveBeenCalled();
-  });
-
-  it('should throw error for non-object JSON', async () => {
-    await expect(runQuery('null')).rejects.toThrow('Invalid query format. Expected JSON object');
-    await expect(runQuery('123')).rejects.toThrow('Invalid query format. Expected JSON object');
-    await expect(runQuery('"string"')).rejects.toThrow(
-      'Invalid query format. Expected JSON object',
-    );
   });
 });
