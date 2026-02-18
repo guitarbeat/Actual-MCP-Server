@@ -21,11 +21,11 @@ export function sortBy<T>(
     return [...array].sort((a, b) => {
       const valA = iteratee(a);
       const valB = iteratee(b);
-      // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
       if ((valA as any) < (valB as any)) {
         return -1 * multiplier;
       }
-      // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
       if ((valA as any) > (valB as any)) {
         return 1 * multiplier;
       }
@@ -50,11 +50,11 @@ export function sortBy<T>(
 }
 
 function compare(a: unknown, b: unknown, order: 'asc' | 'desc'): number {
-  // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
   if ((a as any) < (b as any)) {
     return order === 'asc' ? -1 : 1;
   }
-  // biome-ignore lint/suspicious/noExplicitAny: Comparison of unknown types requires loose typing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
   if ((a as any) > (b as any)) {
     return order === 'asc' ? 1 : -1;
   }
