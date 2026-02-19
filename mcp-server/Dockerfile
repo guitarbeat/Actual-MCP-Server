@@ -15,10 +15,6 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --froze
 COPY . ./
 RUN pnpm run build
 
-# Reinstall production-only deps (with native addon compilation)
-RUN rm -rf node_modules && \
-    pnpm install --prod --no-frozen-lockfile
-
 # ---- Release ----
 FROM node:20-alpine AS release
 
