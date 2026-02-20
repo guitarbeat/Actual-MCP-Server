@@ -65,12 +65,12 @@ export async function handler(args: z.infer<typeof UpdateScheduleSchema>): Promi
       return error('No fields provided for update', 'Provide at least one field to update');
     }
 
-    const handler = new ScheduleHandler();
-    await handler.update(id, scheduleUpdateData);
-    handler.invalidateCache();
+    const scheduleHandler = new ScheduleHandler();
+    await scheduleHandler.update(id, scheduleUpdateData);
+    scheduleHandler.invalidateCache();
     return success(`Successfully updated schedule with id ${id}`);
-  } catch (error) {
-    return errorFromCatch(error, {
+  } catch (err) {
+    return errorFromCatch(err, {
       fallbackMessage: 'Failed to update schedule',
     });
   }

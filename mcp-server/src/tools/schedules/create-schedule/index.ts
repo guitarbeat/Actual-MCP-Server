@@ -50,9 +50,9 @@ export const schema = {
 export async function handler(args: ScheduleData): Promise<MCPResponse> {
   try {
     const validated = ScheduleDataSchema.parse(args);
-    const handler = new ScheduleHandler();
-    const scheduleId = await handler.create(validated);
-    handler.invalidateCache();
+    const scheduleHandler = new ScheduleHandler();
+    const scheduleId = await scheduleHandler.create(validated);
+    scheduleHandler.invalidateCache();
     return success(
       `Successfully created schedule "${validated.name || 'Unnamed'}" with id ${scheduleId}`,
     );
