@@ -47,8 +47,8 @@ export async function handler(args: z.infer<typeof GetAccountBalanceSchema>): Pr
     // Resolve account name to ID if needed
     const accountId = await nameResolver.resolveAccount(validated.id);
 
-    const handler = new AccountHandler();
-    const balance = await handler.balance(accountId, validated.date);
+    const accountHandler = new AccountHandler();
+    const balance = await accountHandler.balance(accountId, validated.date);
     return success(`Account ${validated.id} balance: ${formatAmount(balance)}`);
   } catch (error) {
     return errorFromCatch(error, {

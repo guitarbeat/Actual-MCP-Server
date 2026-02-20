@@ -83,6 +83,7 @@ interface CategorizedToolDefinition {
  */
 function wrapHandler(
   // biome-ignore lint/suspicious/noExplicitAny: Handler functions have various typed signatures that all accept objects; runtime validation is done via Zod
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handler: ((args: any) => Promise<MCPResponse>) | (() => Promise<MCPResponse>),
 ): (args: Record<string, unknown>) => Promise<MCPResponse> {
   return async (args: Record<string, unknown>): Promise<MCPResponse> => {

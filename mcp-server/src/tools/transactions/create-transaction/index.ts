@@ -105,9 +105,9 @@ export async function handler(args: z.infer<typeof CreateTransactionSchema>): Pr
     const validated = CreateTransactionSchema.parse(args);
 
     // Use TransactionHandler to create transaction
-    const handler = new TransactionHandler();
-    const transactionId = await handler.create(validated as TransactionData);
-    handler.invalidateCache();
+    const transactionHandler = new TransactionHandler();
+    const transactionId = await transactionHandler.create(validated as TransactionData);
+    transactionHandler.invalidateCache();
 
     return success(`Successfully created transaction with id ${transactionId}`);
   } catch (error) {

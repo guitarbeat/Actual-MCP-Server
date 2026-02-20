@@ -44,9 +44,9 @@ export async function handler(args: z.infer<typeof DeleteTransactionSchema>): Pr
     const validated = DeleteTransactionSchema.parse(args);
 
     // Use TransactionHandler to delete transaction
-    const handler = new TransactionHandler();
-    await handler.delete(validated.id);
-    handler.invalidateCache();
+    const transactionHandler = new TransactionHandler();
+    await transactionHandler.delete(validated.id);
+    transactionHandler.invalidateCache();
 
     return success(`Successfully deleted transaction with id ${validated.id}`);
   } catch (error) {
