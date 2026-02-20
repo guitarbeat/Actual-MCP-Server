@@ -193,8 +193,8 @@ export class BalanceHistoryCalculator {
 
     // Convert nested records to array with account names
     const sortedMonths: MonthBalance[] = Object.entries(balanceHistory).flatMap(
-      ([accountName, months]) =>
-        Object.values(months).map((month) => ({
+      ([accountName, monthRecords]) =>
+        Object.values(monthRecords).map((month) => ({
           ...month,
           account: accountName,
         })),

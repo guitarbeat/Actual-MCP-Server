@@ -37,9 +37,9 @@ export const schema = {
 export async function handler(args: z.infer<typeof DeleteScheduleSchema>): Promise<MCPResponse> {
   try {
     const validated = DeleteScheduleSchema.parse(args);
-    const handler = new ScheduleHandler();
-    await handler.delete(validated.id);
-    handler.invalidateCache();
+    const scheduleHandler = new ScheduleHandler();
+    await scheduleHandler.delete(validated.id);
+    scheduleHandler.invalidateCache();
     return success(`Successfully deleted schedule with id ${validated.id}`);
   } catch (error) {
     return errorFromCatch(error, {
