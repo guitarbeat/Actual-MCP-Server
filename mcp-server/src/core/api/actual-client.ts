@@ -146,6 +146,7 @@ async function initializeApiConnection(): Promise<void> {
     password: process.env.ACTUAL_PASSWORD,
   };
   // biome-ignore lint/suspicious/noExplicitAny: API types mismatch with env vars
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await api.init(config as any);
 }
 
@@ -1080,6 +1081,7 @@ export async function batchBudgetUpdates(callback: () => Promise<void>): Promise
 export async function runAQL(query: unknown): Promise<unknown> {
   return ensureConnection(async () => {
     // biome-ignore lint/suspicious/noExplicitAny: Workaround for type mismatch in actual-app/api
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return api.runQuery(query as any);
   });
 }

@@ -94,13 +94,13 @@ export async function handler(args: z.infer<typeof UpdateTransactionSchema>): Pr
     }
 
     // Use TransactionHandler to update transaction
-    const handler = new TransactionHandler();
-    await handler.update(id, updateData as TransactionData);
-    handler.invalidateCache();
+    const transactionHandler = new TransactionHandler();
+    await transactionHandler.update(id, updateData as TransactionData);
+    transactionHandler.invalidateCache();
 
     return success(`Successfully updated transaction with id ${id}`);
-  } catch (error) {
-    return errorFromCatch(error, {
+  } catch (err) {
+    return errorFromCatch(err, {
       fallbackMessage: 'Failed to update transaction',
     });
   }

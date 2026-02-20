@@ -37,9 +37,9 @@ export const schema = {
 export async function handler(args: z.infer<typeof ReopenAccountSchema>): Promise<MCPResponse> {
   try {
     const validated = ReopenAccountSchema.parse(args);
-    const handler = new AccountHandler();
-    await handler.reopen(validated.id);
-    handler.invalidateCache();
+    const accountHandler = new AccountHandler();
+    await accountHandler.reopen(validated.id);
+    accountHandler.invalidateCache();
     return success(`Successfully reopened account with id ${validated.id}`);
   } catch (error) {
     return errorFromCatch(error, {

@@ -46,9 +46,9 @@ export async function handler(args: z.infer<typeof CloseAccountSchema>): Promise
   try {
     const validated = CloseAccountSchema.parse(args);
     const { id, ...closeData } = validated;
-    const handler = new AccountHandler();
-    await handler.close(id, closeData as CloseAccountData);
-    handler.invalidateCache();
+    const accountHandler = new AccountHandler();
+    await accountHandler.close(id, closeData as CloseAccountData);
+    accountHandler.invalidateCache();
     return success(`Successfully closed account with id ${id}`);
   } catch (error) {
     return errorFromCatch(error, {
