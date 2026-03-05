@@ -26,7 +26,7 @@ describe('Financial Analyzer', () => {
           { amount: -200, payee: { name: 'Amazon' } },
           { amount: -20, payee: { name: 'Uber' } },
         ],
-      } as any);
+      } as unknown as { data: any[] });
 
       const result = await findUncategorizedTransactions('2024-01');
 
@@ -40,7 +40,7 @@ describe('Financial Analyzer', () => {
     });
 
     it('should handle no transactions', async () => {
-      vi.mocked(actualClient.runAQL).mockResolvedValue({ data: [] } as any);
+      vi.mocked(actualClient.runAQL).mockResolvedValue({ data: [] } as unknown as { data: any[] });
       const result = await findUncategorizedTransactions('2024-01');
       expect(result.count).toBe(0);
       expect(result.totalAmount).toBe(0);
@@ -50,7 +50,7 @@ describe('Financial Analyzer', () => {
     it('should handle transactions with missing payee name', async () => {
       vi.mocked(actualClient.runAQL).mockResolvedValue({
         data: [{ amount: -50, payee: null }],
-      } as any);
+      } as unknown as { data: any[] });
 
       const result = await findUncategorizedTransactions('2024-01');
       expect(result.count).toBe(1);

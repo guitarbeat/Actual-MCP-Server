@@ -22,7 +22,7 @@ vi.mock('node:os', () => ({
 vi.mock('@actual-app/api', () => {
   const send = vi.fn().mockResolvedValue('success');
   const aqlQuery = vi.fn().mockResolvedValue('success');
-  const runQuery = vi.fn().mockResolvedValue('success');
+  const mockRunQuery = vi.fn().mockResolvedValue('success');
   // q returns a dummy object that we can attach state to
   const q = vi.fn().mockImplementation((table) => ({ state: { table } }));
 
@@ -37,7 +37,7 @@ vi.mock('@actual-app/api', () => {
         send,
       },
       aqlQuery,
-      runQuery,
+      runQuery: mockRunQuery,
       q,
     },
   };

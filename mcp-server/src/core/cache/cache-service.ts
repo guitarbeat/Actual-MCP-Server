@@ -23,10 +23,10 @@ export interface CacheStats {
  */
 export class CacheService {
   // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
-  private cache: LRUCache<string, any>;
+  private cache: LRUCache<string, unknown>;
 
   // biome-ignore lint/suspicious/noExplicitAny: Pending promises can resolve to any type
-  private pendingPromises: Map<string, Promise<any>>;
+  private pendingPromises: Map<string, Promise<unknown>>;
 
   private hits: number;
 
@@ -40,7 +40,7 @@ export class CacheService {
     this.enabled = process.env.CACHE_ENABLED !== 'false';
 
     // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
-    this.cache = new LRUCache<string, any>({
+    this.cache = new LRUCache<string, unknown>({
       max: maxEntries,
       ttl: defaultTtl,
       updateAgeOnGet: true, // LRU behavior - update access time on get

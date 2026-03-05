@@ -49,13 +49,13 @@ dotenv.config({ path: '.env' });
 // Argument parsing (must happen before server creation)
 const {
   values: {
-    sse: useSse,
+    sse: useSseOption,
     'enable-write': enableWrite,
     'enable-bearer': enableBearer,
     'enable-nini': enableNini,
     port,
-    'test-resources': testResources,
-    'test-custom': testCustom,
+    'test-resources': testResourcesOption,
+    'test-custom': testCustomOption,
     host,
   },
 } = parseArgs({
@@ -325,14 +325,14 @@ function validateEnv(): void {
  * Initialize Actual Budget API if not in test mode
  */
 async function initializeApi(
-  testResources: boolean,
-  testCustom: boolean,
-  useSse: boolean,
+  shouldTestResources: boolean,
+  shouldTestCustom: boolean,
+  shouldUseSse: boolean,
 ): Promise<void> {
-  if (testResources || testCustom) return;
+  if (shouldTestResources || shouldTestCustom) return;
 
   // * CRITICAL: In stdio mode, setup safe logging BEFORE initialization
-  if (!useSse && !stdioTransportConnected) {
+  if (!shouldUseSse && !stdioTransportConnected) {
     const transport = new StdioServerTransport();
     await server.connect(transport);
     setupSafeLogging(server);
@@ -371,16 +371,16 @@ async function initializeApi(
  * server startup, and connection to Actual Budget API.
  */
 async function main(): Promise<void> {
-  if (testResources) {
+  if (testResourcesOption) {
     await runResourceTest();
   }
 
-  if (testCustom) {
+  if (testCustomOption) {
     await runCustomTest();
   }
 
   validateEnv();
-  if (useSse) {
+  if (useSseOption) {
     // Determine binding host
     // If bearer auth is enabled, default to 0.0.0.0 (all interfaces)
     // If bearer auth is disabled, default to 127.0.0.1 (localhost only) for security
@@ -780,9 +780,9 @@ async function main(): Promise<void> {
 
     // * Initialize API after server starts listening on port
     // * This prevents Render from timing out during initialization
-    await initializeApi(!!testResources, !!testCustom, useSse);
+    await initializeApi(!!testResourcesOption, !!testCustomOption, useSseOption);
   } else {
-    await initializeApi(!!testResources, !!testCustom, useSse);
+    await initializeApi(!!testResourcesOption, !!testCustomOption, useSseOption);
     // * Transport already connected and safe logging setup in main() above
     // * Just log that we're ready
     if (!stdioTransportConnected) {
