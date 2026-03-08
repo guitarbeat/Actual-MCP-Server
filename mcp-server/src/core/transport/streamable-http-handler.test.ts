@@ -35,9 +35,10 @@ describe('StreamableHTTPHandler Security', () => {
   it('should sanitize error messages in 500 responses', async () => {
     // Mock handleNewSession to throw a sensitive error
     // We access the private method by casting to any
-    vi.spyOn(handler as any, 'handleNewSession').mockRejectedValue(
-      new Error('Sensitive database password exposed!'),
-    );
+    vi.spyOn(
+      handler as unknown as { handleNewSession: () => Promise<void> },
+      'handleNewSession',
+    ).mockRejectedValue(new Error('Sensitive database password exposed!'));
 
     // Trigger the error by simulating an initialize request
     const body = {

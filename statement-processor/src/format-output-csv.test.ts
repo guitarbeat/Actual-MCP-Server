@@ -19,7 +19,6 @@ describe('formatTransactionsToCSV', () => {
         category: '+Groceries', // Formula
         notes: '@malicious', // Formula
         amount: -50,
-        originalDescription: 'Test',
       },
       {
         date: '2024-01-03',
@@ -27,7 +26,6 @@ describe('formatTransactionsToCSV', () => {
         category: '\tTab', // Tab
         notes: '\rReturn', // Carriage return
         amount: -20,
-        originalDescription: 'Test 2',
       },
     ];
 
@@ -50,7 +48,6 @@ describe('formatTransactionsToCSV', () => {
         category: 'Food',
         notes: 'Just notes',
         amount: -50,
-        originalDescription: 'Test',
       },
     ];
 
