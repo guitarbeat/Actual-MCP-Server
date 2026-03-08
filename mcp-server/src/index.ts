@@ -20,7 +20,9 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
-import type { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import {
   getInitializationStats,
   initActualApi,
@@ -396,6 +398,21 @@ async function main(): Promise<void> {
       // * When bearer auth is disabled, restrict to localhost for security.
       allowedHosts: enableBearer ? undefined : ['localhost', '127.0.0.1'],
     });
+
+    // * Enforce a 1MB payload limit for JSON bodies
+    app.use(express.json({ limit: '1mb' }));
+
+    // * Helmet security headers (Content Security Policy is managed by custom securityHeaders middleware)
+    app.use(helmet({ contentSecurityPolicy: false }));
+
+    // * Rate limiting: maximum of 100 requests per 15 minutes
+    const apiLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    app.use(apiLimiter);
 
     // * Security Headers
     app.use(securityHeaders);

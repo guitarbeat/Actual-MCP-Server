@@ -13,17 +13,8 @@ import type { NextFunction, Request, Response } from 'express';
  * - Removal of X-Powered-By
  */
 export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
-  // Prevent MIME type sniffing
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-
-  // Prevent clickjacking
-  res.setHeader('X-Frame-Options', 'DENY');
-
-  // Enforce HTTPS
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-
-  // Control referrer information
-  res.setHeader('Referrer-Policy', 'no-referrer');
+  // Note: helmet handles standard security headers (like X-Frame-Options, X-Content-Type-Options,
+  // Strict-Transport-Security, X-Powered-By, etc.) globally in index.ts. We only set custom CSP here.
 
   // Generate a nonce for inline scripts
   const nonce = randomBytes(16).toString('base64');
@@ -39,9 +30,6 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
     'Content-Security-Policy',
     `default-src 'self'; img-src 'self' data:; style-src 'self' 'nonce-${nonce}'; script-src 'self' 'nonce-${nonce}'; frame-ancestors 'none';`,
   );
-
-  // Remove X-Powered-By header to hide server details
-  res.removeHeader('X-Powered-By');
 
   next();
 };
