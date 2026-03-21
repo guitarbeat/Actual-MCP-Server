@@ -2,6 +2,11 @@ import { describe, it, vi, expect, afterEach } from 'vitest';
 import { findUncategorizedTransactions } from './financial-analyzer.js';
 import * as actualClient from '../api/actual-client.js';
 
+type UncategorizedAqlRow = {
+  amount: number;
+  payee: { name: string } | null;
+};
+
 // Mock the API client
 vi.mock('../api/actual-client.js', () => ({
   getAccounts: vi.fn(),
@@ -26,7 +31,7 @@ describe('Financial Analyzer', () => {
           { amount: -200, payee: { name: 'Amazon' } },
           { amount: -20, payee: { name: 'Uber' } },
         ],
-      } as unknown as { data: any[] });
+      } as { data: UncategorizedAqlRow[] });
 
       const result = await findUncategorizedTransactions('2024-01');
 
@@ -40,7 +45,9 @@ describe('Financial Analyzer', () => {
     });
 
     it('should handle no transactions', async () => {
-      vi.mocked(actualClient.runAQL).mockResolvedValue({ data: [] } as unknown as { data: any[] });
+      vi.mocked(actualClient.runAQL).mockResolvedValue({ data: [] } as {
+        data: UncategorizedAqlRow[];
+      });
       const result = await findUncategorizedTransactions('2024-01');
       expect(result.count).toBe(0);
       expect(result.totalAmount).toBe(0);
@@ -50,7 +57,7 @@ describe('Financial Analyzer', () => {
     it('should handle transactions with missing payee name', async () => {
       vi.mocked(actualClient.runAQL).mockResolvedValue({
         data: [{ amount: -50, payee: null }],
-      } as unknown as { data: any[] });
+      } as { data: UncategorizedAqlRow[] });
 
       const result = await findUncategorizedTransactions('2024-01');
       expect(result.count).toBe(1);
