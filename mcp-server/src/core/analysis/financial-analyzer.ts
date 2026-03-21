@@ -4,12 +4,7 @@
 // ----------------------------
 
 import { q } from '@actual-app/api';
-import {
-  getAccounts,
-  getBudgetMonth,
-  getSchedules,
-  runAQL,
-} from '../api/actual-client.js';
+import { getAccounts, getBudgetMonth, getSchedules, runAQL } from '../api/actual-client.js';
 import { fetchAccountBalances } from '../data/fetch-account-balances.js';
 import { formatDate, getDateRange } from '../formatting/index.js';
 
@@ -285,7 +280,9 @@ export async function getUpcomingSchedulesSummary(days = 14): Promise<{
 
     // Sort by next date (soonest first)
     return {
-      items: upcoming.sort((a, b) => new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime()),
+      items: upcoming.sort(
+        (a, b) => new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime(),
+      ),
       warnings: [],
     };
   } catch {

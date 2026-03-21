@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getAvailableTools, type ToolDefinition } from '../src/tools/index.js';
+import type { ToolDefinition } from '../src/tools/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,11 +29,26 @@ function formatToolList(tools: ToolDefinition[]): string {
     .join('\n');
 }
 
-function buildToolCollections(): {
+async function loadGetAvailableTools(): Promise<
+  typeof import('../src/tools/index.js').getAvailableTools
+> {
+  if (!('navigator' in globalThis)) {
+    Object.defineProperty(globalThis, 'navigator', {
+      value: { platform: process.platform },
+      configurable: true,
+    });
+  }
+
+  const module = await import('../src/tools/index.js');
+  return module.getAvailableTools;
+}
+
+async function buildToolCollections(): Promise<{
   readOnlyCore: ToolDefinition[];
   writeCore: ToolDefinition[];
   advanced: ToolDefinition[];
-} {
+}> {
+  const getAvailableTools = await loadGetAvailableTools();
   const readOnlyCore = getAvailableTools(false, false);
   const writeAndReadCore = getAvailableTools(true, false);
   const writeCore = writeAndReadCore.filter((tool) => tool.requiresWrite);
@@ -48,8 +63,8 @@ function buildToolCollections(): {
   };
 }
 
-function buildReadmeToolSurface(): string {
-  const { readOnlyCore, writeCore, advanced } = buildToolCollections();
+async function buildReadmeToolSurface(): Promise<string> {
+  const { readOnlyCore, writeCore, advanced } = await buildToolCollections();
   const total = readOnlyCore.length + writeCore.length + advanced.length;
 
   return [
@@ -67,8 +82,8 @@ function buildReadmeToolSurface(): string {
   ].join('\n');
 }
 
-function buildRegistryDocument(): string {
-  const { readOnlyCore, writeCore, advanced } = buildToolCollections();
+async function buildRegistryDocument(): Promise<string> {
+  const { readOnlyCore, writeCore, advanced } = await buildToolCollections();
 
   return [
     '# Tool Registry',
@@ -114,11 +129,11 @@ function writeIfChanged(path: string, nextContent: string): boolean {
   return true;
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const shouldWrite = process.argv.includes('--write');
-  const generatedReadmeSection = buildReadmeToolSurface();
+  const generatedReadmeSection = await buildReadmeToolSurface();
   const nextReadme = replaceMarkedSection(readFileSync(readmePath, 'utf8'), generatedReadmeSection);
-  const nextRegistry = buildRegistryDocument();
+  const nextRegistry = await buildRegistryDocument();
 
   mkdirSync(docsDir, { recursive: true });
 
@@ -142,4 +157,4 @@ function main(): void {
   console.log('Tool documentation is in sync.');
 }
 
-main();
+void main();

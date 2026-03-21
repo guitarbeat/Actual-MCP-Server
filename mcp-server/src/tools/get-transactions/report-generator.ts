@@ -34,10 +34,7 @@ export class GetTransactionsReportGenerator {
     const filtersList = filters.map((filter) => `- ${filter}`).join('\n');
 
     // Build the report sections
-    const sections = [
-      '# Filtered Transactions',
-      '',
-    ];
+    const sections = ['# Filtered Transactions', ''];
 
     if (metadata.warnings && metadata.warnings.length > 0) {
       sections.push('## Warnings', '');
