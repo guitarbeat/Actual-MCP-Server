@@ -1,18 +1,15 @@
-import {
-  getAccountBalance,
-  updateTransaction,
-} from '../../../core/api/actual-client.js';
+import { getAccountBalance, updateTransaction } from '../../../core/api/actual-client.js';
 import { fetchAllAccounts } from '../../../core/data/fetch-accounts.js';
 import { fetchTransactionsForAccount } from '../../../core/data/fetch-transactions.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
-import type {
-  ReconciliationSnapshot,
-  ReconciliationTransaction,
-} from './types.js';
+import type { ReconciliationSnapshot, ReconciliationTransaction } from './types.js';
 
 const RECONCILIATION_START_DATE = '1900-01-01';
 
-function isRelevantTransaction(transaction: ReconciliationTransaction, statementDate: string): boolean {
+function isRelevantTransaction(
+  transaction: ReconciliationTransaction,
+  statementDate: string,
+): boolean {
   return !transaction.is_child && transaction.date <= statementDate;
 }
 
@@ -53,12 +50,16 @@ export class ReconcileAccountDataFetcher {
       isRelevantTransaction(transaction, statementDate),
     );
     const clearedTransactions = relevantTransactions.filter((transaction) => transaction.cleared);
-    const unclearedTransactions = relevantTransactions.filter((transaction) => !transaction.cleared);
+    const unclearedTransactions = relevantTransactions.filter(
+      (transaction) => !transaction.cleared,
+    );
     const eligibleTransactions = relevantTransactions.filter((transaction) =>
       isEligibleForClearing(transaction, statementDate),
     );
 
-    const futureTransactionsIgnored = transactions.filter((transaction) => transaction.date > statementDate).length;
+    const futureTransactionsIgnored = transactions.filter(
+      (transaction) => transaction.date > statementDate,
+    ).length;
     const clearedBalanceCents = clearedTransactions.reduce(
       (sum, transaction) => sum + transaction.amount,
       0,

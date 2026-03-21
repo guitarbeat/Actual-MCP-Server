@@ -20,7 +20,10 @@ interface PreparedTransactionResult {
 
 export class ImportTransactionBatchDataFetcher {
   async prepareBatches(transactions: ImportedTransaction[]): Promise<ImportAccountBatch[]> {
-    const groupedByAccountReference = new Map<string, Array<{ index: number; value: ImportedTransaction }>>();
+    const groupedByAccountReference = new Map<
+      string,
+      Array<{ index: number; value: ImportedTransaction }>
+    >();
 
     transactions.forEach((transaction, index) => {
       const bucket = groupedByAccountReference.get(transaction.accountId) ?? [];
@@ -34,7 +37,9 @@ export class ImportTransactionBatchDataFetcher {
       try {
         const resolvedAccountId = await nameResolver.resolveAccount(accountReference);
         const preparedEntries = await Promise.all(
-          entries.map(async ({ index, value }) => this.prepareTransaction(accountReference, index, value)),
+          entries.map(async ({ index, value }) =>
+            this.prepareTransaction(accountReference, index, value),
+          ),
         );
 
         const existingBatch = batchesByAccountId.get(resolvedAccountId) ?? {
@@ -95,7 +100,9 @@ export class ImportTransactionBatchDataFetcher {
   ): Promise<PreparedTransactionResult> {
     try {
       const preparedPayee =
-        transaction.payee !== undefined ? await nameResolver.resolvePayee(transaction.payee) : undefined;
+        transaction.payee !== undefined
+          ? await nameResolver.resolvePayee(transaction.payee)
+          : undefined;
       const preparedSubtransactions = transaction.subtransactions
         ? await Promise.all(
             transaction.subtransactions.map(async (subtransaction) => ({

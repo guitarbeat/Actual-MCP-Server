@@ -21,10 +21,7 @@ export const ImportedTransactionSchema = z
       .optional()
       .describe('Optional payee name or ID. Use transfer payee IDs for transfers.'),
     payee_name: z.string().optional().describe('Optional payee name to create or match.'),
-    imported_payee: z
-      .string()
-      .optional()
-      .describe('Optional raw imported payee/description text.'),
+    imported_payee: z.string().optional().describe('Optional raw imported payee/description text.'),
     notes: z.string().optional().describe('Optional transaction notes.'),
     imported_id: z
       .string()
@@ -47,10 +44,7 @@ export const ImportTransactionBatchArgsSchema = z
       .boolean()
       .optional()
       .describe('Default cleared state for imported transactions.'),
-    dryRun: z
-      .boolean()
-      .optional()
-      .describe('Preview the import without writing any data.'),
+    dryRun: z.boolean().optional().describe('Preview the import without writing any data.'),
     reimportDeleted: z
       .boolean()
       .optional()

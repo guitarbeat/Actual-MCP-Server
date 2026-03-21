@@ -35,7 +35,10 @@ export async function handler(
 
     for (const recommendation of parsed.recommendations) {
       const categoryLabel =
-        recommendation.categoryName || recommendation.category || recommendation.categoryId || 'Unknown category';
+        recommendation.categoryName ||
+        recommendation.category ||
+        recommendation.categoryId ||
+        'Unknown category';
 
       if (recommendation.amount === 0) {
         report.skipped.push({
@@ -48,7 +51,9 @@ export async function handler(
       try {
         const categoryId =
           recommendation.categoryId ??
-          (recommendation.category ? await nameResolver.resolveCategory(recommendation.category) : undefined);
+          (recommendation.category
+            ? await nameResolver.resolveCategory(recommendation.category)
+            : undefined);
 
         if (!categoryId) {
           throw new Error('Category identifier could not be resolved.');
