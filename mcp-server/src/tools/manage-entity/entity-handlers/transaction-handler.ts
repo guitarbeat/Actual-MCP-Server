@@ -3,11 +3,14 @@
 // ----------------------------
 
 import {
+  addTransactions,
   deleteTransaction,
+  getTransactions,
   importTransactions,
   updateTransaction,
 } from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
+import { fetchAllPayees } from '../../../core/data/fetch-payees.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
 import type { EntityHandler, Operation } from './base-handler.js';
@@ -22,6 +25,7 @@ export interface TransactionData {
   amount?: number; // Dollars or cents (auto-detected)
   payee?: string; // Name or ID
   category?: string; // Name or ID
+  transferAccount?: string; // Destination account name or ID for transfers
   notes?: string;
   cleared?: boolean;
   subtransactions?: Array<{
@@ -40,6 +44,7 @@ interface NormalizedTransactionData {
   amount: number; // Always in cents
   payeeId?: string | null;
   categoryId?: string | null;
+  transferAccountId?: string | null;
   notes?: string;
   cleared?: boolean;
   subtransactions?: Array<{
@@ -68,6 +73,19 @@ function convertAmountToCents(amount: number): number {
   return Math.round(amount * 100);
 }
 
+async function resolveTransferPayeeId(destinationAccountId: string): Promise<string> {
+  const payees = await fetchAllPayees();
+  const transferPayee = payees.find((payee) => payee.transfer_acct === destinationAccountId);
+
+  if (!transferPayee) {
+    throw new Error(
+      `No transfer payee found for account '${destinationAccountId}'. Ensure the destination account exists.`,
+    );
+  }
+
+  return transferPayee.id;
+}
+
 /**
  * Handler for transaction entity operations
  * Implements create, update, and delete operations for transactions
@@ -91,6 +109,9 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
       amount: data.amount !== undefined ? convertAmountToCents(data.amount) : 0,
       payeeId: data.payee ? await nameResolver.resolvePayee(data.payee) : null,
       categoryId: data.category ? await nameResolver.resolveCategory(data.category) : null,
+      transferAccountId: data.transferAccount
+        ? await nameResolver.resolveAccount(data.transferAccount)
+        : null,
       notes: data.notes,
       cleared: data.cleared,
     };
@@ -108,6 +129,14 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
     if (data.amount === undefined) throw new Error('amount is required for create operation');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
       throw new Error('date must be in YYYY-MM-DD format');
+    }
+
+    if (data.transferAccount && data.category) {
+      throw new Error('category cannot be set when transferAccount is provided');
+    }
+
+    if (data.transferAccount && data.subtransactions?.length) {
+      throw new Error('subtransactions are not supported when transferAccount is provided');
     }
   }
 
@@ -132,6 +161,7 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
    */
   async create(data: TransactionData): Promise<string> {
     const normalized = await this.normalizeData(data, true);
+    const importedId = `manual-${normalized.accountId}-${normalized.date}-${normalized.amount}-${Date.now()}`;
 
     // Build transaction object for importTransactions
     const transaction = {
@@ -141,13 +171,47 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
       category: normalized.categoryId,
       notes: normalized.notes || '',
       cleared: normalized.cleared ?? false,
-      imported_id: `manual-${normalized.accountId}-${normalized.date}-${normalized.amount}-${Date.now()}`,
+      imported_id: importedId,
       subtransactions: normalized.subtransactions?.map((sub) => ({
         amount: sub.amount,
         category: sub.categoryId,
         notes: sub.notes,
       })),
     };
+
+    if (normalized.transferAccountId) {
+      const transferPayeeId = await resolveTransferPayeeId(normalized.transferAccountId);
+
+      await addTransactions(
+        normalized.accountId,
+        [
+          {
+            date: normalized.date,
+            amount: normalized.amount,
+            payee: transferPayeeId,
+            notes: normalized.notes || '',
+            cleared: normalized.cleared ?? false,
+            imported_id: importedId,
+          },
+        ],
+        { runTransfers: true },
+      );
+
+      const createdTransactions = await getTransactions(
+        normalized.accountId,
+        normalized.date,
+        normalized.date,
+      );
+      const createdTransaction = createdTransactions.find(
+        (candidate) => candidate.imported_id === importedId,
+      );
+
+      if (!createdTransaction) {
+        throw new Error('Failed to create transfer transaction');
+      }
+
+      return createdTransaction.id;
+    }
 
     // Import the transaction (this will run rules, detect duplicates, etc.)
     const importResult = await importTransactions(normalized.accountId, [transaction]);

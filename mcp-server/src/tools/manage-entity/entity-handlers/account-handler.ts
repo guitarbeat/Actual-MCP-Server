@@ -4,7 +4,7 @@
 
 import {
   closeAccount,
-  createAccount,
+  createAccountWithInitialBalance,
   deleteAccount,
   getAccountBalance,
   reopenAccount,
@@ -89,14 +89,7 @@ export class AccountHandler implements EntityHandler<AccountData, AccountData> {
     }
 
     // Create the account
-    const accountId = await createAccount(accountData);
-
-    // Set initial balance if provided
-    if (data.initialBalance !== undefined && data.initialBalance !== 0) {
-      // Note: Initial balance handling may vary by API implementation
-      // This is a placeholder - actual implementation depends on API
-      await updateAccount(accountId, { balance: data.initialBalance });
-    }
+    const accountId = await createAccountWithInitialBalance(accountData, data.initialBalance);
 
     return accountId;
   }

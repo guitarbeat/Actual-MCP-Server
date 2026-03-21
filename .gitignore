@@ -28,6 +28,11 @@ Thumbs.db
 # IDE / editor
 .idea
 .vscode
+.cursor
+
+# Local AI / assistant artifacts
+.agent
+.jules
 
 # Cache
 .eslintcache

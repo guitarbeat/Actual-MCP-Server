@@ -10,12 +10,16 @@ import type { ToolInput } from '../core/types/index.js';
 import * as closeAccount from './accounts/close-account/index.js';
 import * as getAccountBalance from './accounts/get-account-balance/index.js';
 import * as reopenAccount from './accounts/reopen-account/index.js';
+import * as reconcileAccount from './accounts/reconcile-account/index.js';
+import * as setAccountStartingBalance from './accounts/set-account-starting-balance/index.js';
 import * as balanceHistory from './balance-history/index.js';
 import * as holdBudget from './budget/hold-budget/index.js';
 import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
+import * as applyBudgetPlan from './budgets/apply-budget-plan/index.js';
 import * as getBudget from './budgets/get-budget/index.js';
 import * as getBudgets from './budgets/get-budgets/index.js';
 import * as importTransactions from './budgets/import-transactions/index.js';
+import * as recommendBudgetPlan from './budgets/recommend-budget-plan/index.js';
 import * as switchBudget from './budgets/switch-budget/index.js';
 import * as getGroupedCategories from './categories/get-grouped-categories/index.js';
 // CRUD Factory
@@ -35,7 +39,12 @@ import * as spendingByCategory from './spending-by-category/index.js';
 // Transaction CRUD tools
 import * as createTransaction from './transactions/create-transaction/index.js';
 import * as deleteTransaction from './transactions/delete-transaction/index.js';
+import * as importTransactionBatch from './transactions/import-transaction-batch/index.js';
 import * as updateTransaction from './transactions/update-transaction/index.js';
+import * as createSchedule from './schedules/create-schedule/index.js';
+import * as deleteSchedule from './schedules/delete-schedule/index.js';
+import * as getSchedules from './schedules/get-schedules/index.js';
+import * as updateSchedule from './schedules/update-schedule/index.js';
 
 /**
  * Tool definition interface for registry-based tool management
@@ -163,6 +172,18 @@ const toolRegistry: CategorizedToolDefinition[] = [
     requiresWrite: false,
     category: 'core',
   },
+  {
+    schema: recommendBudgetPlan.schema,
+    handler: wrapHandler(recommendBudgetPlan.handler),
+    requiresWrite: false,
+    category: 'core',
+  },
+  {
+    schema: getSchedules.schema,
+    handler: wrapHandler(getSchedules.handler),
+    requiresWrite: false,
+    category: 'core',
+  },
 
   // Core write tools
   {
@@ -180,6 +201,48 @@ const toolRegistry: CategorizedToolDefinition[] = [
   {
     schema: importTransactions.schema,
     handler: wrapHandler(importTransactions.handler),
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: importTransactionBatch.schema,
+    handler: wrapHandler(importTransactionBatch.handler),
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: applyBudgetPlan.schema,
+    handler: wrapHandler(applyBudgetPlan.handler),
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: setAccountStartingBalance.schema,
+    handler: wrapHandler(setAccountStartingBalance.handler),
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: reconcileAccount.schema,
+    handler: wrapHandler(reconcileAccount.handler),
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: createSchedule.schema,
+    handler: wrapHandler(createSchedule.handler),
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: updateSchedule.schema,
+    handler: wrapHandler(updateSchedule.handler),
+    requiresWrite: true,
+    category: 'core',
+  },
+  {
+    schema: deleteSchedule.schema,
+    handler: wrapHandler(deleteSchedule.handler),
     requiresWrite: true,
     category: 'core',
   },
