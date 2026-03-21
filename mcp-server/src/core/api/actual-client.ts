@@ -155,6 +155,10 @@ function invalidateAllReadState(): void {
   nameResolver.clearCache();
 }
 
+function invalidateNameResolutionState(): void {
+  nameResolver.clearCache();
+}
+
 async function waitForInitialization(timeoutMs = 55000): Promise<void> {
   if (!initializationPromise) {
     return;
@@ -727,8 +731,9 @@ export async function createPayee(args: Record<string, unknown>): Promise<string
     }
     const result = await api.createPayee(args as Omit<APIPayeeEntity, 'id'>);
     cacheService.invalidatePattern('payees:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -738,8 +743,9 @@ export async function updatePayee(id: string, args: Record<string, unknown>): Pr
   return ensureConnection(async () => {
     const result = await api.updatePayee(id, args);
     cacheService.invalidatePattern('payees:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -749,29 +755,30 @@ export async function deletePayee(id: string): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.deletePayee(id);
     cacheService.invalidatePattern('payees:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
  * Create a new rule (ensures API is initialized)
  */
 export async function createRule(args: Record<string, unknown>): Promise<RuleEntity> {
-  return ensureConnection(() => api.createRule(args as Omit<RuleEntity, 'id'>));
+  return ensureConnection(() => api.createRule(args as Omit<RuleEntity, 'id'>), 'write');
 }
 
 /**
  * Update a rule (ensures API is initialized)
  */
 export async function updateRule(args: Record<string, unknown>): Promise<RuleEntity> {
-  return ensureConnection(() => api.updateRule(args as unknown as RuleEntity));
+  return ensureConnection(() => api.updateRule(args as unknown as RuleEntity), 'write');
 }
 
 /**
  * Delete a rule (ensures API is initialized)
  */
 export async function deleteRule(id: string): Promise<boolean> {
-  return ensureConnection(() => api.deleteRule(id));
+  return ensureConnection(() => api.deleteRule(id), 'write');
 }
 
 /**
@@ -781,8 +788,9 @@ export async function createCategory(args: Record<string, unknown>): Promise<str
   return ensureConnection(async () => {
     const result = await api.createCategory(args as Omit<APICategoryEntity, 'id'>);
     cacheService.invalidatePattern('categories:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -792,8 +800,9 @@ export async function updateCategory(id: string, args: Record<string, unknown>):
   return ensureConnection(async () => {
     const result = await api.updateCategory(id, args);
     cacheService.invalidatePattern('categories:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -803,7 +812,8 @@ export async function deleteCategory(id: string): Promise<void> {
   return ensureConnection(async () => {
     await api.deleteCategory(id);
     cacheService.invalidatePattern('categories:*');
-  });
+    invalidateNameResolutionState();
+  }, 'write');
 }
 
 /**
@@ -813,8 +823,9 @@ export async function createCategoryGroup(args: Record<string, unknown>): Promis
   return ensureConnection(async () => {
     const result = await api.createCategoryGroup(args as Omit<APICategoryGroupEntity, 'id'>);
     cacheService.invalidatePattern('categoryGroups:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -827,8 +838,9 @@ export async function updateCategoryGroup(
   return ensureConnection(async () => {
     const result = await api.updateCategoryGroup(id, args);
     cacheService.invalidatePattern('categoryGroups:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -838,7 +850,8 @@ export async function deleteCategoryGroup(id: string): Promise<void> {
   return ensureConnection(async () => {
     await api.deleteCategoryGroup(id);
     cacheService.invalidatePattern('categoryGroups:*');
-  });
+    invalidateNameResolutionState();
+  }, 'write');
 }
 
 /**
@@ -862,8 +875,9 @@ export async function addTransactions(
     const result = await api.addTransactions(accountId, transactions, options);
     cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -918,9 +932,10 @@ export async function importTransactions(
 
     cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
 
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -938,7 +953,8 @@ export async function updateTransaction(
     await api.updateTransaction(id, updates);
     cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
-  });
+    invalidateNameResolutionState();
+  }, 'write');
 }
 
 /**
@@ -952,7 +968,8 @@ export async function deleteTransaction(id: string): Promise<void> {
     await api.deleteTransaction(id);
     cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
-  });
+    invalidateNameResolutionState();
+  }, 'write');
 }
 
 /**
@@ -972,8 +989,9 @@ export async function createAccountWithInitialBalance(
   return ensureConnection(async () => {
     const result = await api.createAccount(args as Omit<APIAccountEntity, 'id'>, initialBalance);
     cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -983,8 +1001,9 @@ export async function updateAccount(id: string, args: Record<string, unknown>): 
   return ensureConnection(async () => {
     const result = await api.updateAccount(id, args);
     cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -994,8 +1013,9 @@ export async function closeAccount(id: string): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.closeAccount(id);
     cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -1005,8 +1025,9 @@ export async function reopenAccount(id: string): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.reopenAccount(id);
     cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -1016,8 +1037,9 @@ export async function deleteAccount(id: string): Promise<unknown> {
   return ensureConnection(async () => {
     const result = await api.deleteAccount(id);
     cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
