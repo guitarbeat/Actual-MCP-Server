@@ -1,11 +1,6 @@
 import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
 import type { ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
-import {
-  getAccounts,
-  getBudgetMonth,
-  getPayeeRules,
-  getRules,
-} from '../core/api/actual-client.js';
+import { getAccounts, getBudgetMonth, getPayeeRules, getRules } from '../core/api/actual-client.js';
 import {
   type FinancialInsightsSummary,
   generateInsightsSummary,
@@ -204,7 +199,9 @@ function formatHealthDashboard(
   ].join('\n');
 }
 
-function stringifyRulePart(part: RuleEntity['conditions'][number] | RuleEntity['actions'][number]): string {
+function stringifyRulePart(
+  part: RuleEntity['conditions'][number] | RuleEntity['actions'][number],
+): string {
   const value = Array.isArray(part.value) ? part.value.join(', ') : String(part.value);
   return `${String(part.field)} ${part.op} ${value}`;
 }
@@ -257,10 +254,7 @@ async function handleRulesResource(uri: string): Promise<ReadResourceResult> {
   };
 }
 
-async function handlePayeeRulesResource(
-  uri: string,
-  payeeId: string,
-): Promise<ReadResourceResult> {
+async function handlePayeeRulesResource(uri: string, payeeId: string): Promise<ReadResourceResult> {
   const [rules, payeesById] = await Promise.all([getPayeeRules(payeeId), fetchAllPayeesMap()]);
   const payeeName = payeesById[payeeId]?.name || payeeId;
 
@@ -299,8 +293,6 @@ export async function handleAssistiveResource(
   }
 
   return {
-    contents: [
-      { uri, text: `Error: Unrecognized resource URI: ${uri}`, mimeType: 'text/plain' },
-    ],
+    contents: [{ uri, text: `Error: Unrecognized resource URI: ${uri}`, mimeType: 'text/plain' }],
   };
 }

@@ -1,9 +1,5 @@
 import type { ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
-import {
-  getAccountBalance,
-  getAccounts,
-  getTransactions,
-} from '../core/api/actual-client.js';
+import { getAccountBalance, getAccounts, getTransactions } from '../core/api/actual-client.js';
 import { formatAmount, formatDate, getDateRange } from '../core/formatting/index.js';
 import type { Account, Transaction } from '../core/types/index.js';
 

@@ -30,8 +30,7 @@ export async function handler(
   } catch (error) {
     return errorFromCatch(error, {
       fallbackMessage: 'Failed to recommend a budget plan',
-      suggestion:
-        'Verify the target month and optional lookback settings before retrying.',
+      suggestion: 'Verify the target month and optional lookback settings before retrying.',
     });
   }
 }

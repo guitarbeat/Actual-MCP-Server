@@ -76,7 +76,9 @@ function resolveBudgetCategoryId(
   groupName: string,
   categoriesByCompositeKey: Map<string, string>,
 ): string | undefined {
-  return budgetCategory.id || categoriesByCompositeKey.get(categoryKey(groupName, budgetCategory.name));
+  return (
+    budgetCategory.id || categoriesByCompositeKey.get(categoryKey(groupName, budgetCategory.name))
+  );
 }
 
 function isFixedCost(amounts: number[], roundingIncrement: number): boolean {
@@ -148,8 +150,7 @@ function buildRecommendation(
   }
 
   const roundedAverage = roundUp(averageSpent, roundingIncrement);
-  const recommendedAmount =
-    roundedAverage > 0 ? Math.max(roundedAverage, minimumFloor) : 0;
+  const recommendedAmount = roundedAverage > 0 ? Math.max(roundedAverage, minimumFloor) : 0;
 
   return {
     categoryId: history.categoryId,

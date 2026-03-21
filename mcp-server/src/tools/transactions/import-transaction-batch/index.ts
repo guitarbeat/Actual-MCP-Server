@@ -90,7 +90,11 @@ export async function handler(
     }
 
     return successWithJson(
-      new ImportTransactionBatchReportGenerator().generate(batches, accountResults, parsed.dryRun ?? false),
+      new ImportTransactionBatchReportGenerator().generate(
+        batches,
+        accountResults,
+        parsed.dryRun ?? false,
+      ),
     );
   } catch (error) {
     return errorFromCatch(error, {

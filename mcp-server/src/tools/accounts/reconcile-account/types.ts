@@ -1,13 +1,11 @@
+import { z } from 'zod';
 import type { Transaction } from '../../../core/types/domain.js';
 import { DateSchema } from '../../../core/types/index.js';
-import { z } from 'zod';
 
 export const ReconcileAccountArgsSchema = z
   .object({
     account: z.string().min(1).describe('Account name or ID to reconcile.'),
-    statementBalance: z
-      .number()
-      .describe('Statement balance in dollars, for example 1234.56.'),
+    statementBalance: z.number().describe('Statement balance in dollars, for example 1234.56.'),
     statementDate: DateSchema.describe('Statement cutoff date in YYYY-MM-DD format.'),
     forceClear: z
       .boolean()
