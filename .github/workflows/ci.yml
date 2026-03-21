@@ -38,22 +38,22 @@ jobs:
       - name: Secret and public-readiness checks
         run: |
           pre-commit run gitleaks --all-files
-          pnpm --filter actual-mcp public:check
+          pnpm --filter @guitarbeat/actual-mcp public:check
 
       - name: Lint
-        run: pnpm --filter actual-mcp lint
+        run: pnpm --filter @guitarbeat/actual-mcp lint
 
       - name: Format Check
-        run: pnpm --filter actual-mcp format:check
+        run: pnpm --filter @guitarbeat/actual-mcp format:check
 
       - name: Tool Docs Check
-        run: pnpm --filter actual-mcp docs:check
+        run: pnpm --filter @guitarbeat/actual-mcp docs:check
 
       - name: Type Check
-        run: pnpm --filter actual-mcp type-check
+        run: pnpm --filter @guitarbeat/actual-mcp type-check
 
       - name: Build
-        run: pnpm --filter actual-mcp build
+        run: pnpm --filter @guitarbeat/actual-mcp build
 
       - name: Test
-        run: pnpm --filter actual-mcp test
+        run: pnpm --filter @guitarbeat/actual-mcp test

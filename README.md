@@ -1,37 +1,37 @@
 # Actual MCP
 
-This repository contains a source-buildable Actual Budget MCP server in [`mcp-server/`](./mcp-server). The server exposes Actual Budget data and write workflows over MCP, including budgeting, reconciliation, schedule management, transaction imports, starting-balance repair, and transfer-aware transaction creation.
+This workspace is centered on the public Actual Budget MCP server in [`mcp-server/`](./mcp-server). It exposes Actual Budget data and write workflows over MCP, including budgeting, reconciliation, schedule management, transaction imports, starting-balance repair, and transfer-aware transaction creation.
 
-## Primary Package
+## Distribution Targets
 
-- [`mcp-server/`](./mcp-server) is the product package.
-- [`mcp-server/README.md`](./mcp-server/README.md) is the authoritative guide for installation, configuration, client setup, and tool inventory.
-- [`docs/engineering-notes.md`](./docs/engineering-notes.md) contains contributor-facing implementation notes.
+- npm package: [`@guitarbeat/actual-mcp`](https://www.npmjs.com/package/@guitarbeat/actual-mcp)
+- Container image: `ghcr.io/guitarbeat/actual-mcp`
+- Source repository: `https://github.com/guitarbeat/Actual-MCP-Server`
 
 ## Quick Start
 
 ```bash
-git clone <your-repo-url>
-cd actual-mcp
+git clone https://github.com/guitarbeat/Actual-MCP-Server.git
+cd Actual-MCP-Server
 pnpm install
-pnpm --filter actual-mcp build
-pnpm --filter actual-mcp test
+pnpm --filter @guitarbeat/actual-mcp build
+pnpm --filter @guitarbeat/actual-mcp test
 ```
 
-For package-specific setup and MCP client configuration, use [`mcp-server/README.md`](./mcp-server/README.md).
+Use [`mcp-server/README.md`](./mcp-server/README.md) for package installation, MCP client configuration, Docker usage, and the generated tool inventory.
 
-## Security And Public Readiness
+## Public Hygiene
 
-- Rotate any previously exposed credentials, bearer tokens, sync IDs, and local inspector tokens before sharing the repository.
-- Rewrite git history to remove previously committed secret-bearing files or values before pushing a public branch.
-- Run `pre-commit run --all-files` and `pnpm --filter actual-mcp public:check` to verify the working tree is public-safe.
+- Rotate any previously exposed credentials, bearer tokens, sync IDs, and local inspector tokens before publishing.
+- Rewrite git history to remove earlier secret-bearing files or values before pushing a public branch.
+- Run `pre-commit run --all-files` and `pnpm --filter @guitarbeat/actual-mcp public:check` before release.
 
 ## Repository Layout
 
 ```text
 .
-├── mcp-server/           # Actual Budget MCP server package
-├── docs/                 # Contributor-facing engineering notes
-├── render.yaml           # Render blueprint for the MCP server
-└── .pre-commit-config.yaml
+├── mcp-server/              # Publishable MCP server package
+├── docs/                    # Contributor-facing engineering notes
+├── render.yaml              # Render blueprint for HTTP/SSE deployment
+└── .pre-commit-config.yaml  # Secret scanning and public-tree checks
 ```

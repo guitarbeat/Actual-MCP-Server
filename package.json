@@ -13,11 +13,11 @@
     "test": "pnpm -r run test",
     "type-check": "pnpm -r --if-present run type-check",
     "quality": "pnpm -r --if-present run quality",
-    "dev:mcp-server": "pnpm --filter actual-mcp dev",
-    "watch:mcp-server": "pnpm --filter actual-mcp watch",
-    "start:mcp-server": "pnpm --filter actual-mcp start",
-    "test:mcp-server": "pnpm --filter actual-mcp test",
-    "docs:mcp-server": "pnpm --filter actual-mcp docs:generate",
-    "public:check:mcp-server": "pnpm --filter actual-mcp public:check"
+    "dev:mcp-server": "pnpm --filter @guitarbeat/actual-mcp dev",
+    "watch:mcp-server": "pnpm --filter @guitarbeat/actual-mcp watch",
+    "start:mcp-server": "pnpm --filter @guitarbeat/actual-mcp start",
+    "test:mcp-server": "pnpm --filter @guitarbeat/actual-mcp test",
+    "docs:mcp-server": "pnpm --filter @guitarbeat/actual-mcp docs:generate",
+    "public:check:mcp-server": "pnpm --filter @guitarbeat/actual-mcp public:check"
   }
 }

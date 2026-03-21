@@ -15,7 +15,7 @@ COPY mcp-server/package.json ./mcp-server/package.json
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 COPY . ./
-RUN pnpm --filter actual-mcp build
+RUN pnpm --filter @guitarbeat/actual-mcp build
 
 # ---- Release ----
 FROM node:20-alpine AS release

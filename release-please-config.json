@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "mcp-server": {
+      "release-type": "node",
+      "package-name": "@guitarbeat/actual-mcp",
+      "include-component-in-tag": false
+    }
+  }
+}
