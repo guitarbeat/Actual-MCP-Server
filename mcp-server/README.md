@@ -133,15 +133,12 @@ The container entrypoint starts the server in HTTP/SSE mode with `--enable-write
 ## Tool Surface
 
 <!-- TOOL_SURFACE:START -->
-
 Generated from `src/tools/index.ts`. The current registry exposes 47 tools total:
-
 - 13 read-only core tools
 - 26 write-enabled core tools
 - 8 advanced `--enable-nini` tools
 
 The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).
-
 <!-- TOOL_SURFACE:END -->
 
 ## Inspector And Development
