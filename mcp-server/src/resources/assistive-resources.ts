@@ -203,7 +203,12 @@ function stringifyRulePart(
   part: RuleEntity['conditions'][number] | RuleEntity['actions'][number],
 ): string {
   const value = Array.isArray(part.value) ? part.value.join(', ') : String(part.value);
-  return `${String(part.field)} ${part.op} ${value}`;
+
+  if ('field' in part) {
+    return `${String(part.field)} ${part.op} ${value}`;
+  }
+
+  return `${part.op} ${value}`;
 }
 
 function formatRulesMarkdown(title: string, rules: RuleEntity[]): string {

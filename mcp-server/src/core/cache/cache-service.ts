@@ -6,6 +6,8 @@
 
 import { LRUCache } from 'lru-cache';
 
+type CacheValue = NonNullable<unknown>;
+
 /**
  * Cache statistics for monitoring cache performance.
  */
@@ -23,10 +25,10 @@ export interface CacheStats {
  */
 export class CacheService {
   // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
-  private cache: LRUCache<string, unknown>;
+  private cache: LRUCache<string, CacheValue>;
 
   // biome-ignore lint/suspicious/noExplicitAny: Pending promises can resolve to any type
-  private pendingPromises: Map<string, Promise<unknown>>;
+  private pendingPromises: Map<string, Promise<CacheValue>>;
 
   private hits: number;
 
@@ -40,7 +42,7 @@ export class CacheService {
     this.enabled = process.env.CACHE_ENABLED !== 'false';
 
     // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
-    this.cache = new LRUCache<string, unknown>({
+    this.cache = new LRUCache<string, CacheValue>({
       max: maxEntries,
       ttl: defaultTtl,
       updateAgeOnGet: true, // LRU behavior - update access time on get
@@ -59,7 +61,11 @@ export class CacheService {
    * @param ttl - Time to live in milliseconds (optional)
    * @returns Cached or freshly fetched data
    */
-  async getOrFetch<T>(key: string, fetchFn: () => Promise<T>, ttl?: number): Promise<T> {
+  async getOrFetch<T extends CacheValue>(
+    key: string,
+    fetchFn: () => Promise<T>,
+    ttl?: number,
+  ): Promise<T> {
     if (!this.enabled) {
       return fetchFn();
     }
@@ -97,7 +103,7 @@ export class CacheService {
    * @param key - Cache key
    * @returns Cached data or undefined if not found/expired
    */
-  private get<T>(key: string): T | undefined {
+  private get<T extends CacheValue>(key: string): T | undefined {
     return this.cache.get(key) as T | undefined;
   }
 
@@ -108,7 +114,7 @@ export class CacheService {
    * @param data - Data to cache
    * @param ttl - Time to live in milliseconds (optional)
    */
-  set<T>(key: string, data: T, ttl?: number): void {
+  set<T extends CacheValue>(key: string, data: T, ttl?: number): void {
     if (!this.enabled) {
       return;
     }

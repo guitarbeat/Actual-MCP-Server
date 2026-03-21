@@ -5,8 +5,8 @@ MCP server for integrating Actual Budget with Claude and other LLM assistants.
 ## Quick Start
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 Configure environment:
@@ -121,9 +121,9 @@ PORT=3000                        # Optional, defaults to 3000
 ## Development
 
 ```bash
-npm run watch    # Auto-rebuild
-npm test         # Run tests
-npm run quality  # Lint + format + type-check
+pnpm run watch    # Auto-rebuild
+pnpm test         # Run tests
+pnpm run quality  # Lint + format + type-check
 ```
 
 ## MCP Inspector
@@ -135,7 +135,7 @@ The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a debu
 The easiest way to use the inspector is with the provided npm script:
 
 ```bash
-npm run inspector
+pnpm run inspector
 ```
 
 This will:
@@ -155,10 +155,10 @@ For more control, you can use the inspector directly:
 
 ```bash
 # Build first
-npm run build
+pnpm run build
 
 # Pass environment variables from .env file
-npm run inspector
+pnpm run inspector
 
 # Or pass environment variables directly
 npx @modelcontextprotocol/inspector \
@@ -184,7 +184,7 @@ npx @modelcontextprotocol/inspector \
 You can customize the ports if needed:
 
 ```bash
-CLIENT_PORT=8080 SERVER_PORT=9000 npm run inspector
+CLIENT_PORT=8080 SERVER_PORT=9000 pnpm run inspector
 ```
 
 Or with direct npx:
@@ -368,8 +368,8 @@ The codebase follows best practices for maintainability and reliability:
 
 Quick tips:
 
-- Use `npm run inspector` to test the server interactively
-- Enable performance tracking: `DEBUG_PERFORMANCE=true npm run inspector`
+- Use `pnpm run inspector` to test the server interactively
+- Enable performance tracking: `DEBUG_PERFORMANCE=true pnpm run inspector`
 - View Claude Desktop logs: `tail -F ~/Library/Logs/Claude/mcp*.log`
 
 ## Support the Project

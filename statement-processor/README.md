@@ -16,8 +16,8 @@ A standalone tool to transform Chase checking account CSV exports into cleaned, 
 ## Installation
 
 ```bash
-cd chase-csv-cleaner
-npm install
+cd statement-processor
+pnpm install
 ```
 
 ## Usage
@@ -25,13 +25,13 @@ npm install
 ### Basic Usage
 
 ```bash
-npm run csv-import -- --input ChaseChecking.CSV --api-key YOUR_API_KEY
+pnpm run csv-import -- --input ChaseChecking.CSV --api-key YOUR_API_KEY
 ```
 
 ### With Custom Date Range and Starting Balance
 
 ```bash
-npm run csv-import -- \
+pnpm run csv-import -- \
   --input ChaseChecking.CSV \
   --output cleaned.csv \
   --start-date 2025-08-01 \
@@ -134,13 +134,13 @@ The tool generates a CSV file with the following columns:
 ### Run Tests
 
 ```bash
-npm test
+pnpm test
 ```
 
 ### Run Specific Test File
 
 ```bash
-npm test -- --run src/parser.test.ts
+pnpm test -- --run src/parser.test.ts
 ```
 
 ## Project Structure

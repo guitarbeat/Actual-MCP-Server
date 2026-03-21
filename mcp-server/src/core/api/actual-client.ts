@@ -648,11 +648,10 @@ export async function updateCategory(id: string, args: Record<string, unknown>):
 /**
  * Delete a category (ensures API is initialized)
  */
-export async function deleteCategory(id: string): Promise<{ error?: string }> {
+export async function deleteCategory(id: string): Promise<void> {
   return ensureConnection(async () => {
-    const result = await api.deleteCategory(id);
+    await api.deleteCategory(id);
     cacheService.invalidatePattern('categories:*');
-    return result;
   });
 }
 
@@ -684,11 +683,10 @@ export async function updateCategoryGroup(
 /**
  * Delete a category group (ensures API is initialized)
  */
-export async function deleteCategoryGroup(id: string): Promise<unknown> {
+export async function deleteCategoryGroup(id: string): Promise<void> {
   return ensureConnection(async () => {
-    const result = await api.deleteCategoryGroup(id);
+    await api.deleteCategoryGroup(id);
     cacheService.invalidatePattern('categoryGroups:*');
-    return result;
   });
 }
 
