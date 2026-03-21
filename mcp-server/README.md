@@ -1,4 +1,4 @@
-# actual-mcp
+# @guitarbeat/actual-mcp
 
 Actual Budget MCP server for Claude Desktop, Codex, Cursor, and other MCP clients.
 
@@ -10,12 +10,14 @@ Actual Budget MCP server for Claude Desktop, Codex, Cursor, and other MCP client
 
 ## Install
 
-From the workspace root:
+From source:
 
 ```bash
 pnpm install
-pnpm --filter actual-mcp build
+pnpm --filter @guitarbeat/actual-mcp build
 ```
+
+From npm in MCP client configs, use `npx -y @guitarbeat/actual-mcp`.
 
 ## Configuration
 
@@ -39,7 +41,7 @@ Optional variables:
 Default stdio mode is intended for desktop MCP clients:
 
 ```bash
-pnpm --filter actual-mcp start
+pnpm --filter @guitarbeat/actual-mcp start
 ```
 
 Remote HTTP/SSE mode:
@@ -64,8 +66,8 @@ Claude Desktop uses `claude_desktop_config.json`:
   "mcpServers": {
     "actual-budget": {
       "type": "stdio",
-      "command": "node",
-      "args": ["/absolute/path/to/mcp-server/build/index.js", "--enable-write"],
+      "command": "npx",
+      "args": ["-y", "@guitarbeat/actual-mcp", "--enable-write"],
       "env": {
         "ACTUAL_SERVER_URL": "https://actual.example.com",
         "ACTUAL_PASSWORD": "replace-with-your-actual-password",
@@ -80,8 +82,8 @@ Codex uses `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.actual_budget]
-command = "node"
-args = ["/absolute/path/to/mcp-server/build/index.js", "--enable-write"]
+command = "npx"
+args = ["-y", "@guitarbeat/actual-mcp", "--enable-write"]
 
 [mcp_servers.actual_budget.env]
 ACTUAL_SERVER_URL = "https://actual.example.com"
@@ -95,8 +97,8 @@ Cursor uses `~/.cursor/mcp.json` or project-local `.cursor/mcp.json`:
 {
   "mcpServers": {
     "actual-budget": {
-      "command": "node",
-      "args": ["/absolute/path/to/mcp-server/build/index.js", "--enable-write"],
+      "command": "npx",
+      "args": ["-y", "@guitarbeat/actual-mcp", "--enable-write"],
       "env": {
         "ACTUAL_SERVER_URL": "https://actual.example.com",
         "ACTUAL_PASSWORD": "replace-with-your-actual-password",
@@ -107,17 +109,23 @@ Cursor uses `~/.cursor/mcp.json` or project-local `.cursor/mcp.json`:
 }
 ```
 
-Build the package first, then use the absolute path to `mcp-server/build/index.js` in your client configuration.
+For local development instead of npm, replace `npx` with `node` and point `args` at `/absolute/path/to/mcp-server/build/index.js`.
 
 ## Docker
 
 Build locally from the repository root:
 
 ```bash
-docker build -f mcp-server/Dockerfile -t actual-mcp .
+docker build -f mcp-server/Dockerfile -t ghcr.io/guitarbeat/actual-mcp:local .
 ```
 
-Run the local image:
+Pull the published image:
+
+```bash
+docker pull ghcr.io/guitarbeat/actual-mcp:latest
+```
+
+Run the published image:
 
 ```bash
 docker run --rm -p 3000:3000 \
@@ -125,7 +133,7 @@ docker run --rm -p 3000:3000 \
   -e ACTUAL_PASSWORD=replace-with-your-actual-password \
   -e ACTUAL_BUDGET_SYNC_ID=replace-with-your-budget-sync-id \
   -e BEARER_TOKEN=replace-with-a-long-random-token \
-  actual-mcp
+  ghcr.io/guitarbeat/actual-mcp:latest
 ```
 
 The container entrypoint starts the server in HTTP/SSE mode with `--enable-write` and `--enable-bearer`.
@@ -133,12 +141,15 @@ The container entrypoint starts the server in HTTP/SSE mode with `--enable-write
 ## Tool Surface
 
 <!-- TOOL_SURFACE:START -->
+
 Generated from `src/tools/index.ts`. The current registry exposes 47 tools total:
+
 - 13 read-only core tools
 - 26 write-enabled core tools
 - 8 advanced `--enable-nini` tools
 
 The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).
+
 <!-- TOOL_SURFACE:END -->
 
 ## Inspector And Development
