@@ -1,25 +1,12 @@
 {
-  "name": "@guitarbeat/actual-mcp",
+  "name": "actual-mcp",
   "version": "1.6.5",
-  "description": "Public Actual Budget MCP server for budgeting, reconciliation, imports, and reporting",
-  "private": false,
+  "description": "Actual Budget MCP server exposing API functionality",
+  "private": true,
   "packageManager": "pnpm@10.27.0",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "type": "module",
-  "homepage": "https://github.com/guitarbeat/Actual-MCP-Server/tree/main/mcp-server#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/guitarbeat/Actual-MCP-Server.git",
-    "directory": "mcp-server"
-  },
-  "bugs": {
-    "url": "https://github.com/guitarbeat/Actual-MCP-Server/issues"
-  },
-  "author": "guitarbeat",
-  "publishConfig": {
-    "access": "public"
-  },
   "engines": {
     "node": ">=20.0.0"
   },
@@ -29,8 +16,7 @@
   "files": [
     "build",
     "README.md",
-    "LICENSE",
-    "docs"
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
