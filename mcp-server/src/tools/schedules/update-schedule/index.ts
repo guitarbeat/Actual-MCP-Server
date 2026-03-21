@@ -4,7 +4,13 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { error, errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import {
+  error,
+  errorFromCatch,
+  isMCPResponse,
+  type MCPResponse,
+  success,
+} from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
 import type { ScheduleUpdateData } from '../../manage-entity/types.js';
@@ -70,6 +76,10 @@ export async function handler(args: z.infer<typeof UpdateScheduleSchema>): Promi
     scheduleHandler.invalidateCache();
     return success(`Successfully updated schedule with id ${id}`);
   } catch (err) {
+    if (isMCPResponse(err)) {
+      return err;
+    }
+
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to update schedule',
     });

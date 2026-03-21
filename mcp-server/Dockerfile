@@ -10,20 +10,22 @@ RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
 # Install build tools for native addons (better-sqlite3)
 RUN apk add --no-cache python3 make g++
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY mcp-server/package.json ./mcp-server/package.json
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 COPY . ./
-RUN pnpm run build
+RUN pnpm --filter actual-mcp build
 
 # ---- Release ----
 FROM node:20-alpine AS release
 
-WORKDIR /app
+WORKDIR /app/mcp-server
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/mcp-server/package.json ./package.json
+COPY --from=builder /app/mcp-server/build ./build
 
+ENV NODE_ENV=production
 EXPOSE 3000
 ENTRYPOINT ["node", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]

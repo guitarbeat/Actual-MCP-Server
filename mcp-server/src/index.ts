@@ -46,7 +46,7 @@ const __dirname = dirname(__filename);
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
 const { version } = packageJson;
 
-dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env', quiet: true } as Parameters<typeof dotenv.config>[0]);
 
 // Argument parsing (must happen before server creation)
 const {
@@ -709,10 +709,10 @@ async function main(): Promise<void> {
                 </ul>
               </main>
 
-              <footer>
-                <a href="https://github.com/guitarbeat/actual-mcp" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository (opens in a new tab)">GitHub</a>
-                <a href="/health">System Health</a>
-              </footer>
+	              <footer>
+	                <span>Actual MCP</span>
+	                <a href="/health">System Health</a>
+	              </footer>
             </div>
             <script nonce="${nonce}">
               document.addEventListener('DOMContentLoaded', () => {

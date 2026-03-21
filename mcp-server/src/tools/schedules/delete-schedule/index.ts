@@ -4,7 +4,12 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import {
+  errorFromCatch,
+  isMCPResponse,
+  type MCPResponse,
+  success,
+} from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
 
@@ -42,6 +47,10 @@ export async function handler(args: z.infer<typeof DeleteScheduleSchema>): Promi
     scheduleHandler.invalidateCache();
     return success(`Successfully deleted schedule with id ${validated.id}`);
   } catch (error) {
+    if (isMCPResponse(error)) {
+      return error;
+    }
+
     return errorFromCatch(error, {
       fallbackMessage: 'Failed to delete schedule',
     });

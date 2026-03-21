@@ -3,7 +3,12 @@
 // ----------------------------
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import {
+  errorFromCatch,
+  isMCPResponse,
+  type MCPResponse,
+  success,
+} from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
 import type { ScheduleData } from '../../manage-entity/types.js';
@@ -57,6 +62,10 @@ export async function handler(args: ScheduleData): Promise<MCPResponse> {
       `Successfully created schedule "${validated.name || 'Unnamed'}" with id ${scheduleId}`,
     );
   } catch (error) {
+    if (isMCPResponse(error)) {
+      return error;
+    }
+
     return errorFromCatch(error, {
       fallbackMessage: 'Failed to create schedule',
     });
