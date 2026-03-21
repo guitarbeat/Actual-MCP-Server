@@ -37,6 +37,13 @@ export const CreateTransactionSchema = z.object({
     .max(100, 'Category name must be less than 100 characters')
     .optional()
     .describe('Category to classify the transaction (e.g., "Groceries", "Rent", "Salary").'),
+  transferAccount: z
+    .string()
+    .max(100, 'Transfer account name must be less than 100 characters')
+    .optional()
+    .describe(
+      'Destination account name or ID for a transfer. When provided, the matching transfer payee is resolved automatically and the counterpart transaction is created in the destination account.',
+    ),
   notes: z
     .string()
     .max(500, 'Notes must be less than 500 characters')
@@ -77,6 +84,7 @@ export const schema = {
     '- User wants to "record a purchase" or "log an expense"\n' +
     '- User says "I spent $X on [something]"\n' +
     '- User wants to "add income" or "record a payment"\n' +
+    '- User wants to move money between two accounts\n' +
     '- User needs to "split a transaction" across categories\n' +
     '- User wants to manually enter a transaction not from bank import\n\n' +
     'REQUIRED:\n' +
@@ -86,16 +94,19 @@ export const schema = {
     'OPTIONAL:\n' +
     '- payee: Merchant or person name\n' +
     '- category: Category name\n' +
+    '- transferAccount: Destination account for transfers (do not combine with category or subtransactions)\n' +
     '- notes: Additional details\n' +
     '- cleared: true/false (default: false)\n' +
     '- subtransactions: For split transactions\n\n' +
     'EXAMPLES:\n' +
     '- "Add $50 grocery purchase": {"account": "Checking", "date": "2025-01-15", "amount": -50, "payee": "Whole Foods", "category": "Groceries"}\n' +
     '- "Record paycheck": {"account": "Checking", "date": "2025-01-15", "amount": 2000, "payee": "Employer", "category": "Income"}\n' +
+    '- "Transfer $200 to savings": {"account": "Checking", "date": "2025-01-15", "amount": -200, "transferAccount": "Savings"}\n' +
     '- "Split transaction": {"account": "Checking", "date": "2025-01-15", "amount": -100, "subtransactions": [{"amount": -60, "category": "Groceries"}, {"amount": -40, "category": "Gas"}]}\n\n' +
     'NOTES:\n' +
     '- Amounts < 1000 treated as dollars (-50 = -$50)\n' +
-    '- Negative amounts = expenses, positive = income',
+    '- Negative amounts = expenses, positive = income\n' +
+    '- Transfers create the counterpart transaction automatically',
   inputSchema: zodToJsonSchema(CreateTransactionSchema) as ToolInput,
 };
 

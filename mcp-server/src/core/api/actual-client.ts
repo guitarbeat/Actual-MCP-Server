@@ -807,8 +807,21 @@ export async function deleteTransaction(id: string): Promise<void> {
  * Create a new account (ensures API is initialized)
  */
 export async function createAccount(args: Record<string, unknown>): Promise<string> {
+  return createAccountWithInitialBalance(args);
+}
+
+/**
+ * Create a new account with optional initial balance (ensures API is initialized)
+ */
+export async function createAccountWithInitialBalance(
+  args: Record<string, unknown>,
+  initialBalance?: number,
+): Promise<string> {
   return ensureConnection(async () => {
-    const result = await api.createAccount(args as Omit<APIAccountEntity, 'id'>);
+    const result = await api.createAccount(
+      args as Omit<APIAccountEntity, 'id'>,
+      initialBalance,
+    );
     cacheService.invalidate('accounts:all');
     return result;
   });
