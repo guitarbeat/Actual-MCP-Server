@@ -39,40 +39,8 @@ jobs:
       - name: Type Check
         run: pnpm --filter actual-mcp type-check
 
+      - name: Build
+        run: pnpm --filter actual-mcp build
+
       - name: Test
         run: pnpm --filter actual-mcp test
-
-  statement-processor:
-    name: Statement Processor
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.27.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm --filter chase-csv-cleaner lint
-
-      - name: Format Check
-        run: pnpm --filter chase-csv-cleaner format:check
-
-      - name: Type Check
-        run: pnpm --filter chase-csv-cleaner type-check
-
-      - name: Test
-        run: pnpm --filter chase-csv-cleaner test

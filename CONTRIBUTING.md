@@ -1,16 +1,15 @@
-# Contributing to Actual Budget MCP & Utilities
+# Contributing to Actual Budget MCP Server
 
 Thank you for your interest in contributing! This document outlines the standards and process for contributing to this repository.
 
 ## Development Environment
 
-This repository contains multiple projects. Each project is managed independently but shares some common tooling.
+This repository is managed as a `pnpm` workspace with the MCP server as the primary package.
 
 ### Prerequisites
 
 - **Node.js** >= 20.0.0
-- **pnpm** (for `mcp-server`)
-- **npm** (for `statement-processor`)
+- **pnpm** >= 10
 
 ## Code Standards
 
@@ -21,28 +20,30 @@ We adhere to strict coding standards to maintain quality and consistency.
 - **Linting**: We use [ESLint](https://eslint.org/) with [Airbnb](https://github.com/airbnb/javascript) rules (TypeScript).
 - **Formatting**: We use [Prettier](https://prettier.io/) for code formatting.
 
-Before committing, please ensure your code passes linting and formatting checks.
+Before committing, please ensure your code passes linting, formatting, type-checking, and tests from the workspace root.
 
-**MCP Server:**
 ```bash
-cd mcp-server
-pnpm run lint
-pnpm run format:check
-pnpm run test
-```
-
-**Statement Processor:**
-```bash
-cd statement-processor
-npm run lint
-npm run format:check
-npm run test
+pnpm install
+pnpm lint
+pnpm format:check
+pnpm type-check
+pnpm test
 ```
 
 ### Pre-commit Hooks
 
 We use `husky` and `lint-staged` to automatically lint and format staged files before commit.
 We also provide a `.pre-commit-config.yaml` for users of the [pre-commit](https://pre-commit.com/) framework.
+
+## Security & Public Repo Hygiene
+
+- Never commit real credentials, bearer tokens, sync IDs, local machine paths, or client-specific configuration files.
+- Keep local assistant and IDE state out of git. The repository ignores `.agent/`, `.cursor/`, and `.jules/`.
+- Run the secret-scanning checks before pushing changes intended for public branches.
+
+## Engineering Notes
+
+Repository-level implementation notes are documented in [docs/engineering-notes.md](./docs/engineering-notes.md).
 
 ## Pull Request Process
 

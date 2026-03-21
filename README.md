@@ -1,22 +1,19 @@
-# Actual Budget MCP & Utilities 💰
+# Actual Budget MCP Server 💰
 
 [![CI](https://github.com/guitarbeat/actual-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/guitarbeat/actual-mcp/actions/workflows/ci.yml)
 [![code style: airbnb](https://img.shields.io/badge/code%20style-airbnb-blue.svg)](https://github.com/airbnb/javascript)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-This repository contains a suite of tools designed to enhance your [Actual Budget](https://actualbudget.com/) experience, specifically bridging the gap between your local budget and modern AI tools.
+This repository contains the Actual Budget MCP server, designed to bridge the gap between your local [Actual Budget](https://actualbudget.com/) data and modern AI tools.
 
 The repository is organized as a `pnpm` workspace so you can install dependencies once at the root and run package-specific commands with shared scripts.
 
-## 🚀 Projects
+## 🚀 Project
 
 ### 🤖 [Actual MCP Server](./mcp-server)
 A Model Context Protocol (MCP) server that exposes your Actual Budget data to LLMs (Claude Desktop, ChatGPT, Poke, etc.).
 - **Features**: Live account balance checks, transaction history, spending analysis, and automated financial insights.
 - **Deployment**: One-click deployment to **Render**.
-
-### 📄 [Statement Processor](./statement-processor)
-Utilities for processing and normalizing financial statements for import into Actual.
 
 ---
 
@@ -54,17 +51,15 @@ The repository is managed from the workspace root.
    ```bash
    pnpm --filter actual-mcp build
    pnpm --filter actual-mcp test
-   pnpm --filter chase-csv-cleaner test
    ```
 
 ### Workspace Commands
 
 ```bash
-pnpm build                # Run all available package build scripts
-pnpm test                 # Run tests across both packages
-pnpm quality              # Run lint, format checks, type-checks, and tests where available
+pnpm build                # Run the MCP server build
+pnpm test                 # Run the MCP server test suite
+pnpm quality              # Run lint, format checks, and type-checks where available
 pnpm dev:mcp-server       # Start the MCP server in development mode
-pnpm csv-import -- --help # Run the statement processor CLI
 ```
 
 ### Repository Layout
@@ -72,7 +67,6 @@ pnpm csv-import -- --help # Run the statement processor CLI
 ```text
 .
 ├── mcp-server/           # Actual Budget MCP server
-├── statement-processor/  # CSV cleaning and import utilities
 ├── features/             # Feature notes and planning artifacts
 ├── verification/         # Manual verification helpers
 └── render.yaml           # Render blueprint for the MCP server
