@@ -9,8 +9,16 @@ export class BalanceHistoryReportGenerator {
     account: Account | undefined,
     period: { start: string; end: string },
     sortedMonths: MonthBalance[],
+    warnings: string[] = [],
   ): string {
     let markdown = `# Balance History\n\n`;
+    if (warnings.length > 0) {
+      markdown += '## Warnings\n\n';
+      warnings.forEach((warning) => {
+        markdown += `- ${warning}\n`;
+      });
+      markdown += '\n';
+    }
     if (account) {
       markdown += `Account: ${account.name}\n`;
     }

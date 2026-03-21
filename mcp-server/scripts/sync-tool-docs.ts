@@ -56,6 +56,7 @@ function buildReadmeToolSurface(): string {
     toolSurfaceStart,
     '',
     `Generated from \`src/tools/index.ts\`. The current registry exposes ${total} tools total:`,
+    '',
     `- ${readOnlyCore.length} read-only core tools`,
     `- ${writeCore.length} write-enabled core tools`,
     `- ${advanced.length} advanced \`--enable-nini\` tools`,

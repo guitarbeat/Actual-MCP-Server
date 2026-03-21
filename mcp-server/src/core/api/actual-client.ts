@@ -386,6 +386,7 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
       logSuccessfulInitialization(startTime, budgets, budgetId);
       markConnectionReady(budgetId);
       markSyncSuccess();
+      invalidateAllReadState();
       setupAutoSync();
     } catch (error) {
       handleInitializationError(error);
@@ -452,6 +453,7 @@ export async function shutdownActualApi(): Promise<void> {
   }
 
   if (!initialized) {
+    initializationError = null;
     updateConnectionState({
       status: 'disconnected',
     });
@@ -464,6 +466,7 @@ export async function shutdownActualApi(): Promise<void> {
     console.error('Error shutting down Actual Budget API:', error);
   } finally {
     initialized = false;
+    initializationError = null;
     updateConnectionState({
       status: 'disconnected',
     });
@@ -562,15 +565,11 @@ async function ensureReadConnectionAvailable(): Promise<void> {
     await waitForInitialization();
   }
 
-  if (initializationError) {
-    throw initializationError;
-  }
-
   if (initialized && connectionState.status === 'ready') {
     return;
   }
 
-  await initActualApi(connectionState.status === 'error');
+  await initActualApi(connectionState.status === 'error' || initializationError !== null);
 }
 
 async function ensureWriteConnectionAvailable(): Promise<void> {
@@ -578,12 +577,8 @@ async function ensureWriteConnectionAvailable(): Promise<void> {
     await waitForInitialization();
   }
 
-  if (initializationError) {
-    throw initializationError;
-  }
-
   if (!initialized || connectionState.status !== 'ready') {
-    await initActualApi(connectionState.status === 'error');
+    await initActualApi(connectionState.status === 'error' || initializationError !== null);
   }
 
   const isHealthy = await checkConnectionHealth();
@@ -1071,7 +1066,7 @@ export async function setBudgetAmount(
       console.error(`[PERF] setBudgetAmount completed in ${Date.now() - opStart}ms`);
     }
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -1089,21 +1084,21 @@ export async function setBudgetCarryover(
       console.error(`[PERF] setBudgetCarryover completed in ${Date.now() - opStart}ms`);
     }
     return result;
-  });
+  }, 'write');
 }
 
 /**
  * Hold budget amount for next month (ensures API is initialized)
  */
 export async function holdBudgetForNextMonth(month: string, amount: number): Promise<unknown> {
-  return ensureConnection(() => api.holdBudgetForNextMonth(month, amount));
+  return ensureConnection(() => api.holdBudgetForNextMonth(month, amount), 'write');
 }
 
 /**
  * Reset budget hold for a specific month (ensures API is initialized)
  */
 export async function resetBudgetHold(month: string): Promise<unknown> {
-  return ensureConnection(() => api.resetBudgetHold(month));
+  return ensureConnection(() => api.resetBudgetHold(month), 'write');
 }
 
 /**
@@ -1115,7 +1110,7 @@ export async function createSchedule(args: Record<string, unknown>): Promise<str
       throw new Error('createSchedule method is not available in this version of the API');
     }
     return extendedApi.createSchedule(args);
-  });
+  }, 'write');
 }
 
 /**
@@ -1127,7 +1122,7 @@ export async function updateSchedule(id: string, args: Record<string, unknown>):
       throw new Error('updateSchedule method is not available in this version of the API');
     }
     return extendedApi.updateSchedule(id, args);
-  });
+  }, 'write');
 }
 
 /**
@@ -1139,7 +1134,7 @@ export async function deleteSchedule(id: string): Promise<unknown> {
       throw new Error('deleteSchedule method is not available in this version of the API');
     }
     return extendedApi.deleteSchedule(id);
-  });
+  }, 'write');
 }
 
 /**
@@ -1158,8 +1153,9 @@ export async function mergePayees(targetId: string, sourceIds: string[]): Promis
   return ensureConnection(async () => {
     const result = await api.mergePayees(targetId, sourceIds);
     cacheService.invalidatePattern('payees:*');
+    invalidateNameResolutionState();
     return result;
-  });
+  }, 'write');
 }
 
 /**
@@ -1188,7 +1184,10 @@ export async function downloadBudget(budgetId: string, password?: string): Promi
     } else {
       await api.downloadBudget(budgetId);
     }
-  });
+    markConnectionReady(budgetId);
+    markSyncSuccess();
+    invalidateAllReadState();
+  }, 'write');
 }
 
 /**
@@ -1203,7 +1202,10 @@ export async function loadBudget(budgetId: string): Promise<void> {
       // Fallback to downloadBudget if loadBudget doesn't exist
       await api.downloadBudget(budgetId);
     }
-  });
+    markConnectionReady(budgetId);
+    markSyncSuccess();
+    invalidateAllReadState();
+  }, 'write');
 }
 
 /**
@@ -1212,10 +1214,13 @@ export async function loadBudget(budgetId: string): Promise<void> {
 export async function sync(): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.sync === 'function') {
-      return api.sync();
+      const result = await api.sync();
+      markSyncSuccess();
+      invalidateAllReadState();
+      return result;
     }
     throw new Error('sync method is not available in this version of the API');
-  });
+  }, 'write');
 }
 
 /**
@@ -1224,10 +1229,13 @@ export async function sync(): Promise<unknown> {
 export async function runBankSync(accountId?: string): Promise<unknown> {
   return ensureConnection(async () => {
     if (extendedApi.runBankSync) {
-      return extendedApi.runBankSync(accountId ? { accountId } : undefined);
+      const result = await extendedApi.runBankSync(accountId ? { accountId } : undefined);
+      markSyncSuccess();
+      invalidateAllReadState();
+      return result;
     }
     throw new Error('runBankSync method is not available in this version of the API');
-  });
+  }, 'write');
 }
 
 /**
@@ -1239,10 +1247,13 @@ export async function runImport(
 ): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.runImport === 'function') {
-      return api.runImport(budgetName, callback);
+      const result = await api.runImport(budgetName, callback);
+      markSyncSuccess();
+      invalidateAllReadState();
+      return result;
     }
     throw new Error('runImport method is not available in this version of the API');
-  });
+  }, 'write');
 }
 
 /**
@@ -1251,10 +1262,12 @@ export async function runImport(
 export async function batchBudgetUpdates(callback: () => Promise<void>): Promise<unknown> {
   return ensureConnection(async () => {
     if (typeof api.batchBudgetUpdates === 'function') {
-      return api.batchBudgetUpdates(callback);
+      const result = await api.batchBudgetUpdates(callback);
+      invalidateAllReadState();
+      return result;
     }
     throw new Error('batchBudgetUpdates method is not available in this version of the API');
-  });
+  }, 'write');
 }
 
 /**

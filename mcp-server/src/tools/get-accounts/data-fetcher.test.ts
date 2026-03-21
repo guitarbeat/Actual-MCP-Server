@@ -40,11 +40,13 @@ describe('GetAccountsDataFetcher', () => {
     const fetcher = new GetAccountsDataFetcher();
     const result = await fetcher.fetchAccounts({ includeClosed: false });
 
-    expect(result).toHaveLength(2);
-    expect(result[0].id).toBe('acc-1');
-    expect(result[0].balance).toBe(1000);
-    expect(result[1].id).toBe('acc-2');
-    expect(result[1].balance).toBe(2000);
+    expect(result.partial).toBe(false);
+    expect(result.warnings).toEqual([]);
+    expect(result.accounts).toHaveLength(2);
+    expect(result.accounts[0].id).toBe('acc-1');
+    expect(result.accounts[0].balance).toBe(1000);
+    expect(result.accounts[1].id).toBe('acc-2');
+    expect(result.accounts[1].balance).toBe(2000);
 
     expect(mockGetAccountBalance).toHaveBeenCalledTimes(2);
     expect(mockGetAccountBalance).toHaveBeenCalledWith('acc-1');
@@ -63,8 +65,10 @@ describe('GetAccountsDataFetcher', () => {
     const fetcher = new GetAccountsDataFetcher();
     const result = await fetcher.fetchAccounts({ includeClosed: false });
 
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('acc-1');
+    expect(result.partial).toBe(false);
+    expect(result.warnings).toEqual([]);
+    expect(result.accounts).toHaveLength(1);
+    expect(result.accounts[0].id).toBe('acc-1');
     expect(mockGetAccountBalance).toHaveBeenCalledTimes(1);
     expect(mockGetAccountBalance).toHaveBeenCalledWith('acc-1');
   });
@@ -81,7 +85,9 @@ describe('GetAccountsDataFetcher', () => {
     const fetcher = new GetAccountsDataFetcher();
     const result = await fetcher.fetchAccounts({ includeClosed: true });
 
-    expect(result).toHaveLength(2);
+    expect(result.partial).toBe(false);
+    expect(result.warnings).toEqual([]);
+    expect(result.accounts).toHaveLength(2);
     expect(mockGetAccountBalance).toHaveBeenCalledTimes(2);
   });
 });

@@ -3,10 +3,11 @@
  * Handles fetching accounts and their balances with optional filtering
  */
 
-import { getAccountBalance } from '../../core/api/actual-client.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
+import { fetchAccountBalances } from '../../core/data/fetch-account-balances.js';
 import type { Account } from '../../core/types/domain.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
+import { formatAccountDataWarnings } from '../../core/utils/partial-results.js';
 import { isId, normalizeName } from '../../core/utils/name-utils.js';
 
 export interface AccountWithBalance extends Account {
@@ -18,6 +19,12 @@ export interface FetchAccountsOptions {
   includeClosed: boolean;
 }
 
+export interface FetchAccountsResult {
+  accounts: AccountWithBalance[];
+  partial: boolean;
+  warnings: string[];
+}
+
 export class GetAccountsDataFetcher {
   /**
    * Fetch accounts with their current balances, optionally filtered
@@ -25,7 +32,7 @@ export class GetAccountsDataFetcher {
    * @param options - Filtering options
    * @returns Array of accounts with balance information
    */
-  async fetchAccounts(options: FetchAccountsOptions): Promise<AccountWithBalance[]> {
+  async fetchAccounts(options: FetchAccountsOptions): Promise<FetchAccountsResult> {
     let accounts: Account[] = await fetchAllAccounts();
 
     if (options.accountId) {
@@ -41,15 +48,19 @@ export class GetAccountsDataFetcher {
       accounts = accounts.filter((a) => !a.closed);
     }
 
-    // Fetch balance for each account in parallel
-    // Optimization: Use Promise.all to fetch balances concurrently instead of sequentially
-    await Promise.all(
-      accounts.map(async (account) => {
-        account.balance = await getAccountBalance(account.id);
-      }),
-    );
+    const { balancesByAccountId, warnings } = await fetchAccountBalances(accounts);
+    const hydratedAccounts = accounts
+      .filter((account) => account.id in balancesByAccountId)
+      .map((account) => ({
+        ...account,
+        balance: balancesByAccountId[account.id],
+      })) as AccountWithBalance[];
 
-    return accounts as AccountWithBalance[];
+    return {
+      accounts: hydratedAccounts,
+      partial: warnings.length > 0,
+      warnings: formatAccountDataWarnings(warnings),
+    };
   }
 
   private async resolveAccountsById(accounts: Account[], accountId: string): Promise<Account[]> {

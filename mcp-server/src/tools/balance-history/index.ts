@@ -43,11 +43,12 @@ export async function handler(args: BalanceHistoryArgs): Promise<CallToolResult>
     const end = formatDate(endDate);
 
     // Fetch data
-    const { account, accounts, transactions } = await new BalanceHistoryDataFetcher().fetchAll(
+    const { account, accounts, transactions, warnings } =
+      await new BalanceHistoryDataFetcher().fetchAll(
       accountId,
       start,
       end,
-    );
+      );
 
     // Calculate balance history
     const sortedMonths = new BalanceHistoryCalculator().calculate(
@@ -63,6 +64,7 @@ export async function handler(args: BalanceHistoryArgs): Promise<CallToolResult>
       account,
       { start, end },
       sortedMonths,
+      warnings,
     );
     return success(markdown);
   } catch (err) {

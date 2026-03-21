@@ -2,6 +2,7 @@
 // TRANSACTION ENTITY HANDLER
 // ----------------------------
 
+import { createHash } from 'node:crypto';
 import {
   addTransactions,
   deleteTransaction,
@@ -28,6 +29,7 @@ export interface TransactionData {
   transferAccount?: string; // Destination account name or ID for transfers
   notes?: string;
   cleared?: boolean;
+  idempotencyKey?: string;
   subtransactions?: Array<{
     amount: number;
     category?: string;
@@ -47,11 +49,28 @@ interface NormalizedTransactionData {
   transferAccountId?: string | null;
   notes?: string;
   cleared?: boolean;
+  idempotencyKey?: string;
   subtransactions?: Array<{
     amount: number;
     categoryId?: string | null;
     notes?: string;
   }>;
+}
+
+function buildImportedId(
+  normalized: Pick<NormalizedTransactionData, 'accountId' | 'date' | 'amount'>,
+  idempotencyKey?: string,
+): string {
+  if (!idempotencyKey) {
+    return `manual-${normalized.accountId}-${normalized.date}-${normalized.amount}-${Date.now()}`;
+  }
+
+  const digest = createHash('sha256')
+    .update(`${normalized.accountId}:${normalized.date}:${normalized.amount}:${idempotencyKey}`)
+    .digest('hex')
+    .slice(0, 24);
+
+  return `manual-${digest}`;
 }
 
 /**
@@ -114,6 +133,7 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
         : null,
       notes: data.notes,
       cleared: data.cleared,
+      idempotencyKey: data.idempotencyKey,
     };
 
     if (data.subtransactions && data.subtransactions.length > 0) {
@@ -161,7 +181,7 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
    */
   async create(data: TransactionData): Promise<string> {
     const normalized = await this.normalizeData(data, true);
-    const importedId = `manual-${normalized.accountId}-${normalized.date}-${normalized.amount}-${Date.now()}`;
+    const importedId = buildImportedId(normalized, normalized.idempotencyKey);
 
     // Build transaction object for importTransactions
     const transaction = {

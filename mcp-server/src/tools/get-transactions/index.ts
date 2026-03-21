@@ -1,12 +1,14 @@
 // Orchestrator for get-transactions tool
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { fetchAllOnBudgetTransactionsWithMetadata } from '../../core/data/fetch-transactions.js';
 import { getDateRange } from '../../core/formatting/index.js';
 import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
 import { errorFromCatch, success } from '../../core/response/index.js';
 import type { Transaction } from '../../core/types/domain.js';
 import { GetTransactionsArgsSchema } from '../../core/types/index.js';
 import type { ToolInput, GetTransactionsArgs } from '../../core/types/index.js';
+import { formatAccountDataWarnings } from '../../core/utils/partial-results.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsInputParser } from './input-parser.js';
@@ -119,21 +121,15 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
 
     let resolvedAccountId: string;
     let transactions: Transaction[];
+    let warnings: string[] = [];
 
     // Fetch transactions
     if (accountId.toLowerCase() === 'all') {
       const { fetchAllAccounts } = await import('../../core/data/fetch-accounts.js');
       const accounts = await fetchAllAccounts();
-      const onBudgetAccounts = accounts.filter((acc) => !acc.offbudget && !acc.closed);
-
-      const allTransactions = await Promise.all(
-        onBudgetAccounts.map((acc) =>
-          new GetTransactionsDataFetcher().fetch(acc.id, start, end, {
-            accountIdIsResolved: true,
-          }),
-        ),
-      );
-      transactions = allTransactions.flat();
+      const result = await fetchAllOnBudgetTransactionsWithMetadata(accounts, start, end);
+      transactions = result.transactions;
+      warnings = formatAccountDataWarnings(result.warnings);
       resolvedAccountId = 'all';
     } else {
       resolvedAccountId = await nameResolver.resolveAccount(accountId);
@@ -175,6 +171,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       totalFetched: transactions.length,
       totalAmount,
       accountSummary,
+      warnings,
     });
     return success(markdown);
   } catch (err) {

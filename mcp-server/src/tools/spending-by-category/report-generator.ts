@@ -9,8 +9,16 @@ export class SpendingByCategoryReportGenerator {
     period: { start: string; end: string },
     accountLabel: string,
     includeIncome: boolean,
+    warnings: string[] = [],
   ): string {
     let markdown = `# Spending by Category\n\n`;
+    if (warnings.length > 0) {
+      markdown += '## Warnings\n\n';
+      warnings.forEach((warning) => {
+        markdown += `- ${warning}\n`;
+      });
+      markdown += '\n';
+    }
     markdown += `Period: ${period.start} to ${period.end}\n\n`;
     markdown += `${accountLabel}\n\n`;
     markdown += `Income categories: ${includeIncome ? 'Included' : 'Excluded'}\n\n`;

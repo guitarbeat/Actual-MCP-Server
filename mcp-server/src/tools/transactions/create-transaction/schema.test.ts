@@ -32,6 +32,18 @@ describe('CreateTransactionSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('should validate transaction with idempotencyKey', () => {
+    const validData = {
+      account: 'Checking',
+      date: '2023-10-27',
+      amount: 100.0,
+      idempotencyKey: 'txn-2023-10-27-checking-100',
+    };
+
+    const result = CreateTransactionSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
   it('should fail on invalid date format', () => {
     const invalidData = {
       account: 'Checking',

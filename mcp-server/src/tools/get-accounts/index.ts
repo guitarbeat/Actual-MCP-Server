@@ -38,13 +38,13 @@ export async function handler(
     const parsed = parser.parse(args);
 
     // Fetch accounts with balances
-    const accounts = await new GetAccountsDataFetcher().fetchAccounts({
+    const { accounts, warnings } = await new GetAccountsDataFetcher().fetchAccounts({
       accountId: parsed.accountId,
       includeClosed: parsed.includeClosed,
     });
 
     // Generate formatted report
-    const structured = new GetAccountsReportGenerator().generate(accounts);
+    const structured = new GetAccountsReportGenerator().generate(accounts, warnings);
 
     return successWithJson(structured);
   } catch (err) {

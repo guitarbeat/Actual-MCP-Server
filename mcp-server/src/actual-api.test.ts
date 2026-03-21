@@ -4,13 +4,16 @@ import fs from 'node:fs';
 import api from '@actual-app/api';
 import * as actualApi from './core/api/actual-client.js';
 import { cacheService } from './core/cache/cache-service.js';
+import { nameResolver } from './core/utils/name-resolver.js';
 
 // Mock the @actual-app/api module
 vi.mock('@actual-app/api', () => ({
   default: {
     init: vi.fn(),
     downloadBudget: vi.fn(),
+    getAccounts: vi.fn().mockResolvedValue([]),
     getBudgets: vi.fn(),
+    loadBudget: vi.fn(),
     shutdown: vi.fn(),
     sync: vi.fn(),
     deleteTransaction: vi.fn(),
@@ -30,9 +33,16 @@ vi.mock('fs', () => ({
 // Mock cache service
 vi.mock('./core/cache/cache-service.js', () => ({
   cacheService: {
+    clear: vi.fn(),
     invalidate: vi.fn(),
     invalidatePattern: vi.fn(),
     getOrFetch: vi.fn().mockImplementation((_key, fetchFn) => fetchFn()),
+  },
+}));
+
+vi.mock('./core/utils/name-resolver.js', () => ({
+  nameResolver: {
+    clearCache: vi.fn(),
   },
 }));
 
@@ -42,6 +52,7 @@ describe('Auto-load functionality', () => {
   beforeEach(async () => {
     originalEnv = { ...process.env };
     vi.clearAllMocks();
+    vi.mocked(api.getAccounts).mockResolvedValue([]);
 
     // Reset initialization state by calling shutdown
     await actualApi.shutdownActualApi();
@@ -178,6 +189,108 @@ describe('Auto-load functionality', () => {
       await actualApi.initActualApi();
 
       expect(api.downloadBudget).toHaveBeenCalledWith('local-budget-id');
+    });
+  });
+
+  describe('connection state and readiness', () => {
+    it('should report ready state after successful initialization', async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-sync-id',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+
+      const readiness = await actualApi.getReadinessStatus();
+      expect(readiness.ready).toBe(true);
+      expect(readiness.status).toBe('ready');
+      expect(readiness.activeBudgetId).toBe('test-sync-id');
+      expect(readiness.reason).toBe('ready');
+      expect(readiness.lastReadyAt).toBeTruthy();
+      expect(readiness.lastSyncAt).toBeTruthy();
+    });
+
+    it('should report error state when initialization fails', async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.init).mockRejectedValue(new Error('Connection failed'));
+
+      await expect(actualApi.initActualApi()).rejects.toThrow('Connection failed');
+
+      const readiness = await actualApi.getReadinessStatus();
+      expect(readiness.ready).toBe(false);
+      expect(readiness.status).toBe('error');
+      expect(readiness.lastError).toBe('connection_failed');
+    });
+
+    it('should mark readiness unhealthy when a forced health check loses the budget', async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-sync-id',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+      vi.mocked(api.getAccounts).mockRejectedValueOnce(new Error('No budget file is open'));
+
+      const readiness = await actualApi.getReadinessStatus(true);
+      expect(readiness.ready).toBe(false);
+      expect(readiness.status).toBe('error');
+      expect(readiness.reason).toBe('budget_not_loaded');
+    });
+  });
+
+  describe('single-flight initialization', () => {
+    it('should reuse the same initialization promise for concurrent callers', async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-sync-id',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+
+      let resolveInit: (() => void) | undefined;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveInit = () => resolve(undefined as any);
+          }) as any,
+      );
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      const firstInit = actualApi.initActualApi();
+      const secondInit = actualApi.initActualApi();
+
+      resolveInit?.();
+      await Promise.all([firstInit, secondInit]);
+
+      expect(api.init).toHaveBeenCalledTimes(1);
+      expect(api.getBudgets).toHaveBeenCalledTimes(1);
+      expect(api.downloadBudget).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -412,6 +525,54 @@ describe('Auto-load functionality', () => {
     });
   });
 
+  describe('cache invalidation for sync and budget switching', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-sync-id',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+      vi.mocked(api.loadBudget).mockResolvedValue(undefined);
+      vi.mocked(api.sync).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+      vi.mocked(cacheService.clear).mockClear();
+      vi.mocked(nameResolver.clearCache).mockClear();
+    });
+
+    it('should clear cached read state after sync', async () => {
+      await actualApi.sync();
+
+      expect(cacheService.clear).toHaveBeenCalled();
+      expect(nameResolver.clearCache).toHaveBeenCalled();
+    });
+
+    it('should clear cached read state after downloadBudget', async () => {
+      await actualApi.downloadBudget('budget-2');
+
+      expect(api.downloadBudget).toHaveBeenCalledWith('budget-2');
+      expect(cacheService.clear).toHaveBeenCalled();
+      expect(nameResolver.clearCache).toHaveBeenCalled();
+    });
+
+    it('should clear cached read state after loadBudget', async () => {
+      await actualApi.loadBudget('budget-3');
+
+      expect(api.loadBudget).toHaveBeenCalledWith('budget-3');
+      expect(cacheService.clear).toHaveBeenCalled();
+      expect(nameResolver.clearCache).toHaveBeenCalled();
+    });
+  });
+
   describe('updateTransaction', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
@@ -464,6 +625,17 @@ describe('Auto-load functionality', () => {
       await expect(actualApi.updateTransaction('invalid-id', { amount: 5000 })).rejects.toThrow(
         'Transaction not found',
       );
+    });
+
+    it('should not retry writes after a dispatched connection error', async () => {
+      const mockUpdateTransaction = vi.fn().mockRejectedValue(new Error('Network timeout'));
+      vi.mocked(api).updateTransaction = mockUpdateTransaction;
+
+      await expect(actualApi.updateTransaction('txn-123', { amount: 5000 })).rejects.toThrow(
+        'Network timeout',
+      );
+
+      expect(mockUpdateTransaction).toHaveBeenCalledTimes(1);
     });
   });
 

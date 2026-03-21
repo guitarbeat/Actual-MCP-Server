@@ -119,6 +119,26 @@ describe('TransactionHandler', () => {
     expect(mockAddTransactions).not.toHaveBeenCalled();
   });
 
+  it('derives a stable imported_id from idempotencyKey', async () => {
+    mockImportTransactions.mockResolvedValue({ added: ['transaction-2'], updated: [] });
+
+    const handler = new TransactionHandler();
+    await handler.create({
+      account: 'Checking',
+      date: '2025-01-20',
+      amount: -45.67,
+      payee: 'Whole Foods',
+      category: 'Groceries',
+      idempotencyKey: 'retry-safe-key',
+    });
+
+    expect(mockImportTransactions).toHaveBeenCalledWith('account-checking', [
+      expect.objectContaining({
+        imported_id: 'manual-3901c58bb6826f2a838df0f5',
+      }),
+    ]);
+  });
+
   it('rejects transfer transactions that also provide a category', async () => {
     const handler = new TransactionHandler();
 

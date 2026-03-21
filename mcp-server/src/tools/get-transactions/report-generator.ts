@@ -19,6 +19,7 @@ interface ReportMetadata {
   totalFetched: number;
   accountSummary?: { accountName: string; count: number }[];
   totalAmount?: number;
+  warnings?: string[];
 }
 
 export class GetTransactionsReportGenerator {
@@ -36,11 +37,22 @@ export class GetTransactionsReportGenerator {
     const sections = [
       '# Filtered Transactions',
       '',
+    ];
+
+    if (metadata.warnings && metadata.warnings.length > 0) {
+      sections.push('## Warnings', '');
+      metadata.warnings.forEach((warning) => {
+        sections.push(`- ${warning}`);
+      });
+      sections.push('');
+    }
+
+    sections.push(
       `**Account reference provided:** ${metadata.accountReference}`,
       `**Resolved account ID:** ${metadata.resolvedAccountId}`,
       `**Date range evaluated:** ${metadata.dateRange.start} → ${metadata.dateRange.end}`,
       `**Transactions returned:** ${metadata.filteredCount} of ${metadata.totalFetched} fetched`,
-    ];
+    );
 
     if (metadata.totalAmount !== undefined) {
       sections.push(`**Total amount:** ${formatAmount(metadata.totalAmount)}`);
