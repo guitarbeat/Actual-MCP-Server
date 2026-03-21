@@ -15,6 +15,7 @@ import type {
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { BudgetFile } from '../types/index.js';
+import { nameResolver } from '../utils/name-resolver.js';
 
 type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
@@ -30,11 +31,35 @@ const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
+export type ActualConnectionStatus = 'disconnected' | 'initializing' | 'ready' | 'error';
+
+export interface ActualConnectionState {
+  status: ActualConnectionStatus;
+  lastReadyAt: string | null;
+  lastSyncAt: string | null;
+  lastError: string | null;
+  activeBudgetId: string | null;
+}
+
+export interface ActualReadinessStatus extends ActualConnectionState {
+  ready: boolean;
+  reason: string;
+}
+
+const INITIAL_CONNECTION_STATE: ActualConnectionState = {
+  status: 'disconnected',
+  lastReadyAt: null,
+  lastSyncAt: null,
+  lastError: null,
+  activeBudgetId: null,
+};
+
 // API initialization state
 let initialized = false;
-let initializing = false;
 let initializationError: Error | null = null;
+let initializationPromise: Promise<void> | null = null;
 let checkingHealth = false; // Prevent recursion in health checks
+let connectionState: ActualConnectionState = { ...INITIAL_CONNECTION_STATE };
 
 // Performance tracking for initialization
 let initializationTime: number | null = null;
@@ -43,12 +68,120 @@ let initializationSkipCount = 0;
 // Auto-sync state
 let autoSyncInterval: NodeJS.Timeout | null = null;
 
+function nowAsIsoString(): string {
+  return new Date().toISOString();
+}
+
+function sanitizeConnectionError(error: unknown): string {
+  const errorMessage = error instanceof Error ? error.message : String(error ?? 'unknown error');
+  const errorStr = errorMessage.toLowerCase();
+
+  if (
+    errorStr.includes('out of sync') ||
+    errorStr.includes('out-of-sync') ||
+    errorStr.includes('migration')
+  ) {
+    return 'migration_in_progress';
+  }
+  if (errorStr.includes('timeout')) {
+    return 'connection_timeout';
+  }
+  if (
+    errorStr.includes('auth') ||
+    errorStr.includes('password') ||
+    errorStr.includes('unauthorized')
+  ) {
+    return 'authentication_failed';
+  }
+  if (errorStr.includes('no budgets found')) {
+    return 'no_budgets_found';
+  }
+  if (errorStr.includes('no budget file is open') || errorStr.includes('budget file')) {
+    return 'budget_not_loaded';
+  }
+  if (
+    errorStr.includes('not connected') ||
+    errorStr.includes('connection') ||
+    errorStr.includes('network') ||
+    errorStr.includes('econnrefused')
+  ) {
+    return 'connection_failed';
+  }
+
+  return 'unknown_error';
+}
+
+function updateConnectionState(patch: Partial<ActualConnectionState>): void {
+  connectionState = {
+    ...connectionState,
+    ...patch,
+  };
+}
+
+function markConnectionInitializing(): void {
+  updateConnectionState({
+    status: 'initializing',
+    lastError: null,
+  });
+}
+
+function markConnectionReady(budgetId: string): void {
+  initialized = true;
+  updateConnectionState({
+    status: 'ready',
+    lastReadyAt: nowAsIsoString(),
+    lastError: null,
+    activeBudgetId: budgetId,
+  });
+}
+
+function markConnectionError(error: unknown): void {
+  initialized = false;
+  updateConnectionState({
+    status: 'error',
+    lastError: sanitizeConnectionError(error),
+  });
+}
+
+function markSyncSuccess(): void {
+  updateConnectionState({
+    lastSyncAt: nowAsIsoString(),
+    lastError: null,
+  });
+}
+
+function invalidateAllReadState(): void {
+  cacheService.clear();
+  nameResolver.clearCache();
+}
+
+async function waitForInitialization(timeoutMs = 55000): Promise<void> {
+  if (!initializationPromise) {
+    return;
+  }
+
+  let timeoutHandle: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`Initialization timed out after ${Math.floor(timeoutMs / 1000)} seconds`));
+    }, timeoutMs);
+  });
+
+  try {
+    await Promise.race([initializationPromise, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+}
+
 /**
  * Check if the Actual Budget API connection is healthy
  * @returns true if connection is healthy, false otherwise
  */
 async function checkConnectionHealth(): Promise<boolean> {
-  if (!initialized) {
+  if (!initialized || connectionState.status !== 'ready') {
     return false;
   }
 
@@ -80,6 +213,7 @@ async function checkConnectionHealth(): Promise<boolean> {
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
         console.error('[CONNECTION] Health check failed - connection lost or budget closed');
       }
+      markConnectionError(error);
       return false;
     }
 
@@ -88,46 +222,6 @@ async function checkConnectionHealth(): Promise<boolean> {
   } finally {
     checkingHealth = false;
   }
-}
-
-/**
- * Handle early return cases for initialization
- * @param forceReconnect - Whether to force reconnection
- * @returns True if initialization should be skipped
- */
-async function handleInitializationEarlyReturns(forceReconnect: boolean): Promise<boolean> {
-  if (initialized && !forceReconnect) {
-    // Log when initialization is skipped due to existing connection
-    initializationSkipCount++;
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      const timeSaved = initializationTime || 600; // Use actual time or estimate
-      console.error(
-        `[PERF] ⚡ Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
-      );
-    }
-    return true;
-  }
-
-  // If forcing reconnect, reset initialization state
-  if (forceReconnect && initialized) {
-    initialized = false;
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error('[CONNECTION] Forcing reconnection...');
-    }
-  }
-
-  if (initializing) {
-    // * Wait for initialization to complete if already in progress
-    // * This prevents race conditions when multiple requests trigger initialization simultaneously
-    // * Note: Uses busy-wait pattern - acceptable for initialization which is infrequent
-    while (initializing) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    if (initializationError) throw initializationError;
-    return true;
-  }
-
-  return false;
 }
 
 /**
@@ -232,6 +326,7 @@ function handleInitializationError(error: unknown): never {
   }
 
   initializationError = error instanceof Error ? error : new Error(String(error));
+  markConnectionError(initializationError);
   throw initializationError;
 }
 
@@ -240,36 +335,64 @@ function handleInitializationError(error: unknown): never {
  * @param forceReconnect - If true, force reconnection even if already initialized
  */
 export async function initActualApi(forceReconnect = false): Promise<void> {
-  if (await handleInitializationEarlyReturns(forceReconnect)) {
+  if (initialized && !forceReconnect) {
+    initializationSkipCount++;
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      const timeSaved = initializationTime || 600;
+      console.error(
+        `[PERF] ⚡ Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
+      );
+    }
     return;
   }
 
-  initializing = true;
-  const startTime = Date.now();
+  if (initializationPromise) {
+    await waitForInitialization();
+    if (initializationError) {
+      throw initializationError;
+    }
+    return;
+  }
+
+  if (forceReconnect && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+    console.error('[CONNECTION] Forcing reconnection...');
+  }
 
   initializationError = null;
-  try {
-    const connStart = Date.now();
-    await initializeApiConnection();
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error(`[PERF] API connection initialized in ${Date.now() - connStart}ms`);
-    }
+  markConnectionInitializing();
 
-    const budgetFetchStart = Date.now();
-    const { budgetId, budgets } = await downloadAndLoadBudget();
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error(
-        `[PERF] Budget list fetched and budget downloaded in ${Date.now() - budgetFetchStart}ms`,
-      );
-    }
+  initializationPromise = (async () => {
+    const startTime = Date.now();
 
-    initialized = true;
-    logSuccessfulInitialization(startTime, budgets, budgetId);
-    setupAutoSync();
-  } catch (error) {
-    handleInitializationError(error);
-  } finally {
-    initializing = false;
+    try {
+      const connStart = Date.now();
+      await initializeApiConnection();
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        console.error(`[PERF] API connection initialized in ${Date.now() - connStart}ms`);
+      }
+
+      const budgetFetchStart = Date.now();
+      const { budgetId, budgets } = await downloadAndLoadBudget();
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        console.error(
+          `[PERF] Budget list fetched and budget downloaded in ${Date.now() - budgetFetchStart}ms`,
+        );
+      }
+
+      logSuccessfulInitialization(startTime, budgets, budgetId);
+      markConnectionReady(budgetId);
+      markSyncSuccess();
+      setupAutoSync();
+    } catch (error) {
+      handleInitializationError(error);
+    } finally {
+      initializationPromise = null;
+    }
+  })();
+
+  await waitForInitialization();
+  if (initializationError) {
+    throw initializationError;
   }
 }
 
@@ -302,11 +425,9 @@ function setupAutoSync(): void {
   // Setup interval for background sync
   autoSyncInterval = setInterval(async () => {
     try {
-      if (typeof api.sync === 'function') {
-        await api.sync();
-        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-          console.error(`[AUTO-SYNC] ✓ Budget synced successfully`);
-        }
+      await sync();
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        console.error(`[AUTO-SYNC] ✓ Budget synced successfully`);
       }
     } catch (error) {
       console.error('[AUTO-SYNC] Failed to sync budget:', error);
@@ -320,12 +441,17 @@ function setupAutoSync(): void {
  * Shutdown the Actual Budget API
  */
 export async function shutdownActualApi(): Promise<void> {
-  if (!initialized) return;
-
   // Clean up auto-sync interval
   if (autoSyncInterval) {
     clearInterval(autoSyncInterval);
     autoSyncInterval = null;
+  }
+
+  if (!initialized) {
+    updateConnectionState({
+      status: 'disconnected',
+    });
+    return;
   }
 
   try {
@@ -334,6 +460,9 @@ export async function shutdownActualApi(): Promise<void> {
     console.error('Error shutting down Actual Budget API:', error);
   } finally {
     initialized = false;
+    updateConnectionState({
+      status: 'disconnected',
+    });
   }
 }
 
@@ -364,7 +493,7 @@ export function isInitialized(): boolean {
  * Check if the API is currently initializing
  */
 export function isInitializing(): boolean {
-  return initializing;
+  return initializationPromise !== null || connectionState.status === 'initializing';
 }
 
 /**
@@ -374,46 +503,36 @@ export function resetInitializationStats(): void {
   initializationSkipCount = 0;
 }
 
-/**
- * Ensure connection is healthy and initialized
- */
-async function ensureConnectionHealthy(): Promise<void> {
-  if (initializing) {
-    // If already initializing, wait for it to complete with a timeout
-    const waitStartTime = Date.now();
-    const maxWaitTime = 55000; // 55 seconds (just under typical 60s client timeout)
+export function getConnectionState(): ActualConnectionState {
+  return { ...connectionState };
+}
 
-    while (initializing) {
-      if (Date.now() - waitStartTime > maxWaitTime) {
-        throw new Error('Initialization timed out after 55 seconds');
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
+export async function getReadinessStatus(forceCheck = false): Promise<ActualReadinessStatus> {
+  if (forceCheck && initialized && connectionState.status === 'ready') {
+    const isHealthy = await checkConnectionHealth();
+    if (!isHealthy && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error('[READINESS] Readiness probe detected an unhealthy Actual connection');
     }
-
-    if (initializationError) {
-      throw initializationError;
-    }
-    return;
   }
 
-  // Optimization: Trust the initialized state to avoid checking health (API call) on every request.
-  // If the connection is broken, the subsequent operation will fail and trigger the retry logic
-  // in ensureConnection(). This saves one network round-trip per request.
-  if (initialized) {
-    return;
+  const snapshot = getConnectionState();
+  let reason = snapshot.lastError || 'not_initialized';
+
+  if (snapshot.status === 'ready' && snapshot.activeBudgetId) {
+    reason = 'ready';
+  } else if (snapshot.status === 'initializing') {
+    reason = 'initializing';
+  } else if (snapshot.activeBudgetId && snapshot.status !== 'ready') {
+    reason = snapshot.lastError || 'connection_error';
+  } else if (!snapshot.activeBudgetId) {
+    reason = snapshot.lastError || 'budget_not_loaded';
   }
 
-  const isHealthy = await checkConnectionHealth();
-  if (!isHealthy) {
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error('[CONNECTION] Connection unhealthy, attempting reconnect');
-    }
-    initialized = false;
-    await initActualApi(true);
-  } else if (!initialized) {
-    // Ensure initialization (in case initialized flag is false but connection works)
-    await initActualApi();
-  }
+  return {
+    ...snapshot,
+    ready: snapshot.status === 'ready' && Boolean(snapshot.activeBudgetId),
+    reason,
+  };
 }
 
 /**
@@ -434,60 +553,89 @@ function isConnectionError(errorMessage: string): boolean {
   );
 }
 
-/**
- * Handle connection error retry logic
- * @param error - The error that occurred
- * @param attempt - Current attempt number
- * @param maxRetries - Maximum number of retries
- * @returns True if should retry
- */
-async function handleConnectionErrorRetry(
-  error: Error,
-  attempt: number,
-  maxRetries: number,
-): Promise<boolean> {
-  const errorMessage = error.message.toLowerCase();
-  if (!isConnectionError(errorMessage) || attempt >= maxRetries) {
-    return false;
+async function ensureReadConnectionAvailable(): Promise<void> {
+  if (initializationPromise) {
+    await waitForInitialization();
   }
 
-  if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-    console.error(
-      `[CONNECTION] Connection error detected, reconnecting (attempt ${attempt + 1}/${maxRetries + 1}): ${errorMessage}`,
-    );
+  if (initializationError) {
+    throw initializationError;
   }
 
-  // Reset connection state and retry
-  initialized = false;
-  checkingHealth = false;
-  await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1))); // Exponential backoff
-  return true;
+  if (initialized && connectionState.status === 'ready') {
+    return;
+  }
+
+  await initActualApi(connectionState.status === 'error');
 }
 
-/**
- * Ensure the Actual Budget API connection is healthy
- * Automatically reconnects if connection is lost
- * @param operation - Function to execute after ensuring connection
- * @returns Result of the operation
- */
-async function ensureConnection<T>(operation: () => Promise<T>): Promise<T> {
+async function ensureWriteConnectionAvailable(): Promise<void> {
+  if (initializationPromise) {
+    await waitForInitialization();
+  }
+
+  if (initializationError) {
+    throw initializationError;
+  }
+
+  if (!initialized || connectionState.status !== 'ready') {
+    await initActualApi(connectionState.status === 'error');
+  }
+
+  const isHealthy = await checkConnectionHealth();
+  if (!isHealthy) {
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error('[CONNECTION] Connection unhealthy before write, reconnecting');
+    }
+    await initActualApi(true);
+  }
+}
+
+type ConnectionMode = 'read' | 'write';
+
+async function ensureConnection<T>(
+  operation: () => Promise<T>,
+  mode: ConnectionMode = 'read',
+): Promise<T> {
+  if (mode === 'write') {
+    await ensureWriteConnectionAvailable();
+    try {
+      return await operation();
+    } catch (error) {
+      const resolvedError = error instanceof Error ? error : new Error(String(error));
+      if (isConnectionError(resolvedError.message.toLowerCase())) {
+        markConnectionError(resolvedError);
+      }
+      throw resolvedError;
+    }
+  }
+
   const maxRetries = 2;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      await ensureConnectionHealthy();
+      await ensureReadConnectionAvailable();
       return await operation();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      const shouldRetry = await handleConnectionErrorRetry(lastError, attempt, maxRetries);
+      const shouldRetry =
+        isConnectionError(lastError.message.toLowerCase()) && attempt < maxRetries;
       if (!shouldRetry) {
         throw lastError;
       }
+
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        console.error(
+          `[CONNECTION] Read operation failed, reconnecting (attempt ${attempt + 1}/${maxRetries + 1}): ${lastError.message.toLowerCase()}`,
+        );
+      }
+
+      markConnectionError(lastError);
+      await initActualApi(true);
     }
   }
 
-  // Should never reach here, but TypeScript needs it
   throw lastError || new Error('Failed to ensure connection');
 }
 

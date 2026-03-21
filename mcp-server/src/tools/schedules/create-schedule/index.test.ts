@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { unsupportedFeatureError } from '../../../core/response/error-builder.js';
+import { handler } from './index.js';
 
 const mockCreate = vi.fn();
 const mockInvalidateCache = vi.fn();
@@ -10,8 +11,6 @@ vi.mock('../../manage-entity/entity-handlers/schedule-handler.js', () => ({
     invalidateCache: (...args: unknown[]) => mockInvalidateCache(...args),
   })),
 }));
-
-import { handler } from './index.js';
 
 function parseJsonResponse(response: Awaited<ReturnType<typeof handler>>): Record<string, unknown> {
   const firstContent = response.content[0];
