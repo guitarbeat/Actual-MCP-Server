@@ -2,7 +2,7 @@ import { formatAmount } from '../../core/formatting/index.js';
 import type { MonthData, MonthlySummaryReportData } from '../../core/types/index.js';
 
 export class MonthlySummaryReportGenerator {
-  generate(data: MonthlySummaryReportData): string {
+  generate(data: MonthlySummaryReportData, warnings: string[] = []): string {
     const {
       start,
       end,
@@ -19,6 +19,15 @@ export class MonthlySummaryReportGenerator {
     } = data;
 
     let markdown = `# Monthly Financial Summary\n\n`;
+
+    if (warnings.length > 0) {
+      markdown += '## Warnings\n\n';
+      warnings.forEach((warning) => {
+        markdown += `- ${warning}\n`;
+      });
+      markdown += '\n';
+    }
+
     markdown += `Period: ${start} to ${end}\n\n`;
 
     if (accountId) {

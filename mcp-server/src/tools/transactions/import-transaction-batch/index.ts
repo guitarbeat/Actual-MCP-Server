@@ -24,7 +24,8 @@ export const schema = {
     'NOTES:\n' +
     '- Amounts must be provided in cents\n' +
     '- accountId accepts an account name or ID\n' +
-    '- Category learning is limited to Actual rules already configured in the budget',
+    '- Category learning is limited to Actual rules already configured in the budget\n' +
+    '- Remote retries are safest when each transaction includes a stable imported_id',
   inputSchema: zodToJsonSchema(ImportTransactionBatchArgsSchema) as ToolInput,
 };
 

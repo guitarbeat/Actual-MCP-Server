@@ -4,7 +4,7 @@ services:
     env: docker
     dockerContext: .
     dockerfilePath: mcp-server/Dockerfile
-    healthCheckPath: /health
+    healthCheckPath: /ready
     envVars:
       - key: ACTUAL_SERVER_URL
         sync: false

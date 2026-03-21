@@ -24,13 +24,17 @@ import express, { type Request, type Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import {
+  getConnectionState,
   getInitializationStats,
+  getReadinessStatus,
   initActualApi,
-  isInitialized,
-  isInitializing,
   shutdownActualApi,
 } from './core/api/actual-client.js';
 import { createBearerAuth } from './core/auth/bearer-auth.js';
+import {
+  shouldWarnAboutAutoSyncForRemote,
+  validateBearerStartupConfig,
+} from './core/auth/startup-guard.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { restoreConsoleMethods, setupSafeLogging } from './core/logging/safe-logger.js';
 import { corsMiddleware } from './core/transport/cors.js';
@@ -323,6 +327,16 @@ function validateEnv(): void {
   }
 }
 
+function validateRuntimeGuards(): void {
+  validateBearerStartupConfig(enableBearer, process.env.BEARER_TOKEN);
+
+  if (useSseOption && shouldWarnAboutAutoSyncForRemote(process.env.AUTO_SYNC_INTERVAL_MINUTES)) {
+    console.error(
+      'Warning: AUTO_SYNC_INTERVAL_MINUTES should be set to a non-zero value for remote deployments to keep cached data fresh.',
+    );
+  }
+}
+
 /**
  * Initialize Actual Budget API if not in test mode
  */
@@ -382,6 +396,7 @@ async function main(): Promise<void> {
   }
 
   validateEnv();
+  validateRuntimeGuards();
   if (useSseOption) {
     // Determine binding host
     // If bearer auth is enabled, default to 0.0.0.0 (all interfaces)
@@ -437,13 +452,14 @@ async function main(): Promise<void> {
     // * Dashboard renderer to keep route complexity low
     function renderDashboard(nonce: string): string {
       const stats = getInitializationStats();
-      const initialized = isInitialized();
-      const initializing = isInitializing();
+      const connectionState = getConnectionState();
+      const ready = connectionState.status === 'ready' && Boolean(connectionState.activeBudgetId);
+      const initializing = connectionState.status === 'initializing';
 
       const getStatusDetails = () => {
-        if (initialized) return { type: 'success', text: 'Connected' };
+        if (ready) return { type: 'success', text: 'Ready' };
         if (initializing) return { type: 'warning', text: 'Initializing...' };
-        return { type: 'error', text: 'Disconnected' };
+        return { type: 'error', text: 'Not Ready' };
       };
 
       const { type: statusType, text: statusText } = getStatusDetails();
@@ -697,7 +713,13 @@ async function main(): Promise<void> {
                   ${renderStat('Port', resolvedPort)}
                   ${renderStat('Host', bindHost)}
                   ${renderStat('Auth', enableBearer ? 'Enabled' : 'Disabled')}
+                  ${renderStat('Liveness', 'Up')}
+                  ${renderStat('Readiness', ready ? 'Ready' : 'Not Ready')}
                   ${renderStat('Init Time', stats.initializationTime ? `${stats.initializationTime}ms` : '---')}
+                  ${renderStat('Last Ready', connectionState.lastReadyAt || '---')}
+                  ${renderStat('Last Sync', connectionState.lastSyncAt || '---')}
+                  ${renderStat('Budget', connectionState.activeBudgetId || '---')}
+                  ${renderStat('Last Error', connectionState.lastError || 'None')}
                   ${renderStat('Sessions', streamableHandler.getActiveSessionCount())}
                 </dl>
 
@@ -705,13 +727,15 @@ async function main(): Promise<void> {
                 <ul class="endpoints">
                   ${renderEndpoint('ALL', 'primary', '/mcp', 'Streamable Connection')}
                   ${renderEndpoint('GET', 'success', '/sse', 'Event Stream')}
-                  ${renderEndpoint('GET', 'warning', '/health', 'Health Check')}
+                  ${renderEndpoint('GET', 'warning', '/health', 'Liveness Check')}
+                  ${renderEndpoint('GET', 'warning', '/ready', 'Readiness Check')}
                 </ul>
               </main>
 
 	              <footer>
 	                <span>Actual MCP</span>
-	                <a href="/health">System Health</a>
+	                <a href="/health">Liveness</a>
+	                <a href="/ready">Readiness</a>
 	              </footer>
             </div>
             <script nonce="${nonce}">
@@ -763,6 +787,11 @@ async function main(): Promise<void> {
     // * Health check route for deployment platforms
     app.get('/health', (_req: Request, res: Response) => {
       res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+
+    app.get('/ready', async (_req: Request, res: Response) => {
+      const readiness = await getReadinessStatus(true);
+      res.status(readiness.ready ? 200 : 503).json(readiness);
     });
 
     app.get('/sse', bearerAuth, handleSseConnection);

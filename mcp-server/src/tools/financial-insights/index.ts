@@ -43,6 +43,8 @@ function formatInsights(insights: FinancialInsightsSummary): object {
   return {
     summary: insights.summary,
     month: insights.month,
+    partial: insights.partial,
+    warnings: insights.warnings,
     overspending:
       insights.overspending.length > 0
         ? insights.overspending.map((item) => ({

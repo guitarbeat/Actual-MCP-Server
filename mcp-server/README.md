@@ -30,9 +30,10 @@ ACTUAL_BUDGET_SYNC_ID=replace-with-your-budget-sync-id
 Optional variables:
 
 - `ACTUAL_BUDGET_ENCRYPTION_PASSWORD` for encrypted budgets
-- `BEARER_TOKEN` for HTTP/SSE auth when `--enable-bearer` is enabled
+- `BEARER_TOKEN` for HTTP/SSE auth when `--enable-bearer` is enabled. Use a long random value; startup now rejects weak tokens.
 - `PORT` for HTTP/SSE mode
-- `AUTO_SYNC_INTERVAL_MINUTES`, `CACHE_ENABLED`, and `CACHE_TTL_SECONDS` for runtime behavior
+- `AUTO_SYNC_INTERVAL_MINUTES`, `CACHE_ENABLED`, and `CACHE_TTL_SECONDS` for runtime behavior. Remote deployments should set a non-zero sync interval.
+- `MCP_ALLOWED_ORIGINS` to allow browser-based MCP clients in production; server-to-server clients without an `Origin` header remain allowed.
 
 ## Run Modes
 
@@ -52,8 +53,14 @@ Useful flags:
 
 - `--enable-write` exposes write-capable tools
 - `--enable-nini` exposes advanced account and budget-file tools
-- `--enable-bearer` requires `BEARER_TOKEN` and allows non-localhost binding by default
+- `--enable-bearer` requires `BEARER_TOKEN`, enforces a minimum token length at startup, and allows non-localhost binding by default
 - `--host` and `--port` override the HTTP listener
+
+Remote deployment notes:
+
+- Terminate TLS in front of the server and treat the bearer token as a full read/write secret.
+- Restrict network access with your reverse proxy or platform controls when possible.
+- Use `/health` for liveness and `/ready` for Actual connectivity readiness.
 
 ## Client Examples
 

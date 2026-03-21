@@ -1,7 +1,9 @@
 import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
 import { getTransactions } from '../../core/api/actual-client.js';
 import type { Account, Category, Payee, Transaction } from '../types/domain.js';
+import { mapSettledWithConcurrency } from '../utils/concurrency.js';
 import { nameResolver } from '../utils/name-resolver.js';
+import type { AccountDataWarning } from '../utils/partial-results.js';
 import { fetchAllCategoriesMap } from './fetch-categories.js';
 import { fetchAllPayeesMap } from './fetch-payees.js';
 
@@ -14,6 +16,14 @@ export interface TransactionLookups {
   payeesById: Record<string, Payee>;
   categoriesById: Record<string, Category>;
 }
+
+export interface TransactionFetchResult {
+  transactions: Transaction[];
+  successfulAccountIds: string[];
+  warnings: AccountDataWarning[];
+}
+
+const TRANSACTION_FETCH_CONCURRENCY = 4;
 
 async function _buildTransactionLookups(
   options: TransactionLookupOptions,
@@ -147,52 +157,97 @@ export async function fetchTransactionsForAccount(
  * @param end - End date in YYYY-MM-DD format
  * @returns Object containing transactions array and optional errors array
  */
+async function fetchTransactionsAcrossAccounts(
+  accounts: Account[],
+  start: string,
+  end: string,
+): Promise<{
+  transactions: TransactionEntity[];
+  successfulAccountIds: string[];
+  warnings: AccountDataWarning[];
+}> {
+  if (accounts.length === 0) {
+    return {
+      transactions: [],
+      successfulAccountIds: [],
+      warnings: [],
+    };
+  }
+
+  const fetchStart = Date.now();
+  const results = await mapSettledWithConcurrency(
+    accounts,
+    async (account) => ({
+      account,
+      transactions: await getTransactions(account.id, start, end),
+    }),
+    TRANSACTION_FETCH_CONCURRENCY,
+  );
+
+  const transactions: TransactionEntity[] = [];
+  const successfulAccountIds: string[] = [];
+  const warnings: AccountDataWarning[] = [];
+
+  results.forEach((result, index) => {
+    const account = accounts[index];
+    if (result.status === 'fulfilled') {
+      transactions.push(...result.value.transactions);
+      successfulAccountIds.push(account.id);
+      return;
+    }
+
+    const error =
+      result.reason instanceof Error ? result.reason.message : String(result.reason ?? 'unknown');
+    warnings.push({
+      accountId: account.id,
+      accountName: account.name,
+      operation: 'transactions',
+      error,
+    });
+  });
+
+  if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+    console.error(
+      `[PERF] Transactions fetched for ${successfulAccountIds.length}/${accounts.length} accounts in ${Date.now() - fetchStart}ms`,
+    );
+  }
+
+  if (warnings.length > 0) {
+    console.error('[TRANSACTIONS] Partial failures while fetching account transactions:', warnings);
+  }
+
+  return {
+    transactions,
+    successfulAccountIds,
+    warnings,
+  };
+}
+
 export async function fetchAllOnBudgetTransactionsParallel(
   accounts: Account[],
   start: string,
   end: string,
 ): Promise<{
   transactions: TransactionEntity[];
-  errors?: Array<{ accountId: string; accountName: string; error: string }>;
+  successfulAccountIds: string[];
+  warnings: AccountDataWarning[];
 }> {
   const onBudgetAccounts = accounts.filter((a) => !a.offbudget && !a.closed);
+  return fetchTransactionsAcrossAccounts(onBudgetAccounts, start, end);
+}
 
-  if (onBudgetAccounts.length === 0) {
-    return { transactions: [] };
-  }
+export async function fetchAllOnBudgetTransactionsWithMetadata(
+  accounts: Account[],
+  start: string,
+  end: string,
+): Promise<TransactionFetchResult> {
+  const result = await fetchAllOnBudgetTransactionsParallel(accounts, start, end);
 
-  // # Reason: Use Promise.allSettled to handle partial failures gracefully
-  const results = await Promise.allSettled(
-    onBudgetAccounts.map((account) =>
-      getTransactions(account.id, start, end).then((txs) => ({
-        account,
-        transactions: txs,
-      })),
-    ),
-  );
-
-  const transactions: TransactionEntity[] = [];
-  const errors: Array<{
-    accountId: string;
-    accountName: string;
-    error: string;
-  }> = [];
-
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      transactions.push(...result.value.transactions);
-    } else {
-      // Extract account info from the error if possible
-      const accountInfo = onBudgetAccounts[results.indexOf(result)];
-      errors.push({
-        accountId: accountInfo.id,
-        accountName: accountInfo.name,
-        error: result.reason?.message || String(result.reason),
-      });
-    }
-  }
-
-  return errors.length > 0 ? { transactions, errors } : { transactions };
+  return {
+    transactions: await enrichTransactionsBatch(result.transactions),
+    successfulAccountIds: result.successfulAccountIds,
+    warnings: result.warnings,
+  };
 }
 
 export async function fetchAllOnBudgetTransactions(
@@ -200,15 +255,22 @@ export async function fetchAllOnBudgetTransactions(
   start: string,
   end: string,
 ): Promise<Transaction[]> {
-  const result = await fetchAllOnBudgetTransactionsParallel(accounts, start, end);
+  const result = await fetchAllOnBudgetTransactionsWithMetadata(accounts, start, end);
+  return result.transactions;
+}
 
-  // # Reason: Log errors but don't fail the entire operation for partial failures
-  if (result.errors && result.errors.length > 0) {
-    console.error('Errors fetching transactions for some accounts:', result.errors);
-  }
+export async function fetchAllTransactionsWithMetadata(
+  accounts: Account[],
+  start: string,
+  end: string,
+): Promise<TransactionFetchResult> {
+  const result = await fetchTransactionsAcrossAccounts(accounts, start, end);
 
-  // # Reason: Use batch enrichment to fetch lookups only once for all transactions
-  return enrichTransactionsBatch(result.transactions);
+  return {
+    transactions: await enrichTransactionsBatch(result.transactions),
+    successfulAccountIds: result.successfulAccountIds,
+    warnings: result.warnings,
+  };
 }
 
 export async function fetchAllTransactions(
@@ -216,46 +278,6 @@ export async function fetchAllTransactions(
   start: string,
   end: string,
 ): Promise<Transaction[]> {
-  if (accounts.length === 0) {
-    return [];
-  }
-
-  // # Reason: Use Promise.allSettled to handle partial failures gracefully
-  const results = await Promise.allSettled(
-    accounts.map((account) =>
-      getTransactions(account.id, start, end).then((txs) => ({
-        account,
-        transactions: txs,
-      })),
-    ),
-  );
-
-  const transactions: TransactionEntity[] = [];
-  const errors: Array<{
-    accountId: string;
-    accountName: string;
-    error: string;
-  }> = [];
-
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      transactions.push(...result.value.transactions);
-    } else {
-      // Extract account info from the error if possible
-      const accountInfo = accounts[results.indexOf(result)];
-      errors.push({
-        accountId: accountInfo.id,
-        accountName: accountInfo.name,
-        error: result.reason?.message || String(result.reason),
-      });
-    }
-  }
-
-  // # Reason: Log errors but don't fail the entire operation for partial failures
-  if (errors.length > 0) {
-    console.error('Errors fetching transactions for some accounts:', errors);
-  }
-
-  // # Reason: Use batch enrichment to fetch lookups only once for all transactions
-  return enrichTransactionsBatch(transactions);
+  const result = await fetchAllTransactionsWithMetadata(accounts, start, end);
+  return result.transactions;
 }

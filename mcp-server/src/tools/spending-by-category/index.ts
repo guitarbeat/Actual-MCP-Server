@@ -23,7 +23,7 @@ export async function handler(args: SpendingByCategoryArgs): Promise<CallToolRes
   try {
     const input: SpendingByCategoryInput = new SpendingByCategoryInputParser().parse(args);
     const { startDate, endDate, accountId, includeIncome } = input;
-    const { accounts, categories, categoryGroups, transactions } =
+    const { accounts, categories, categoryGroups, transactions, warnings } =
       await new SpendingByCategoryDataFetcher().fetchAll(accountId, startDate, endDate);
     const categoryMapper = new CategoryMapper(categories, categoryGroups);
     const spendingByCategory = new TransactionGrouper().groupByCategory(
@@ -45,6 +45,7 @@ export async function handler(args: SpendingByCategoryArgs): Promise<CallToolRes
       { start: startDate, end: endDate },
       accountLabel,
       includeIncome,
+      warnings,
     );
     return success(markdown);
   } catch (err) {

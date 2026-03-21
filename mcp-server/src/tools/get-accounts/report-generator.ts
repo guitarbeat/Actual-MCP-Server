@@ -15,6 +15,12 @@ export interface FormattedAccount {
   offBudget: boolean;
 }
 
+export interface GetAccountsReport {
+  accounts: FormattedAccount[];
+  partial: boolean;
+  warnings: string[];
+}
+
 export class GetAccountsReportGenerator {
   /**
    * Generate formatted account data
@@ -22,14 +28,18 @@ export class GetAccountsReportGenerator {
    * @param accounts - Array of accounts with balances
    * @returns Array of formatted account objects
    */
-  generate(accounts: AccountWithBalance[]): FormattedAccount[] {
-    return accounts.map((account) => ({
-      id: account.id,
-      name: account.name,
-      type: account.type || 'Account',
-      balance: formatAmount(account.balance),
-      closed: account.closed ?? false,
-      offBudget: account.offbudget ?? false,
-    }));
+  generate(accounts: AccountWithBalance[], warnings: string[] = []): GetAccountsReport {
+    return {
+      accounts: accounts.map((account) => ({
+        id: account.id,
+        name: account.name,
+        type: account.type || 'Account',
+        balance: formatAmount(account.balance),
+        closed: account.closed ?? false,
+        offBudget: account.offbudget ?? false,
+      })),
+      partial: warnings.length > 0,
+      warnings,
+    };
   }
 }

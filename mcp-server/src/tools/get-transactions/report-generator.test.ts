@@ -42,4 +42,20 @@ describe('GetTransactionsReportGenerator', () => {
     const report = generator.generate(mockTransactions, metadata);
     expect(report).not.toContain('**Total amount:**');
   });
+
+  it('should include warnings when partial account data was skipped', () => {
+    const metadata = {
+      accountReference: 'all',
+      resolvedAccountId: 'all',
+      dateRange: { start: '2024-03-01', end: '2024-03-31' },
+      appliedFilters: [],
+      filteredCount: 1,
+      totalFetched: 1,
+      warnings: ['Savings: transactions unavailable (timeout)'],
+    };
+
+    const report = generator.generate(mockTransactions, metadata);
+    expect(report).toContain('## Warnings');
+    expect(report).toContain('Savings: transactions unavailable (timeout)');
+  });
 });

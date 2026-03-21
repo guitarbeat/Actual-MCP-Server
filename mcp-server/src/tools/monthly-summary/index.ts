@@ -24,11 +24,12 @@ export async function handler(args: MonthlySummaryArgs): Promise<CallToolResult>
     const input = new MonthlySummaryInputParser().parse(args);
     const { start, end } = getDateRangeForMonths(input.months);
 
-    const { accounts, categories, transactions } = await new MonthlySummaryDataFetcher().fetchAll(
+    const { accounts, categories, transactions, warnings } =
+      await new MonthlySummaryDataFetcher().fetchAll(
       input.accountId,
       start,
       end,
-    );
+      );
     const { incomeCategories, investmentSavingsCategories } = new CategoryClassifier().classify(
       categories,
     );
@@ -46,7 +47,7 @@ export async function handler(args: MonthlySummaryArgs): Promise<CallToolResult>
       sortedMonths,
       averages,
     });
-    const markdown = new MonthlySummaryReportGenerator().generate(reportData);
+    const markdown = new MonthlySummaryReportGenerator().generate(reportData, warnings);
 
     return successWithContent({ type: 'text', text: markdown });
   } catch (err) {

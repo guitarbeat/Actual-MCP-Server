@@ -5,12 +5,12 @@
 
 import { q } from '@actual-app/api';
 import {
-  getAccountBalance,
   getAccounts,
   getBudgetMonth,
   getSchedules,
   runAQL,
 } from '../api/actual-client.js';
+import { fetchAccountBalances } from '../data/fetch-account-balances.js';
 import { formatDate, getDateRange } from '../formatting/index.js';
 
 // ----------------------------
@@ -81,6 +81,8 @@ export interface FinancialInsightsSummary {
   accountHealth: AccountHealthItem[];
   upcomingSchedules: UpcomingScheduleItem[];
   trends: TrendsSummary;
+  partial: boolean;
+  warnings: string[];
 }
 
 // ----------------------------
@@ -197,17 +199,22 @@ export async function findUncategorizedTransactions(month: string): Promise<Unca
 /**
  * Get account health summary
  */
-export async function getAccountHealthSummary(): Promise<AccountHealthItem[]> {
+export async function getAccountHealthSummary(): Promise<{
+  items: AccountHealthItem[];
+  warnings: string[];
+}> {
   const accounts = await getAccounts();
   const healthItems: AccountHealthItem[] = [];
 
-  // Fetch balances in parallel for all non-closed accounts
   const openAccounts = accounts.filter((a) => !a.closed);
-  const balances = await Promise.all(openAccounts.map((account) => getAccountBalance(account.id)));
+  const balanceResult = await fetchAccountBalances(openAccounts);
 
-  for (let i = 0; i < openAccounts.length; i++) {
-    const account = openAccounts[i];
-    const balance = balances[i];
+  openAccounts.forEach((account) => {
+    if (!(account.id in balanceResult.balancesByAccountId)) {
+      return;
+    }
+
+    const balance = balanceResult.balancesByAccountId[account.id];
     let status: 'negative' | 'low' | 'healthy' = 'healthy';
 
     if (balance < 0) {
@@ -223,17 +230,25 @@ export async function getAccountHealthSummary(): Promise<AccountHealthItem[]> {
       balance,
       status,
     });
-  }
+  });
 
   // Sort: negative first, then low, then healthy
   const statusOrder = { negative: 0, low: 1, healthy: 2 };
-  return healthItems.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+  return {
+    items: healthItems.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]),
+    warnings: balanceResult.warnings.map(
+      ({ accountName, error }) => `${accountName}: balances unavailable (${error})`,
+    ),
+  };
 }
 
 /**
  * Get upcoming scheduled transactions
  */
-export async function getUpcomingSchedulesSummary(days = 14): Promise<UpcomingScheduleItem[]> {
+export async function getUpcomingSchedulesSummary(days = 14): Promise<{
+  items: UpcomingScheduleItem[];
+  warnings: string[];
+}> {
   try {
     const schedules = (await getSchedules()) as Array<{
       id: string;
@@ -245,7 +260,7 @@ export async function getUpcomingSchedulesSummary(days = 14): Promise<UpcomingSc
     }>;
 
     if (!schedules || !Array.isArray(schedules)) {
-      return [];
+      return { items: [], warnings: [] };
     }
 
     const now = new Date();
@@ -269,10 +284,15 @@ export async function getUpcomingSchedulesSummary(days = 14): Promise<UpcomingSc
     }
 
     // Sort by next date (soonest first)
-    return upcoming.sort((a, b) => new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime());
+    return {
+      items: upcoming.sort((a, b) => new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime()),
+      warnings: [],
+    };
   } catch {
-    // Schedules API may not be available
-    return [];
+    return {
+      items: [],
+      warnings: ['Scheduled transactions unavailable from the current Actual API connection'],
+    };
   }
 }
 
@@ -347,15 +367,21 @@ export async function generateInsightsSummary(
   const budgetPromise = getBudgetMonth(targetMonth) as unknown as Promise<BudgetMonthData>;
 
   // Run all analyses in parallel for performance
-  const [overspending, uncategorized, accountHealth, upcomingSchedules, trends] = await Promise.all(
-    [
+  const [overspending, uncategorized, accountHealthResult, upcomingSchedulesResult, trends] =
+    await Promise.all([
       analyzeOverspending(targetMonth, budgetPromise),
       findUncategorizedTransactions(targetMonth),
       getAccountHealthSummary(),
-      includeSchedules ? getUpcomingSchedulesSummary(scheduleDays) : Promise.resolve([]),
+      includeSchedules
+        ? getUpcomingSchedulesSummary(scheduleDays)
+        : Promise.resolve({ items: [], warnings: [] }),
       calculateTrends(targetMonth, budgetPromise),
-    ],
-  );
+    ]);
+  const accountHealth = accountHealthResult.items;
+  const accountHealthWarnings = accountHealthResult.warnings;
+  const upcomingSchedules = upcomingSchedulesResult.items;
+  const scheduleWarnings = upcomingSchedulesResult.warnings;
+  const warnings = [...accountHealthWarnings, ...scheduleWarnings];
 
   // Generate human-readable summary
   const summaryParts: string[] = [];
@@ -393,5 +419,7 @@ export async function generateInsightsSummary(
     accountHealth,
     upcomingSchedules,
     trends,
+    partial: warnings.length > 0,
+    warnings,
   };
 }

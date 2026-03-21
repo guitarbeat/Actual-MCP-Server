@@ -53,6 +53,13 @@ export const CreateTransactionSchema = z.object({
     .boolean()
     .optional()
     .describe('Whether the transaction has cleared the bank. Defaults to false.'),
+  idempotencyKey: z
+    .string()
+    .max(200, 'Idempotency key must be less than 200 characters')
+    .optional()
+    .describe(
+      'Optional stable key for safe remote retries. Reusing the same key with the same transaction details avoids duplicate manual imports.',
+    ),
   subtransactions: z
     .array(
       z.object({
@@ -97,16 +104,19 @@ export const schema = {
     '- transferAccount: Destination account for transfers (do not combine with category or subtransactions)\n' +
     '- notes: Additional details\n' +
     '- cleared: true/false (default: false)\n' +
+    '- idempotencyKey: Stable retry key for remote calls that may be retried\n' +
     '- subtransactions: For split transactions\n\n' +
     'EXAMPLES:\n' +
     '- "Add $50 grocery purchase": {"account": "Checking", "date": "2025-01-15", "amount": -50, "payee": "Whole Foods", "category": "Groceries"}\n' +
     '- "Record paycheck": {"account": "Checking", "date": "2025-01-15", "amount": 2000, "payee": "Employer", "category": "Income"}\n' +
     '- "Transfer $200 to savings": {"account": "Checking", "date": "2025-01-15", "amount": -200, "transferAccount": "Savings"}\n' +
-    '- "Split transaction": {"account": "Checking", "date": "2025-01-15", "amount": -100, "subtransactions": [{"amount": -60, "category": "Groceries"}, {"amount": -40, "category": "Gas"}]}\n\n' +
+    '- "Split transaction": {"account": "Checking", "date": "2025-01-15", "amount": -100, "subtransactions": [{"amount": -60, "category": "Groceries"}, {"amount": -40, "category": "Gas"}]}\n' +
+    '- "Safe retry": {"account": "Checking", "date": "2025-01-15", "amount": -50, "payee": "Cafe", "idempotencyKey": "txn-cafe-2025-01-15"}\n\n' +
     'NOTES:\n' +
     '- Amounts < 1000 treated as dollars (-50 = -$50)\n' +
     '- Negative amounts = expenses, positive = income\n' +
-    '- Transfers create the counterpart transaction automatically',
+    '- Transfers create the counterpart transaction automatically\n' +
+    '- Remote retries are safest when idempotencyKey is provided',
   inputSchema: zodToJsonSchema(CreateTransactionSchema) as ToolInput,
 };
 
