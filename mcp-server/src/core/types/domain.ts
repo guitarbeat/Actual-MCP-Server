@@ -14,12 +14,12 @@ export interface Transaction {
   account: string;
   date: string;
   amount: number;
-  payee?: string;
+  payee?: string | null;
   payee_name?: string;
-  category?: string;
+  category?: string | null;
   category_name?: string;
-  notes?: string;
-  transfer_id?: string;
+  notes?: string | null;
+  transfer_id?: string | null;
   is_parent?: boolean;
   is_child?: boolean;
   account_name?: string;

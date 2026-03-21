@@ -4,7 +4,8 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Enable pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Reason: Pin pnpm to the workspace/CI version so Render builds are reproducible.
+RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
 
 # Install build tools for native addons (better-sqlite3)
 RUN apk add --no-cache python3 make g++

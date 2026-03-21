@@ -842,7 +842,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
     server.close();
 
     // Restore console methods before exit
-    if (!useSse) {
+    if (!useSseOption) {
       restoreConsoleMethods();
     }
 

@@ -1,0 +1,23 @@
+{
+  "name": "actual-mcp-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.27.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present run build",
+    "lint": "pnpm -r run lint",
+    "format": "pnpm -r run format",
+    "format:check": "pnpm -r run format:check",
+    "test": "pnpm -r run test",
+    "type-check": "pnpm -r --if-present run type-check",
+    "quality": "pnpm -r --if-present run quality",
+    "dev:mcp-server": "pnpm --filter actual-mcp dev",
+    "watch:mcp-server": "pnpm --filter actual-mcp watch",
+    "start:mcp-server": "pnpm --filter actual-mcp start",
+    "test:mcp-server": "pnpm --filter actual-mcp test",
+    "test:statement-processor": "pnpm --filter chase-csv-cleaner test",
+    "csv-import": "pnpm --filter chase-csv-cleaner csv-import"
+  }
+}

@@ -3,6 +3,7 @@
   "version": "1.6.5",
   "description": "Actual Budget MCP server exposing API functionality",
   "private": true,
+  "packageManager": "pnpm@10.27.0",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "type": "module",
@@ -22,9 +23,9 @@
     "watch": "tsc --watch",
     "dev": "tsx src/index.ts",
     "start": "node build/index.js",
-    "inspector": "npm run build && dotenv -e .env -- sh -c 'npx @modelcontextprotocol/inspector -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL -e ACTUAL_PASSWORD=$ACTUAL_PASSWORD -e ACTUAL_BUDGET_SYNC_ID=$ACTUAL_BUDGET_SYNC_ID node build/index.js'",
-    "inspector:custom": "npm run build && npx @modelcontextprotocol/inspector node build/index.js",
-    "test": "npm run test:unit",
+    "inspector": "pnpm run build && dotenv -e .env -- sh -c 'npx @modelcontextprotocol/inspector -e ACTUAL_SERVER_URL=$ACTUAL_SERVER_URL -e ACTUAL_PASSWORD=$ACTUAL_PASSWORD -e ACTUAL_BUDGET_SYNC_ID=$ACTUAL_BUDGET_SYNC_ID node build/index.js'",
+    "inspector:custom": "pnpm run build && npx @modelcontextprotocol/inspector node build/index.js",
+    "test": "vitest run",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -34,9 +35,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
-    "quality": "npm run lint && npm run format:check && npm run type-check",
+    "quality": "pnpm run lint && pnpm run format:check && pnpm run type-check",
     "prepare": "husky",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "@actual-app/api": "^26.2.0",

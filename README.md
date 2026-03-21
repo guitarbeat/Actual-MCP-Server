@@ -6,6 +6,8 @@
 
 This repository contains a suite of tools designed to enhance your [Actual Budget](https://actualbudget.com/) experience, specifically bridging the gap between your local budget and modern AI tools.
 
+The repository is organized as a `pnpm` workspace so you can install dependencies once at the root and run package-specific commands with shared scripts.
+
 ## 🚀 Projects
 
 ### 🤖 [Actual MCP Server](./mcp-server)
@@ -28,12 +30,12 @@ If you find these tools helpful and want to support their ongoing development, f
 
 ## 🛠️ Setup
 
-Each project in this repository is managed independently. Please refer to the `README.md` in each subdirectory for specific setup instructions.
+The repository is managed from the workspace root.
 
 ### Prerequisites
 
 - Node.js >= 20.0.0
-- npm (latest stable)
+- pnpm >= 10
 
 ### Quick Start
 
@@ -43,18 +45,39 @@ Each project in this repository is managed independently. Please refer to the `R
    cd actual-mcp
    ```
 
-2. **Install dependencies for MCP Server:**
+2. **Install workspace dependencies once:**
    ```bash
-   cd mcp-server
-   npm install
+   pnpm install
    ```
 
-3. **Install dependencies for Statement Processor:**
+3. **Run package-specific commands from the root:**
    ```bash
-   cd ../statement-processor
-   npm install
+   pnpm --filter actual-mcp build
+   pnpm --filter actual-mcp test
+   pnpm --filter chase-csv-cleaner test
    ```
+
+### Workspace Commands
+
+```bash
+pnpm build                # Run all available package build scripts
+pnpm test                 # Run tests across both packages
+pnpm quality              # Run lint, format checks, type-checks, and tests where available
+pnpm dev:mcp-server       # Start the MCP server in development mode
+pnpm csv-import -- --help # Run the statement processor CLI
+```
+
+### Repository Layout
+
+```text
+.
+├── mcp-server/           # Actual Budget MCP server
+├── statement-processor/  # CSV cleaning and import utilities
+├── features/             # Feature notes and planning artifacts
+├── verification/         # Manual verification helpers
+└── render.yaml           # Render blueprint for the MCP server
+```
 
 ## 📈 Deployment
 
-The `mcp-server` is configured for deployment on Render. See [render.yaml](./render.yaml) for service definitions.
+The `mcp-server` is configured for deployment on Render. See [render.yaml](./render.yaml) for the service definition.
