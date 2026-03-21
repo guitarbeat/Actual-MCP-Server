@@ -54,12 +54,14 @@ function buildReadmeToolSurface(): string {
 
   return [
     toolSurfaceStart,
+    '',
     `Generated from \`src/tools/index.ts\`. The current registry exposes ${total} tools total:`,
     `- ${readOnlyCore.length} read-only core tools`,
     `- ${writeCore.length} write-enabled core tools`,
     `- ${advanced.length} advanced \`--enable-nini\` tools`,
     '',
     'The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).',
+    '',
     toolSurfaceEnd,
   ].join('\n');
 }
