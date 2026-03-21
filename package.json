@@ -16,8 +16,6 @@
     "dev:mcp-server": "pnpm --filter actual-mcp dev",
     "watch:mcp-server": "pnpm --filter actual-mcp watch",
     "start:mcp-server": "pnpm --filter actual-mcp start",
-    "test:mcp-server": "pnpm --filter actual-mcp test",
-    "test:statement-processor": "pnpm --filter chase-csv-cleaner test",
-    "csv-import": "pnpm --filter chase-csv-cleaner csv-import"
+    "test:mcp-server": "pnpm --filter actual-mcp test"
   }
 }

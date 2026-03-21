@@ -1,7 +1,0 @@
-node_modules/
-*.csv
-!example.csv
-.env
-.DS_Store
-dist/
-*.log
