@@ -25,11 +25,7 @@ export async function handler(args: MonthlySummaryArgs): Promise<CallToolResult>
     const { start, end } = getDateRangeForMonths(input.months);
 
     const { accounts, categories, transactions, warnings } =
-      await new MonthlySummaryDataFetcher().fetchAll(
-      input.accountId,
-      start,
-      end,
-      );
+      await new MonthlySummaryDataFetcher().fetchAll(input.accountId, start, end);
     const { incomeCategories, investmentSavingsCategories } = new CategoryClassifier().classify(
       categories,
     );

@@ -64,17 +64,19 @@ export class BalanceHistoryDataFetcher {
       ]);
 
       accounts = successfulAccountIds.reduce<Account[]>((resolvedAccounts, successfulAccountId) => {
-          const resolvedAccount = allAccounts.find((candidate) => candidate.id === successfulAccountId);
-          if (!resolvedAccount) {
-            return resolvedAccounts;
-          }
-
-          resolvedAccounts.push({
-            ...resolvedAccount,
-            balance: balanceResult.balancesByAccountId[successfulAccountId],
-          });
+        const resolvedAccount = allAccounts.find(
+          (candidate) => candidate.id === successfulAccountId,
+        );
+        if (!resolvedAccount) {
           return resolvedAccounts;
-        }, []);
+        }
+
+        resolvedAccounts.push({
+          ...resolvedAccount,
+          balance: balanceResult.balancesByAccountId[successfulAccountId],
+        });
+        return resolvedAccounts;
+      }, []);
     }
 
     return { account, accounts, transactions, warnings };

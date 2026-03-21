@@ -46,6 +46,8 @@ vi.mock('./core/utils/name-resolver.js', () => ({
   },
 }));
 
+type MockApiInitResult = Awaited<ReturnType<typeof api.init>>;
+
 describe('Auto-load functionality', () => {
   let originalEnv: NodeJS.ProcessEnv;
 
@@ -272,13 +274,13 @@ describe('Auto-load functionality', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ] as any);
 
+      const initResult = {} as MockApiInitResult;
       let resolveInit: (() => void) | undefined;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(api.init).mockImplementation(
         () =>
-          new Promise((resolve) => {
-            resolveInit = () => resolve(undefined as any);
-          }) as any,
+          new Promise<MockApiInitResult>((resolve) => {
+            resolveInit = () => resolve(initResult);
+          }),
       );
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
