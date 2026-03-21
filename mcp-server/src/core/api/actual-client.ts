@@ -150,11 +150,6 @@ function markSyncSuccess(): void {
   });
 }
 
-function invalidateAllReadState(): void {
-  cacheService.clear();
-  nameResolver.clearCache();
-}
-
 function invalidateNameResolutionState(): void {
   nameResolver.clearCache();
 }
