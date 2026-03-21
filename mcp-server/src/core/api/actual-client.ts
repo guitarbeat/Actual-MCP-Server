@@ -227,8 +227,6 @@ function handleInitializationError(error: unknown): never {
     console.error('  1. Update Actual Budget server to the latest version');
     console.error('  2. Restart the Actual Budget service - migrations will auto-apply');
     console.error('  3. If the issue persists, check Actual Budget server logs');
-    console.error('');
-    console.error('  See docs/easypanel-deployment.md for more details.');
   } else {
     console.error('Failed to initialize Actual Budget API:', error);
   }
@@ -330,8 +328,13 @@ export async function shutdownActualApi(): Promise<void> {
     autoSyncInterval = null;
   }
 
-  await api.shutdown();
-  initialized = false;
+  try {
+    await api.shutdown();
+  } catch (error) {
+    console.error('Error shutting down Actual Budget API:', error);
+  } finally {
+    initialized = false;
+  }
 }
 
 /**
@@ -701,6 +704,7 @@ export async function addTransactions(
     payee?: string | null;
     category?: string | null;
     notes?: string;
+    imported_id?: string;
     cleared?: boolean;
   }>,
   options?: { learnCategories?: boolean; runTransfers?: boolean },
@@ -818,10 +822,7 @@ export async function createAccountWithInitialBalance(
   initialBalance?: number,
 ): Promise<string> {
   return ensureConnection(async () => {
-    const result = await api.createAccount(
-      args as Omit<APIAccountEntity, 'id'>,
-      initialBalance,
-    );
+    const result = await api.createAccount(args as Omit<APIAccountEntity, 'id'>, initialBalance);
     cacheService.invalidate('accounts:all');
     return result;
   });

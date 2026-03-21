@@ -70,7 +70,9 @@ export class SetAccountStartingBalanceDataFetcher {
       categoryId,
       notes: args.notes ?? primaryStartingBalance?.notes ?? 'Starting balance',
       existingTransactionId: primaryStartingBalance?.id,
-      duplicateTransactionIds: startingBalanceTransactions.slice(1).map((transaction) => transaction.id),
+      duplicateTransactionIds: startingBalanceTransactions
+        .slice(1)
+        .map((transaction) => transaction.id),
     };
   }
 

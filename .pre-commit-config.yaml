@@ -7,3 +7,14 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: public-repo-check
+        name: public-repo-check
+        entry: bash -lc 'cd mcp-server && pnpm run public:check'
+        language: system
+        pass_filenames: false

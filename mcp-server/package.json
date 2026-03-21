@@ -35,17 +35,20 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
+    "docs:generate": "tsx scripts/sync-tool-docs.ts --write",
+    "docs:check": "tsx scripts/sync-tool-docs.ts --check",
+    "public:check": "tsx scripts/public-repo-check.ts",
     "quality": "pnpm run lint && pnpm run format:check && pnpm run type-check",
     "prepare": "husky",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build && pnpm run docs:check && pnpm run public:check"
   },
   "dependencies": {
-    "@actual-app/api": "^26.2.0",
-    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@actual-app/api": "^26.3.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "csv-parse": "^6.1.0",
     "csv-stringify": "^6.6.0",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.2.4",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
@@ -90,17 +93,6 @@
       "prettier --write"
     ]
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "homepage": "https://github.com/guitarbeat/actual-mcp",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/guitarbeat/actual-mcp.git"
-  },
-  "bugs": {
-    "url": "https://github.com/guitarbeat/actual-mcp/issues"
-  },
   "keywords": [
     "mcp",
     "actual-budget",
@@ -109,6 +101,5 @@
     "model-context-protocol",
     "actual"
   ],
-  "author": "guitarbeat",
   "license": "MIT"
 }

@@ -16,6 +16,8 @@
     "dev:mcp-server": "pnpm --filter actual-mcp dev",
     "watch:mcp-server": "pnpm --filter actual-mcp watch",
     "start:mcp-server": "pnpm --filter actual-mcp start",
-    "test:mcp-server": "pnpm --filter actual-mcp test"
+    "test:mcp-server": "pnpm --filter actual-mcp test",
+    "docs:mcp-server": "pnpm --filter actual-mcp docs:generate",
+    "public:check:mcp-server": "pnpm --filter actual-mcp public:check"
   }
 }

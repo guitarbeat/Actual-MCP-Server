@@ -37,3 +37,4 @@ export {
   successWithContent,
   successWithJson,
 } from './response-builder.js';
+export { isMCPResponse } from './is-mcp-response.js';

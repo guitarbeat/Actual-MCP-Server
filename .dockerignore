@@ -1,0 +1,12 @@
+.git
+.github
+.cursor
+.agent
+.jules
+node_modules
+mcp-server/node_modules
+mcp-server/build
+features
+verification
+.DS_Store
+*.log
