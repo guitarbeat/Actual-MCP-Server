@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { handler } from './index.js';
 
 const mockFetchSnapshot = vi.fn();
 const mockClearTransactions = vi.fn();
@@ -9,8 +10,6 @@ vi.mock('./data-fetcher.js', () => ({
     clearTransactions: (...args: unknown[]) => mockClearTransactions(...args),
   })),
 }));
-
-import { handler } from './index.js';
 
 function parseJsonResponse(response: Awaited<ReturnType<typeof handler>>): Record<string, unknown> {
   const firstContent = response.content[0];
