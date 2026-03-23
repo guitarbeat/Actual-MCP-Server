@@ -128,13 +128,25 @@ function sanitizeConnectionError(error: unknown): string {
   if (errorStr.includes('not found') || errorStr.includes('404')) {
     return 'budget_not_found';
   }
-  if (errorStr.includes('decrypt') || errorStr.includes('encrypt') || errorStr.includes('encryption')) {
+  if (
+    errorStr.includes('decrypt') ||
+    errorStr.includes('encrypt') ||
+    errorStr.includes('encryption')
+  ) {
     return 'encryption_error';
   }
-  if (errorStr.includes('enotfound') || errorStr.includes('ehostunreach') || errorStr.includes('dns')) {
+  if (
+    errorStr.includes('enotfound') ||
+    errorStr.includes('ehostunreach') ||
+    errorStr.includes('dns')
+  ) {
     return 'server_unreachable';
   }
-  if (errorStr.includes('eacces') || errorStr.includes('permission') || errorStr.includes('eperm')) {
+  if (
+    errorStr.includes('eacces') ||
+    errorStr.includes('permission') ||
+    errorStr.includes('eperm')
+  ) {
     return 'permission_denied';
   }
   if (errorStr.includes('disk') || errorStr.includes('space') || errorStr.includes('enospc')) {
@@ -304,13 +316,19 @@ async function downloadAndLoadBudget(): Promise<{
   const specifiedId = process.env.ACTUAL_BUDGET_SYNC_ID;
   if (specifiedId) {
     const matchingBudget = budgets.find(
-      (b) => b.cloudFileId === specifiedId || b.id === specifiedId
+      (b) => b.cloudFileId === specifiedId || b.id === specifiedId,
     );
     if (!matchingBudget) {
-      const availableIds = budgets.map((b) => `${b.name || 'unnamed'} (${b.cloudFileId || b.id})`).join(', ');
-      console.error(`[CONNECTION] ⚠️  ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`);
+      const availableIds = budgets
+        .map((b) => `${b.name || 'unnamed'} (${b.cloudFileId || b.id})`)
+        .join(', ');
+      console.error(
+        `[CONNECTION] ⚠️  ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
+      );
       console.error(`[CONNECTION] Available budgets: ${availableIds}`);
-      console.error(`[CONNECTION] Falling back to first budget: ${budgets[0].name || budgets[0].cloudFileId || budgets[0].id}`);
+      console.error(
+        `[CONNECTION] Falling back to first budget: ${budgets[0].name || budgets[0].cloudFileId || budgets[0].id}`,
+      );
       // Fall back to first budget instead of failing
     }
   }
@@ -333,10 +351,13 @@ async function downloadAndLoadBudget(): Promise<{
   // Find the target budget to check encryption status
   const targetBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isEncrypted = targetBudget && 'encryptKeyId' in targetBudget && (targetBudget as any).encryptKeyId;
+  const isEncrypted =
+    targetBudget && 'encryptKeyId' in targetBudget && (targetBudget as any).encryptKeyId;
 
   if (budgetPassword && !isEncrypted) {
-    console.error('[CONNECTION] ⚠️  Encryption password provided but budget is not encrypted. Ignoring password.');
+    console.error(
+      '[CONNECTION] ⚠️  Encryption password provided but budget is not encrypted. Ignoring password.',
+    );
   }
 
   if (budgetPassword && isEncrypted) {
@@ -486,8 +507,10 @@ export function startBackgroundRetry(): void {
       return;
     }
     attempt++;
-    const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1), 120000); // Max 2 minutes
-    console.error(`[CONNECTION] Background retry attempt ${attempt}/${MAX_RETRY_ATTEMPTS} in ${Math.round(delay / 1000)}s...`);
+    const delay = Math.min(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), 120000); // Max 2 minutes
+    console.error(
+      `[CONNECTION] Background retry attempt ${attempt}/${MAX_RETRY_ATTEMPTS} in ${Math.round(delay / 1000)}s...`,
+    );
 
     backgroundRetryTimer = setTimeout(async () => {
       try {
@@ -498,7 +521,9 @@ export function startBackgroundRetry(): void {
         if (attempt < MAX_RETRY_ATTEMPTS) {
           retry();
         } else {
-          console.error(`[CONNECTION] ❌ All ${MAX_RETRY_ATTEMPTS} retry attempts failed. Manual intervention required.`);
+          console.error(
+            `[CONNECTION] ❌ All ${MAX_RETRY_ATTEMPTS} retry attempts failed. Manual intervention required.`,
+          );
           backgroundRetryTimer = null;
         }
       }
@@ -629,7 +654,9 @@ export function getConnectionState(): ActualConnectionState {
 
 export async function getReadinessStatus(forceCheck?: false): Promise<ActualReadinessStatus>;
 export async function getReadinessStatus(forceCheck: true): Promise<ActualReadinessStatusExtended>;
-export async function getReadinessStatus(forceCheck = false): Promise<ActualReadinessStatus | ActualReadinessStatusExtended> {
+export async function getReadinessStatus(
+  forceCheck = false,
+): Promise<ActualReadinessStatus | ActualReadinessStatusExtended> {
   if (forceCheck && initialized && connectionState.status === 'ready') {
     const isHealthy = await checkConnectionHealth();
     if (!isHealthy && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
@@ -672,7 +699,9 @@ export async function getReadinessStatus(forceCheck = false): Promise<ActualRead
         serverUrl: serverHostname,
         budgetSyncId: Boolean(process.env.ACTUAL_BUDGET_SYNC_ID),
         hasPassword: Boolean(process.env.ACTUAL_PASSWORD),
-        hasEncryptionPassword: Boolean(process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD),
+        hasEncryptionPassword: Boolean(
+          process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD,
+        ),
         autoSyncMinutes: process.env.AUTO_SYNC_INTERVAL_MINUTES || null,
         retrying: backgroundRetryTimer !== null,
       },

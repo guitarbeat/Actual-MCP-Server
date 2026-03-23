@@ -3,6 +3,7 @@ import {
   GetPromptRequestSchema,
   ListPromptsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { getCurrentMonth } from './core/utils/current-month.js';
 
 // ----------------------------
 // PROMPTS
@@ -42,7 +43,7 @@ export const setupPrompts = (server: Server): void => {
     const { name, arguments: args } = request.params;
 
     if (name === 'analyze-monthly-spending') {
-      const month = (args?.month as string) || new Date().toISOString().slice(0, 7);
+      const month = (args?.month as string) || getCurrentMonth();
       return {
         messages: [
           {
