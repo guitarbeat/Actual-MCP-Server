@@ -55,4 +55,51 @@ describe('sortBy', () => {
   it('should handle empty arrays', () => {
     expect(sortBy([], [])).toEqual([]);
   });
+
+
+  it('should preserve original order for equivalent items with a single iteratee (stable sort)', () => {
+    const data = [
+      { val: 1, id: 'a' },
+      { val: 2, id: 'b' },
+      { val: 1, id: 'c' },
+    ];
+    const result = sortBy(data, [(d) => d.val]);
+    expect(result).toEqual([
+      { val: 1, id: 'a' },
+      { val: 1, id: 'c' },
+      { val: 2, id: 'b' },
+    ]);
+  });
+
+
+  it('should preserve original order for equivalent items with multiple iteratees (stable sort)', () => {
+    const data = [
+      { g: 'a', v: 1, id: 'first' },
+      { g: 'a', v: 2, id: 'middle' },
+      { g: 'a', v: 1, id: 'second' },
+    ];
+    // Sort by g (asc), then v (asc)
+    const result = sortBy(data, [(d) => d.g, (d) => d.v]);
+    expect(result).toEqual([
+      { g: 'a', v: 1, id: 'first' },
+      { g: 'a', v: 1, id: 'second' },
+      { g: 'a', v: 2, id: 'middle' },
+    ]);
+  });
+
+
+  it('should support multiple iteratees descending', () => {
+    const data = [
+      { group: 'a', val: 1 },
+      { group: 'b', val: 2 },
+      { group: 'a', val: 2 },
+    ];
+    // Sort by group (desc), then val (desc)
+    const result = sortBy(data, [(d) => d.group, (d) => d.val], ['desc', 'desc']);
+    expect(result).toEqual([
+      { group: 'b', val: 2 },
+      { group: 'a', val: 2 },
+      { group: 'a', val: 1 },
+    ]);
+  });
 });
