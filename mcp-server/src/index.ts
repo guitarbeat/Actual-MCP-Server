@@ -330,9 +330,13 @@ function validateEnv(): void {
   console.error(`  ACTUAL_SERVER_URL: ${serverHostname}`);
   console.error(`  ACTUAL_PASSWORD: ${process.env.ACTUAL_PASSWORD ? '****' : '(not set)'}`);
   console.error(`  ACTUAL_BUDGET_SYNC_ID: ${process.env.ACTUAL_BUDGET_SYNC_ID || '(auto-detect)'}`);
-  console.error(`  ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD ? '****' : '(not set)'}`);
+  console.error(
+    `  ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD ? '****' : '(not set)'}`,
+  );
   console.error(`  ACTUAL_DATA_DIR: ${process.env.ACTUAL_DATA_DIR || '(default)'}`);
-  console.error(`  AUTO_SYNC_INTERVAL_MINUTES: ${process.env.AUTO_SYNC_INTERVAL_MINUTES || '(disabled)'}`);
+  console.error(
+    `  AUTO_SYNC_INTERVAL_MINUTES: ${process.env.AUTO_SYNC_INTERVAL_MINUTES || '(disabled)'}`,
+  );
   console.error(`  BEARER_TOKEN: ${process.env.BEARER_TOKEN ? '****' : '(not set)'}`);
   console.error('---');
 
@@ -830,10 +834,20 @@ async function main(): Promise<void> {
           timeSaved: stats.timeSaved,
         },
         config: {
-          serverUrl: process.env.ACTUAL_SERVER_URL ? (() => { try { return new URL(process.env.ACTUAL_SERVER_URL).hostname; } catch { return '(invalid URL)'; }})() : null,
+          serverUrl: process.env.ACTUAL_SERVER_URL
+            ? (() => {
+                try {
+                  return new URL(process.env.ACTUAL_SERVER_URL).hostname;
+                } catch {
+                  return '(invalid URL)';
+                }
+              })()
+            : null,
           budgetSyncId: process.env.ACTUAL_BUDGET_SYNC_ID || null,
           hasPassword: Boolean(process.env.ACTUAL_PASSWORD),
-          hasEncryptionPassword: Boolean(process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD),
+          hasEncryptionPassword: Boolean(
+            process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD,
+          ),
           dataDir: process.env.ACTUAL_DATA_DIR || '(default)',
           autoSyncMinutes: process.env.AUTO_SYNC_INTERVAL_MINUTES || null,
         },
