@@ -30,4 +30,22 @@ describe('sumBy', () => {
     const data = [{ val: -10 }, { val: 5 }];
     expect(sumBy(data, 'val')).toBe(-5);
   });
+
+  it('should handle NaN values as 0', () => {
+    const data = [{ val: 1 }, { val: NaN }, { val: 3 }];
+    expect(sumBy(data, 'val')).toBe(4);
+  });
+
+  it('should handle Infinity', () => {
+    const data = [{ val: 1 }, { val: Infinity }];
+    expect(sumBy(data, 'val')).toBe(Infinity);
+  });
+
+  it('should handle mixed types and strings by numeric coercion', () => {
+    const data: Array<{ val: string | number }> = [{ val: '10' }, { val: 20 }];
+    expect(sumBy(data, 'val')).toBe(30);
+
+    const invalidData: Array<{ val: string | number }> = [{ val: 'abc' }, { val: 5 }];
+    expect(sumBy(invalidData, 'val')).toBe(5);
+  });
 });
