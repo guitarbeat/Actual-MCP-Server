@@ -10,7 +10,7 @@ import {
 import type { TextContent, ImageContent } from './types.js';
 
 // Helper to extract text payload from a TextContent response
-function getPayload(result: { content: Array<{ type: string; text?: string }> }): any {
+function getPayload(result: { content: Array<{ type: string; text?: string }> }): unknown {
   const textContent = result.content[0] as TextContent;
   return JSON.parse(textContent.text);
 }
@@ -38,7 +38,7 @@ describe('Response Builder', () => {
       const imageContent: ImageContent = {
         type: 'image',
         data: 'base64data',
-        mimeType: 'image/png'
+        mimeType: 'image/png',
       };
 
       const result = successWithContent(imageContent);
@@ -82,7 +82,7 @@ describe('Response Builder', () => {
       expect(result.isError).toBe(true);
       expect(result.content).toHaveLength(1);
 
-      const payload = getPayload(result);
+      const payload = getPayload(result) as { error: boolean; message: string; suggestion: string };
       expect(payload.error).toBe(true);
       expect(payload.message).toBe('Something went wrong');
       expect(payload.suggestion).toBe('Try again later');
@@ -97,14 +97,16 @@ describe('Response Builder', () => {
       const issues: ZodIssue[] = [
         { code: 'custom', path: ['user', 'name'], message: 'Name is required' },
         { code: 'custom', path: ['age'], message: 'Age must be a number' },
-        { code: 'custom', path: [], message: 'General error' }
+        { code: 'custom', path: [], message: 'General error' },
       ];
       const zodError = new ZodError(issues);
 
       const result = errorFromCatch(zodError);
 
-      const payload = getPayload(result);
-      expect(payload.message).toBe('Validation error: user.name: Name is required; age: Age must be a number; General error');
+      const payload = getPayload(result) as { error: boolean; message: string; suggestion: string };
+      expect(payload.message).toBe(
+        'Validation error: user.name: Name is required; age: Age must be a number; General error',
+      );
     });
 
     it('should extract message from standard Error', () => {
@@ -113,7 +115,7 @@ describe('Response Builder', () => {
 
       const result = errorFromCatch(err);
 
-      const payload = getPayload(result);
+      const payload = getPayload(result) as { error: boolean; message: string; suggestion: string };
       expect(payload.message).toBe('Standard error message');
     });
 
@@ -121,7 +123,7 @@ describe('Response Builder', () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       const result = errorFromCatch('A string error');
 
-      const payload = getPayload(result);
+      const payload = getPayload(result) as { error: boolean; message: string; suggestion: string };
       expect(payload.message).toBe('A string error');
     });
 
@@ -131,7 +133,7 @@ describe('Response Builder', () => {
 
       const result = errorFromCatch(err);
 
-      const payload = getPayload(result);
+      const payload = getPayload(result) as { error: boolean; message: string; suggestion: string };
       expect(payload.message).toBe('Object error message');
     });
 
@@ -141,7 +143,7 @@ describe('Response Builder', () => {
 
       const result = errorFromCatch(err);
 
-      const payload = getPayload(result);
+      const payload = getPayload(result) as { error: boolean; message: string; suggestion: string };
       expect(payload.message).toBe('{"foo":"bar"}');
     });
 
@@ -149,10 +151,12 @@ describe('Response Builder', () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const result1 = errorFromCatch(null, { fallbackMessage: 'Custom fallback' });
-      expect(getPayload(result1).message).toBe('Custom fallback');
+      expect((getPayload(result1) as { message: string }).message).toBe('Custom fallback');
 
       const result2 = errorFromCatch(undefined);
-      expect(getPayload(result2).message).toBe('Unknown error encountered');
+      expect((getPayload(result2) as { message: string }).message).toBe(
+        'Unknown error encountered',
+      );
     });
 
     it('should log error with context to console.error', () => {
@@ -162,7 +166,7 @@ describe('Response Builder', () => {
       errorFromCatch(err, {
         operation: 'testOp',
         tool: 'testTool',
-        args: { id: 1 }
+        args: { id: 1 },
       });
 
       expect(consoleSpy).toHaveBeenCalled();
@@ -181,84 +185,116 @@ describe('Response Builder', () => {
 
       it('should infer suggestion for accountId errors', () => {
         const result = errorFromCatch('Invalid accountId provided');
-        expect(getPayload(result).suggestion).toContain('get-accounts tool to list available accounts');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'get-accounts tool to list available accounts',
+        );
       });
 
       it('should infer suggestion for categoryId errors', () => {
         const result = errorFromCatch('categoryId not found');
-        expect(getPayload(result).suggestion).toContain('get-grouped-categories tool to inspect');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'get-grouped-categories tool to inspect',
+        );
       });
 
       it('should infer suggestion for scheduleId errors', () => {
         const result = errorFromCatch('scheduleId is missing');
-        expect(getPayload(result).suggestion).toContain('get-schedules tool to list existing schedules');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'get-schedules tool to list existing schedules',
+        );
       });
 
       it('should infer suggestion for payeeId errors', () => {
         const result = errorFromCatch('Invalid payeeId');
-        expect(getPayload(result).suggestion).toContain('get-payees tool to list payees');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'get-payees tool to list payees',
+        );
       });
 
       it('should infer suggestion for budgetId errors', () => {
         const result = errorFromCatch('budgetId must be valid');
-        expect(getPayload(result).suggestion).toContain('get-budgets tool to review available');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'get-budgets tool to review available',
+        );
       });
 
       it('should infer suggestion for month errors', () => {
         const result = errorFromCatch('Invalid month format');
-        expect(getPayload(result).suggestion).toContain('get-budget tool to list available months');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'get-budget tool to list available months',
+        );
       });
 
       it('should infer suggestion for amount errors', () => {
         const result = errorFromCatch('amount must be a number');
-        expect(getPayload(result).suggestion).toContain('milliunits (e.g., 12500 for $125.00)');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'milliunits (e.g., 12500 for $125.00)',
+        );
       });
 
       it('should infer suggestion for nextDate errors', () => {
         const result = errorFromCatch('nextDate is required');
-        expect(getPayload(result).suggestion).toContain('ISO string such as 2025-01-15');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'ISO string such as 2025-01-15',
+        );
       });
 
       it('should infer suggestion for rule errors', () => {
         const result = errorFromCatch('Invalid rule');
-        expect(getPayload(result).suggestion).toContain('recurrence rule identifier');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'recurrence rule identifier',
+        );
       });
 
       it('should infer suggestion for filePath errors', () => {
         const result = errorFromCatch('filePath does not exist');
-        expect(getPayload(result).suggestion).toContain('accessible to the server');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'accessible to the server',
+        );
       });
 
       it('should infer suggestion for enabled errors', () => {
         const result = errorFromCatch('enabled flag is wrong');
-        expect(getPayload(result).suggestion).toContain('Provide true or false to toggle');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'Provide true or false to toggle',
+        );
       });
 
       it('should infer suggestion for name errors', () => {
         const result = errorFromCatch('name is too short');
-        expect(getPayload(result).suggestion).toContain('descriptive text and reuse IDs');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'descriptive text and reuse IDs',
+        );
       });
 
       it('should infer suggestion for type errors', () => {
         const result = errorFromCatch('Unknown type');
-        expect(getPayload(result).suggestion).toContain('supported types noted in the error');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'supported types noted in the error',
+        );
       });
 
       it('should infer suggestion for query errors', () => {
         const result = errorFromCatch('SQL query failed');
-        expect(getPayload(result).suggestion).toContain('SQL query string and review Actual Budget query documentation');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'SQL query string and review Actual Budget query documentation',
+        );
       });
 
       it('should use default suggestion if no pattern matches', () => {
         const result = errorFromCatch('Something completely different went wrong');
-        expect(getPayload(result).suggestion).toContain('Check the Actual Budget server logs');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toContain(
+          'Check the Actual Budget server logs',
+        );
       });
 
       it('should prioritize explicit suggestion in context over inferred one', () => {
         const result = errorFromCatch('Invalid accountId', {
-          suggestion: 'Explicitly telling you what to do'
+          suggestion: 'Explicitly telling you what to do',
         });
-        expect(getPayload(result).suggestion).toBe('Explicitly telling you what to do');
+        expect((getPayload(result) as { suggestion: string }).suggestion).toBe(
+          'Explicitly telling you what to do',
+        );
       });
     });
   });
