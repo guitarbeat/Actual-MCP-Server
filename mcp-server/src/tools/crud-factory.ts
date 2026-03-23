@@ -5,8 +5,8 @@
 
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { error, errorFromCatch, type MCPResponse, success } from '../core/response/index.js';
-import type { ToolInput } from '../core/types/index.js';
+import { error, errorFromCatch, success } from '../core/response/index.js';
+import type { MCPResponse, ToolInput } from '../core/types/index.js';
 import type { EntityHandler } from './manage-entity/entity-handlers/base-handler.js';
 
 /**
