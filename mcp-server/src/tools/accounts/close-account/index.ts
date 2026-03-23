@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import { errorFromCatch, success } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import type { CloseAccountData } from '../../manage-entity/entity-handlers/account-handler.js';
 import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
@@ -42,7 +42,7 @@ export const schema = {
   inputSchema: zodToJsonSchema(CloseAccountSchema) as ToolInput,
 };
 
-export async function handler(args: z.infer<typeof CloseAccountSchema>): Promise<MCPResponse> {
+export async function handler(args: z.infer<typeof CloseAccountSchema>) {
   try {
     const validated = CloseAccountSchema.parse(args);
     const { id, ...closeData } = validated;
