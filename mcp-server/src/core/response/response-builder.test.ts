@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { ZodError, ZodIssue } from 'zod';
+import type { TextContent, ImageContent } from '@modelcontextprotocol/sdk/types.js';
 import {
   error,
   errorFromCatch,
@@ -7,7 +8,6 @@ import {
   successWithContent,
   successWithJson,
 } from './response-builder.js';
-import type { TextContent, ImageContent } from '@modelcontextprotocol/sdk/types.js';
 
 // Helper to extract text payload from a TextContent response
 function getPayload(result: { content: Array<{ type: string; text?: string }> }): unknown {
