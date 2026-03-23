@@ -29,6 +29,7 @@ import {
   getReadinessStatus,
   initActualApi,
   shutdownActualApi,
+  startBackgroundRetry,
 } from './core/api/actual-client.js';
 import { createBearerAuth } from './core/auth/bearer-auth.js';
 import {
@@ -317,6 +318,24 @@ async function runCustomTest(): Promise<void> {
  * Validate required environment variables and print warnings
  */
 function validateEnv(): void {
+  console.error('--- Configuration ---');
+  let serverHostname = '(not set)';
+  if (process.env.ACTUAL_SERVER_URL) {
+    try {
+      serverHostname = new URL(process.env.ACTUAL_SERVER_URL).hostname;
+    } catch {
+      serverHostname = '(invalid URL)';
+    }
+  }
+  console.error(`  ACTUAL_SERVER_URL: ${serverHostname}`);
+  console.error(`  ACTUAL_PASSWORD: ${process.env.ACTUAL_PASSWORD ? '****' : '(not set)'}`);
+  console.error(`  ACTUAL_BUDGET_SYNC_ID: ${process.env.ACTUAL_BUDGET_SYNC_ID || '(auto-detect)'}`);
+  console.error(`  ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD ? '****' : '(not set)'}`);
+  console.error(`  ACTUAL_DATA_DIR: ${process.env.ACTUAL_DATA_DIR || '(default)'}`);
+  console.error(`  AUTO_SYNC_INTERVAL_MINUTES: ${process.env.AUTO_SYNC_INTERVAL_MINUTES || '(disabled)'}`);
+  console.error(`  BEARER_TOKEN: ${process.env.BEARER_TOKEN ? '****' : '(not set)'}`);
+  console.error('---');
+
   if (!process.env.ACTUAL_DATA_DIR && !process.env.ACTUAL_SERVER_URL) {
     console.error('Warning: Neither ACTUAL_DATA_DIR nor ACTUAL_SERVER_URL is set.');
   }
@@ -377,6 +396,9 @@ async function initializeApi(
         'Server is running but Actual Budget connection failed. Will retry on next request.\n\nCommon causes:\n  - Incorrect ACTUAL_SERVER_URL or ACTUAL_PASSWORD\n  - Actual Budget server is not running or not accessible\n  - Network connectivity issues\n  - Invalid ACTUAL_BUDGET_SYNC_ID',
       );
     }
+
+    // Start background retry for automatic recovery
+    startBackgroundRetry();
   }
 }
 
@@ -729,6 +751,7 @@ async function main(): Promise<void> {
                   ${renderEndpoint('GET', 'success', '/sse', 'Event Stream')}
                   ${renderEndpoint('GET', 'warning', '/health', 'Liveness Check')}
                   ${renderEndpoint('GET', 'warning', '/ready', 'Readiness Check')}
+                  ${renderEndpoint('GET', 'primary', '/diagnostics', 'Debug Info (auth required)')}
                 </ul>
               </main>
 
@@ -792,6 +815,30 @@ async function main(): Promise<void> {
     app.get('/ready', async (_req: Request, res: Response) => {
       const readiness = await getReadinessStatus(true);
       res.status(readiness.ready ? 200 : 503).json(readiness);
+    });
+
+    app.get('/diagnostics', bearerAuth, async (_req: Request, res: Response) => {
+      const readiness = await getReadinessStatus(true);
+      const state = getConnectionState();
+      const stats = getInitializationStats();
+      res.json({
+        ...readiness,
+        debugError: state.debugError,
+        stats: {
+          initializationTime: stats.initializationTime,
+          skipCount: stats.skipCount,
+          timeSaved: stats.timeSaved,
+        },
+        config: {
+          serverUrl: process.env.ACTUAL_SERVER_URL ? (() => { try { return new URL(process.env.ACTUAL_SERVER_URL).hostname; } catch { return '(invalid URL)'; }})() : null,
+          budgetSyncId: process.env.ACTUAL_BUDGET_SYNC_ID || null,
+          hasPassword: Boolean(process.env.ACTUAL_PASSWORD),
+          hasEncryptionPassword: Boolean(process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD),
+          dataDir: process.env.ACTUAL_DATA_DIR || '(default)',
+          autoSyncMinutes: process.env.AUTO_SYNC_INTERVAL_MINUTES || null,
+        },
+        version,
+      });
     });
 
     app.get('/sse', bearerAuth, handleSseConnection);
