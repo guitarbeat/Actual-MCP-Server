@@ -100,13 +100,19 @@ describe('validators', () => {
     });
 
     it('throws an error if value is null or undefined', () => {
-      expect(() => assertUuid(null, 'userId')).toThrow('userId is required and must be a valid UUID');
-      expect(() => assertUuid(undefined, 'userId')).toThrow('userId is required and must be a valid UUID');
+      expect(() => assertUuid(null, 'userId')).toThrow(
+        'userId is required and must be a valid UUID',
+      );
+      expect(() => assertUuid(undefined, 'userId')).toThrow(
+        'userId is required and must be a valid UUID',
+      );
     });
 
     it('throws an error if value is an empty string or only whitespace', () => {
       expect(() => assertUuid('', 'userId')).toThrow('userId is required and must be a valid UUID');
-      expect(() => assertUuid('   ', 'userId')).toThrow('userId is required and must be a valid UUID');
+      expect(() => assertUuid('   ', 'userId')).toThrow(
+        'userId is required and must be a valid UUID',
+      );
     });
 
     it('throws an error if value is not a valid UUID', () => {
@@ -124,22 +130,36 @@ describe('validators', () => {
     });
 
     it('throws an error if value is null or undefined', () => {
-      expect(() => assertMonth(null, 'billingMonth')).toThrow('billingMonth is required and must be in YYYY-MM format');
-      expect(() => assertMonth(undefined, 'billingMonth')).toThrow('billingMonth is required and must be in YYYY-MM format');
+      expect(() => assertMonth(null, 'billingMonth')).toThrow(
+        'billingMonth is required and must be in YYYY-MM format',
+      );
+      expect(() => assertMonth(undefined, 'billingMonth')).toThrow(
+        'billingMonth is required and must be in YYYY-MM format',
+      );
     });
 
     it('throws an error if value is an empty string or only whitespace', () => {
-      expect(() => assertMonth('', 'billingMonth')).toThrow('billingMonth is required and must be in YYYY-MM format');
-      expect(() => assertMonth('   ', 'billingMonth')).toThrow('billingMonth is required and must be in YYYY-MM format');
+      expect(() => assertMonth('', 'billingMonth')).toThrow(
+        'billingMonth is required and must be in YYYY-MM format',
+      );
+      expect(() => assertMonth('   ', 'billingMonth')).toThrow(
+        'billingMonth is required and must be in YYYY-MM format',
+      );
     });
 
     it('throws an error if value is not a valid YYYY-MM format', () => {
-      expect(() => assertMonth('10-2023', 'billingMonth')).toThrow('billingMonth must be in YYYY-MM format');
-      expect(() => assertMonth('2023-13', 'billingMonth')).toThrow('billingMonth must be in YYYY-MM format');
+      expect(() => assertMonth('10-2023', 'billingMonth')).toThrow(
+        'billingMonth must be in YYYY-MM format',
+      );
+      expect(() => assertMonth('2023-13', 'billingMonth')).toThrow(
+        'billingMonth must be in YYYY-MM format',
+      );
     });
 
     it('throws an error if value is not a string type', () => {
-      expect(() => assertMonth(123, 'billingMonth')).toThrow('billingMonth must be in YYYY-MM format');
+      expect(() => assertMonth(123, 'billingMonth')).toThrow(
+        'billingMonth must be in YYYY-MM format',
+      );
     });
   });
 
@@ -149,25 +169,39 @@ describe('validators', () => {
     });
 
     it('throws an error if value is null or undefined', () => {
-      expect(() => assertPositiveIntegerCents(null, 'price')).toThrow('price is required and must be a positive integer amount in cents');
-      expect(() => assertPositiveIntegerCents(undefined, 'price')).toThrow('price is required and must be a positive integer amount in cents');
+      expect(() => assertPositiveIntegerCents(null, 'price')).toThrow(
+        'price is required and must be a positive integer amount in cents',
+      );
+      expect(() => assertPositiveIntegerCents(undefined, 'price')).toThrow(
+        'price is required and must be a positive integer amount in cents',
+      );
     });
 
     it('throws an error if value is not a number', () => {
-      expect(() => assertPositiveIntegerCents('100', 'price')).toThrow('price is required and must be a positive integer amount in cents');
-      expect(() => assertPositiveIntegerCents(NaN, 'price')).toThrow('price is required and must be a positive integer amount in cents');
+      expect(() => assertPositiveIntegerCents('100', 'price')).toThrow(
+        'price is required and must be a positive integer amount in cents',
+      );
+      expect(() => assertPositiveIntegerCents(NaN, 'price')).toThrow(
+        'price is required and must be a positive integer amount in cents',
+      );
     });
 
     it('throws an error if value is zero', () => {
-      expect(() => assertPositiveIntegerCents(0, 'price')).toThrow('price must be a positive integer amount in cents');
+      expect(() => assertPositiveIntegerCents(0, 'price')).toThrow(
+        'price must be a positive integer amount in cents',
+      );
     });
 
     it('throws an error if value is negative', () => {
-      expect(() => assertPositiveIntegerCents(-100, 'price')).toThrow('price must be a positive integer amount in cents');
+      expect(() => assertPositiveIntegerCents(-100, 'price')).toThrow(
+        'price must be a positive integer amount in cents',
+      );
     });
 
     it('throws an error if value is a float', () => {
-      expect(() => assertPositiveIntegerCents(100.5, 'price')).toThrow('price must be a positive integer amount in cents');
+      expect(() => assertPositiveIntegerCents(100.5, 'price')).toThrow(
+        'price must be a positive integer amount in cents',
+      );
     });
   });
 });
