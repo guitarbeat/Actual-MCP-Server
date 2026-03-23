@@ -27,6 +27,11 @@ COPY --from=builder /app/mcp-server/node_modules ./node_modules
 COPY --from=builder /app/mcp-server/package.json ./package.json
 COPY --from=builder /app/mcp-server/build ./build
 
+# Polyfill browser globals required by @actual-app/api at module load time.
+# navigator.platform is referenced at the top level of bundle.api.js; Node.js
+# has no navigator global so the process crashes on startup without this.
+RUN echo 'if (typeof globalThis.navigator === "undefined") { globalThis.navigator = { platform: process.platform, userAgent: "node" }; }' > polyfill.cjs
+
 ENV NODE_ENV=production
 EXPOSE 3000
-ENTRYPOINT ["node", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
+ENTRYPOINT ["node", "--require", "./polyfill.cjs", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
