@@ -54,12 +54,12 @@ describe('StreamableHTTPHandler Security', () => {
 
     expect(res.statusCode).toBe(500);
 
-    // VERIFY FIX: The sensitive error message should NOT be included in the response
+    // The sensitive error message should NOT be included in the response
     expect(res.end).not.toHaveBeenCalledWith(
       expect.stringContaining('Sensitive database password exposed!'),
     );
 
-    // VERIFY FIX: The response should contain the generic error message
+    // The response should contain the generic error message
     expect(res.end).toHaveBeenCalledWith(expect.stringContaining('Internal server error'));
   });
 });
