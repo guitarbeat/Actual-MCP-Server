@@ -38,9 +38,6 @@ export class StreamableHTTPHandler {
    *
    * Follows MCP SDK best practices: one transport per session.
    */
-  /**
-   * Handle an incoming Streamable HTTP request
-   */
   async handleRequest(
     req: IncomingMessage,
     res: ServerResponse,
@@ -57,15 +54,16 @@ export class StreamableHTTPHandler {
         this.sendErrorResponse(res, 400, -32000, 'Bad Request: No valid session ID provided');
       }
     } catch (error) {
-      console.error('[StreamableHTTPHandler] Error handling request:', error);
+      // SECURITY: Log the actual error for server-side debugging, but DO NOT leak details to the client
+      console.error('[StreamableHTTPHandler] Internal server error:', error);
+
       if (!res.headersSent) {
-        // SECURITY: Do not leak error details to the client
+        // Return a generic error message for all unhandled exceptions
         this.sendErrorResponse(
           res,
           500,
-          -32603,
+          -32603, // Internal error code per JSON-RPC 2.0
           'Internal server error',
-          // Data field omitted to prevent leaking sensitive information
         );
       }
     }
