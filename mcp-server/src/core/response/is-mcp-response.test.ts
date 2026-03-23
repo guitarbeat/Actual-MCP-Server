@@ -12,9 +12,7 @@ describe('isMCPResponse', () => {
 
   it('should return true for a valid MCP response with text content', () => {
     const validResponse: MCPResponse = {
-      content: [
-        { type: 'text', text: 'Hello' }
-      ],
+      content: [{ type: 'text', text: 'Hello' }],
     };
     expect(isMCPResponse(validResponse)).toBe(true);
   });
@@ -61,6 +59,6 @@ describe('isMCPResponse', () => {
 
   it('should return false for arrays (not objects with a content property)', () => {
     expect(isMCPResponse([])).toBe(false);
-    expect(isMCPResponse([ { content: [] } ])).toBe(false);
+    expect(isMCPResponse([{ content: [] }])).toBe(false);
   });
 });
