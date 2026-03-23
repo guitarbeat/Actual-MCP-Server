@@ -124,7 +124,7 @@ describe('Auto-load functionality', () => {
       expect(api.downloadBudget).toHaveBeenCalledWith('specific-budget-id');
     });
 
-    it('should use budget password when ACTUAL_BUDGET_PASSWORD is set', async () => {
+    it('should use budget password when ACTUAL_BUDGET_PASSWORD is set for an encrypted budget', async () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'encrypted-budget-id';
       process.env.ACTUAL_BUDGET_PASSWORD = 'secret-password';
       process.env.ACTUAL_DATA_DIR = '/test/data';
@@ -134,6 +134,7 @@ describe('Auto-load functionality', () => {
           id: 'budget-1',
           cloudFileId: 'encrypted-budget-id',
           name: 'Encrypted Budget',
+          encryptKeyId: 'encrypt-key-1',
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ] as any);
