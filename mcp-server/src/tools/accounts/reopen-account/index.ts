@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import { errorFromCatch, success } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
 
@@ -34,7 +34,7 @@ export const schema = {
   inputSchema: zodToJsonSchema(ReopenAccountSchema) as ToolInput,
 };
 
-export async function handler(args: z.infer<typeof ReopenAccountSchema>): Promise<MCPResponse> {
+export async function handler(args: z.infer<typeof ReopenAccountSchema>) {
   try {
     const validated = ReopenAccountSchema.parse(args);
     const accountHandler = new AccountHandler();
