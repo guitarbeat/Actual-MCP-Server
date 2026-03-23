@@ -23,6 +23,7 @@ FROM node:20-alpine AS release
 WORKDIR /app/mcp-server
 
 COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/mcp-server/node_modules ./node_modules
 COPY --from=builder /app/mcp-server/package.json ./package.json
 COPY --from=builder /app/mcp-server/build ./build
 
