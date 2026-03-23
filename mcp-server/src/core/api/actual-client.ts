@@ -348,9 +348,24 @@ async function downloadAndLoadBudget(): Promise<{
   const budgetPassword: string | undefined =
     process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
 
-  // Budget list metadata is not reliable enough to determine whether a password is required.
-  // Forward the user-supplied password and let Actual decide whether to use it.
-  if (budgetPassword) {
+  // Find the target budget to check encryption status
+  const targetBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId) as
+    | (BudgetFile & { encryptKeyId?: string | null })
+    | undefined;
+  const hasEncryptionMetadata =
+    targetBudget !== undefined && Object.hasOwn(targetBudget, 'encryptKeyId');
+  const isEncrypted = Boolean(targetBudget?.encryptKeyId);
+  const shouldUseBudgetPassword = Boolean(
+    budgetPassword && (!hasEncryptionMetadata || isEncrypted),
+  );
+
+  if (budgetPassword && hasEncryptionMetadata && !isEncrypted) {
+    console.error(
+      '[CONNECTION] ⚠️  Encryption password provided but budget is not encrypted. Ignoring password.',
+    );
+  }
+
+  if (shouldUseBudgetPassword) {
     await api.downloadBudget(budgetId, { password: budgetPassword });
   } else {
     await api.downloadBudget(budgetId);
