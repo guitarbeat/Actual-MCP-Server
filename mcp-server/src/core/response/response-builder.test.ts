@@ -7,7 +7,7 @@ import {
   successWithContent,
   successWithJson,
 } from './response-builder.js';
-import type { TextContent, ImageContent } from './types.js';
+import type { TextContent, ImageContent } from '@modelcontextprotocol/sdk/types.js';
 
 // Helper to extract text payload from a TextContent response
 function getPayload(result: { content: Array<{ type: string; text?: string }> }): unknown {
