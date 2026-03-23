@@ -56,7 +56,6 @@ describe('sortBy', () => {
     expect(sortBy([], [])).toEqual([]);
   });
 
-
   it('should preserve original order for equivalent items with a single iteratee (stable sort)', () => {
     const data = [
       { val: 1, id: 'a' },
@@ -70,7 +69,6 @@ describe('sortBy', () => {
       { val: 2, id: 'b' },
     ]);
   });
-
 
   it('should preserve original order for equivalent items with multiple iteratees (stable sort)', () => {
     const data = [
@@ -86,7 +84,6 @@ describe('sortBy', () => {
       { g: 'a', v: 2, id: 'middle' },
     ]);
   });
-
 
   it('should support multiple iteratees descending', () => {
     const data = [
