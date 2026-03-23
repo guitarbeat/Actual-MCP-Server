@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, vi, beforeEach } from 'vitest';
 import { NameResolver } from './name-resolver.js';
 import { fetchAllAccounts } from '../data/fetch-accounts.js';
 import type { Account } from '../types/domain.js';
@@ -17,7 +17,7 @@ describe('NameResolver N+1 Benchmark', () => {
 
     // Simulate fetchAllAccounts returning 1000 accounts and taking 10ms
     vi.mocked(fetchAllAccounts).mockImplementation(async () => {
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       const accounts: Account[] = [];
       for (let i = 0; i < 1000; i++) {
         accounts.push({ id: `acc-${i}`, name: `Account ${i}` } as Account);
