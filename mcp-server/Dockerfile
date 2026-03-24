@@ -20,7 +20,7 @@ RUN pnpm --filter actual-mcp build
 # ---- Release ----
 FROM node:20-alpine AS release
 
-WORKDIR /app/mcp-server
+WORKDIR /app
 
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/mcp-server/node_modules ./node_modules
