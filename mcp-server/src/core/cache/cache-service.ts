@@ -5,6 +5,7 @@
  */
 
 import { LRUCache } from 'lru-cache';
+import { escapeRegExp } from '../utils/regex-utils.js';
 
 type CacheValue = NonNullable<unknown>;
 
@@ -142,17 +143,15 @@ export class CacheService {
    * @param pattern - Pattern to match keys (e.g., 'accounts:*')
    */
   invalidatePattern(pattern: string): void {
-    const regex = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`);
-    const keysToDelete: string[] = [];
+    // Escape special characters to prevent regex injection,
+    // then restore '*' as '.*' for wildcard matching.
+    const escapedPattern = escapeRegExp(pattern).replace(/\\\*/g, '.*');
+    const regex = new RegExp(`^${escapedPattern}$`);
 
     for (const key of this.cache.keys()) {
       if (regex.test(key)) {
-        keysToDelete.push(key);
+        this.cache.delete(key);
       }
-    }
-
-    for (const key of keysToDelete) {
-      this.cache.delete(key);
     }
   }
 

@@ -4,8 +4,8 @@
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi } from '../core/api/actual-client.js';
-import { error, errorFromCatch, type MCPResponse } from '../core/response/index.js';
-import type { ToolInput } from '../core/types/index.js';
+import { error, errorFromCatch } from '../core/response/index.js';
+import type { MCPResponse, ToolInput } from '../core/types/index.js';
 // Account tools (non-CRUD)
 import * as closeAccount from './accounts/close-account/index.js';
 import * as getAccountBalance from './accounts/get-account-balance/index.js';
