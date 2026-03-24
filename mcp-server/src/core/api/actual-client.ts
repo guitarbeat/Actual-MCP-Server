@@ -38,6 +38,7 @@ export interface ActualConnectionState {
   lastReadyAt: string | null;
   lastSyncAt: string | null;
   lastError: string | null;
+  debugError: string | null;
   activeBudgetId: string | null;
 }
 
@@ -46,11 +47,23 @@ export interface ActualReadinessStatus extends ActualConnectionState {
   reason: string;
 }
 
+export interface ActualReadinessStatusExtended extends ActualReadinessStatus {
+  diagnostics: {
+    serverUrl: string | null;
+    budgetSyncId: boolean;
+    hasPassword: boolean;
+    hasEncryptionPassword: boolean;
+    autoSyncMinutes: string | null;
+    retrying: boolean;
+  };
+}
+
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   status: 'disconnected',
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  debugError: null,
   activeBudgetId: null,
 };
 
@@ -67,6 +80,11 @@ let initializationSkipCount = 0;
 
 // Auto-sync state
 let autoSyncInterval: NodeJS.Timeout | null = null;
+
+// Background retry state
+let backgroundRetryTimer: NodeJS.Timeout | null = null;
+const MAX_RETRY_ATTEMPTS = 5;
+const BASE_RETRY_DELAY_MS = 10000; // 10 seconds
 
 function nowAsIsoString(): string {
   return new Date().toISOString();
@@ -107,6 +125,36 @@ function sanitizeConnectionError(error: unknown): string {
   ) {
     return 'connection_failed';
   }
+  if (errorStr.includes('not found') || errorStr.includes('404')) {
+    return 'budget_not_found';
+  }
+  if (
+    errorStr.includes('decrypt') ||
+    errorStr.includes('encrypt') ||
+    errorStr.includes('encryption')
+  ) {
+    return 'encryption_error';
+  }
+  if (
+    errorStr.includes('enotfound') ||
+    errorStr.includes('ehostunreach') ||
+    errorStr.includes('dns')
+  ) {
+    return 'server_unreachable';
+  }
+  if (
+    errorStr.includes('eacces') ||
+    errorStr.includes('permission') ||
+    errorStr.includes('eperm')
+  ) {
+    return 'permission_denied';
+  }
+  if (errorStr.includes('disk') || errorStr.includes('space') || errorStr.includes('enospc')) {
+    return 'storage_error';
+  }
+
+  // Log raw error for debugging when no pattern matches
+  console.error('[CONNECTION] Unrecognized error (raw):', errorMessage);
 
   return 'unknown_error';
 }
@@ -131,15 +179,18 @@ function markConnectionReady(budgetId: string): void {
     status: 'ready',
     lastReadyAt: nowAsIsoString(),
     lastError: null,
+    debugError: null,
     activeBudgetId: budgetId,
   });
 }
 
 function markConnectionError(error: unknown): void {
   initialized = false;
+  const rawMessage = error instanceof Error ? error.message : String(error ?? 'unknown');
   updateConnectionState({
     status: 'error',
     lastError: sanitizeConnectionError(error),
+    debugError: rawMessage,
   });
 }
 
@@ -261,13 +312,60 @@ async function downloadAndLoadBudget(): Promise<{
     throw new Error('No budgets found. Please create a budget in Actual first.');
   }
 
+  // Validate specified budget ID against available budgets
+  const specifiedId = process.env.ACTUAL_BUDGET_SYNC_ID;
+  if (specifiedId) {
+    const matchingBudget = budgets.find(
+      (b) => b.cloudFileId === specifiedId || b.id === specifiedId,
+    );
+    if (!matchingBudget) {
+      const availableIds = budgets
+        .map((b) => `${b.name || 'unnamed'} (${b.cloudFileId || b.id})`)
+        .join(', ');
+      console.error(
+        `[CONNECTION] ⚠️  ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
+      );
+      console.error(`[CONNECTION] Available budgets: ${availableIds}`);
+      console.error(
+        `[CONNECTION] Falling back to first budget: ${budgets[0].name || budgets[0].cloudFileId || budgets[0].id}`,
+      );
+      // Fall back to first budget instead of failing
+    }
+  }
+
   // Use specified budget or the first one
-  const budgetId: string =
-    process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
+  const budgetId: string = (() => {
+    const sid = process.env.ACTUAL_BUDGET_SYNC_ID;
+    if (sid) {
+      const match = budgets.find((b) => b.cloudFileId === sid || b.id === sid);
+      if (match) return sid;
+      console.error(`[CONNECTION] ACTUAL_BUDGET_SYNC_ID="${sid}" not found, using first budget`);
+    }
+    return budgets[0].cloudFileId || budgets[0].id || '';
+  })();
+
   // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
   const budgetPassword: string | undefined =
     process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
-  if (budgetPassword) {
+
+  // Find the target budget to check encryption status
+  const targetBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId) as
+    | (BudgetFile & { encryptKeyId?: string | null })
+    | undefined;
+  const hasEncryptionMetadata =
+    targetBudget !== undefined && Object.hasOwn(targetBudget, 'encryptKeyId');
+  const isEncrypted = Boolean(targetBudget?.encryptKeyId);
+  const shouldUseBudgetPassword = Boolean(
+    budgetPassword && (!hasEncryptionMetadata || isEncrypted),
+  );
+
+  if (budgetPassword && hasEncryptionMetadata && !isEncrypted) {
+    console.error(
+      '[CONNECTION] ⚠️  Encryption password provided but budget is not encrypted. Ignoring password.',
+    );
+  }
+
+  if (shouldUseBudgetPassword) {
     await api.downloadBudget(budgetId, { password: budgetPassword });
   } else {
     await api.downloadBudget(budgetId);
@@ -402,6 +500,45 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
 }
 
 /**
+ * Start background retry for automatic recovery after initialization failure
+ */
+export function startBackgroundRetry(): void {
+  if (backgroundRetryTimer) return; // Already retrying
+
+  let attempt = 0;
+  const retry = async () => {
+    if (initialized) {
+      backgroundRetryTimer = null;
+      return;
+    }
+    attempt++;
+    const delay = Math.min(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), 120000); // Max 2 minutes
+    console.error(
+      `[CONNECTION] Background retry attempt ${attempt}/${MAX_RETRY_ATTEMPTS} in ${Math.round(delay / 1000)}s...`,
+    );
+
+    backgroundRetryTimer = setTimeout(async () => {
+      try {
+        await initActualApi(true);
+        console.error('[CONNECTION] ✅ Background retry succeeded!');
+        backgroundRetryTimer = null;
+      } catch (error) {
+        if (attempt < MAX_RETRY_ATTEMPTS) {
+          retry();
+        } else {
+          console.error(
+            `[CONNECTION] ❌ All ${MAX_RETRY_ATTEMPTS} retry attempts failed. Manual intervention required.`,
+          );
+          backgroundRetryTimer = null;
+        }
+      }
+    }, delay);
+  };
+
+  retry();
+}
+
+/**
  * Setup automatic budget sync on an interval
  */
 function setupAutoSync(): void {
@@ -450,6 +587,12 @@ export async function shutdownActualApi(): Promise<void> {
   if (autoSyncInterval) {
     clearInterval(autoSyncInterval);
     autoSyncInterval = null;
+  }
+
+  // Clean up background retry timer
+  if (backgroundRetryTimer) {
+    clearTimeout(backgroundRetryTimer);
+    backgroundRetryTimer = null;
   }
 
   if (!initialized) {
@@ -514,7 +657,11 @@ export function getConnectionState(): ActualConnectionState {
   return { ...connectionState };
 }
 
-export async function getReadinessStatus(forceCheck = false): Promise<ActualReadinessStatus> {
+export async function getReadinessStatus(forceCheck?: false): Promise<ActualReadinessStatus>;
+export async function getReadinessStatus(forceCheck: true): Promise<ActualReadinessStatusExtended>;
+export async function getReadinessStatus(
+  forceCheck = false,
+): Promise<ActualReadinessStatus | ActualReadinessStatusExtended> {
   if (forceCheck && initialized && connectionState.status === 'ready') {
     const isHealthy = await checkConnectionHealth();
     if (!isHealthy && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
@@ -535,11 +682,39 @@ export async function getReadinessStatus(forceCheck = false): Promise<ActualRead
     reason = snapshot.lastError || 'budget_not_loaded';
   }
 
-  return {
+  const base: ActualReadinessStatus = {
     ...snapshot,
     ready: snapshot.status === 'ready' && Boolean(snapshot.activeBudgetId),
     reason,
   };
+
+  if (forceCheck) {
+    let serverHostname: string | null = null;
+    if (process.env.ACTUAL_SERVER_URL) {
+      try {
+        serverHostname = new URL(process.env.ACTUAL_SERVER_URL).hostname;
+      } catch {
+        serverHostname = '(invalid URL)';
+      }
+    }
+
+    const extended: ActualReadinessStatusExtended = {
+      ...base,
+      diagnostics: {
+        serverUrl: serverHostname,
+        budgetSyncId: Boolean(process.env.ACTUAL_BUDGET_SYNC_ID),
+        hasPassword: Boolean(process.env.ACTUAL_PASSWORD),
+        hasEncryptionPassword: Boolean(
+          process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD,
+        ),
+        autoSyncMinutes: process.env.AUTO_SYNC_INTERVAL_MINUTES || null,
+        retrying: backgroundRetryTimer !== null,
+      },
+    };
+    return extended;
+  }
+
+  return base;
 }
 
 /**

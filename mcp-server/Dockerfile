@@ -22,14 +22,16 @@ FROM node:20-alpine AS release
 
 WORKDIR /app
 
-# Copy root node_modules so that package-level builds can find dependencies
-# and dependencies of dependencies correctly in the monorepo.
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/mcp-server/package.json ./mcp-server/package.json
-COPY --from=builder /app/mcp-server/build ./mcp-server/build
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/mcp-server/node_modules ./node_modules
+COPY --from=builder /app/mcp-server/package.json ./package.json
+COPY --from=builder /app/mcp-server/build ./build
 
-WORKDIR /app/mcp-server
+# Polyfill browser globals required by @actual-app/api at module load time.
+# navigator.platform is referenced at the top level of bundle.api.js; Node.js
+# has no navigator global so the process crashes on startup without this.
+RUN echo 'if (typeof globalThis.navigator === "undefined") { globalThis.navigator = { platform: process.platform, userAgent: "node" }; }' > polyfill.cjs
 
 ENV NODE_ENV=production
 EXPOSE 3000
-ENTRYPOINT ["node", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
+ENTRYPOINT ["node", "--require", "./polyfill.cjs", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
