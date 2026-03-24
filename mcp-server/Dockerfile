@@ -20,11 +20,15 @@ RUN pnpm --filter actual-mcp build
 # ---- Release ----
 FROM node:20-alpine AS release
 
-WORKDIR /app/mcp-server
+WORKDIR /app
 
-COPY --from=builder /app/node_modules /app/node_modules
-COPY --from=builder /app/mcp-server/package.json ./package.json
-COPY --from=builder /app/mcp-server/build ./build
+# Copy root node_modules so that package-level builds can find dependencies
+# and dependencies of dependencies correctly in the monorepo.
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/mcp-server/package.json ./mcp-server/package.json
+COPY --from=builder /app/mcp-server/build ./mcp-server/build
+
+WORKDIR /app/mcp-server
 
 ENV NODE_ENV=production
 EXPOSE 3000
