@@ -32,6 +32,8 @@ Optional variables:
 
 - `ACTUAL_BUDGET_ENCRYPTION_PASSWORD` for encrypted budgets
 - `ACTUAL_READ_FRESHNESS_MODE` to control read freshness. Use `strict-live` to sync before every read and fail instead of serving stale data; default is `cached`.
+- `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID` for the full sandbox-only MCP smoke suite
+- `ACTUAL_TOOL_TEST_PREFIX` to namespace sandbox smoke-test fixtures. Defaults to `__mcp_tool_test__`.
 - `BEARER_TOKEN` for HTTP/SSE auth when `--enable-bearer` is enabled. Use a long random value; startup now rejects weak tokens.
 - `PORT` for HTTP/SSE mode
 - `AUTO_SYNC_INTERVAL_MINUTES`, `CACHE_ENABLED`, and `CACHE_TTL_SECONDS` for runtime behavior. Remote deployments should set a non-zero sync interval.
@@ -179,6 +181,9 @@ The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry
 - MCP Inspector: `pnpm run inspector`
 - Build: `pnpm build`
 - Tests: `pnpm test`
+- Live MCP tool smoke suite: `pnpm run test:tools:live`
+- Sandbox MCP tool smoke suite: `pnpm run test:tools:sandbox`
+- Combined MCP tool smoke suite: `pnpm run test:tools:all`
 - Type-check: `pnpm type-check`
 - Lint and format validation: `pnpm quality`
 - Regenerate tool docs: `pnpm docs:generate`
@@ -186,3 +191,13 @@ The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry
 - Verify the tree is safe to publish: `pnpm public:check`
 
 The inspector runs locally and should never be committed with live session URLs, auth tokens, or local machine details.
+
+## MCP Tool Smoke Testing
+
+The tool smoke runner talks to the built stdio server over MCP and validates the tool surface in two phases:
+
+- `pnpm run test:tools:live` runs read-only live checks against the configured budget and forces `ACTUAL_READ_FRESHNESS_MODE=strict-live` for the spawned server.
+- `pnpm run test:tools:sandbox` runs the full write and `--enable-nini` pass only when `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID` is set.
+- `pnpm run test:tools:all` runs both phases, skipping the sandbox phase when no sandbox budget ID is configured.
+
+The live smoke pass enables `--enable-nini` so safe budget-file discovery via `get-budget-files` is covered without exposing write tools. The sandbox pass uses test-prefixed fixtures and switches back to the configured budget before exiting.
