@@ -7,7 +7,7 @@ import { setBudgetAmount, setBudgetCarryover } from '../../core/api/actual-clien
 import { formatAmount } from '../../core/formatting/index.js';
 import { errorFromCatch, successWithJson } from '../../core/response/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
-import { type SetBudgetArgs, SetBudgetArgsSchema } from './types.js';
+import { SetBudgetArgsSchema } from './types.js';
 
 export const schema = {
   name: 'set-budget',
@@ -69,7 +69,7 @@ export const schema = {
  * @returns Success or error response
  */
 export async function handler(
-  args: SetBudgetArgs,
+  args: unknown,
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
     // Validate arguments
