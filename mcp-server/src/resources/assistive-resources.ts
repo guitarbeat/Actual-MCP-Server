@@ -8,6 +8,7 @@ import {
 import { fetchAllPayeesMap } from '../core/data/fetch-payees.js';
 import { formatAmount } from '../core/formatting/index.js';
 import type { Account } from '../core/types/index.js';
+import { getCurrentMonth } from '../core/utils/current-month.js';
 
 interface CategoryData {
   name: string;
@@ -55,10 +56,6 @@ export const ASSISTIVE_LIST_RESOURCES = [
     mimeType: 'text/markdown',
   },
 ];
-
-function getCurrentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
-}
 
 function categorizeAccounts(accounts: Account[]): {
   liquid: Account[];
