@@ -30,6 +30,9 @@ type ExtendedActualApi = typeof api & {
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+const DEFAULT_READ_FRESHNESS_MODE = 'cached';
+
+export type ActualReadFreshnessMode = 'cached' | 'strict-live';
 
 export type ActualConnectionStatus = 'disconnected' | 'initializing' | 'ready' | 'error';
 
@@ -54,6 +57,7 @@ export interface ActualReadinessStatusExtended extends ActualReadinessStatus {
     hasPassword: boolean;
     hasEncryptionPassword: boolean;
     autoSyncMinutes: string | null;
+    readFreshnessMode: ActualReadFreshnessMode;
     retrying: boolean;
   };
 }
@@ -90,10 +94,23 @@ function nowAsIsoString(): string {
   return new Date().toISOString();
 }
 
+function getReadFreshnessMode(): ActualReadFreshnessMode {
+  return process.env.ACTUAL_READ_FRESHNESS_MODE === 'strict-live'
+    ? 'strict-live'
+    : DEFAULT_READ_FRESHNESS_MODE;
+}
+
+function isStrictLiveReadMode(): boolean {
+  return getReadFreshnessMode() === 'strict-live';
+}
+
 function sanitizeConnectionError(error: unknown): string {
   const errorMessage = error instanceof Error ? error.message : String(error ?? 'unknown error');
   const errorStr = errorMessage.toLowerCase();
 
+  if (errorStr.includes('live sync required before read failed')) {
+    return 'live_sync_failed';
+  }
   if (
     errorStr.includes('out of sync') ||
     errorStr.includes('out-of-sync') ||
@@ -208,6 +225,52 @@ function invalidateAllReadState(): void {
 
 function invalidateNameResolutionState(): void {
   nameResolver.clearCache();
+}
+
+function createLiveSyncRequiredError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error ?? 'unknown error');
+  return new Error(`Live sync required before read failed: ${message}`);
+}
+
+async function syncForLiveRead(): Promise<void> {
+  if (!isStrictLiveReadMode()) {
+    return;
+  }
+
+  try {
+    await sync();
+  } catch (error) {
+    const syncError = createLiveSyncRequiredError(error);
+    markConnectionError(syncError);
+    throw syncError;
+  }
+}
+
+interface ReadOperationOptions {
+  cacheKey?: string;
+  ttl?: number;
+}
+
+async function runReadOperation<T>(
+  fetchFn: () => Promise<T>,
+  options?: ReadOperationOptions,
+): Promise<T> {
+  return ensureConnection(async (): Promise<T> => {
+    if (isStrictLiveReadMode()) {
+      await syncForLiveRead();
+      return fetchFn();
+    }
+
+    if (options?.cacheKey) {
+      return (await cacheService.getOrFetch(
+        options.cacheKey,
+        fetchFn as () => Promise<NonNullable<T>>,
+        options.ttl,
+      )) as T;
+    }
+
+    return fetchFn();
+  });
 }
 
 async function waitForInitialization(timeoutMs = 55000): Promise<void> {
@@ -724,6 +787,7 @@ export async function getReadinessStatus(
           process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD,
         ),
         autoSyncMinutes: process.env.AUTO_SYNC_INTERVAL_MINUTES || null,
+        readFreshnessMode: getReadFreshnessMode(),
         retrying: backgroundRetryTimer !== null,
       },
     };
@@ -837,19 +901,20 @@ async function ensureConnection<T>(
  * Get all accounts (ensures API is initialized)
  */
 export async function getAccounts(): Promise<APIAccountEntity[]> {
-  return ensureConnection(() => cacheService.getOrFetch('accounts:all', () => api.getAccounts()));
+  return runReadOperation(() => api.getAccounts(), { cacheKey: 'accounts:all' });
 }
 
 /**
  * Get all categories (ensures API is initialized)
  */
 export async function getCategories(): Promise<APICategoryEntity[]> {
-  return ensureConnection(() =>
-    cacheService.getOrFetch('categories:all', async () => {
+  return runReadOperation(
+    async () => {
       const result = await api.getCategories();
       // * Filter out category groups if API returns a union type
       return result.filter((item): item is APICategoryEntity => 'group_id' in item);
-    }),
+    },
+    { cacheKey: 'categories:all' },
   );
 }
 
@@ -857,16 +922,14 @@ export async function getCategories(): Promise<APICategoryEntity[]> {
  * Get all category groups (ensures API is initialized)
  */
 export async function getCategoryGroups(): Promise<APICategoryGroupEntity[]> {
-  return ensureConnection(() =>
-    cacheService.getOrFetch('categoryGroups:all', () => api.getCategoryGroups()),
-  );
+  return runReadOperation(() => api.getCategoryGroups(), { cacheKey: 'categoryGroups:all' });
 }
 
 /**
  * Get all payees (ensures API is initialized)
  */
 export async function getPayees(): Promise<APIPayeeEntity[]> {
-  return ensureConnection(() => cacheService.getOrFetch('payees:all', () => api.getPayees()));
+  return runReadOperation(() => api.getPayees(), { cacheKey: 'payees:all' });
 }
 
 /**
@@ -877,25 +940,23 @@ export async function getTransactions(
   start: string,
   end: string,
 ): Promise<TransactionEntity[]> {
-  return ensureConnection(() =>
-    cacheService.getOrFetch(`transactions:${accountId}:${start}:${end}`, () =>
-      api.getTransactions(accountId, start, end),
-    ),
-  );
+  return runReadOperation(() => api.getTransactions(accountId, start, end), {
+    cacheKey: `transactions:${accountId}:${start}:${end}`,
+  });
 }
 
 /**
  * Get all rules (ensures API is initialized)
  */
 export async function getRules(): Promise<RuleEntity[]> {
-  return ensureConnection(() => api.getRules());
+  return runReadOperation(() => api.getRules());
 }
 
 /**
  * Get account balance for a specific account and date (ensures API is initialized)
  */
 export async function getAccountBalance(accountId: string, date?: string): Promise<number> {
-  return ensureConnection(() => {
+  return runReadOperation(() => {
     // * Convert string date to Date object if provided
     const dateObj = date ? new Date(date) : undefined;
     return api.getAccountBalance(accountId, dateObj);
@@ -1232,14 +1293,14 @@ export async function deleteAccount(id: string): Promise<unknown> {
  * Get all budget months (ensures API is initialized)
  */
 export async function getBudgetMonths(): Promise<string[]> {
-  return ensureConnection(() => api.getBudgetMonths());
+  return runReadOperation(() => api.getBudgetMonths());
 }
 
 /**
  * Get budget data for a specific month (ensures API is initialized)
  */
 export async function getBudgetMonth(month: string): Promise<unknown> {
-  return ensureConnection(() => api.getBudgetMonth(month));
+  return runReadOperation(() => api.getBudgetMonth(month));
 }
 
 /**
@@ -1332,7 +1393,7 @@ export async function deleteSchedule(id: string): Promise<unknown> {
  * Get all schedules (ensures API is initialized)
  */
 export async function getSchedules(): Promise<unknown[]> {
-  return ensureConnection(async () => {
+  return runReadOperation(async () => {
     return extendedApi.getSchedules?.();
   });
 }
@@ -1353,14 +1414,14 @@ export async function mergePayees(targetId: string, sourceIds: string[]): Promis
  * Get rules for a specific payee (ensures API is initialized)
  */
 export async function getPayeeRules(payeeId: string): Promise<RuleEntity[]> {
-  return ensureConnection(() => api.getPayeeRules(payeeId));
+  return runReadOperation(() => api.getPayeeRules(payeeId));
 }
 
 /**
  * Get all budgets (ensures API is initialized)
  */
 export async function getBudgets(): Promise<BudgetFile[]> {
-  return ensureConnection(() => api.getBudgets());
+  return runReadOperation(() => api.getBudgets());
 }
 
 /**
@@ -1465,7 +1526,7 @@ export async function batchBudgetUpdates(callback: () => Promise<void>): Promise
  * Run an AQL query (ensures API is initialized)
  */
 export async function runAQL(query: unknown): Promise<unknown> {
-  return ensureConnection(async () => {
+  return runReadOperation(async () => {
     // biome-ignore lint/suspicious/noExplicitAny: Workaround for type mismatch in actual-app/api
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return api.runQuery(query as any);
@@ -1476,7 +1537,7 @@ export async function runAQL(query: unknown): Promise<unknown> {
  * Run an ActualQL query (ensures API is initialized)
  */
 export async function runQuery(query: string): Promise<unknown> {
-  return ensureConnection(async () => {
+  return runReadOperation(async () => {
     if (typeof api.runQuery === 'function') {
       // * API signature changed - runQuery now takes query string directly or different format
       // Cast through unknown to handle API signature mismatch (Query type vs string)
@@ -1490,7 +1551,7 @@ export async function runQuery(query: string): Promise<unknown> {
  * Get server version (ensures API is initialized)
  */
 export async function getServerVersion(): Promise<{ error?: string } | { version: string }> {
-  return ensureConnection(async () => {
+  return runReadOperation(async () => {
     if (extendedApi.getServerVersion) {
       return extendedApi.getServerVersion();
     }
@@ -1502,7 +1563,7 @@ export async function getServerVersion(): Promise<{ error?: string } | { version
  * Get ID by name for accounts, categories, payees, or schedules (ensures API is initialized)
  */
 export async function getIDByName(type: string, name: string): Promise<string> {
-  return ensureConnection(async () => {
+  return runReadOperation(async () => {
     if (extendedApi.getIDByName) {
       return extendedApi.getIDByName({ type, string: name });
     }
