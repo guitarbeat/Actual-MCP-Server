@@ -302,6 +302,29 @@ describe('Auto-load functionality', () => {
       expect(readiness.status).toBe('error');
       expect(readiness.reason).toBe('budget_not_loaded');
     });
+
+    it('should include the active read freshness mode in readiness diagnostics', async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      process.env.ACTUAL_READ_FRESHNESS_MODE = 'strict-live';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-sync-id',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+
+      const readiness = await actualApi.getReadinessStatus(true);
+      expect(readiness.diagnostics.readFreshnessMode).toBe('strict-live');
+    });
   });
 
   describe('single-flight initialization', () => {
@@ -616,6 +639,90 @@ describe('Auto-load functionality', () => {
       expect(api.loadBudget).toHaveBeenCalledWith('budget-3');
       expect(cacheService.clear).toHaveBeenCalled();
       expect(nameResolver.clearCache).toHaveBeenCalled();
+    });
+  });
+
+  describe('strict live read mode', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-sync-id',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+      vi.mocked(api.sync).mockResolvedValue(undefined);
+      vi.mocked(api.getAccounts).mockResolvedValue([
+        {
+          id: 'account-1',
+          name: 'Checking',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+
+      await actualApi.initActualApi();
+      vi.mocked(api.sync).mockClear();
+      vi.mocked(api.getAccounts).mockClear();
+      vi.mocked(cacheService.getOrFetch).mockClear();
+      vi.mocked(cacheService.clear).mockClear();
+    });
+
+    it('should keep cached mode behavior by default', async () => {
+      const accounts = await actualApi.getAccounts();
+
+      expect(accounts).toHaveLength(1);
+      expect(api.sync).not.toHaveBeenCalled();
+      expect(cacheService.getOrFetch).toHaveBeenCalledWith(
+        'accounts:all',
+        expect.any(Function),
+        undefined,
+      );
+      expect(api.getAccounts).toHaveBeenCalledTimes(1);
+    });
+
+    it('should sync before reads and bypass cache in strict-live mode', async () => {
+      process.env.ACTUAL_READ_FRESHNESS_MODE = 'strict-live';
+
+      const accounts = await actualApi.getAccounts();
+
+      expect(accounts).toHaveLength(1);
+      expect(api.sync).toHaveBeenCalledTimes(1);
+      expect(cacheService.getOrFetch).not.toHaveBeenCalled();
+      expect(api.getAccounts).toHaveBeenCalledTimes(2);
+      expect(cacheService.clear).toHaveBeenCalled();
+    });
+
+    it('should sync before every repeated read in strict-live mode', async () => {
+      process.env.ACTUAL_READ_FRESHNESS_MODE = 'strict-live';
+
+      await actualApi.getAccounts();
+      await actualApi.getAccounts();
+
+      expect(api.sync).toHaveBeenCalledTimes(2);
+      expect(api.getAccounts).toHaveBeenCalledTimes(4);
+      expect(cacheService.getOrFetch).not.toHaveBeenCalled();
+    });
+
+    it('should fail closed when live sync fails', async () => {
+      process.env.ACTUAL_READ_FRESHNESS_MODE = 'strict-live';
+      vi.mocked(api.sync).mockRejectedValueOnce(new Error('Sync unavailable'));
+
+      await expect(actualApi.getAccounts()).rejects.toThrow(
+        'Live sync required before read failed: Sync unavailable',
+      );
+
+      expect(cacheService.getOrFetch).not.toHaveBeenCalled();
+      expect(api.getAccounts).toHaveBeenCalledTimes(1);
+
+      const readiness = await actualApi.getReadinessStatus();
+      expect(readiness.lastError).toBe('live_sync_failed');
     });
   });
 

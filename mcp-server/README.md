@@ -31,6 +31,7 @@ ACTUAL_BUDGET_SYNC_ID=replace-with-your-budget-sync-id
 Optional variables:
 
 - `ACTUAL_BUDGET_ENCRYPTION_PASSWORD` for encrypted budgets
+- `ACTUAL_READ_FRESHNESS_MODE` to control read freshness. Use `strict-live` to sync before every read and fail instead of serving stale data; default is `cached`.
 - `BEARER_TOKEN` for HTTP/SSE auth when `--enable-bearer` is enabled. Use a long random value; startup now rejects weak tokens.
 - `PORT` for HTTP/SSE mode
 - `AUTO_SYNC_INTERVAL_MINUTES`, `CACHE_ENABLED`, and `CACHE_TTL_SECONDS` for runtime behavior. Remote deployments should set a non-zero sync interval.
