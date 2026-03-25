@@ -58,14 +58,16 @@ export async function handler(
 
     const passwordStr = password && typeof password === 'string' ? password : undefined;
 
-    // Try downloadBudget first (handles both local and remote)
-    await downloadBudget(budgetId, passwordStr);
-
-    // Also try loadBudget as fallback for local budgets
     try {
-      await loadBudget(budgetId);
-    } catch {
-      // Ignore if loadBudget fails, downloadBudget may have succeeded
+      // Prefer the download path so remote/group IDs work and the downloaded local copy is loaded.
+      await downloadBudget(budgetId, passwordStr);
+    } catch (downloadError) {
+      // Fall back to direct local loading when the caller passed a local budget ID.
+      try {
+        await loadBudget(budgetId);
+      } catch {
+        throw downloadError;
+      }
     }
 
     return successWithJson(`Successfully switched to budget: ${budgetId}`);

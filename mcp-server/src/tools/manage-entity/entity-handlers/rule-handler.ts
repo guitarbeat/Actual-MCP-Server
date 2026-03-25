@@ -32,8 +32,8 @@ export class RuleHandler implements EntityHandler<RuleData, RuleData> {
    * @param data - Rule update data
    */
   async update(id: string, data: RuleData): Promise<void> {
-    // Validate data
-    const validated = RuleDataSchema.parse(data);
+    // Update operations support partial rule patches.
+    const validated = RuleDataSchema.partial().parse(data);
 
     await updateRule({ id, ...validated });
   }

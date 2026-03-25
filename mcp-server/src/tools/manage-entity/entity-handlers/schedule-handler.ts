@@ -79,7 +79,11 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
       apiData.amount = this.transformScheduleAmount(validated.amount);
     }
 
-    if (validated.amountOp !== undefined) apiData.amountOp = validated.amountOp;
+    if (validated.amountOp !== undefined) {
+      apiData.amountOp = validated.amountOp;
+    } else if (validated.amount !== undefined) {
+      apiData.amountOp = 'is';
+    }
 
     if (validated.payee !== undefined) {
       apiData.payee = validated.payee ? await nameResolver.resolvePayee(validated.payee) : null;
