@@ -39,6 +39,8 @@ interface LiveContext {
 interface SandboxState {
   originalBudgetId: string;
   sandboxBudgetId: string;
+  originalSwitchBudgetId: string;
+  sandboxSwitchBudgetId: string;
   switchedToSandbox: boolean;
   currentMonth: string;
   fixtureDate: string;
@@ -487,6 +489,8 @@ function createSandboxState(): SandboxState {
   return {
     originalBudgetId,
     sandboxBudgetId,
+    originalSwitchBudgetId: originalBudgetId,
+    sandboxSwitchBudgetId: sandboxBudgetId,
     switchedToSandbox: false,
     currentMonth,
     fixtureDate,
@@ -570,18 +574,39 @@ async function assertSandboxBudgetPresent(
     }>
   >(budgetsResult);
 
-  const found = budgets.some(
+  const sandboxBudget = budgets.find(
     (budget) =>
       budget.id === state.sandboxBudgetId ||
       budget.groupId === state.sandboxBudgetId ||
       budget.cloudFileId === state.sandboxBudgetId,
   );
 
-  if (!found) {
+  if (!sandboxBudget) {
     throw new Error(
       `Sandbox budget "${state.sandboxBudgetId}" was not found in get-budget-files output.`,
     );
   }
+
+  const originalBudget = budgets.find(
+    (budget) =>
+      budget.id === state.originalBudgetId ||
+      budget.groupId === state.originalBudgetId ||
+      budget.cloudFileId === state.originalBudgetId,
+  );
+
+  if (!originalBudget) {
+    throw new Error(
+      `Original budget "${state.originalBudgetId}" was not found in get-budget-files output.`,
+    );
+  }
+
+  state.sandboxSwitchBudgetId =
+    sandboxBudget.groupId ?? sandboxBudget.cloudFileId ?? sandboxBudget.id ?? state.sandboxBudgetId;
+  state.originalSwitchBudgetId =
+    originalBudget.groupId ??
+    originalBudget.cloudFileId ??
+    originalBudget.id ??
+    state.originalBudgetId;
 }
 
 async function buildSandboxArgs(
@@ -590,7 +615,7 @@ async function buildSandboxArgs(
 ): Promise<Record<string, unknown>> {
   switch (toolName) {
     case 'switch-budget':
-      return { budgetId: state.sandboxBudgetId };
+      return { budgetId: state.sandboxSwitchBudgetId };
     case 'create-category-group':
       return { name: state.names.groupBase };
     case 'update-category-group':
@@ -627,13 +652,22 @@ async function buildSandboxArgs(
       assertDefined(state.merchantPayeeId, 'merchantPayeeId', toolName);
       assertDefined(state.categoryId, 'categoryId', toolName);
       return {
+        stage: 'pre',
         conditionsOp: 'and',
         conditions: [{ field: 'payee', op: 'is', value: state.merchantPayeeId }],
         actions: [{ field: 'category', op: 'set', value: state.categoryId }],
       };
     case 'update-rule':
       assertDefined(state.ruleId, 'ruleId', toolName);
-      return { id: state.ruleId, stage: 'post' };
+      assertDefined(state.merchantPayeeId, 'merchantPayeeId', toolName);
+      assertDefined(state.categoryId, 'categoryId', toolName);
+      return {
+        id: state.ruleId,
+        stage: 'post',
+        conditionsOp: 'and',
+        conditions: [{ field: 'payee', op: 'is', value: state.merchantPayeeId }],
+        actions: [{ field: 'category', op: 'set', value: state.categoryId }],
+      };
     case 'merge-payees':
       assertDefined(state.mergeTargetPayeeId, 'mergeTargetPayeeId', toolName);
       assertDefined(state.mergeSourcePayeeId, 'mergeSourcePayeeId', toolName);
@@ -658,7 +692,11 @@ async function buildSandboxArgs(
       };
     case 'update-schedule':
       assertDefined(state.scheduleId, 'scheduleId', toolName);
-      return { id: state.scheduleId, notes: `${state.prefix} schedule updated` };
+      return {
+        id: state.scheduleId,
+        amount: -30,
+        amountOp: 'is',
+      };
     case 'create-transaction':
       assertDefined(state.primaryAccountName, 'primaryAccountName', toolName);
       assertDefined(state.merchantPayeeName, 'merchantPayeeName', toolName);
@@ -677,8 +715,9 @@ async function buildSandboxArgs(
         notes: state.names.updatedTransactionNotes,
       };
     case 'set-account-starting-balance':
+      assertDefined(state.secondaryAccountId, 'secondaryAccountId', toolName);
       return {
-        account: state.names.secondaryAccount,
+        account: state.secondaryAccountId,
         amount: 5000,
         date: state.fixtureDate,
         notes: `${state.prefix} opening balance`,
@@ -698,9 +737,9 @@ async function buildSandboxArgs(
         ],
       };
     case 'reconcile-account':
-      assertDefined(state.primaryAccountName, 'primaryAccountName', toolName);
+      assertDefined(state.primaryAccountId, 'primaryAccountId', toolName);
       return {
-        account: state.primaryAccountName,
+        account: state.primaryAccountId,
         statementBalance: 87.66,
         statementDate: state.fixtureDate,
       };
@@ -877,7 +916,7 @@ async function bestEffortSandboxCleanup(
     await bestEffortTool(session, 'delete-category-group', { id: state.groupId });
   }
 
-  await bestEffortTool(session, 'switch-budget', { budgetId: state.originalBudgetId });
+  await bestEffortTool(session, 'switch-budget', { budgetId: state.originalSwitchBudgetId });
 }
 
 async function runSandboxPhase(results: SmokeResult[]): Promise<void> {
