@@ -85,7 +85,10 @@ function validateEnv(): void {
 function validateRuntimeGuards(): void {
   validateBearerStartupConfig(enableBearer, process.env.BEARER_TOKEN);
 
-  if (useHttpTransport && shouldWarnAboutAutoSyncForRemote(process.env.AUTO_SYNC_INTERVAL_MINUTES)) {
+  if (
+    useHttpTransport &&
+    shouldWarnAboutAutoSyncForRemote(process.env.AUTO_SYNC_INTERVAL_MINUTES)
+  ) {
     console.error(
       'Warning: AUTO_SYNC_INTERVAL_MINUTES should be set to a non-zero value for remote deployments to keep cached data fresh.',
     );

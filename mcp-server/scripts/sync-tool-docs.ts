@@ -1,7 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ToolDefinition } from '../src/tools/index.js';
+import type { PromptDefinition } from '../src/mcp/prompts/index.js';
+import type { ResourceDefinition } from '../src/mcp/resources/index.js';
+import type { DeclarativeToolDefinition } from '../src/mcp/tools/common.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,26 +14,40 @@ const registryPath = resolve(docsDir, 'tool-registry.md');
 const toolSurfaceStart = '<!-- TOOL_SURFACE:START -->';
 const toolSurfaceEnd = '<!-- TOOL_SURFACE:END -->';
 
-function sortTools(tools: ToolDefinition[]): ToolDefinition[] {
-  return [...tools].sort((left, right) => left.schema.name.localeCompare(right.schema.name));
+function sortByName<T extends { name: string }>(items: T[]): T[] {
+  return [...items].sort((left, right) => left.name.localeCompare(right.name));
 }
 
-function summarizeDescription(tool: ToolDefinition): string {
-  return (tool.schema.description || 'No description available.')
+function summarizeDescription(description?: string): string {
+  return (description || 'No description available.')
     .split(/\\n|\n/)[0]
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-function formatToolList(tools: ToolDefinition[]): string {
-  return sortTools(tools)
-    .map((tool) => `- \`${tool.schema.name}\`: ${summarizeDescription(tool)}`)
+function formatToolList(tools: DeclarativeToolDefinition[]): string {
+  return sortByName(tools)
+    .map((tool) => `- \`${tool.name}\`: ${summarizeDescription(tool.description)}`)
     .join('\n');
 }
 
-async function loadGetAvailableTools(): Promise<
-  typeof import('../src/tools/index.js').getAvailableTools
-> {
+function formatPromptList(prompts: PromptDefinition[]): string {
+  return sortByName(prompts)
+    .map((prompt) => `- \`${prompt.name}\`: ${summarizeDescription(prompt.description)}`)
+    .join('\n');
+}
+
+function formatResourceList(resources: ResourceDefinition[]): string {
+  return [...resources]
+    .sort((left, right) => left.uri.localeCompare(right.uri))
+    .map(
+      (resource) =>
+        `- \`${resource.uri}\` (${resource.kind}): ${resource.name}. ${summarizeDescription(resource.description)}`,
+    )
+    .join('\n');
+}
+
+async function loadMcpSurface() {
   if (!('navigator' in globalThis)) {
     Object.defineProperty(globalThis, 'navigator', {
       value: { platform: process.platform },
@@ -39,42 +55,60 @@ async function loadGetAvailableTools(): Promise<
     });
   }
 
-  const module = await import('../src/tools/index.js');
-  return module.getAvailableTools;
+  const [toolModule, promptModule, resourceModule] = await Promise.all([
+    import('../src/mcp/tools/index.js'),
+    import('../src/mcp/prompts/index.js'),
+    import('../src/mcp/resources/index.js'),
+  ]);
+
+  return {
+    getToolDefinitions: toolModule.getToolDefinitions,
+    promptDefinitions: promptModule.promptDefinitions,
+    resourceDefinitions: resourceModule.resourceDefinitions,
+  };
 }
 
 async function buildToolCollections(): Promise<{
-  readOnlyCore: ToolDefinition[];
-  writeCore: ToolDefinition[];
-  advanced: ToolDefinition[];
+  readOnlyCore: DeclarativeToolDefinition[];
+  writeCore: DeclarativeToolDefinition[];
+  advanced: DeclarativeToolDefinition[];
+  prompts: PromptDefinition[];
+  resources: ResourceDefinition[];
 }> {
-  const getAvailableTools = await loadGetAvailableTools();
-  const readOnlyCore = getAvailableTools(false, false);
-  const writeAndReadCore = getAvailableTools(true, false);
+  const { getToolDefinitions, promptDefinitions, resourceDefinitions } = await loadMcpSurface();
+  const readOnlyCore = getToolDefinitions({ enableWrite: false, enableNini: false });
+  const writeAndReadCore = getToolDefinitions({ enableWrite: true, enableNini: false });
   const writeCore = writeAndReadCore.filter((tool) => tool.requiresWrite);
-  const advanced = getAvailableTools(true, true).filter(
-    (tool) => !writeAndReadCore.some((candidate) => candidate.schema.name === tool.schema.name),
+  const advanced = getToolDefinitions({ enableWrite: true, enableNini: true }).filter(
+    (tool) => !writeAndReadCore.some((candidate) => candidate.name === tool.name),
   );
 
   return {
     readOnlyCore,
     writeCore,
     advanced,
+    prompts: promptDefinitions,
+    resources: resourceDefinitions,
   };
 }
 
 async function buildReadmeToolSurface(): Promise<string> {
-  const { readOnlyCore, writeCore, advanced } = await buildToolCollections();
+  const { readOnlyCore, writeCore, advanced, prompts, resources } = await buildToolCollections();
   const total = readOnlyCore.length + writeCore.length + advanced.length;
+  const staticResources = resources.filter((resource) => resource.kind === 'static');
+  const templateResources = resources.filter((resource) => resource.kind === 'template');
 
   return [
     toolSurfaceStart,
     '',
-    `Generated from \`src/tools/index.ts\`. The current registry exposes ${total} tools total:`,
+    `Generated from the declarative MCP modules under \`src/mcp/\`. The current surface exposes ${total} tools, ${prompts.length} prompts, and ${resources.length} resources:`,
     '',
     `- ${readOnlyCore.length} read-only core tools`,
     `- ${writeCore.length} write-enabled core tools`,
     `- ${advanced.length} advanced \`--enable-nini\` tools`,
+    `- ${prompts.length} prompts`,
+    `- ${staticResources.length} static resources`,
+    `- ${templateResources.length} templated resources`,
     '',
     'The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).',
     '',
@@ -83,12 +117,12 @@ async function buildReadmeToolSurface(): Promise<string> {
 }
 
 async function buildRegistryDocument(): Promise<string> {
-  const { readOnlyCore, writeCore, advanced } = await buildToolCollections();
+  const { readOnlyCore, writeCore, advanced, prompts, resources } = await buildToolCollections();
 
   return [
-    '# Tool Registry',
+    '# MCP Surface Registry',
     '',
-    'Generated from `src/tools/index.ts`. Edit the registry, then run `pnpm docs:generate`.',
+    'Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, then run `pnpm docs:generate`.',
     '',
     '## Read-Only Core',
     '',
@@ -101,6 +135,14 @@ async function buildRegistryDocument(): Promise<string> {
     '## Advanced (`--enable-nini`)',
     '',
     formatToolList(advanced),
+    '',
+    '## Prompts',
+    '',
+    formatPromptList(prompts),
+    '',
+    '## Resources',
+    '',
+    formatResourceList(resources),
     '',
   ].join('\n');
 }

@@ -15,24 +15,24 @@ import * as createTransaction from '../../tools/transactions/create-transaction/
 import * as deleteTransaction from '../../tools/transactions/delete-transaction/index.js';
 import * as importTransactionBatch from '../../tools/transactions/import-transaction-batch/index.js';
 import * as updateTransaction from '../../tools/transactions/update-transaction/index.js';
-import { defineLegacyTools } from './common.js';
+import { defineLegacyTool } from './common.js';
 
-export const writeToolDefinitions = defineLegacyTools([
-  { ...setBudget, requiresWrite: true, category: 'core' },
-  { ...mergePayees, requiresWrite: true, category: 'core' },
-  { ...importTransactions, requiresWrite: true, category: 'core' },
-  { ...importTransactionBatch, requiresWrite: true, category: 'core' },
-  { ...applyBudgetPlan, requiresWrite: true, category: 'core' },
-  { ...setAccountStartingBalance, requiresWrite: true, category: 'core' },
-  { ...reconcileAccount, requiresWrite: true, category: 'core' },
-  { ...createSchedule, requiresWrite: true, category: 'core' },
-  { ...updateSchedule, requiresWrite: true, category: 'core' },
-  { ...deleteSchedule, requiresWrite: true, category: 'core' },
-  { ...createTransaction, requiresWrite: true, category: 'core' },
-  { ...updateTransaction, requiresWrite: true, category: 'core' },
-  { ...deleteTransaction, requiresWrite: true, category: 'core' },
-  { ...closeAccount, requiresWrite: true, category: 'nini' },
-  { ...reopenAccount, requiresWrite: true, category: 'nini' },
-  { ...holdBudget, requiresWrite: true, category: 'nini' },
-  { ...resetBudgetHold, requiresWrite: true, category: 'nini' },
-]);
+export const writeToolDefinitions = [
+  defineLegacyTool({ ...setBudget, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...mergePayees, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...importTransactions, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...importTransactionBatch, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...applyBudgetPlan, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...setAccountStartingBalance, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...reconcileAccount, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...createSchedule, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...updateSchedule, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...deleteSchedule, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...createTransaction, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...updateTransaction, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...deleteTransaction, requiresWrite: true, category: 'core' }),
+  defineLegacyTool({ ...closeAccount, requiresWrite: true, category: 'nini' }),
+  defineLegacyTool({ ...reopenAccount, requiresWrite: true, category: 'nini' }),
+  defineLegacyTool({ ...holdBudget, requiresWrite: true, category: 'nini' }),
+  defineLegacyTool({ ...resetBudgetHold, requiresWrite: true, category: 'nini' }),
+];

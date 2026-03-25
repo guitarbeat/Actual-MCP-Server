@@ -1,6 +1,6 @@
-# Tool Registry
+# MCP Surface Registry
 
-Generated from `src/tools/index.ts`. Edit the registry, then run `pnpm docs:generate`.
+Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, then run `pnpm docs:generate`.
 
 ## Read-Only Core
 
@@ -57,3 +57,20 @@ Generated from `src/tools/index.ts`. Edit the registry, then run `pnpm docs:gene
 - `reopen-account`: Reopen a closed account in Actual Budget.
 - `reset-budget-hold`: Reset (clear) a budget hold for a specific month.
 - `switch-budget`: Switch to a different budget file. Downloads and loads the specified budget.
+
+## Prompts
+
+- `analyze-monthly-spending`: Analyze spending for a specific month
+- `financial-health-check`: Perform a comprehensive check of financial health (balances, recent trends)
+
+## Resources
+
+- `actual://accounts` (static): Accounts Directory. Browse all accounts. Use the get-accounts tool for detailed account information and balances.
+- `actual://accounts/{accountId}` (template): Account Overview. Provides balance, status, and metadata for a specific account.
+- `actual://accounts/{accountId}/transactions` (template): Account Transactions. Shows recent transactions for an account across the default reporting window.
+- `actual://budgets` (static): Budget Months Directory. Browse budget months. Use the get-budget-month tool to retrieve detailed budget data for specific months.
+- `actual://budgets/{month}` (template): Monthly Budget. Detailed budget breakdown for a specific month (YYYY-MM format).
+- `actual://health` (static): Current Month Health Dashboard. High-level budget health dashboard for the current month.
+- `actual://health/{month}` (template): Monthly Health Dashboard. Budget health dashboard for a specific month (YYYY-MM format).
+- `actual://payees/{payeeId}/rules` (template): Payee Rules. Show Actual Budget rules associated with a payee.
+- `actual://rules` (static): Rule Directory. Browse Actual Budget automation rules.

@@ -5,8 +5,9 @@ Actual Budget MCP server for Claude Desktop, Codex, Cursor, and other MCP client
 ## Highlights
 
 - Actual Budget reads and writes over MCP, with separate read-only, write, and advanced (`--enable-nini`) tool surfaces.
+- Declarative MCP registration for tools, prompts, and resources under `src/mcp/`.
 - Transfer-aware transaction creation, starting-balance repair, account reconciliation, budget planning, schedule management, and batch transaction import.
-- Persistent Actual connection management, in-memory caching, safe logging, bearer auth for remote transports, and both stdio plus HTTP/SSE transports.
+- Hono-based remote runtime with streamable HTTP MCP transport, bearer auth, health checks, and stdio support for desktop clients.
 
 ## Install
 
@@ -43,7 +44,7 @@ Default stdio mode is intended for desktop MCP clients:
 pnpm --filter actual-mcp start
 ```
 
-Remote HTTP/SSE mode:
+Remote HTTP mode:
 
 ```bash
 node build/index.js --sse --enable-write --enable-bearer
@@ -53,7 +54,7 @@ Useful flags:
 
 - `--enable-write` exposes write-capable tools
 - `--enable-nini` exposes advanced account and budget-file tools
-- `--enable-bearer` requires `BEARER_TOKEN`, enforces a minimum token length at startup, and allows non-localhost binding by default
+- `--enable-bearer` requires `BEARER_TOKEN`, enforces a minimum token length at startup, and protects the remote `/mcp` endpoint
 - `--host` and `--port` override the HTTP listener
 
 Remote deployment notes:
@@ -64,7 +65,7 @@ Remote deployment notes:
 
 ## Render
 
-This package can be deployed directly to Render as a web service. The repository root includes [`render.yaml`](../render.yaml), which points Render at [`Dockerfile`](./Dockerfile) and starts the server in HTTP/SSE mode with `--enable-write` and `--enable-bearer`.
+This package can be deployed directly to Render as a web service. The repository root includes [`render.yaml`](../render.yaml), which points Render at [`Dockerfile`](./Dockerfile) and starts the server in remote HTTP mode with `--enable-write` and `--enable-bearer`.
 
 Typical Render setup:
 
@@ -75,7 +76,7 @@ Typical Render setup:
 If you are looking at Render Workflows examples such as:
 
 ```ts
-import { task } from "@renderinc/sdk/workflows";
+import { task } from '@renderinc/sdk/workflows';
 ```
 
 that is a different Render product for background jobs. It does not replace this package's server entrypoint at [`src/index.ts`](./src/index.ts). A Render Workflow project should live alongside this service, not inside the MCP server runtime unless you are intentionally building a second app surface.
@@ -153,17 +154,20 @@ docker run --rm -p 3000:3000 \
   actual-mcp
 ```
 
-The container entrypoint starts the server in HTTP/SSE mode with `--enable-write` and `--enable-bearer`.
+The container entrypoint starts the server in remote HTTP mode with `--enable-write` and `--enable-bearer`.
 
-## Tool Surface
+## MCP Surface
 
 <!-- TOOL_SURFACE:START -->
 
-Generated from `src/tools/index.ts`. The current registry exposes 47 tools total:
+Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 47 tools, 2 prompts, and 9 resources:
 
 - 13 read-only core tools
 - 26 write-enabled core tools
 - 8 advanced `--enable-nini` tools
+- 2 prompts
+- 4 static resources
+- 5 templated resources
 
 The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).
 

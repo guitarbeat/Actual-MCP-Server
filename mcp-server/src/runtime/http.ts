@@ -61,9 +61,8 @@ export function createHttpApp(options: {
 
   app.all('/mcp', async (c) => {
     const sessionId = c.req.header('mcp-session-id');
-    const method = c.req.method;
 
-    if (method === 'POST') {
+    if (c.req.method === 'POST') {
       const parsedBody = await c.req.json().catch(() => undefined);
 
       if (sessionId) {
@@ -99,8 +98,7 @@ export function createHttpApp(options: {
         enableNini: options.enableNini,
       });
 
-      let transport!: WebStandardStreamableHTTPServerTransport;
-      transport = new WebStandardStreamableHTTPServerTransport({
+      const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (initializedSessionId) => {
           sessions.set(initializedSessionId, { server, transport });
