@@ -1,16 +1,5 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
 import type { MiddlewareHandler } from 'hono';
-
-function timingSafeStringEqual(a: string | undefined, b: string | undefined): boolean {
-  if (!a || !b) {
-    return false;
-  }
-
-  const hashA = createHash('sha256').update(a).digest();
-  const hashB = createHash('sha256').update(b).digest();
-
-  return timingSafeEqual(hashA, hashB);
-}
+import { timingSafeStringEqual } from '../core/auth/index.js';
 
 export function createBearerMiddleware(options: {
   enableBearer: boolean;
