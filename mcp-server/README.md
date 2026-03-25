@@ -62,6 +62,24 @@ Remote deployment notes:
 - Restrict network access with your reverse proxy or platform controls when possible.
 - Use `/health` for liveness and `/ready` for Actual connectivity readiness.
 
+## Render
+
+This package can be deployed directly to Render as a web service. The repository root includes [`render.yaml`](../render.yaml), which points Render at [`Dockerfile`](./Dockerfile) and starts the server in HTTP/SSE mode with `--enable-write` and `--enable-bearer`.
+
+Typical Render setup:
+
+1. Create the service from the repository Blueprint.
+2. Provide `ACTUAL_SERVER_URL`, `ACTUAL_PASSWORD`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
+3. Use `/health` as the liveness endpoint and `/ready` as the readiness endpoint.
+
+If you are looking at Render Workflows examples such as:
+
+```ts
+import { task } from "@renderinc/sdk/workflows";
+```
+
+that is a different Render product for background jobs. It does not replace this package's server entrypoint at [`src/index.ts`](./src/index.ts). A Render Workflow project should live alongside this service, not inside the MCP server runtime unless you are intentionally building a second app surface.
+
 ## Client Examples
 
 Claude Desktop uses `claude_desktop_config.json`:
