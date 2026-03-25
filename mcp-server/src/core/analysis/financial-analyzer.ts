@@ -7,6 +7,7 @@ import { q } from '@actual-app/api';
 import { getAccounts, getBudgetMonth, getSchedules, runAQL } from '../api/actual-client.js';
 import { fetchAccountBalances } from '../data/fetch-account-balances.js';
 import { formatDate, getDateRange } from '../formatting/index.js';
+import { getCurrentMonth } from '../utils/current-month.js';
 
 // ----------------------------
 // TYPES
@@ -83,14 +84,6 @@ export interface FinancialInsightsSummary {
 // ----------------------------
 // HELPER FUNCTIONS
 // ----------------------------
-
-/**
- * Get current month in YYYY-MM format
- */
-function getCurrentMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
 
 /**
  * Get previous month in YYYY-MM format

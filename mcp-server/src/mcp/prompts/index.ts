@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { getCurrentMonth } from '../../core/utils/current-month.js';
 
 export interface PromptDefinition {
   name: string;
@@ -21,7 +22,7 @@ export const promptDefinitions: PromptDefinition[] = [
       month: z.string().optional().describe('The month to analyze (YYYY-MM)'),
     },
     async buildMessages({ month }) {
-      const resolvedMonth = month || new Date().toISOString().slice(0, 7);
+      const resolvedMonth = month || getCurrentMonth();
 
       return {
         messages: [
