@@ -19,8 +19,10 @@ pnpm install
 
 - [`package.json`](./package.json): workspace shortcuts for build, test, docs, and public-readiness checks
 - [`mcp-server/package.json`](./mcp-server/package.json): authoritative package scripts
-- [`mcp-server/src/tools/`](./mcp-server/src/tools): MCP tool registry and implementations
-- [`mcp-server/scripts/sync-tool-docs.ts`](./mcp-server/scripts/sync-tool-docs.ts): regenerates README tool counts and `docs/tool-registry.md`
+- [`mcp-server/src/mcp/`](./mcp-server/src/mcp): declarative MCP surface for tools, prompts, and resources
+- [`mcp-server/src/tools/`](./mcp-server/src/tools): legacy tool implementations still reused by the declarative MCP layer
+- [`mcp-server/src/runtime/`](./mcp-server/src/runtime): Hono-based remote runtime and MCP bootstrap
+- [`mcp-server/scripts/sync-tool-docs.ts`](./mcp-server/scripts/sync-tool-docs.ts): regenerates README MCP-surface counts and [`mcp-server/docs/tool-registry.md`](./mcp-server/docs/tool-registry.md)
 - [`mcp-server/scripts/public-repo-check.ts`](./mcp-server/scripts/public-repo-check.ts): blocks local artifacts, tracked env files, local paths, and leaked inspector/auth strings
 - [`docs/engineering-notes.md`](./docs/engineering-notes.md): contributor-facing implementation notes
 
@@ -79,9 +81,9 @@ pnpm --filter actual-mcp quality
 4. Run `pnpm --filter actual-mcp test`.
 5. If entrypoints or packaging changed, run `pnpm --filter actual-mcp build`.
 
-### Tool surface or docs change
+### MCP surface or docs change
 
-Run this workflow whenever you change anything under [`mcp-server/src/tools/`](./mcp-server/src/tools), the registry in [`mcp-server/src/tools/index.ts`](./mcp-server/src/tools/index.ts), or the generated tool-surface block in [`mcp-server/README.md`](./mcp-server/README.md):
+Run this workflow whenever you change anything under [`mcp-server/src/mcp/`](./mcp-server/src/mcp), contributor-facing MCP docs in [`mcp-server/README.md`](./mcp-server/README.md), or the generated inventory in [`mcp-server/docs/tool-registry.md`](./mcp-server/docs/tool-registry.md):
 
 ```bash
 pnpm --filter actual-mcp docs:generate
@@ -108,6 +110,8 @@ For normal local runs:
 pnpm start:mcp-server
 node mcp-server/build/index.js --sse --enable-write --enable-bearer
 ```
+
+`--sse` remains the compatibility flag that switches the server into remote HTTP mode and exposes `/mcp`, `/health`, and `/ready`.
 
 ### Public-readiness workflow
 
@@ -153,7 +157,7 @@ docker run --rm -p 3000:3000 \
   actual-mcp
 ```
 
-The container entrypoint starts `node build/index.js --sse --enable-bearer --enable-write`.
+The container entrypoint starts `node build/index.js --sse --enable-bearer --enable-write` for remote HTTP mode.
 
 ## Current Conventions
 
