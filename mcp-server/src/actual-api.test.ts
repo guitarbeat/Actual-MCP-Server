@@ -124,6 +124,28 @@ describe('Auto-load functionality', () => {
       expect(api.downloadBudget).toHaveBeenCalledWith('specific-budget-id');
     });
 
+    it('should match ACTUAL_BUDGET_SYNC_ID against groupId when provided by Actual', async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'group-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'cloud-file-id',
+          groupId: 'group-sync-id',
+          name: 'Actual Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+
+      expect(api.downloadBudget).toHaveBeenCalledWith('group-sync-id');
+    });
+
     it('should use budget password when ACTUAL_BUDGET_PASSWORD is set', async () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'encrypted-budget-id';
       process.env.ACTUAL_BUDGET_PASSWORD = 'secret-password';
@@ -191,6 +213,28 @@ describe('Auto-load functionality', () => {
       await actualApi.initActualApi();
 
       expect(api.downloadBudget).toHaveBeenCalledWith('local-budget-id');
+    });
+
+    it('should prefer groupId when auto-selecting the first budget', async () => {
+      delete process.env.ACTUAL_BUDGET_SYNC_ID;
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'cloud-file-id',
+          groupId: 'group-sync-id',
+          name: 'Actual Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+
+      expect(api.downloadBudget).toHaveBeenCalledWith('group-sync-id');
     });
   });
 

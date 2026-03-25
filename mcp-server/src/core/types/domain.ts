@@ -70,5 +70,6 @@ export interface Payee {
 export interface BudgetFile {
   id?: string;
   cloudFileId?: string;
+  groupId?: string;
   name: string;
 }
