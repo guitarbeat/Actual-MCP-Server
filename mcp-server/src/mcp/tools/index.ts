@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { ToolDefinition } from '../../tools/index.js';
-import { getAvailableTools, setupTools } from '../../tools/index.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { initActualApi } from '../../core/api/actual-client.js';
+import { error, errorFromCatch } from '../../core/response/index.js';
 import type { DeclarativeToolDefinition } from './common.js';
 import { crudToolDefinitions } from './crud-tools.js';
 import { readToolDefinitions } from './read-tools.js';
@@ -16,47 +17,60 @@ export function getToolDefinitions(options: {
   enableWrite: boolean;
   enableNini: boolean;
 }): DeclarativeToolDefinition[] {
-  const legacyToolsByName = new Map(
-    getAvailableTools(options.enableWrite, options.enableNini).map((tool) => [
-      tool.schema.name,
-      tool,
-    ]),
-  );
   const { enableWrite, enableNini } = options;
 
-  return toolDefinitions
-    .filter((tool) => {
-      if (tool.requiresWrite && !enableWrite) {
-        return false;
-      }
+  return toolDefinitions.filter((tool) => {
+    if (tool.requiresWrite && !enableWrite) {
+      return false;
+    }
 
-      if (tool.category === 'nini' && !enableNini) {
-        return false;
-      }
+    if (tool.category === 'nini' && !enableNini) {
+      return false;
+    }
 
-      return true;
-    })
-    .map((tool) => mergeLegacySchema(tool, legacyToolsByName.get(tool.name)));
+    return true;
+  });
 }
 
 export function registerTools(
   server: McpServer,
   options: { enableWrite: boolean; enableNini: boolean },
 ): void {
-  setupTools(server.server, options.enableWrite, options.enableNini);
-}
+  const availableTools = getToolDefinitions(options);
 
-function mergeLegacySchema(
-  tool: DeclarativeToolDefinition,
-  legacyTool?: ToolDefinition,
-): DeclarativeToolDefinition {
-  if (!legacyTool) {
-    return tool;
-  }
+  server.server.setRequestHandler(ListToolsRequestSchema, () => {
+    return {
+      tools: availableTools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
+      })),
+    };
+  });
 
-  return {
-    ...tool,
-    description: tool.description ?? legacyTool.schema.description,
-    inputSchema: legacyTool.schema.inputSchema,
-  };
+  server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    try {
+      await initActualApi();
+      const { name, arguments: args } = request.params;
+      const tool = availableTools.find((candidate) => candidate.name === name);
+
+      if (!tool) {
+        return error(
+          `Unknown tool '${name}'`,
+          'Call list-tools to inspect supported tool names before retrying this request.',
+        );
+      }
+
+      return await tool.execute((args ?? {}) as Record<string, unknown>);
+    } catch (err) {
+      return errorFromCatch(err, {
+        fallbackMessage: `Failed to execute tool ${request.params.name}`,
+        suggestion:
+          'Check the Actual Budget server logs and ensure the provided arguments match the tool schema before retrying.',
+        tool: request.params.name,
+        operation: 'tool_execution',
+        args: request.params.arguments,
+      });
+    }
+  });
 }
