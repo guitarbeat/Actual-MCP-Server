@@ -5,8 +5,8 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { formatAmount } from '../../../core/formatting/index.js';
-import { errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
-import type { ToolInput } from '../../../core/types/index.js';
+import { errorFromCatch, success } from '../../../core/response/index.js';
+import type { MCPResponse, ToolInput } from '../../../core/types/index.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
 
