@@ -299,6 +299,24 @@ async function initializeApiConnection(): Promise<void> {
   await api.init(config as any);
 }
 
+function getBudgetIdentifiers(budget: BudgetFile): string[] {
+  return [budget.groupId, budget.cloudFileId, budget.id].filter(
+    (value): value is string => typeof value === 'string' && value.length > 0,
+  );
+}
+
+function matchesBudgetIdentifier(budget: BudgetFile, identifier: string): boolean {
+  return getBudgetIdentifiers(budget).includes(identifier);
+}
+
+function getBudgetDownloadIdentifier(budget: BudgetFile): string {
+  return budget.groupId || budget.cloudFileId || budget.id || '';
+}
+
+function describeBudgetIdentifiers(budget: BudgetFile): string {
+  return getBudgetIdentifiers(budget).join(' | ');
+}
+
 /**
  * Download and load budget during initialization
  * @returns Object with budgetId and budgets array
@@ -315,19 +333,17 @@ async function downloadAndLoadBudget(): Promise<{
   // Validate specified budget ID against available budgets
   const specifiedId = process.env.ACTUAL_BUDGET_SYNC_ID;
   if (specifiedId) {
-    const matchingBudget = budgets.find(
-      (b) => b.cloudFileId === specifiedId || b.id === specifiedId,
-    );
+    const matchingBudget = budgets.find((b) => matchesBudgetIdentifier(b, specifiedId));
     if (!matchingBudget) {
       const availableIds = budgets
-        .map((b) => `${b.name || 'unnamed'} (${b.cloudFileId || b.id})`)
+        .map((b) => `${b.name || 'unnamed'} (${describeBudgetIdentifiers(b)})`)
         .join(', ');
       console.error(
         `[CONNECTION] ⚠️  ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
       );
       console.error(`[CONNECTION] Available budgets: ${availableIds}`);
       console.error(
-        `[CONNECTION] Falling back to first budget: ${budgets[0].name || budgets[0].cloudFileId || budgets[0].id}`,
+        `[CONNECTION] Falling back to first budget: ${budgets[0].name || getBudgetDownloadIdentifier(budgets[0])}`,
       );
       // Fall back to first budget instead of failing
     }
@@ -337,11 +353,11 @@ async function downloadAndLoadBudget(): Promise<{
   const budgetId: string = (() => {
     const sid = process.env.ACTUAL_BUDGET_SYNC_ID;
     if (sid) {
-      const match = budgets.find((b) => b.cloudFileId === sid || b.id === sid);
+      const match = budgets.find((b) => matchesBudgetIdentifier(b, sid));
       if (match) return sid;
       console.error(`[CONNECTION] ACTUAL_BUDGET_SYNC_ID="${sid}" not found, using first budget`);
     }
-    return budgets[0].cloudFileId || budgets[0].id || '';
+    return getBudgetDownloadIdentifier(budgets[0]);
   })();
 
   // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
@@ -349,7 +365,7 @@ async function downloadAndLoadBudget(): Promise<{
     process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
 
   // Find the target budget to check encryption status
-  const targetBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId) as
+  const targetBudget = budgets.find((b) => matchesBudgetIdentifier(b, budgetId)) as
     | (BudgetFile & { encryptKeyId?: string | null })
     | undefined;
   const hasEncryptionMetadata =
@@ -392,7 +408,7 @@ function logSuccessfulInitialization(
   }
 
   // Find the budget name for logging
-  const loadedBudget = budgets.find((b) => b.cloudFileId === budgetId || b.id === budgetId);
+  const loadedBudget = budgets.find((b) => matchesBudgetIdentifier(b, budgetId));
   const budgetName = loadedBudget?.name || budgetId;
   console.error(`✓ Budget loaded: ${budgetName}`);
   if (process.env.ACTUAL_BUDGET_SYNC_ID) {
