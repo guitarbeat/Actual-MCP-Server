@@ -38,6 +38,7 @@ Thumbs.db
 .eslintcache
 .smart-coding-cache
 .actual-data
+.playwright-cli
 
 # Upstream comparison artifacts
 upstream-comparison
