@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { ToolInput } from '../../core/types/index.js';
 
 export type ToolCategory = 'core' | 'nini';
 
@@ -8,11 +8,9 @@ export interface DeclarativeToolDefinition {
   description?: string;
   requiresWrite: boolean;
   category: ToolCategory;
-  inputSchema?: z.ZodTypeAny;
+  inputSchema?: ToolInput;
   execute: (args: Record<string, unknown>) => Promise<CallToolResult>;
 }
-
-const looseToolInputSchema = z.object({}).catchall(z.unknown());
 
 type LegacyToolHandler<TArgs> = {
   bivarianceHack: (args: TArgs) => Promise<CallToolResult>;
@@ -22,29 +20,26 @@ interface LegacyToolLike<TArgs = Record<string, unknown>> {
   schema: {
     name: string;
     description?: string;
+    inputSchema?: ToolInput;
   };
   handler: LegacyToolHandler<TArgs>;
   requiresWrite: boolean;
   category: ToolCategory;
 }
 
-export function defineLegacyTool<TArgs>(
-  tool: LegacyToolLike<TArgs>,
-  inputSchema: z.ZodTypeAny = looseToolInputSchema,
-): DeclarativeToolDefinition {
+export function defineLegacyTool<TArgs>(tool: LegacyToolLike<TArgs>): DeclarativeToolDefinition {
   return {
     name: tool.schema.name,
     description: tool.schema.description,
     requiresWrite: tool.requiresWrite,
     category: tool.category,
-    inputSchema,
+    inputSchema: tool.schema.inputSchema,
     execute: (args) => tool.handler(args as TArgs),
   };
 }
 
 export function defineLegacyTools<const TArgs extends readonly LegacyToolLike<unknown>[]>(
   tools: TArgs,
-  inputSchema: z.ZodTypeAny = looseToolInputSchema,
 ): DeclarativeToolDefinition[] {
-  return tools.map((tool) => defineLegacyTool(tool, inputSchema));
+  return tools.map((tool) => defineLegacyTool(tool));
 }

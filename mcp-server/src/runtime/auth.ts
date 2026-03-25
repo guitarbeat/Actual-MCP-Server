@@ -24,6 +24,11 @@ export function createBearerMiddleware(options: {
       return;
     }
 
+    if (c.req.method === 'OPTIONS') {
+      await next();
+      return;
+    }
+
     const header = c.req.header('authorization');
     const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
 

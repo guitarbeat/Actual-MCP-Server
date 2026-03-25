@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { serve } from '@hono/node-server';
+import type { ServerType } from '@hono/node-server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import {
@@ -17,7 +18,7 @@ import {
   shouldWarnAboutAutoSyncForRemote,
   validateBearerStartupConfig,
 } from './core/auth/startup-guard.js';
-import { createHttpApp } from './runtime/http.js';
+import { createHttpRuntime } from './runtime/http.js';
 import { createActualMcpServer } from './runtime/server.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -139,6 +140,8 @@ async function runCustomTest(): Promise<never> {
 }
 
 let activeServer: ReturnType<typeof createActualMcpServer> | undefined;
+let activeHttpServer: ServerType | undefined;
+let activeHttpRuntime: ReturnType<typeof createHttpRuntime> | undefined;
 
 async function gracefulShutdown(signal: string): Promise<void> {
   console.error(`${signal} received, shutting down server`);
@@ -152,6 +155,24 @@ async function gracefulShutdown(signal: string): Promise<void> {
     if (activeServer) {
       await activeServer.close();
     }
+    if (activeHttpRuntime) {
+      await activeHttpRuntime.close();
+    }
+    await new Promise<void>((resolve, reject) => {
+      if (!activeHttpServer) {
+        resolve();
+        return;
+      }
+
+      activeHttpServer.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
     await shutdownActualApi();
     clearTimeout(forceExitTimeout);
     process.exit(0);
@@ -176,7 +197,7 @@ async function main(): Promise<void> {
 
   if (useHttpTransport) {
     const bindHost = host || (enableBearer ? '0.0.0.0' : '127.0.0.1');
-    const app = createHttpApp({
+    activeHttpRuntime = createHttpRuntime({
       version,
       enableWrite,
       enableNini,
@@ -184,9 +205,9 @@ async function main(): Promise<void> {
       bearerToken: process.env.BEARER_TOKEN,
     });
 
-    serve(
+    activeHttpServer = serve(
       {
-        fetch: app.fetch,
+        fetch: activeHttpRuntime.app.fetch,
         port: resolvedPort,
         hostname: bindHost,
       },
