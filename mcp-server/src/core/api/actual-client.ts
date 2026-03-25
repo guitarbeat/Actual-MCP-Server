@@ -376,8 +376,25 @@ function getBudgetDownloadIdentifier(budget: BudgetFile): string {
   return budget.groupId || budget.cloudFileId || budget.id || '';
 }
 
+function getBudgetLocalIdentifier(budget: BudgetFile): string | null {
+  return typeof budget.id === 'string' && budget.id.length > 0 ? budget.id : null;
+}
+
 function describeBudgetIdentifiers(budget: BudgetFile): string {
   return getBudgetIdentifiers(budget).join(' | ');
+}
+
+async function loadBudgetByResolvedIdentifier(identifier: string): Promise<string> {
+  const budgets: BudgetFile[] = await api.getBudgets();
+  const matchingBudget = budgets.find((budget) => matchesBudgetIdentifier(budget, identifier));
+  const loadableBudgetId = matchingBudget ? getBudgetLocalIdentifier(matchingBudget) : null;
+
+  if (loadableBudgetId && typeof api.loadBudget === 'function') {
+    await api.loadBudget(loadableBudgetId);
+    return loadableBudgetId;
+  }
+
+  return identifier;
 }
 
 /**
@@ -1436,7 +1453,9 @@ export async function downloadBudget(budgetId: string, password?: string): Promi
     } else {
       await api.downloadBudget(budgetId);
     }
-    markConnectionReady(budgetId);
+
+    const activeBudgetId = await loadBudgetByResolvedIdentifier(budgetId);
+    markConnectionReady(activeBudgetId);
     markSyncSuccess();
     invalidateAllReadState();
   }, 'write');
