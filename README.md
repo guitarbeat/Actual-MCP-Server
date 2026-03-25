@@ -20,6 +20,31 @@ pnpm --filter actual-mcp test
 
 For package-specific setup and MCP client configuration, use [`mcp-server/README.md`](./mcp-server/README.md).
 
+## Render Deployment
+
+This repository already includes a Render Blueprint at [`render.yaml`](./render.yaml) for deploying the MCP server as a web service.
+
+Use the blueprint when you want to host the MCP server itself on Render:
+
+1. Build and push this repository to GitHub.
+2. In Render, create a new Blueprint or web service from the repo.
+3. Set `ACTUAL_SERVER_URL`, `ACTUAL_PASSWORD`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
+4. Deploy and use `/health` and `/ready` for platform checks.
+
+The Render Workflows SDK is a separate product from the MCP server runtime in this repo. Code like:
+
+```ts
+import { task } from "@renderinc/sdk/workflows";
+```
+
+is for background workflow jobs created with `render workflows init --language node`, not for the HTTP/SSE MCP server entrypoint under [`mcp-server/src/index.ts`](./mcp-server/src/index.ts).
+
+If you want both:
+
+- keep this repo and `render.yaml` for the deployed MCP server
+- create a separate Render Workflows project for background jobs
+- have the workflow call the deployed MCP server or other APIs as needed
+
 ## Security And Public Readiness
 
 - Rotate any previously exposed credentials, bearer tokens, sync IDs, and local inspector tokens before sharing the repository.
