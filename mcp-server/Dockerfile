@@ -16,16 +16,14 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --froze
 
 COPY . ./
 RUN pnpm --filter actual-mcp build
+RUN pnpm --filter actual-mcp deploy --legacy --prod /out
 
 # ---- Release ----
 FROM node:20-alpine AS release
 
 WORKDIR /app
 
-COPY --from=builder /app/node_modules /app/node_modules
-COPY --from=builder /app/mcp-server/node_modules ./node_modules
-COPY --from=builder /app/mcp-server/package.json ./package.json
-COPY --from=builder /app/mcp-server/build ./build
+COPY --from=builder /out ./
 
 # Polyfill browser globals required by @actual-app/api at module load time.
 # navigator.platform is referenced at the top level of bundle.api.js; Node.js
