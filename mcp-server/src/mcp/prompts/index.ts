@@ -1,16 +1,26 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
-export function registerPrompts(server: McpServer): void {
-  server.registerPrompt(
-    'analyze-monthly-spending',
-    {
-      description: 'Analyze spending for a specific month',
-      argsSchema: {
-        month: z.string().optional().describe('The month to analyze (YYYY-MM)'),
-      },
+export interface PromptDefinition {
+  name: string;
+  description: string;
+  argsSchema?: Record<string, z.ZodTypeAny>;
+  buildMessages: (args: Record<string, string | undefined>) => Promise<{
+    messages: Array<{
+      role: 'user';
+      content: { type: 'text'; text: string };
+    }>;
+  }>;
+}
+
+export const promptDefinitions: PromptDefinition[] = [
+  {
+    name: 'analyze-monthly-spending',
+    description: 'Analyze spending for a specific month',
+    argsSchema: {
+      month: z.string().optional().describe('The month to analyze (YYYY-MM)'),
     },
-    async ({ month }) => {
+    async buildMessages({ month }) {
       const resolvedMonth = month || new Date().toISOString().slice(0, 7);
 
       return {
@@ -28,14 +38,11 @@ export function registerPrompts(server: McpServer): void {
         ],
       };
     },
-  );
-
-  server.registerPrompt(
-    'financial-health-check',
-    {
-      description: 'Perform a comprehensive check of financial health (balances, recent trends)',
-    },
-    async () => {
+  },
+  {
+    name: 'financial-health-check',
+    description: 'Perform a comprehensive check of financial health (balances, recent trends)',
+    async buildMessages() {
       return {
         messages: [
           {
@@ -52,5 +59,18 @@ export function registerPrompts(server: McpServer): void {
         ],
       };
     },
-  );
+  },
+];
+
+export function registerPrompts(server: McpServer): void {
+  promptDefinitions.forEach((prompt) => {
+    server.registerPrompt(
+      prompt.name,
+      {
+        description: prompt.description,
+        argsSchema: prompt.argsSchema,
+      },
+      async (args) => prompt.buildMessages(args as Record<string, string | undefined>),
+    );
+  });
 }

@@ -32,8 +32,7 @@ export function createBearerMiddleware(options: {
       return c.json(
         {
           error: 'Authentication required',
-          message:
-            'Authentication must be provided via the Authorization: Bearer <token> header.',
+          message: 'Authentication must be provided via the Authorization: Bearer <token> header.',
           code: -32000,
         },
         401,

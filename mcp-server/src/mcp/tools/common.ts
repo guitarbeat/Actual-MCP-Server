@@ -14,18 +14,22 @@ export interface DeclarativeToolDefinition {
 
 const looseToolInputSchema = z.object({}).catchall(z.unknown());
 
-interface LegacyToolLike {
+type LegacyToolHandler<TArgs> = {
+  bivarianceHack: (args: TArgs) => Promise<CallToolResult>;
+}['bivarianceHack'];
+
+interface LegacyToolLike<TArgs = Record<string, unknown>> {
   schema: {
     name: string;
     description?: string;
   };
-  handler: (args: any) => Promise<CallToolResult>;
+  handler: LegacyToolHandler<TArgs>;
   requiresWrite: boolean;
   category: ToolCategory;
 }
 
-export function defineLegacyTool(
-  tool: LegacyToolLike,
+export function defineLegacyTool<TArgs>(
+  tool: LegacyToolLike<TArgs>,
   inputSchema: z.ZodTypeAny = looseToolInputSchema,
 ): DeclarativeToolDefinition {
   return {
@@ -34,12 +38,12 @@ export function defineLegacyTool(
     requiresWrite: tool.requiresWrite,
     category: tool.category,
     inputSchema,
-    execute: tool.handler,
+    execute: (args) => tool.handler(args as TArgs),
   };
 }
 
-export function defineLegacyTools(
-  tools: LegacyToolLike[],
+export function defineLegacyTools<const TArgs extends readonly LegacyToolLike<unknown>[]>(
+  tools: TArgs,
   inputSchema: z.ZodTypeAny = looseToolInputSchema,
 ): DeclarativeToolDefinition[] {
   return tools.map((tool) => defineLegacyTool(tool, inputSchema));

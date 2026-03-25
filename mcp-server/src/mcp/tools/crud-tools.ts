@@ -1,11 +1,12 @@
 import { createCRUDTools } from '../../tools/crud-factory.js';
 import { entityConfigurations } from '../../tools/crud-factory-config.js';
-import { defineLegacyTools } from './common.js';
+import { defineLegacyTool } from './common.js';
 
-export const crudToolDefinitions = defineLegacyTools([
-  ...createCRUDTools(entityConfigurations.category),
-  ...createCRUDTools(entityConfigurations.payee),
-  ...createCRUDTools(entityConfigurations.account),
-  ...createCRUDTools(entityConfigurations.rule),
-  ...createCRUDTools(entityConfigurations.categoryGroup),
-]);
+export const crudToolDefinitions = createCRUDTools(entityConfigurations.category)
+  .concat(
+    createCRUDTools(entityConfigurations.payee),
+    createCRUDTools(entityConfigurations.account),
+    createCRUDTools(entityConfigurations.rule),
+    createCRUDTools(entityConfigurations.categoryGroup),
+  )
+  .map((tool) => defineLegacyTool(tool));
