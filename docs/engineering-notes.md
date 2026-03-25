@@ -16,9 +16,9 @@ This repository keeps a few implementation notes in version control so contribut
 - Do not expose raw internal error messages in HTTP 500 responses.
 - Keep CSP strict; avoid adding inline script or style exceptions unless there is no safer option.
 
-## Server-Rendered Dashboard UX
+## Runtime Architecture
 
-- Prefer semantic HTML such as `<dl>` and `<ul>` for stats and lists.
-- Use semantic status tokens from logic and map them to styles in CSS instead of returning hardcoded colors from TypeScript.
-- Any transient UI feedback should be accessible with `role=\"status\"` or `aria-live`.
-- When inline browser behavior is necessary, use a nonce-based CSP-compatible approach.
+- Keep the MCP surface declarative under `mcp-server/src/mcp/`; tools, prompts, and resources should be discoverable without editing the entrypoint.
+- Keep remote runtime concerns in `mcp-server/src/runtime/`; transport, auth, readiness, and HTTP wiring should not leak into domain handlers.
+- Reuse legacy tool handlers when practical, but prefer moving repeated parsing and orchestration into shared services instead of growing new registry boilerplate.
+- Treat `mcp-server/src/index.ts` as a thin bootstrap layer only.

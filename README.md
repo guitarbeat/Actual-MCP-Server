@@ -37,7 +37,7 @@ The Render Workflows SDK is a separate product from the MCP server runtime in th
 import { task } from "@renderinc/sdk/workflows";
 ```
 
-is for background workflow jobs created with `render workflows init --language node`, not for the HTTP/SSE MCP server entrypoint under [`mcp-server/src/index.ts`](./mcp-server/src/index.ts).
+is for background workflow jobs created with `render workflows init --language node`, not for the MCP server entrypoint under [`mcp-server/src/index.ts`](./mcp-server/src/index.ts), which now boots stdio mode or the remote Hono-based HTTP runtime.
 
 If you want both:
 
