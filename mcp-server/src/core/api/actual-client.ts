@@ -7,6 +7,7 @@ import type {
   APICategoryEntity,
   APICategoryGroupEntity,
   APIPayeeEntity,
+  APIScheduleEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import type {
   RuleEntity,
@@ -21,7 +22,7 @@ type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
   updateSchedule?: (id: string, args: Record<string, unknown>) => Promise<unknown>;
   deleteSchedule?: (id: string) => Promise<unknown>;
-  getSchedules?: () => Promise<unknown[]>;
+  getSchedules?: () => Promise<APIScheduleEntity[]>;
   runBankSync?: (options?: { accountId: string }) => Promise<unknown>;
   getServerVersion?: () => Promise<{ error?: string } | { version: string }>;
   getIDByName?: (args: { type: string; string: string }) => Promise<string>;
@@ -1409,9 +1410,9 @@ export async function deleteSchedule(id: string): Promise<unknown> {
 /**
  * Get all schedules (ensures API is initialized)
  */
-export async function getSchedules(): Promise<unknown[]> {
+export async function getSchedules(): Promise<APIScheduleEntity[]> {
   return runReadOperation(async () => {
-    return extendedApi.getSchedules?.();
+    return (await extendedApi.getSchedules?.()) ?? [];
   });
 }
 

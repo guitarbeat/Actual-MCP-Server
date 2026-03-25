@@ -33,16 +33,15 @@ export const schema = {
     '- accountId: Account name or ID (supports partial matching)\n' +
     '- account: Account name or ID (alternative to accountId)\n' +
     '- amount: Amount in dollars or cents (auto-detected, like transactions)\n' +
-    '- amountOp: Amount operation\n' +
+    '- amountOp: Amount operation. Defaults to "is" when amount is provided.\n' +
     '- date: Date string or RecurConfig\n' +
     '- payee: Payee name or ID\n' +
     '- category: Category name or ID\n' +
-    '- notes: Transaction notes\n' +
     '- posts_transaction: Whether to auto-post transactions\n\n' +
     'EXAMPLES:\n' +
-    '- Update amount: {"id": "schedule-id", "amount": -2000.00}\n' +
+    '- Update amount: {"id": "schedule-id", "amount": -2000.00, "amountOp": "is"}\n' +
     '- Update date: {"id": "schedule-id", "date": "2024-03-01"}\n' +
-    '- Multiple fields: {"id": "schedule-id", "amount": -1750.00, "notes": "Updated amount"}\n\n' +
+    '- Multiple fields: {"id": "schedule-id", "amount": -1750.00, "amountOp": "is", "posts_transaction": true}\n\n' +
     'COMMON USE CASES:\n' +
     '- Update recurring bill amounts\n' +
     '- Change schedule dates\n' +
@@ -57,6 +56,7 @@ export const schema = {
     '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -2000 → -$2,000.00)\n' +
     '- Amounts >= 1000 treated as cents (e.g., -200000 → -$2,000.00)\n' +
     '- Supports name resolution for account, payee, and category (partial matching)\n' +
+    '- The Actual schedule API does not expose schedule notes, so notes are intentionally not accepted here\n' +
     '- See create-schedule for date and amount formats',
   inputSchema: zodToJsonSchema(UpdateScheduleSchema) as ToolInput,
 };

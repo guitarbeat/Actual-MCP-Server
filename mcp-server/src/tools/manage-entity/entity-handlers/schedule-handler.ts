@@ -2,7 +2,13 @@
 // SCHEDULE ENTITY HANDLER
 // ----------------------------
 
-import { createSchedule, deleteSchedule, updateSchedule } from '../../../core/api/actual-client.js';
+import type { APIScheduleEntity } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
+import {
+  createSchedule,
+  deleteSchedule,
+  getSchedules,
+  updateSchedule,
+} from '../../../core/api/actual-client.js';
 import { cacheService } from '../../../core/cache/cache-service.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { EntityErrorBuilder } from '../errors/entity-error-builder.js';
@@ -11,6 +17,15 @@ import { ScheduleDataSchema, ScheduleUpdateDataSchema } from '../types.js';
 import type { EntityHandler, Operation } from './base-handler.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
+const MUTABLE_SCHEDULE_FIELDS: Array<keyof APIScheduleEntity> = [
+  'name',
+  'posts_transaction',
+  'payee',
+  'account',
+  'amount',
+  'amountOp',
+  'date',
+];
 
 /**
  * Converts amount to cents if it appears to be in dollars.
@@ -57,8 +72,7 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
 
   async update(id: string, data: ScheduleUpdateData): Promise<void> {
     const validated = ScheduleUpdateDataSchema.parse(data);
-    const apiData: Record<string, unknown> = {};
-    await this.applyScheduleTransformations(apiData, validated);
+    const apiData = await this.buildScheduleUpdatePayload(id, validated);
 
     try {
       await updateSchedule(id, apiData);
@@ -79,11 +93,7 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
       apiData.amount = this.transformScheduleAmount(validated.amount);
     }
 
-    if (validated.amountOp !== undefined) {
-      apiData.amountOp = validated.amountOp;
-    } else if (validated.amount !== undefined) {
-      apiData.amountOp = 'is';
-    }
+    this.normalizeScheduleAmountOp(apiData, validated.amount);
 
     if (validated.payee !== undefined) {
       apiData.payee = validated.payee ? await nameResolver.resolvePayee(validated.payee) : null;
@@ -95,9 +105,18 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
         : null;
     }
 
-    if (validated.notes !== undefined) apiData.notes = validated.notes;
     if (validated.posts_transaction !== undefined)
       apiData.posts_transaction = validated.posts_transaction;
+  }
+
+  private async buildScheduleUpdatePayload(
+    id: string,
+    validated: ScheduleUpdateData,
+  ): Promise<Record<string, unknown>> {
+    const existingSchedule = await this.getExistingSchedule(id);
+    const apiData = this.extractMutableScheduleFields(existingSchedule);
+    await this.applyScheduleTransformations(apiData, validated);
+    return apiData;
   }
 
   private async resolveScheduleAccounts(
@@ -119,6 +138,40 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
       num1: convertAmountToCents(amount.num1),
       num2: convertAmountToCents(amount.num2),
     };
+  }
+
+  private normalizeScheduleAmountOp(
+    apiData: Record<string, unknown>,
+    requestedAmount?: ScheduleData['amount'],
+  ): void {
+    if (apiData.amountOp !== undefined) {
+      return;
+    }
+
+    if (requestedAmount !== undefined || apiData.amount !== undefined) {
+      apiData.amountOp = 'is';
+    }
+  }
+
+  private async getExistingSchedule(id: string): Promise<APIScheduleEntity> {
+    const schedules = await getSchedules();
+    const existingSchedule = schedules.find((schedule) => schedule.id === id);
+
+    if (!existingSchedule) {
+      throw new Error(`Schedule '${id}' could not be loaded.`);
+    }
+
+    return existingSchedule;
+  }
+
+  private extractMutableScheduleFields(schedule: APIScheduleEntity): Record<string, unknown> {
+    return MUTABLE_SCHEDULE_FIELDS.reduce<Record<string, unknown>>((acc, field) => {
+      const value = schedule[field];
+      if (value !== undefined) {
+        acc[field] = value;
+      }
+      return acc;
+    }, {});
   }
 
   /**

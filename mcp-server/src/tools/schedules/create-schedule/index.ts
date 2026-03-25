@@ -25,10 +25,9 @@ export const schema = {
     '- accountId: Account name or ID (supports partial matching, e.g., "Chase" matches "Chase Checking")\n' +
     '- account: Account name or ID (alternative to accountId)\n' +
     '- amount: Amount in dollars or cents (auto-detected, like transactions)\n' +
-    '- amountOp: Amount operation (is, isapprox, isbetween)\n' +
+    '- amountOp: Amount operation (is, isapprox, isbetween). Defaults to "is" when amount is provided.\n' +
     '- payee: Payee name or ID\n' +
     '- category: Category name or ID\n' +
-    '- notes: Transaction notes\n' +
     '- posts_transaction: Whether to automatically post transactions (default: false)\n\n' +
     'EXAMPLES:\n' +
     '- Simple date: {"name": "Monthly Rent", "accountId": "Chase Checking", "amount": -1500.00, "date": "2024-02-01"}\n' +
@@ -48,7 +47,8 @@ export const schema = {
     '- RecurConfig supports daily, weekly, monthly, yearly frequencies\n' +
     '- Amount auto-detection: amounts < 1000 treated as dollars (e.g., -1500 → -$1,500.00)\n' +
     '- Amounts >= 1000 treated as cents (e.g., -150000 → -$1,500.00)\n' +
-    '- Supports name resolution for account, payee, and category (partial matching)',
+    '- Supports name resolution for account, payee, and category (partial matching)\n' +
+    '- The Actual schedule API does not expose schedule notes, so notes are intentionally not accepted here',
   inputSchema: zodToJsonSchema(ScheduleDataSchema) as ToolInput,
 };
 

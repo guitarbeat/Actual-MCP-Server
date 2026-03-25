@@ -8,8 +8,8 @@ export const RuleInputSchema = {
     },
     stage: {
       type: ['string', 'null'],
-      enum: ['pre', 'post', null],
-      description: 'When the rule should be applied (null for default stage)',
+      enum: ['pre', 'default', 'post', null],
+      description: 'When the rule should be applied (use "default" or null for the default stage)',
     },
     conditionsOp: {
       type: 'string',
