@@ -91,7 +91,7 @@ export interface RuleAction {
  * Data required to create or update a rule
  */
 export interface RuleData {
-  stage?: string | null;
+  stage?: 'pre' | 'default' | 'post' | null;
   conditionsOp: 'and' | 'or';
   conditions: RuleCondition[];
   actions: RuleAction[];
@@ -134,7 +134,6 @@ export interface ScheduleData {
   date?: string | RecurConfig; // Optional overall; required specifically during creation
   payee?: string | null; // Optional, name or ID
   category?: string | null; // Optional, name or ID
-  notes?: string; // Optional
   posts_transaction?: boolean; // Optional, defaults to false
   // DO NOT include: rule, next_date, completed (auto-managed by API)
 }
@@ -236,7 +235,7 @@ export const RuleActionSchema = z.object({
  * Schema for rule data validation
  */
 export const RuleDataSchema = z.object({
-  stage: z.enum(['pre', 'post']).nullable().optional(),
+  stage: z.enum(['pre', 'default', 'post']).nullable().optional(),
   conditionsOp: z.enum(['and', 'or']),
   conditions: z.array(RuleConditionSchema).min(1, 'At least one condition is required'),
   actions: z.array(RuleActionSchema).min(1, 'At least one action is required'),
@@ -272,31 +271,32 @@ export const RecurConfigSchema = z.object({
  * Schema for schedule data validation
  * Supports name resolution for account, payee, and category (like TransactionData)
  */
-export const ScheduleDataSchema = z.object({
-  name: z.string().min(1, 'Schedule name is recommended').optional(),
-  account: z.string().min(1, 'Account name or ID is required').nullable().optional(), // Name or ID
-  accountId: z.string().min(1, 'Account name or ID is required').optional(), // Name or ID (convenience field)
-  amount: z
-    .union([
-      z.number(), // Dollars or cents (auto-detected, like transactions)
-      z.object({
-        num1: z.number(),
-        num2: z.number(),
-      }),
-    ])
-    .optional(),
-  amountOp: z.enum(['is', 'isapprox', 'isbetween']).optional(),
-  date: z
-    .union([
-      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-      RecurConfigSchema,
-    ])
-    .optional(),
-  payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
-  category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
-  notes: z.string().max(500, 'Notes must be less than 500 characters').optional(),
-  posts_transaction: z.boolean().optional(),
-});
+export const ScheduleDataSchema = z
+  .object({
+    name: z.string().min(1, 'Schedule name is recommended').optional(),
+    account: z.string().min(1, 'Account name or ID is required').nullable().optional(), // Name or ID
+    accountId: z.string().min(1, 'Account name or ID is required').optional(), // Name or ID (convenience field)
+    amount: z
+      .union([
+        z.number(), // Dollars or cents (auto-detected, like transactions)
+        z.object({
+          num1: z.number(),
+          num2: z.number(),
+        }),
+      ])
+      .optional(),
+    amountOp: z.enum(['is', 'isapprox', 'isbetween']).optional(),
+    date: z
+      .union([
+        z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+        RecurConfigSchema,
+      ])
+      .optional(),
+    payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
+    category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
+    posts_transaction: z.boolean().optional(),
+  })
+  .strict();
 
 /**
  * Schema for schedule update data validation.

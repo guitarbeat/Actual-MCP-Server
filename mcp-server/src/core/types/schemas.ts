@@ -321,7 +321,6 @@ export const CreateScheduleArgsSchema = z.object({
     .number()
     .describe('Amount for the schedule in dollars. Negative for expenses, positive for income.'),
   category: z.string().optional().describe('Category name.'),
-  notes: z.string().optional().describe('Notes for the schedule.'),
   nextDate: z.string().describe('Next occurrence date in YYYY-MM-DD format.'),
   rule: z.string().describe('Recurrence rule (e.g., "RRULE:FREQ=MONTHLY").'),
 });
@@ -333,7 +332,6 @@ export const UpdateScheduleArgsSchema = z.object({
   payee: z.string().optional(),
   amount: z.number().optional(),
   category: z.string().optional(),
-  notes: z.string().optional(),
   nextDate: z.string().optional(),
   rule: z.string().optional(),
 });
