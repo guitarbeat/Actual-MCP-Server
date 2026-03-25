@@ -1,0 +1,746 @@
+- generic [ref=e65]:
+  - generic [ref=e68]:
+    - generic [ref=e69]:
+      - button "My Finances" [ref=e71]:
+        - generic [ref=e72]: My Finances
+        - img [ref=e73]
+      - button "Unpin sidebar" [ref=e75]:
+        - img [ref=e1906]
+    - generic [ref=e78]:
+      - generic [ref=e79]:
+        - link "Budget" [ref=e81] [cursor=pointer]:
+          - /url: /budget
+          - generic [ref=e82]:
+            - img [ref=e83]
+            - generic [ref=e85]: Budget
+        - link "Reports" [ref=e87] [cursor=pointer]:
+          - /url: /reports
+          - generic [ref=e88]:
+            - img [ref=e89]
+            - generic [ref=e91]: Reports
+        - link "Schedules" [ref=e93] [cursor=pointer]:
+          - /url: /schedules
+          - generic [ref=e94]:
+            - img [ref=e95]
+            - generic [ref=e98]: Schedules
+        - button "More" [ref=e100]:
+          - generic [ref=e101]:
+            - img [ref=e102]
+            - generic [ref=e104]: More
+      - generic [ref=e107]:
+        - link "All accounts 256,064.98" [ref=e111] [cursor=pointer]:
+          - /url: /accounts
+          - generic [ref=e114]:
+            - generic [ref=e115]: All accounts
+            - generic [ref=e116]: 256,064.98
+        - link "On budget 43,295.28" [ref=e120] [cursor=pointer]:
+          - /url: /accounts/onbudget
+          - generic [ref=e123]:
+            - generic [ref=e124]: On budget
+            - generic [ref=e125]: 43,295.28
+        - link "🏦 Cash App 265.00" [ref=e130] [cursor=pointer]:
+          - /url: /accounts/dec097a1-f046-4aa3-86eb-fa3c63fa7a33
+          - generic [ref=e133]:
+            - generic [ref=e134]: 🏦 Cash App
+            - generic [ref=e135]: "265.00"
+        - link "🏦 Chase Checking 62,737.25" [ref=e140] [cursor=pointer]:
+          - /url: /accounts/ba5b21fd-1bdd-4c65-9b19-a634feb79ac5
+          - generic [ref=e143]:
+            - generic [ref=e144]: 🏦 Chase Checking
+            - generic [ref=e145]: 62,737.25
+        - link "🏦 Robinhood Checking 4,603.63" [ref=e150] [cursor=pointer]:
+          - /url: /accounts/ac0441a1-e30d-406a-917e-5dadb93b7035
+          - generic [ref=e153]:
+            - generic [ref=e154]: 🏦 Robinhood Checking
+            - generic [ref=e155]: 4,603.63
+        - link "🏦 Schwab Checking 3,042.10" [ref=e160] [cursor=pointer]:
+          - /url: /accounts/8725b498-b4e8-46ce-9f7a-fff5ffdbdd96
+          - generic [ref=e163]:
+            - generic [ref=e164]: 🏦 Schwab Checking
+            - generic [ref=e165]: 3,042.10
+        - link "🏦 Wells Fargo Checking 19,669.74" [ref=e170] [cursor=pointer]:
+          - /url: /accounts/d8cf12e1-f551-4468-982f-72908d132a10
+          - generic [ref=e173]:
+            - generic [ref=e174]: 🏦 Wells Fargo Checking
+            - generic [ref=e175]: 19,669.74
+        - link "💰 Chase Savings 76.62" [ref=e180] [cursor=pointer]:
+          - /url: /accounts/db1f60c9-0913-4de8-bbb5-c711df3906ab
+          - generic [ref=e183]:
+            - generic [ref=e184]: 💰 Chase Savings
+            - generic [ref=e185]: "76.62"
+        - link "💳 Amazon Prime -9,139.43" [ref=e190] [cursor=pointer]:
+          - /url: /accounts/5351632d-61ea-4c0c-8b46-19914c05aeb6
+          - generic [ref=e193]:
+            - generic [ref=e194]: 💳 Amazon Prime
+            - generic [ref=e195]: "-9,139.43"
+        - link "💳 Apple Card 5,056.98" [ref=e200] [cursor=pointer]:
+          - /url: /accounts/1f5ce26a-4de1-478f-b53a-b952cb9d2f8d
+          - generic [ref=e203]:
+            - generic [ref=e204]: 💳 Apple Card
+            - generic [ref=e205]: 5,056.98
+        - link "💳 Bank of America Rewards 367.79" [ref=e210] [cursor=pointer]:
+          - /url: /accounts/d08d7001-126b-4159-b53a-170d42abb114
+          - generic [ref=e213]:
+            - generic [ref=e214]: 💳 Bank of America Rewards
+            - generic [ref=e215]: "367.79"
+        - link "💳 Bilt Rewards -16,331.59" [ref=e220] [cursor=pointer]:
+          - /url: /accounts/4b676f8f-ac9b-4286-bb81-60a97e43dc86
+          - generic [ref=e223]:
+            - generic [ref=e224]: 💳 Bilt Rewards
+            - generic [ref=e225]: "-16,331.59"
+        - link "💳 Robinhood Card 3,667.31" [ref=e230] [cursor=pointer]:
+          - /url: /accounts/d3c90700-b1c1-4c04-9380-2a7a37e69c1f
+          - generic [ref=e233]:
+            - generic [ref=e234]: 💳 Robinhood Card
+            - generic [ref=e235]: 3,667.31
+        - link "💳 Southwest Rewards -868.84" [ref=e240] [cursor=pointer]:
+          - /url: /accounts/49c42a77-fda3-44a4-93bc-e89e8a998d35
+          - generic [ref=e243]:
+            - generic [ref=e244]: 💳 Southwest Rewards
+            - generic [ref=e245]: "-868.84"
+        - link "💰 Apple Savings -19,187.10" [ref=e250] [cursor=pointer]:
+          - /url: /accounts/161407c6-2d47-4623-83a3-3b4a9fbf004e
+          - generic [ref=e253]:
+            - generic [ref=e254]: 💰 Apple Savings
+            - generic [ref=e255]: "-19,187.10"
+        - link "💵 Apple Cash -5,447.42" [ref=e260] [cursor=pointer]:
+          - /url: /accounts/f5f92514-3049-4d05-925c-df7972fc312a
+          - generic [ref=e263]:
+            - generic [ref=e264]: 💵 Apple Cash
+            - generic [ref=e265]: "-5,447.42"
+        - link "💵 Venmo -3,220.25" [ref=e270] [cursor=pointer]:
+          - /url: /accounts/04b72898-96fb-4700-891b-290ba4ff3015
+          - generic [ref=e273]:
+            - generic [ref=e274]: 💵 Venmo
+            - generic [ref=e275]: "-3,220.25"
+        - link "💰 Robinhood Savings -1,996.51" [ref=e280] [cursor=pointer]:
+          - /url: /accounts/7c86c4ae-e889-4740-8478-5d5cf801fb46
+          - generic [ref=e283]:
+            - generic [ref=e284]: 💰 Robinhood Savings
+            - generic [ref=e285]: "-1,996.51"
+        - link "Off budget 212,769.70" [ref=e289] [cursor=pointer]:
+          - /url: /accounts/offbudget
+          - generic [ref=e292]:
+            - generic [ref=e293]: Off budget
+            - generic [ref=e294]: 212,769.70
+        - link "💰 CIT HYSA 23,742.94" [ref=e299] [cursor=pointer]:
+          - /url: /accounts/c16c3438-9e56-4042-bff0-6d207868e5d4
+          - generic [ref=e302]:
+            - generic [ref=e303]: 💰 CIT HYSA
+            - generic [ref=e304]: 23,742.94
+        - link "📈 Coinbase BTC 2,237.39" [ref=e309] [cursor=pointer]:
+          - /url: /accounts/bdad5249-ea0a-4574-b8a1-193b09220e94
+          - generic [ref=e312]:
+            - generic [ref=e313]: 📈 Coinbase BTC
+            - generic [ref=e314]: 2,237.39
+        - link "📈 Coinbase DOGE 55.68" [ref=e319] [cursor=pointer]:
+          - /url: /accounts/2412ce09-5cf5-4fea-b2b4-a122a41e28d5
+          - generic [ref=e322]:
+            - generic [ref=e323]: 📈 Coinbase DOGE
+            - generic [ref=e324]: "55.68"
+        - link "📈 Robinhood Managed Roth IRA 3,146.68" [ref=e329] [cursor=pointer]:
+          - /url: /accounts/ecd3f75e-c00d-403c-b560-03ec25148ce7
+          - generic [ref=e332]:
+            - generic [ref=e333]: 📈 Robinhood Managed Roth IRA
+            - generic [ref=e334]: 3,146.68
+        - link "📈 Schwab Brokerage 0.00" [ref=e339] [cursor=pointer]:
+          - /url: /accounts/ee5b3e23-54d5-40fa-ac7b-65e14e59b0af
+          - generic [ref=e342]:
+            - generic [ref=e343]: 📈 Schwab Brokerage
+            - generic [ref=e344]: "0.00"
+        - link "📈 Coinbase LTC 281.40" [ref=e349] [cursor=pointer]:
+          - /url: /accounts/97b9e163-dc67-44dd-a330-0737df370f5f
+          - generic [ref=e352]:
+            - generic [ref=e353]: 📈 Coinbase LTC
+            - generic [ref=e354]: "281.40"
+        - link "📈 Robinhood Crypto 14,995.79" [ref=e359] [cursor=pointer]:
+          - /url: /accounts/79c3dca5-2575-435a-b1c6-998a97cc3ec1
+          - generic [ref=e362]:
+            - generic [ref=e363]: 📈 Robinhood Crypto
+            - generic [ref=e364]: 14,995.79
+        - link "📈 Robinhood Roth IRA 3,048.19" [ref=e369] [cursor=pointer]:
+          - /url: /accounts/15882268-4898-4490-b44a-a7564864aca2
+          - generic [ref=e372]:
+            - generic [ref=e373]: 📈 Robinhood Roth IRA
+            - generic [ref=e374]: 3,048.19
+        - link "📈 Robinhood Brokerage 165,261.63" [ref=e379] [cursor=pointer]:
+          - /url: /accounts/da2ce842-5471-4ca8-98f3-f200fd111d66
+          - generic [ref=e382]:
+            - generic [ref=e383]: 📈 Robinhood Brokerage
+            - generic [ref=e384]: 165,261.63
+        - button "Closed accounts" [active] [ref=e1907] [cursor=pointer]:
+          - generic [ref=e388]: Closed accounts
+        - link "Charles Schwab Individual 0.00" [ref=e1912] [cursor=pointer]:
+          - /url: /accounts/721cfd92-4d11-42b1-b8bb-f97c65fe162e
+          - generic [ref=e1915]:
+            - generic [ref=e1916]: Charles Schwab Individual
+            - generic [ref=e1917]: "0.00"
+      - button "Add account" [ref=e391]:
+        - generic [ref=e392]:
+          - img [ref=e393]
+          - generic [ref=e396]: Add account
+  - generic [ref=e399]:
+    - generic:
+      - generic "Choose the number of months shown at a time" [ref=e401]:
+        - img [ref=e402]
+        - img [ref=e404]
+        - img [ref=e406]
+      - generic [ref=e408]:
+        - button "1048 uncategorized transactions" [ref=e409]
+        - button "Enable privacy mode" [ref=e410]:
+          - img [ref=e411]
+        - button "Sync" [ref=e413]:
+          - img [ref=e415]
+          - generic [ref=e417]: Sync
+        - button "Server online" [ref=e419]
+        - button "Help" [ref=e421]:
+          - img [ref=e422]
+          - text: Help
+    - generic [ref=e428]:
+      - generic [ref=e432]:
+        - button [ref=e433]:
+          - generic "Today" [ref=e434]:
+            - img [ref=e435]
+        - button [ref=e437]:
+          - generic "Previous month" [ref=e438]:
+            - img [ref=e439]
+        - generic [ref=e442]:
+          - text: Oct
+          - generic [ref=e443]: "2025"
+        - generic [ref=e445]: Nov
+        - generic [ref=e447]: Dec
+        - generic [ref=e449]:
+          - text: Jan
+          - generic [ref=e450]: "2026"
+        - generic [ref=e452]: Feb
+        - generic [ref=e454] [cursor=pointer]: Mar
+        - generic [ref=e456]: Apr
+        - generic [ref=e458]: May
+        - generic [ref=e460]: Jun
+        - generic [ref=e462]: Jul
+        - generic [ref=e464]: Aug
+        - button [ref=e465]:
+          - generic "Next month" [ref=e466]:
+            - img [ref=e467]
+      - generic [ref=e469]:
+        - generic [ref=e473]:
+          - generic [ref=e475]:
+            - generic [ref=e476]:
+              - button "Collapse month summary" [ref=e478]:
+                - img [ref=e479]
+              - generic [ref=e482]: February
+              - generic [ref=e483]:
+                - button "View notes" [ref=e487]:
+                  - img [ref=e488]
+                - button "Menu" [ref=e491]:
+                  - img [ref=e492]
+            - generic [ref=e494]:
+              - generic [ref=e495]:
+                - generic [ref=e497]: 41,285.75
+                - generic [ref=e498]: "-1,490.17"
+                - generic [ref=e499]: "-4,842.88"
+                - generic [ref=e500]: "-0.00"
+              - generic [ref=e501]:
+                - generic [ref=e502]: Available funds
+                - generic [ref=e503]: Overspent in Jan
+                - generic [ref=e504]: Budgeted
+                - generic [ref=e505]: For next month
+            - generic [ref=e508]:
+              - generic [ref=e509]: "To Budget:"
+              - generic [ref=e512] [cursor=pointer]: 34,952.70
+          - generic [ref=e514]:
+            - generic [ref=e515]:
+              - button "Collapse month summary" [ref=e517]:
+                - img [ref=e518]
+              - generic [ref=e521]: March
+              - generic [ref=e522]:
+                - button "View notes" [ref=e526]:
+                  - img [ref=e527]
+                - button "Menu" [ref=e530]:
+                  - img [ref=e531]
+            - generic [ref=e533]:
+              - generic [ref=e534]:
+                - generic [ref=e536]: 42,143.84
+                - generic [ref=e537]: "-2,196.84"
+                - generic [ref=e538]: "-5,130.60"
+                - generic [ref=e539]: "-0.00"
+              - generic [ref=e540]:
+                - generic [ref=e541]: Available funds
+                - generic [ref=e542]: Overspent in Feb
+                - generic [ref=e543]: Budgeted
+                - generic [ref=e544]: For next month
+            - generic [ref=e547]:
+              - generic [ref=e548]: "To Budget:"
+              - generic [ref=e551] [cursor=pointer]: 34,816.40
+          - generic [ref=e553]:
+            - generic [ref=e554]:
+              - button "Collapse month summary" [ref=e556]:
+                - img [ref=e557]
+              - generic [ref=e560]: April
+              - generic [ref=e561]:
+                - button "View notes" [ref=e565]:
+                  - img [ref=e566]
+                - button "Menu" [ref=e569]:
+                  - img [ref=e570]
+            - generic [ref=e572]:
+              - generic [ref=e573]:
+                - generic [ref=e575]: 34,816.40
+                - generic [ref=e576]: "-3,355.42"
+                - generic [ref=e577]: "-0.00"
+                - generic [ref=e578]: "-0.00"
+              - generic [ref=e579]:
+                - generic [ref=e580]: Available funds
+                - generic [ref=e581]: Overspent in Mar
+                - generic [ref=e582]: Budgeted
+                - generic [ref=e583]: For next month
+            - generic [ref=e586]:
+              - generic [ref=e587]: "To Budget:"
+              - generic [ref=e590] [cursor=pointer]: 31,460.98
+        - generic [ref=e591]:
+          - generic [ref=e592]:
+            - button "Expand" [ref=e593]:
+              - img [ref=e594]
+            - generic [ref=e596]: Category
+            - button "Menu" [ref=e597]:
+              - img [ref=e598]
+          - generic [ref=e601]:
+            - generic [ref=e602]:
+              - generic [ref=e603]: Budgeted
+              - generic [ref=e604]: 5,130.60
+            - generic [ref=e605]:
+              - generic [ref=e606]: Spent
+              - generic [ref=e607]: "-6,230.79"
+            - generic [ref=e608]:
+              - generic [ref=e609]: Balance
+              - generic [ref=e610]: 4,897.86
+        - generic [ref=e613]:
+          - generic [ref=e616]:
+            - generic [ref=e621]:
+              - img [ref=e622]
+              - generic [ref=e624]: 🚗 TRANSPORTATION
+            - generic [ref=e626]:
+              - generic [ref=e629]: "170.00"
+              - generic [ref=e632]: "-450.63"
+              - generic [ref=e635]: "298.37"
+          - generic [ref=e638]:
+            - generic [ref=e644]: ⛽ Gas
+            - generic [ref=e646]:
+              - generic [ref=e647]:
+                - button [ref=e649]:
+                  - img [ref=e650]
+                - generic [ref=e654]: "120.00"
+              - generic [ref=e659] [cursor=pointer]: "-450.63"
+              - button "-25.63" [ref=e663]:
+                - generic [ref=e665] [cursor=pointer]: "-25.63"
+          - generic [ref=e668]:
+            - generic [ref=e674]: 🚗 Car Insurance
+            - generic [ref=e676]:
+              - generic [ref=e677]:
+                - button [ref=e679]:
+                  - img [ref=e680]
+                - generic [ref=e684]: "50.00"
+              - generic [ref=e689] [cursor=pointer]: "0.00"
+              - button "324.00" [ref=e693]:
+                - generic [ref=e695] [cursor=pointer]: "324.00"
+          - generic [ref=e698]:
+            - generic [ref=e703]:
+              - img [ref=e704]
+              - generic [ref=e706]: 💰 SAVINGS
+            - generic [ref=e708]:
+              - generic [ref=e711]: "75.00"
+              - generic [ref=e714]: "0.00"
+              - generic [ref=e717]: 3,095.15
+          - generic [ref=e720]:
+            - generic [ref=e726]: 📈 Investments
+            - generic [ref=e728]:
+              - generic [ref=e729]:
+                - button [ref=e731]:
+                  - img [ref=e732]
+                - generic [ref=e736]: "50.00"
+              - generic [ref=e741] [cursor=pointer]: "0.00"
+              - button "2,155.84" [ref=e745]:
+                - generic [ref=e747] [cursor=pointer]: 2,155.84
+          - generic [ref=e750]:
+            - generic [ref=e756]: 💳 Bank Fees
+            - generic [ref=e758]:
+              - generic [ref=e759]:
+                - button [ref=e761]:
+                  - img [ref=e762]
+                - generic [ref=e766]: "25.00"
+              - generic [ref=e771] [cursor=pointer]: "0.00"
+              - button "939.11" [ref=e775]:
+                - generic [ref=e777] [cursor=pointer]: "939.11"
+          - generic [ref=e780]:
+            - generic [ref=e786]: 🚨 Emergency Fund
+            - generic [ref=e788]:
+              - generic [ref=e789]:
+                - button [ref=e791]:
+                  - img [ref=e792]
+                - generic [ref=e796]: "0.00"
+              - generic [ref=e801] [cursor=pointer]: "0.00"
+              - button "0.20" [ref=e805]:
+                - generic [ref=e807] [cursor=pointer]: "0.20"
+          - generic [ref=e810]:
+            - generic [ref=e815]:
+              - img [ref=e816]
+              - generic [ref=e818]: 🏠 HOUSING
+            - generic [ref=e820]:
+              - generic [ref=e823]: 1,440.00
+              - generic [ref=e826]: "-4,092.05"
+              - generic [ref=e829]: "-2,291.01"
+          - generic [ref=e832]:
+            - generic [ref=e838]: 🧹 Household Supplies
+            - generic [ref=e840]:
+              - generic [ref=e841]:
+                - button [ref=e843]:
+                  - img [ref=e844]
+                - generic [ref=e848]: "140.00"
+              - generic [ref=e853] [cursor=pointer]: "-41.96"
+              - button "308.04" [ref=e857]:
+                - generic [ref=e859] [cursor=pointer]: "308.04"
+          - generic [ref=e862]:
+            - generic [ref=e868]: 🏠 Rent
+            - generic [ref=e870]:
+              - generic [ref=e871]:
+                - button [ref=e873]:
+                  - img [ref=e874]
+                - generic [ref=e878]: 1,250.00
+              - generic [ref=e883] [cursor=pointer]: "-4,050.09"
+              - button "-2,800.09" [ref=e887]:
+                - generic [ref=e889] [cursor=pointer]: "-2,800.09"
+          - generic [ref=e892]:
+            - generic [ref=e898]: 🌐 Internet
+            - generic [ref=e900]:
+              - generic [ref=e901]:
+                - button [ref=e903]:
+                  - img [ref=e904]
+                - generic [ref=e908]: "50.00"
+              - generic [ref=e913] [cursor=pointer]: "0.00"
+              - button "61.04" [ref=e917]:
+                - generic [ref=e919] [cursor=pointer]: "61.04"
+          - generic [ref=e922]:
+            - generic [ref=e928]: 🔥 Texas Gas
+            - generic [ref=e930]:
+              - generic [ref=e931]:
+                - button [ref=e933]:
+                  - img [ref=e934]
+                - generic [ref=e938]: "0.00"
+              - generic [ref=e943] [cursor=pointer]: "0.00"
+              - button "55.00" [ref=e947]:
+                - generic [ref=e949] [cursor=pointer]: "55.00"
+          - generic [ref=e952]:
+            - generic [ref=e958]: ⚡ Electric
+            - generic [ref=e960]:
+              - generic [ref=e961]:
+                - button [ref=e963]:
+                  - img [ref=e964]
+                - generic [ref=e968]: "0.00"
+              - generic [ref=e973] [cursor=pointer]: "0.00"
+              - button "85.00" [ref=e977]:
+                - generic [ref=e979] [cursor=pointer]: "85.00"
+          - generic [ref=e982]:
+            - generic [ref=e987]:
+              - img [ref=e988]
+              - generic [ref=e990]: 📱 SERVICES
+            - generic [ref=e992]:
+              - generic [ref=e995]: "375.60"
+              - generic [ref=e998]: "-986.28"
+              - generic [ref=e1001]: "-83.21"
+          - generic [ref=e1004]:
+            - generic [ref=e1010]: 💸 Fees & Charges
+            - generic [ref=e1012]:
+              - generic [ref=e1013]:
+                - button [ref=e1015]:
+                  - img [ref=e1016]
+                - generic [ref=e1020]: "50.00"
+              - generic [ref=e1025] [cursor=pointer]: "-6.50"
+              - button "114.50" [ref=e1029]:
+                - generic [ref=e1031] [cursor=pointer]: "114.50"
+          - generic [ref=e1034]:
+            - generic [ref=e1040]: 📦 Amazon Prime
+            - generic [ref=e1042]:
+              - generic [ref=e1043]:
+                - button [ref=e1045]:
+                  - img [ref=e1046]
+                - generic [ref=e1050]: "110.00"
+              - generic [ref=e1055] [cursor=pointer]: "-131.90"
+              - button "-21.90" [ref=e1059]:
+                - generic [ref=e1061] [cursor=pointer]: "-21.90"
+          - generic [ref=e1064]:
+            - generic [ref=e1070]: 📺 Other Subscriptions
+            - generic [ref=e1072]:
+              - generic [ref=e1073]:
+                - button [ref=e1075]:
+                  - img [ref=e1076]
+                - generic [ref=e1080]: "50.00"
+              - generic [ref=e1085] [cursor=pointer]: "0.00"
+              - button "175.21" [ref=e1089]:
+                - generic [ref=e1091] [cursor=pointer]: "175.21"
+          - generic [ref=e1094]:
+            - generic [ref=e1100]: 🍎 Apple Services
+            - generic [ref=e1102]:
+              - generic [ref=e1103]:
+                - button [ref=e1105]:
+                  - img [ref=e1106]
+                - generic [ref=e1110]: "50.00"
+              - generic [ref=e1115] [cursor=pointer]: "-654.80"
+              - button "-507.80" [ref=e1119]:
+                - generic [ref=e1121] [cursor=pointer]: "-507.80"
+          - generic [ref=e1124]:
+            - generic [ref=e1130]: 🎵 Spotify
+            - generic [ref=e1132]:
+              - generic [ref=e1133]:
+                - button [ref=e1135]:
+                  - img [ref=e1136]
+                - generic [ref=e1140]: "50.00"
+              - generic [ref=e1145] [cursor=pointer]: "-3.66"
+              - button "91.88" [ref=e1149]:
+                - generic [ref=e1151] [cursor=pointer]: "91.88"
+          - generic [ref=e1154]:
+            - generic [ref=e1160]: 📞 Phone
+            - generic [ref=e1162]:
+              - generic [ref=e1163]:
+                - button [ref=e1165]:
+                  - img [ref=e1166]
+                - generic [ref=e1170]: "65.60"
+              - generic [ref=e1175] [cursor=pointer]: "-189.42"
+              - button "64.90" [ref=e1179]:
+                - generic [ref=e1181] [cursor=pointer]: "64.90"
+          - generic [ref=e1184]:
+            - generic [ref=e1189]:
+              - img [ref=e1190]
+              - generic [ref=e1192]: 🍽️ FOOD
+            - generic [ref=e1194]:
+              - generic [ref=e1197]: "570.00"
+              - generic [ref=e1200]: "-139.32"
+              - generic [ref=e1203]: "822.21"
+          - generic [ref=e1206]:
+            - generic [ref=e1212]: 🍻 Bars
+            - generic [ref=e1214]:
+              - generic [ref=e1215]:
+                - button [ref=e1217]:
+                  - img [ref=e1218]
+                - generic [ref=e1222]: "50.00"
+              - generic [ref=e1227] [cursor=pointer]: "-24.90"
+              - button "137.42" [ref=e1231]:
+                - generic [ref=e1233] [cursor=pointer]: "137.42"
+          - generic [ref=e1236]:
+            - generic [ref=e1242]: 🚚 Food Delivery
+            - generic [ref=e1244]:
+              - generic [ref=e1245]:
+                - button [ref=e1247]:
+                  - img [ref=e1248]
+                - generic [ref=e1252]: "110.00"
+              - generic [ref=e1257] [cursor=pointer]: "-28.63"
+              - button "187.86" [ref=e1261]:
+                - generic [ref=e1263] [cursor=pointer]: "187.86"
+          - generic [ref=e1266]:
+            - generic [ref=e1272]: 🍔 Fast Food
+            - generic [ref=e1274]:
+              - generic [ref=e1275]:
+                - button [ref=e1277]:
+                  - img [ref=e1278]
+                - generic [ref=e1282]: "200.00"
+              - generic [ref=e1287] [cursor=pointer]: "-27.42"
+              - button "229.06" [ref=e1291]:
+                - generic [ref=e1293] [cursor=pointer]: "229.06"
+          - generic [ref=e1296]:
+            - generic [ref=e1302]: 🍽️ Dining Out
+            - generic [ref=e1304]:
+              - generic [ref=e1305]:
+                - button [ref=e1307]:
+                  - img [ref=e1308]
+                - generic [ref=e1312]: "50.00"
+              - generic [ref=e1317] [cursor=pointer]: "-20.94"
+              - button "29.06" [ref=e1321]:
+                - generic [ref=e1323] [cursor=pointer]: "29.06"
+          - generic [ref=e1326]:
+            - generic [ref=e1332]: 🛒 Groceries
+            - generic [ref=e1334]:
+              - generic [ref=e1335]:
+                - button [ref=e1337]:
+                  - img [ref=e1338]
+                - generic [ref=e1342]: "160.00"
+              - generic [ref=e1347] [cursor=pointer]: "-37.43"
+              - button "238.81" [ref=e1351]:
+                - generic [ref=e1353] [cursor=pointer]: "238.81"
+          - generic [ref=e1356]:
+            - generic [ref=e1361]:
+              - img [ref=e1362]
+              - generic [ref=e1364]: 👨‍👩‍👧‍👦 FAMILY
+            - generic [ref=e1366]:
+              - generic [ref=e1369]: "210.00"
+              - generic [ref=e1372]: "0.00"
+              - generic [ref=e1375]: "878.03"
+          - generic [ref=e1378]:
+            - generic [ref=e1384]: 🐈‍⬛ Nosferatu
+            - generic [ref=e1386]:
+              - generic [ref=e1387]:
+                - button [ref=e1389]:
+                  - img [ref=e1390]
+                - generic [ref=e1394]: "50.00"
+              - generic [ref=e1399] [cursor=pointer]: "0.00"
+              - button "103.00" [ref=e1403]:
+                - generic [ref=e1405] [cursor=pointer]: "103.00"
+          - generic [ref=e1408]:
+            - generic [ref=e1414]: 👧 Gianna
+            - generic [ref=e1416]:
+              - generic [ref=e1417]:
+                - button [ref=e1419]:
+                  - img [ref=e1420]
+                - generic [ref=e1424]: "50.00"
+              - generic [ref=e1429] [cursor=pointer]: "0.00"
+              - button "116.00" [ref=e1433]:
+                - generic [ref=e1435] [cursor=pointer]: "116.00"
+          - generic [ref=e1438]:
+            - generic [ref=e1444]: 💝 Gifts
+            - generic [ref=e1446]:
+              - generic [ref=e1447]:
+                - button [ref=e1449]:
+                  - img [ref=e1450]
+                - generic [ref=e1454]: "60.00"
+              - generic [ref=e1459] [cursor=pointer]: "0.00"
+              - button "531.03" [ref=e1463]:
+                - generic [ref=e1465] [cursor=pointer]: "531.03"
+          - generic [ref=e1468]:
+            - generic [ref=e1474]: 👶 Ziah
+            - generic [ref=e1476]:
+              - generic [ref=e1477]:
+                - button [ref=e1479]:
+                  - img [ref=e1480]
+                - generic [ref=e1484]: "50.00"
+              - generic [ref=e1489] [cursor=pointer]: "0.00"
+              - button "128.00" [ref=e1493]:
+                - generic [ref=e1495] [cursor=pointer]: "128.00"
+          - generic [ref=e1498]:
+            - generic [ref=e1503]:
+              - img [ref=e1504]
+              - generic [ref=e1506]: 🎯 DISCRETIONARY
+            - generic [ref=e1508]:
+              - generic [ref=e1511]: "270.00"
+              - generic [ref=e1514]: "-71.22"
+              - generic [ref=e1517]: "502.36"
+          - generic [ref=e1520]:
+            - generic [ref=e1526]: 📖 Media
+            - generic [ref=e1528]:
+              - generic [ref=e1529]:
+                - button [ref=e1531]:
+                  - img [ref=e1532]
+                - generic [ref=e1536]: "50.00"
+              - generic [ref=e1541] [cursor=pointer]: "0.00"
+              - button "100.00" [ref=e1545]:
+                - generic [ref=e1547] [cursor=pointer]: "100.00"
+          - generic [ref=e1550]:
+            - generic [ref=e1556]: 👕 Clothing
+            - generic [ref=e1558]:
+              - generic [ref=e1559]:
+                - button [ref=e1561]:
+                  - img [ref=e1562]
+                - generic [ref=e1566]: "120.00"
+              - generic [ref=e1571] [cursor=pointer]: "-52.95"
+              - button "197.05" [ref=e1575]:
+                - generic [ref=e1577] [cursor=pointer]: "197.05"
+          - generic [ref=e1580]:
+            - generic [ref=e1586]: 🔧 Repairs
+            - generic [ref=e1588]:
+              - generic [ref=e1589]:
+                - button [ref=e1591]:
+                  - img [ref=e1592]
+                - generic [ref=e1596]: "0.00"
+              - generic [ref=e1601] [cursor=pointer]: "0.00"
+              - button "10.00" [ref=e1605]:
+                - generic [ref=e1607] [cursor=pointer]: "10.00"
+          - generic [ref=e1610]:
+            - generic [ref=e1616]: 🎭 Experiences
+            - generic [ref=e1618]:
+              - generic [ref=e1619]:
+                - button [ref=e1621]:
+                  - img [ref=e1622]
+                - generic [ref=e1626]: "100.00"
+              - generic [ref=e1631] [cursor=pointer]: "-18.27"
+              - button "195.31" [ref=e1635]:
+                - generic [ref=e1637] [cursor=pointer]: "195.31"
+          - generic [ref=e1640]:
+            - generic [ref=e1645]:
+              - img [ref=e1646]
+              - generic [ref=e1648]: 🏥 HEALTH
+            - generic [ref=e1650]:
+              - generic [ref=e1653]: "150.00"
+              - generic [ref=e1656]: "-52.14"
+              - generic [ref=e1659]: "245.11"
+          - generic [ref=e1662]:
+            - generic [ref=e1668]: 🏥 Doctor Visits
+            - generic [ref=e1670]:
+              - generic [ref=e1671]:
+                - button [ref=e1673]:
+                  - img [ref=e1674]
+                - generic [ref=e1678]: "50.00"
+              - generic [ref=e1683] [cursor=pointer]: "-13.40"
+              - button "118.85" [ref=e1687]:
+                - generic [ref=e1689] [cursor=pointer]: "118.85"
+          - generic [ref=e1692]:
+            - generic [ref=e1698]: 💊 Medicine
+            - generic [ref=e1700]:
+              - generic [ref=e1701]:
+                - button [ref=e1703]:
+                  - img [ref=e1704]
+                - generic [ref=e1708]: "50.00"
+              - generic [ref=e1713] [cursor=pointer]: "-38.74"
+              - button "61.26" [ref=e1717]:
+                - generic [ref=e1719] [cursor=pointer]: "61.26"
+          - generic [ref=e1722]:
+            - generic [ref=e1728]: 🧠 Therapy
+            - generic [ref=e1730]:
+              - generic [ref=e1731]:
+                - button [ref=e1733]:
+                  - img [ref=e1734]
+                - generic [ref=e1738]: "50.00"
+              - generic [ref=e1743] [cursor=pointer]: "0.00"
+              - button "65.00" [ref=e1747]:
+                - generic [ref=e1749] [cursor=pointer]: "65.00"
+          - generic [ref=e1752]:
+            - generic [ref=e1757]:
+              - img [ref=e1758]
+              - generic [ref=e1760]: Irregular Expenses
+            - generic [ref=e1762]:
+              - generic [ref=e1765]: 1,870.00
+              - generic [ref=e1768]: "-439.15"
+              - generic [ref=e1771]: 1,430.85
+          - generic [ref=e1774]:
+            - generic [ref=e1780]: ✈️ One-Off / Travel
+            - generic [ref=e1782]:
+              - generic [ref=e1783]:
+                - button [ref=e1785]:
+                  - img [ref=e1786]
+                - generic [ref=e1790]: 1,870.00
+              - generic [ref=e1795] [cursor=pointer]: "-439.15"
+              - button "1,430.85" [ref=e1799]:
+                - generic [ref=e1801] [cursor=pointer]: 1,430.85
+          - generic [ref=e1804]:
+            - button "Add group" [ref=e1806]
+            - generic [ref=e1809]: Received
+          - generic [ref=e1811]:
+            - generic [ref=e1816]:
+              - img [ref=e1817]
+              - generic [ref=e1819]: 💵 INCOME
+            - generic [ref=e1824]: 7,191.14
+          - generic [ref=e1826]:
+            - generic [ref=e1832]: 📊 Dividends
+            - button "0.00" [ref=e1838]:
+              - generic [ref=e1840] [cursor=pointer]: "0.00"
+          - generic [ref=e1842]:
+            - generic [ref=e1848]: 💰 Interest & Cashback
+            - button "0.00" [ref=e1854]:
+              - generic [ref=e1856] [cursor=pointer]: "0.00"
+          - generic [ref=e1858]:
+            - generic [ref=e1864]: 💵 Other Income
+            - button "7,191.14" [ref=e1870]:
+              - generic [ref=e1872] [cursor=pointer]: 7,191.14
+          - generic [ref=e1874]:
+            - generic [ref=e1880]: 🎓 UT Austin Stipend
+            - button "0.00" [ref=e1886]:
+              - generic [ref=e1888] [cursor=pointer]: "0.00"
+          - generic [ref=e1890]:
+            - generic [ref=e1896]: Starting Balances
+            - button "0.00" [ref=e1902]:
+              - generic [ref=e1904] [cursor=pointer]: "0.00"
