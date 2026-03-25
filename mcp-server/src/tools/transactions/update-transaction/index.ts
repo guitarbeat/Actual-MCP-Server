@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { error, errorFromCatch, type MCPResponse, success } from '../../../core/response/index.js';
+import { error, errorFromCatch, success } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import type { TransactionData } from '../../manage-entity/entity-handlers/transaction-handler.js';
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
@@ -83,7 +83,7 @@ export const schema = {
   inputSchema: zodToJsonSchema(UpdateTransactionSchema) as ToolInput,
 };
 
-export async function handler(args: z.infer<typeof UpdateTransactionSchema>): Promise<MCPResponse> {
+export async function handler(args: z.infer<typeof UpdateTransactionSchema>) {
   try {
     // Validate input
     const validated = UpdateTransactionSchema.parse(args);
