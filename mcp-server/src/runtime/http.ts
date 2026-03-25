@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { getConnectionState, getReadinessStatus } from '../core/api/actual-client.js';
@@ -12,29 +11,52 @@ interface SessionConnection {
   transport: WebStandardStreamableHTTPServerTransport;
 }
 
-export function createHttpApp(options: {
+export interface HttpRuntime {
+  app: Hono;
+  close: () => Promise<void>;
+}
+
+export function createHttpRuntime(options: {
   version: string;
   enableWrite: boolean;
   enableNini: boolean;
   enableBearer: boolean;
   bearerToken?: string;
-}): Hono {
+}): HttpRuntime {
   const app = new Hono();
   const sessions = new Map<string, SessionConnection>();
   const requireBearer = createBearerMiddleware({
     enableBearer: options.enableBearer,
     expectedToken: options.bearerToken,
   });
+  const allowedOrigins = parseAllowedOrigins(process.env.MCP_ALLOWED_ORIGINS);
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  app.use(
-    '*',
-    cors({
-      origin: '*',
-      allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization', 'Mcp-Session-Id', 'Last-Event-ID'],
-      exposeHeaders: ['Mcp-Session-Id'],
-    }),
-  );
+  app.use('*', async (c, next) => {
+    const origin = c.req.header('origin');
+    const originAllowed = isOriginAllowed(origin, allowedOrigins, isProduction);
+
+    if (origin && !originAllowed) {
+      return c.json({ error: 'Origin not allowed' }, 403);
+    }
+
+    if (origin && originAllowed) {
+      c.header('Access-Control-Allow-Origin', origin);
+      c.header('Vary', 'Origin');
+      c.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+      c.header(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, Mcp-Session-Id, Last-Event-ID',
+      );
+      c.header('Access-Control-Expose-Headers', 'Mcp-Session-Id');
+    }
+
+    if (c.req.method === 'OPTIONS') {
+      return c.body(null, 204);
+    }
+
+    await next();
+  });
 
   app.use('/mcp', requireBearer);
 
@@ -155,5 +177,57 @@ export function createHttpApp(options: {
     return existing.transport.handleRequest(c.req.raw);
   });
 
-  return app;
+  return {
+    app,
+    async close() {
+      await Promise.all(
+        [...sessions.values()].map(async ({ server }) => {
+          await server.close();
+        }),
+      );
+      sessions.clear();
+    },
+  };
+}
+
+export function createHttpApp(options: {
+  version: string;
+  enableWrite: boolean;
+  enableNini: boolean;
+  enableBearer: boolean;
+  bearerToken?: string;
+}): Hono {
+  return createHttpRuntime(options).app;
+}
+
+function parseAllowedOrigins(value?: string): string[] {
+  return (value || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function isOriginAllowed(
+  origin: string | undefined,
+  allowedOrigins: string[],
+  isProduction: boolean,
+): boolean {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.length > 0) {
+    return allowedOrigins.includes(origin);
+  }
+
+  if (isProduction) {
+    return false;
+  }
+
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  } catch {
+    return false;
+  }
 }
