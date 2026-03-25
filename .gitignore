@@ -37,6 +37,7 @@ Thumbs.db
 # Cache
 .eslintcache
 .smart-coding-cache
+.actual-data
 
 # Upstream comparison artifacts
 upstream-comparison
