@@ -98,4 +98,113 @@ describe('GroupAggregator', () => {
     expect(result[0].total).toBe(-5000);
     expect(result[0].categories).toHaveLength(1);
   });
+
+  it('should ignore inherited properties in spendingByCategory', () => {
+    const aggregator = new GroupAggregator();
+
+    // Create an object that inherits from another object
+    const prototype = {
+      inherited: {
+        id: 'inherited',
+        name: 'Inherited',
+        group: 'Other',
+        isIncome: false,
+        total: -1000,
+        transactions: 1,
+      },
+    };
+
+    const spending = Object.create(prototype);
+    spending.cat1 = {
+      id: 'cat1',
+      name: 'Food',
+      group: 'Living',
+      isIncome: false,
+      total: -5000,
+      transactions: 2,
+    };
+
+    const result = aggregator.aggregateAndSort(spending);
+
+    // It should only process own properties, not inherited ones
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Living');
+    expect(result[0].total).toBe(-5000);
+  });
+
+  it('should handle undefined or falsy totals as 0', () => {
+    const aggregator = new GroupAggregator();
+    const spending: Record<string, CategorySpending> = {
+      cat1: {
+        id: 'cat1',
+        name: 'Food',
+        group: 'Living',
+        isIncome: false,
+        total: undefined as unknown as number, // Force undefined
+        transactions: 2,
+      },
+      cat2: {
+        id: 'cat2',
+        name: 'Rent',
+        group: 'Living',
+        isIncome: false,
+        total: 0,
+        transactions: 1,
+      },
+      cat3: {
+        id: 'cat3',
+        name: 'Salary',
+        group: 'Income',
+        isIncome: true,
+        total: NaN,
+        transactions: 1,
+      },
+    };
+
+    const result = aggregator.aggregateAndSort(spending);
+
+    // It should treat falsy totals as 0
+    expect(result).toHaveLength(2);
+
+    const livingGroup = result.find((g) => g.name === 'Living');
+    expect(livingGroup).toBeDefined();
+    expect(livingGroup!.total).toBe(0);
+
+    const incomeGroup = result.find((g) => g.name === 'Income');
+    expect(incomeGroup).toBeDefined();
+    expect(incomeGroup!.total).toBe(0);
+  });
+});
+
+describe('byId', () => {
+  it('should handle empty array', () => {
+    const aggregator = new GroupAggregator();
+    const result = aggregator.byId([]);
+    expect(result).toEqual({});
+  });
+
+  it('should create record mapped by id', () => {
+    const aggregator = new GroupAggregator();
+    const items = [
+      { id: '1', value: 'a' },
+      { id: '2', value: 'b' },
+    ];
+    const result = aggregator.byId(items);
+    expect(result).toEqual({
+      '1': { id: '1', value: 'a' },
+      '2': { id: '2', value: 'b' },
+    });
+  });
+
+  it('should use last item for duplicate ids', () => {
+    const aggregator = new GroupAggregator();
+    const items = [
+      { id: '1', value: 'first' },
+      { id: '1', value: 'second' },
+    ];
+    const result = aggregator.byId(items);
+    expect(result).toEqual({
+      '1': { id: '1', value: 'second' },
+    });
+  });
 });
