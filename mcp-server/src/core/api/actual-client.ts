@@ -19,6 +19,7 @@ import {
   getDateDiffInDays,
   parseHistoricalTransferCandidateId,
   shiftDateByDays,
+  toActualDbDate,
 } from '../analysis/historical-transfer-utils.js';
 import { validateActualAuthStartupConfig } from '../auth/startup-guard.js';
 import { cacheService } from '../cache/cache-service.js';
@@ -280,7 +281,7 @@ function getHistoricalTransferInternalLayer(): {
   send: NonNullable<NonNullable<ExtendedActualApi['internal']>['send']>;
   db: NonNullable<NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>>;
 } {
-  const internal = extendedApi.internal;
+  const { internal } = extendedApi;
 
   if (!internal?.send || !internal.db?.getTransaction || !internal.db?.all) {
     throw new Error(
@@ -288,9 +289,11 @@ function getHistoricalTransferInternalLayer(): {
     );
   }
 
+  const { send, db } = internal;
+
   return {
-    send: internal.send,
-    db: internal.db,
+    send,
+    db,
   };
 }
 
@@ -299,11 +302,11 @@ function isValidHistoricalTransferTransaction(
 ): transaction is HistoricalTransferInternalTransaction {
   return Boolean(
     transaction &&
-      !transaction.tombstone &&
-      !transaction.starting_balance_flag &&
-      !transaction.is_parent &&
-      !transaction.is_child &&
-      !transaction.transfer_id,
+    !transaction.tombstone &&
+    !transaction.starting_balance_flag &&
+    !transaction.is_parent &&
+    !transaction.is_child &&
+    !transaction.transfer_id,
   );
 }
 
@@ -328,8 +331,8 @@ async function getHistoricalTransferCounterpartIds(
       transaction.id,
       transaction.account,
       transaction.amount * -1,
-      shiftDateByDays(transaction.date, -3),
-      shiftDateByDays(transaction.date, 3),
+      toActualDbDate(shiftDateByDays(transaction.date, -3)),
+      toActualDbDate(shiftDateByDays(transaction.date, 3)),
     ],
   )) as Array<{ id: string }>;
 
@@ -1519,8 +1522,7 @@ export async function applyHistoricalTransfers(
             candidateId,
             transactionIds: [firstTransaction.id, secondTransaction.id],
             status: 'rejected',
-            reason:
-              'A required transfer payee was not found for one of the accounts in this pair.',
+            reason: 'A required transfer payee was not found for one of the accounts in this pair.',
           });
           continue;
         }

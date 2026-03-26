@@ -112,6 +112,10 @@ export function shiftDateByDays(dateString: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+export function toActualDbDate(dateString: string): number {
+  return Number.parseInt(dateString.replaceAll('-', ''), 10);
+}
+
 export function getDateDiffInDays(firstDate: string, secondDate: string): number {
   const first = new Date(`${firstDate}T00:00:00.000Z`);
   const second = new Date(`${secondDate}T00:00:00.000Z`);
