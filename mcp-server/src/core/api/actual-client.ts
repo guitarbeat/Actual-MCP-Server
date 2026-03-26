@@ -15,6 +15,11 @@ import type {
   TransactionEntity,
 } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
+import {
+  getDateDiffInDays,
+  parseHistoricalTransferCandidateId,
+  shiftDateByDays,
+} from '../analysis/historical-transfer-utils.js';
 import { validateActualAuthStartupConfig } from '../auth/startup-guard.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { BudgetFile } from '../types/index.js';
@@ -32,7 +37,43 @@ type ExtendedActualApi = typeof api & {
   runBankSync?: (options?: { accountId: string }) => Promise<unknown>;
   getServerVersion?: () => Promise<{ error?: string } | { version: string }>;
   getIDByName?: (args: { type: string; string: string }) => Promise<string>;
+  internal?: {
+    send?: (name: string, args: Record<string, unknown>) => Promise<unknown>;
+    db?: {
+      getTransaction?: (id: string) => Promise<HistoricalTransferInternalTransaction | null>;
+      all?: (sql: string, params: unknown[]) => Promise<Array<{ id: string }>>;
+    };
+  };
 };
+
+interface HistoricalTransferInternalTransaction {
+  id: string;
+  account: string;
+  amount: number;
+  date: string;
+  payee?: string | null;
+  category?: string | null;
+  transfer_id?: string | null;
+  is_parent?: boolean | null;
+  is_child?: boolean | null;
+  starting_balance_flag?: boolean | null;
+  tombstone?: boolean | null;
+}
+
+interface HistoricalTransferApplyCandidateResult {
+  candidateId: string;
+  transactionIds: [string, string];
+  status: 'applied' | 'rejected';
+  categoriesCleared?: boolean;
+  reason?: string;
+}
+
+export interface HistoricalTransferApplyResult {
+  requestedCandidateCount: number;
+  appliedCount: number;
+  rejectedCount: number;
+  results: HistoricalTransferApplyCandidateResult[];
+}
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
@@ -233,6 +274,66 @@ function invalidateAllReadState(): void {
 
 function invalidateNameResolutionState(): void {
   nameResolver.clearCache();
+}
+
+function getHistoricalTransferInternalLayer(): {
+  send: NonNullable<NonNullable<ExtendedActualApi['internal']>['send']>;
+  db: NonNullable<NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>>;
+} {
+  const internal = extendedApi.internal;
+
+  if (!internal?.send || !internal.db?.getTransaction || !internal.db?.all) {
+    throw new Error(
+      'Historical transfer tools require Actual local data access. This environment does not expose the internal Actual data layer needed to link existing transactions safely.',
+    );
+  }
+
+  return {
+    send: internal.send,
+    db: internal.db,
+  };
+}
+
+function isValidHistoricalTransferTransaction(
+  transaction: HistoricalTransferInternalTransaction | null,
+): transaction is HistoricalTransferInternalTransaction {
+  return Boolean(
+    transaction &&
+      !transaction.tombstone &&
+      !transaction.starting_balance_flag &&
+      !transaction.is_parent &&
+      !transaction.is_child &&
+      !transaction.transfer_id,
+  );
+}
+
+async function getHistoricalTransferCounterpartIds(
+  db: NonNullable<NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>>,
+  transaction: HistoricalTransferInternalTransaction,
+): Promise<string[]> {
+  const rows = (await db.all(
+    `SELECT id
+       FROM v_transactions
+      WHERE tombstone = 0
+        AND id != ?
+        AND (starting_balance_flag = 0 OR starting_balance_flag IS NULL)
+        AND (is_parent = 0 OR is_parent IS NULL)
+        AND (is_child = 0 OR is_child IS NULL)
+        AND transfer_id IS NULL
+        AND account != ?
+        AND amount = ?
+        AND date >= ?
+        AND date <= ?`,
+    [
+      transaction.id,
+      transaction.account,
+      transaction.amount * -1,
+      shiftDateByDays(transaction.date, -3),
+      shiftDateByDays(transaction.date, 3),
+    ],
+  )) as Array<{ id: string }>;
+
+  return rows.map((row) => row.id);
 }
 
 function createLiveSyncRequiredError(error: unknown): Error {
@@ -1298,6 +1399,193 @@ export async function deleteTransaction(id: string): Promise<void> {
     cacheService.invalidatePattern('transactions:*');
     cacheService.invalidate('accounts:all');
     invalidateNameResolutionState();
+  }, 'write');
+}
+
+/**
+ * Link already-imported transaction pairs as historical transfers using Actual's local data layer.
+ * This intentionally bypasses the normal updateTransaction wrapper so it can link two existing rows
+ * without creating duplicate counterpart transactions.
+ */
+export async function applyHistoricalTransfers(
+  candidateIds: string[],
+): Promise<HistoricalTransferApplyResult> {
+  return ensureConnection(async () => {
+    const { send, db } = getHistoricalTransferInternalLayer();
+    const uniqueCandidateIds = [...new Set(candidateIds)];
+    const [accounts, payees] = await Promise.all([api.getAccounts(), api.getPayees()]);
+    const accountsById = new Map(accounts.map((account) => [account.id, account]));
+    const transferPayeeByAccountId = new Map(
+      payees
+        .filter((payee) => typeof payee.transfer_acct === 'string' && payee.transfer_acct)
+        .map((payee) => [payee.transfer_acct as string, payee.id]),
+    );
+    const reservedTransactionIds = new Set<string>();
+    const results: HistoricalTransferApplyCandidateResult[] = [];
+
+    for (const candidateId of uniqueCandidateIds) {
+      try {
+        const [firstTransactionId, secondTransactionId] =
+          parseHistoricalTransferCandidateId(candidateId);
+
+        if (
+          reservedTransactionIds.has(firstTransactionId) ||
+          reservedTransactionIds.has(secondTransactionId)
+        ) {
+          results.push({
+            candidateId,
+            transactionIds: [firstTransactionId, secondTransactionId],
+            status: 'rejected',
+            reason: 'At least one transaction in this request appears in multiple candidate pairs.',
+          });
+          continue;
+        }
+
+        const [firstTransaction, secondTransaction] = await Promise.all([
+          db.getTransaction(firstTransactionId),
+          db.getTransaction(secondTransactionId),
+        ]);
+
+        if (
+          !isValidHistoricalTransferTransaction(firstTransaction) ||
+          !isValidHistoricalTransferTransaction(secondTransaction)
+        ) {
+          results.push({
+            candidateId,
+            transactionIds: [firstTransactionId, secondTransactionId],
+            status: 'rejected',
+            reason:
+              'One or both transactions are missing, already linked, split, deleted, or starting-balance entries.',
+          });
+          continue;
+        }
+
+        if (firstTransaction.account === secondTransaction.account) {
+          results.push({
+            candidateId,
+            transactionIds: [firstTransaction.id, secondTransaction.id],
+            status: 'rejected',
+            reason: 'Historical transfer pairs must come from different accounts.',
+          });
+          continue;
+        }
+
+        if (firstTransaction.amount !== secondTransaction.amount * -1) {
+          results.push({
+            candidateId,
+            transactionIds: [firstTransaction.id, secondTransaction.id],
+            status: 'rejected',
+            reason: 'Historical transfer pairs must have exact inverse amounts.',
+          });
+          continue;
+        }
+
+        if (Math.abs(getDateDiffInDays(firstTransaction.date, secondTransaction.date)) > 3) {
+          results.push({
+            candidateId,
+            transactionIds: [firstTransaction.id, secondTransaction.id],
+            status: 'rejected',
+            reason: 'Historical transfer pairs must fall within 3 days of each other.',
+          });
+          continue;
+        }
+
+        const [firstCounterpartIds, secondCounterpartIds] = await Promise.all([
+          getHistoricalTransferCounterpartIds(db, firstTransaction),
+          getHistoricalTransferCounterpartIds(db, secondTransaction),
+        ]);
+
+        if (
+          firstCounterpartIds.length !== 1 ||
+          firstCounterpartIds[0] !== secondTransaction.id ||
+          secondCounterpartIds.length !== 1 ||
+          secondCounterpartIds[0] !== firstTransaction.id
+        ) {
+          results.push({
+            candidateId,
+            transactionIds: [firstTransaction.id, secondTransaction.id],
+            status: 'rejected',
+            reason:
+              'This candidate no longer has a unique exact inverse counterpart, so it cannot be linked safely.',
+          });
+          continue;
+        }
+
+        const firstTransferPayeeId = transferPayeeByAccountId.get(secondTransaction.account);
+        const secondTransferPayeeId = transferPayeeByAccountId.get(firstTransaction.account);
+
+        if (!firstTransferPayeeId || !secondTransferPayeeId) {
+          results.push({
+            candidateId,
+            transactionIds: [firstTransaction.id, secondTransaction.id],
+            status: 'rejected',
+            reason:
+              'A required transfer payee was not found for one of the accounts in this pair.',
+          });
+          continue;
+        }
+
+        const firstAccount = accountsById.get(firstTransaction.account);
+        const secondAccount = accountsById.get(secondTransaction.account);
+        const categoriesCleared =
+          Boolean(firstAccount?.offbudget) === Boolean(secondAccount?.offbudget);
+
+        await send('transactions-batch-update', {
+          updated: [
+            {
+              id: firstTransaction.id,
+              payee: firstTransferPayeeId,
+              transfer_id: secondTransaction.id,
+              ...(categoriesCleared ? { category: null } : {}),
+            },
+            {
+              id: secondTransaction.id,
+              payee: secondTransferPayeeId,
+              transfer_id: firstTransaction.id,
+              ...(categoriesCleared ? { category: null } : {}),
+            },
+          ],
+          runTransfers: false,
+        });
+
+        reservedTransactionIds.add(firstTransaction.id);
+        reservedTransactionIds.add(secondTransaction.id);
+        results.push({
+          candidateId,
+          transactionIds: [firstTransaction.id, secondTransaction.id],
+          status: 'applied',
+          categoriesCleared,
+        });
+      } catch (error) {
+        results.push({
+          candidateId,
+          transactionIds: (() => {
+            try {
+              const [firstTransactionId, secondTransactionId] =
+                parseHistoricalTransferCandidateId(candidateId);
+              return [firstTransactionId, secondTransactionId] as [string, string];
+            } catch {
+              return [candidateId, candidateId];
+            }
+          })(),
+          status: 'rejected',
+          reason: error instanceof Error ? error.message : String(error ?? 'unknown error'),
+        });
+      }
+    }
+
+    if (results.some((result) => result.status === 'applied')) {
+      cacheService.invalidatePattern('transactions:*');
+      cacheService.invalidate('accounts:all');
+      invalidateNameResolutionState();
+    }
+
+    return {
+      requestedCandidateCount: uniqueCandidateIds.length,
+      appliedCount: results.filter((result) => result.status === 'applied').length,
+      rejectedCount: results.filter((result) => result.status === 'rejected').length,
+      results,
+    };
   }, 'write');
 }
 

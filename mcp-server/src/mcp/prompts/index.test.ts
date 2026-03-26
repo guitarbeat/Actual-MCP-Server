@@ -12,6 +12,8 @@ describe('promptDefinitions', () => {
     const result = await prompt!.buildMessages({ accountId: 'Checking' });
     const text = result.messages[0]?.content.text ?? '';
 
+    expect(text).toContain('audit-historical-transfers');
+    expect(text).toContain('apply-historical-transfers');
     expect(text).toContain('audit-uncategorized-transactions');
     expect(text).toContain('create-rule');
     expect(text).toContain('update-rule');

@@ -18,7 +18,15 @@ vi.mock('@actual-app/api', () => ({
     downloadBudget: vi.fn(),
     getAccounts: vi.fn().mockResolvedValue([]),
     getBudgets: vi.fn(),
+    getPayees: vi.fn().mockResolvedValue([]),
     getTags: vi.fn().mockResolvedValue([]),
+    internal: {
+      send: vi.fn(),
+      db: {
+        all: vi.fn(),
+        getTransaction: vi.fn(),
+      },
+    },
     loadBudget: vi.fn(),
     shutdown: vi.fn(),
     sync: vi.fn(),
@@ -1158,6 +1166,150 @@ describe('Auto-load functionality', () => {
       await actualApi.updateSchedule('schedule-1', { amount: -2500 }, true);
 
       expect(api.updateSchedule).toHaveBeenCalledWith('schedule-1', { amount: -2500 }, true);
+    });
+  });
+
+  describe('historical transfer application', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+      vi.mocked(api.getAccounts).mockResolvedValue([
+        { id: 'checking', name: 'Checking', offbudget: false, closed: false },
+        { id: 'credit', name: 'Credit Card', offbudget: false, closed: false },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      vi.mocked(api.getPayees).mockResolvedValue([
+        { id: 'payee-checking', name: 'Transfer: Checking', transfer_acct: 'checking' },
+        { id: 'payee-credit', name: 'Transfer: Credit Card', transfer_acct: 'credit' },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+
+      const internalDb = api.internal.db;
+      vi.mocked(internalDb.getTransaction).mockImplementation(async (id: string) => {
+        if (id === 'txn-out') {
+          return {
+            id,
+            account: 'checking',
+            amount: -1234,
+            date: '2025-01-15',
+            category: 'cat-1',
+            transfer_id: null,
+            starting_balance_flag: false,
+            is_parent: false,
+            is_child: false,
+            tombstone: false,
+          };
+        }
+
+        if (id === 'txn-in') {
+          return {
+            id,
+            account: 'credit',
+            amount: 1234,
+            date: '2025-01-16',
+            category: 'cat-2',
+            transfer_id: null,
+            starting_balance_flag: false,
+            is_parent: false,
+            is_child: false,
+            tombstone: false,
+          };
+        }
+
+        return null;
+      });
+      vi.mocked(internalDb.all).mockImplementation(async (_sql: string, params: unknown[]) => {
+        const transactionId = params[0];
+
+        if (transactionId === 'txn-out') {
+          return [{ id: 'txn-in' }];
+        }
+
+        if (transactionId === 'txn-in') {
+          return [{ id: 'txn-out' }];
+        }
+
+        return [];
+      });
+      vi.mocked(api.internal.send).mockResolvedValue({
+        updated: [],
+      });
+    });
+
+    it('links strict candidates through the internal batch update path and clears categories when budget status matches', async () => {
+      const result = await actualApi.applyHistoricalTransfers(['txn-in::txn-out']);
+
+      expect(result).toEqual({
+        requestedCandidateCount: 1,
+        appliedCount: 1,
+        rejectedCount: 0,
+        results: [
+          {
+            candidateId: 'txn-in::txn-out',
+            transactionIds: ['txn-out', 'txn-in'],
+            status: 'applied',
+            categoriesCleared: true,
+          },
+        ],
+      });
+      expect(api.internal.send).toHaveBeenCalledWith('transactions-batch-update', {
+        updated: [
+          {
+            id: 'txn-out',
+            payee: 'payee-credit',
+            transfer_id: 'txn-in',
+            category: null,
+          },
+          {
+            id: 'txn-in',
+            payee: 'payee-checking',
+            transfer_id: 'txn-out',
+            category: null,
+          },
+        ],
+        runTransfers: false,
+      });
+      expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
+      expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
+    });
+
+    it('rejects candidates that no longer have a unique exact counterpart', async () => {
+      vi.mocked(api.internal.db.all).mockImplementation(async (_sql: string, params: unknown[]) => {
+        const transactionId = params[0];
+
+        if (transactionId === 'txn-out') {
+          return [{ id: 'txn-in' }, { id: 'txn-other' }];
+        }
+
+        if (transactionId === 'txn-in') {
+          return [{ id: 'txn-out' }];
+        }
+
+        return [];
+      });
+
+      const result = await actualApi.applyHistoricalTransfers(['txn-in::txn-out']);
+
+      expect(result.appliedCount).toBe(0);
+      expect(result.rejectedCount).toBe(1);
+      expect(result.results[0]).toEqual(
+        expect.objectContaining({
+          candidateId: 'txn-in::txn-out',
+          status: 'rejected',
+          reason: expect.stringContaining('unique exact inverse counterpart'),
+        }),
+      );
+      expect(api.internal.send).not.toHaveBeenCalled();
     });
   });
 });

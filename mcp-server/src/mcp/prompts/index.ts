@@ -78,11 +78,13 @@ export const promptDefinitions: PromptDefinition[] = [
             content: {
               type: 'text',
               text: `Please triage uncategorized transactions${scope}.
-1. Run 'audit-uncategorized-transactions' first${accountId ? ` with {"accountId": "${accountId}"}` : ''}.
-2. Review the grouped results for create-rule and update-rule opportunities.
-3. Use existing rule tools to improve high-confidence payee or imported_payee categorization.
-4. Leave ambiguous leftovers for manual cleanup with 'update-transaction'.
-5. Summarize what was automated versus what still needs manual review.`,
+1. Run 'audit-historical-transfers' first${accountId ? ' and use the accountId only as a follow-up filter when you switch to uncategorized cleanup.' : ''}.
+2. If there are safe strict candidates, use 'apply-historical-transfers' with explicit candidate IDs from that audit.
+3. Run 'audit-uncategorized-transactions'${accountId ? ` with {"accountId": "${accountId}"}` : ''} after transfer cleanup.
+4. Review the grouped results for create-rule and update-rule opportunities.
+5. Use existing rule tools to improve high-confidence payee or imported_payee categorization.
+6. Leave ambiguous leftovers for manual cleanup with 'update-transaction'.
+7. Summarize what was automated as transfers, what was automated with rules, and what still needs manual review.`,
             },
           },
         ],
