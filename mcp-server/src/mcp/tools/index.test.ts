@@ -11,16 +11,16 @@ function getTool(name: string) {
 }
 
 describe('getToolDefinitions', () => {
-  it('exposes 13 tools by default', () => {
-    expect(getToolDefinitions({ enableWrite: false, enableNini: false })).toHaveLength(13);
+  it('exposes 14 tools by default', () => {
+    expect(getToolDefinitions({ enableWrite: false, enableNini: false })).toHaveLength(14);
   });
 
-  it('exposes 39 tools with write enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableNini: false })).toHaveLength(39);
+  it('exposes 43 tools with write enabled', () => {
+    expect(getToolDefinitions({ enableWrite: true, enableNini: false })).toHaveLength(43);
   });
 
-  it('exposes 47 tools with write and nini enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableNini: true })).toHaveLength(47);
+  it('exposes 51 tools with write and nini enabled', () => {
+    expect(getToolDefinitions({ enableWrite: true, enableNini: true })).toHaveLength(51);
   });
 
   it('preserves the legacy schema for read tools', () => {
@@ -45,6 +45,18 @@ describe('getToolDefinitions', () => {
     expect(inputSchema.properties).toHaveProperty('name');
     expect(inputSchema.properties).toHaveProperty('groupId');
     expect(inputSchema.required).toEqual(expect.arrayContaining(['name', 'groupId']));
+  });
+
+  it('preserves the legacy schema for new tag tools', () => {
+    const tool = getTool('create-tag');
+    const inputSchema = tool.inputSchema as {
+      properties?: Record<string, unknown>;
+      required?: string[];
+    };
+
+    expect(inputSchema.properties).toHaveProperty('tag');
+    expect(inputSchema.properties).toHaveProperty('color');
+    expect(inputSchema.required).toEqual(expect.arrayContaining(['tag']));
   });
 
   it('preserves the legacy schema for write tools with rich validation', () => {

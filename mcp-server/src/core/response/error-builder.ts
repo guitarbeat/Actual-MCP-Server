@@ -129,7 +129,7 @@ function getTroubleshootingSuggestion(errorStr: string): string {
     errorStr.includes('password') ||
     errorStr.includes('unauthorized')
   ) {
-    return 'Authentication failed: Verify ACTUAL_PASSWORD is correct and matches your Actual Budget server password. Check that the server requires authentication.';
+    return 'Authentication failed: Verify either ACTUAL_PASSWORD or ACTUAL_SESSION_TOKEN is configured correctly for your Actual Budget server, and make sure only one of them is set.';
   }
   if (errorStr.includes('timeout')) {
     return 'Request timed out: The Actual Budget server may be overloaded or unresponsive. Try again in a moment or check server performance.';

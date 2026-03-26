@@ -11,6 +11,7 @@ export interface FormattedAccount {
   name: string;
   type: string;
   balance: string;
+  reportedBalance?: string;
   closed: boolean;
   offBudget: boolean;
 }
@@ -35,6 +36,9 @@ export class GetAccountsReportGenerator {
         name: account.name,
         type: account.type || 'Account',
         balance: formatAmount(account.balance),
+        ...(account.balance_current != null
+          ? { reportedBalance: formatAmount(account.balance_current) }
+          : {}),
         closed: account.closed ?? false,
         offBudget: account.offbudget ?? false,
       })),

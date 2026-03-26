@@ -13,6 +13,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `get-payees`: List all merchants and payees, or search for specific ones. Use this when you need to find payee names or IDs.
 - `get-rules`: List auto-categorization rules that automatically assign categories to transactions. Use this when the user asks about rules or automatic categorization.
 - `get-schedules`: Retrieve all recurring transaction schedules.
+- `get-tags`: List all tags in Actual Budget, or search for specific tags. Use this when you need tag IDs before creating, updating, or deleting tags.
 - `get-transactions`: Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category.
 - `monthly-summary`: Generate high-level financial overview showing income, expenses, savings, and savings rate trends for a specified period (default 3 months).
 - `recommend-budget-plan`: Analyze recent budget history and recommend category targets for a month without mutating data.
@@ -26,12 +27,14 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `create-payee`: Create a new payee in Actual Budget.
 - `create-rule`: Create a new auto-categorization rule in Actual Budget.
 - `create-schedule`: Create a new recurring transaction schedule in Actual Budget.
+- `create-tag`: Create a new tag in Actual Budget.
 - `create-transaction`: Add a new transaction to an account. Use this when the user wants to manually record a purchase, payment, or income.
 - `delete-category`: Delete a category from Actual Budget.
 - `delete-category-group`: Delete a category group from Actual Budget.
 - `delete-payee`: Delete a payee from Actual Budget.
 - `delete-rule`: Delete an auto-categorization rule from Actual Budget.
 - `delete-schedule`: Delete a recurring transaction schedule from Actual Budget.
+- `delete-tag`: Delete a tag from Actual Budget.
 - `delete-transaction`: Remove a transaction permanently. Use this when the user wants to delete a duplicate or incorrect transaction.
 - `import-transaction-batch`: Import a structured batch of transactions into Actual Budget with duplicate detection and rule execution. This keeps the existing bank-sync import tool unchanged while exposing the SDK import pipeline to MCP clients.
 - `import-transactions`: Sync transactions from connected bank accounts to update your budget. Use this when the user wants to refresh bank data.
@@ -45,6 +48,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `update-payee`: Update an existing payee in Actual Budget.
 - `update-rule`: Update an existing auto-categorization rule in Actual Budget.
 - `update-schedule`: Update an existing recurring transaction schedule in Actual Budget.
+- `update-tag`: Update an existing tag in Actual Budget.
 - `update-transaction`: Modify an existing transaction. Use this when the user wants to fix or change transaction details.
 
 ## Advanced (`--enable-nini`)
@@ -74,3 +78,4 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `actual://health/{month}` (template): Monthly Health Dashboard. Budget health dashboard for a specific month (YYYY-MM format).
 - `actual://payees/{payeeId}/rules` (template): Payee Rules. Show Actual Budget rules associated with a payee.
 - `actual://rules` (static): Rule Directory. Browse Actual Budget automation rules.
+- `actual://tags` (static): Tag Directory. Browse all tags available in Actual Budget.

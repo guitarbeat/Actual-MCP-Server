@@ -37,10 +37,12 @@ export const schema = {
     '- date: Date string or RecurConfig\n' +
     '- payee: Payee name or ID\n' +
     '- category: Category name or ID\n' +
-    '- posts_transaction: Whether to auto-post transactions\n\n' +
+    '- posts_transaction: Whether to auto-post transactions\n' +
+    '- resetNextDate: Recalculate the next scheduled occurrence after applying changes\n\n' +
     'EXAMPLES:\n' +
     '- Update amount: {"id": "schedule-id", "amount": -2000.00, "amountOp": "is"}\n' +
     '- Update date: {"id": "schedule-id", "date": "2024-03-01"}\n' +
+    '- Reset next occurrence: {"id": "schedule-id", "resetNextDate": true}\n' +
     '- Multiple fields: {"id": "schedule-id", "amount": -1750.00, "amountOp": "is", "posts_transaction": true}\n\n' +
     'COMMON USE CASES:\n' +
     '- Update recurring bill amounts\n' +
@@ -64,10 +66,13 @@ export const schema = {
 export async function handler(args: z.infer<typeof UpdateScheduleSchema>): Promise<MCPResponse> {
   try {
     const validated = UpdateScheduleSchema.parse(args);
-    const { id, ...updateData } = validated;
-    const scheduleUpdateData: ScheduleUpdateData = updateData;
+    const { id, resetNextDate, ...updateData } = validated;
+    const scheduleUpdateData: ScheduleUpdateData = {
+      ...updateData,
+      ...(resetNextDate !== undefined ? { resetNextDate } : {}),
+    };
 
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(updateData).length === 0 && resetNextDate === undefined) {
       return error('No fields provided for update', 'Provide at least one field to update');
     }
 

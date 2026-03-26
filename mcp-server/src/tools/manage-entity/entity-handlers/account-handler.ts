@@ -34,6 +34,7 @@ export interface AccountData {
   type?: AccountType;
   offbudget?: boolean;
   initialBalance?: number; // For create operation only, in cents
+  balanceCurrent?: number | null; // Reported bank balance, in cents
 }
 
 /**
@@ -87,6 +88,9 @@ export class AccountHandler implements EntityHandler<AccountData, AccountData> {
     if (data.offbudget !== undefined) {
       accountData.offbudget = data.offbudget;
     }
+    if (data.balanceCurrent !== undefined) {
+      accountData.balance_current = data.balanceCurrent;
+    }
 
     // Create the account
     const accountId = await createAccountWithInitialBalance(accountData, data.initialBalance);
@@ -127,6 +131,9 @@ export class AccountHandler implements EntityHandler<AccountData, AccountData> {
     if (data.offbudget !== undefined) {
       updates.offbudget = data.offbudget;
     }
+    if (data.balanceCurrent !== undefined) {
+      updates.balance_current = data.balanceCurrent;
+    }
 
     // Update the account
     await updateAccount(id, updates);
@@ -146,11 +153,8 @@ export class AccountHandler implements EntityHandler<AccountData, AccountData> {
    * @param data - Optional close account data with transfer information
    * Note: Transfer support may be handled by the API internally
    */
-  async close(id: string, _data?: CloseAccountData): Promise<void> {
-    // Note: The API may handle balance transfers internally
-    // The current API wrapper doesn't expose transferAccountId parameter
-    // but we accept it in the data structure for future compatibility
-    await closeAccount(id);
+  async close(id: string, data?: CloseAccountData): Promise<void> {
+    await closeAccount(id, data?.transferAccountId, data?.transferCategoryId);
   }
 
   /**
