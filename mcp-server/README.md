@@ -173,10 +173,10 @@ The container entrypoint starts the server in remote HTTP mode with `--enable-wr
 
 <!-- TOOL_SURFACE:START -->
 
-Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 52 tools, 3 prompts, and 11 resources:
+Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 54 tools, 3 prompts, and 11 resources:
 
-- 15 read-only core tools
-- 29 write-enabled core tools
+- 16 read-only core tools
+- 30 write-enabled core tools
 - 8 advanced `--enable-nini` tools
 - 3 prompts
 - 6 static resources

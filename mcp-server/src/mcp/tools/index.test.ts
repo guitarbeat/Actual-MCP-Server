@@ -11,15 +11,15 @@ function getTool(name: string) {
 }
 
 describe('getToolDefinitions', () => {
-  it('exposes 14 tools by default', () => {
+  it('exposes 16 tools by default', () => {
     expect(getToolDefinitions({ enableWrite: false, enableNini: false })).toHaveLength(16);
   });
 
-  it('exposes 43 tools with write enabled', () => {
+  it('exposes 46 tools with write enabled', () => {
     expect(getToolDefinitions({ enableWrite: true, enableNini: false })).toHaveLength(46);
   });
 
-  it('exposes 51 tools with write and nini enabled', () => {
+  it('exposes 54 tools with write and nini enabled', () => {
     expect(getToolDefinitions({ enableWrite: true, enableNini: true })).toHaveLength(54);
   });
 

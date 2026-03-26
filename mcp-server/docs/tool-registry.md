@@ -4,6 +4,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 
 ## Read-Only Core
 
+- `audit-historical-transfers`: Audit already-imported transactions for strict historical transfer candidates, then separate softer payment-style leftovers for manual review.
 - `audit-uncategorized-transactions`: Audit uncategorized transactions at scale and group them into rule opportunities versus manual cleanup work.
 - `balance-history`: Track how an account balance has changed over time with monthly snapshots. Use this when the user asks about balance trends or account growth.
 - `get-account-balance`: Check the current or historical balance of a specific account. Use this when the user asks about a single account balance.
@@ -23,6 +24,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 ## Write Core
 
 - `apply-budget-plan`: Apply category budget recommendations to a target month. Use this after reviewing the output of recommend-budget-plan.
+- `apply-historical-transfers`: Link strict historical transfer candidates as real transfers without creating duplicate counterpart transactions.
 - `create-category`: Create a new category in Actual Budget.
 - `create-category-group`: Create a new category group in Actual Budget.
 - `create-payee`: Create a new payee in Actual Budget.

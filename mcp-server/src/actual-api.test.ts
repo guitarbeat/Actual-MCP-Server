@@ -1256,7 +1256,7 @@ describe('Auto-load functionality', () => {
         results: [
           {
             candidateId: 'txn-in::txn-out',
-            transactionIds: ['txn-out', 'txn-in'],
+            transactionIds: ['txn-in', 'txn-out'],
             status: 'applied',
             categoriesCleared: true,
           },
@@ -1265,20 +1265,34 @@ describe('Auto-load functionality', () => {
       expect(api.internal.send).toHaveBeenCalledWith('transactions-batch-update', {
         updated: [
           {
-            id: 'txn-out',
-            payee: 'payee-credit',
-            transfer_id: 'txn-in',
-            category: null,
-          },
-          {
             id: 'txn-in',
             payee: 'payee-checking',
             transfer_id: 'txn-out',
             category: null,
           },
+          {
+            id: 'txn-out',
+            payee: 'payee-credit',
+            transfer_id: 'txn-in',
+            category: null,
+          },
         ],
         runTransfers: false,
       });
+      expect(api.internal.db.all).toHaveBeenNthCalledWith(1, expect.any(String), [
+        'txn-in',
+        'credit',
+        -1234,
+        20250113,
+        20250119,
+      ]);
+      expect(api.internal.db.all).toHaveBeenNthCalledWith(2, expect.any(String), [
+        'txn-out',
+        'checking',
+        1234,
+        20250112,
+        20250118,
+      ]);
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
       expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
     });

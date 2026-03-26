@@ -196,7 +196,8 @@ function buildStrictTransferCandidate(
 ): HistoricalTransferCandidate {
   const [outflow, inflow] = first.amount <= second.amount ? [first, second] : [second, first];
   const sameBudgetStatus =
-    Boolean(accountsById[first.account]?.offbudget) === Boolean(accountsById[second.account]?.offbudget);
+    Boolean(accountsById[first.account]?.offbudget) ===
+    Boolean(accountsById[second.account]?.offbudget);
   const outflowSide = toCandidateSide(outflow);
   const inflowSide = toCandidateSide(inflow);
   const uncategorizedSideCount = [outflowSide, inflowSide].filter(
@@ -248,9 +249,12 @@ function buildStrictTransferCandidates(
   accountsById: Record<string, Account>,
 ): HistoricalTransferCandidate[] {
   const eligibleTransactions = transactions.filter(
-    (transaction) => !isStartingBalance(transaction) && isEligibleStrictTransferTransaction(transaction),
+    (transaction) =>
+      !isStartingBalance(transaction) && isEligibleStrictTransferTransaction(transaction),
   );
-  const transactionsById = new Map(eligibleTransactions.map((transaction) => [transaction.id, transaction]));
+  const transactionsById = new Map(
+    eligibleTransactions.map((transaction) => [transaction.id, transaction]),
+  );
   const transactionsByInverseAmount = new Map<number, Transaction[]>();
 
   for (const transaction of eligibleTransactions) {
@@ -348,7 +352,12 @@ function buildFlaggedReviewGroups(
   >();
 
   for (const transaction of transactions) {
-    if (transaction.category || pairedTransactionIds.has(transaction.id) || isStartingBalance(transaction)) {
+    if (
+      transaction.category ||
+      pairedTransactionIds.has(transaction.id) ||
+      isStartingBalance(transaction) ||
+      !isEligibleStrictTransferTransaction(transaction)
+    ) {
       continue;
     }
 
@@ -478,7 +487,8 @@ export function buildHistoricalTransferAudit(
       accountScope: 'all-accounts',
       totalTransactionsAnalyzed: transactions.length,
       eligibleTransactionCount: transactions.filter(
-        (transaction) => !isStartingBalance(transaction) && isEligibleStrictTransferTransaction(transaction),
+        (transaction) =>
+          !isStartingBalance(transaction) && isEligibleStrictTransferTransaction(transaction),
       ).length,
       strictCandidateCount: strictCandidates.length,
       returnedStrictCandidateCount: Math.min(strictCandidates.length, candidateLimit),
