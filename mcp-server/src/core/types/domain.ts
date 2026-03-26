@@ -17,6 +17,7 @@ export interface Transaction {
   amount: number;
   payee?: string | null;
   payee_name?: string;
+  imported_payee?: string | null;
   category?: string | null;
   category_name?: string;
   notes?: string | null;

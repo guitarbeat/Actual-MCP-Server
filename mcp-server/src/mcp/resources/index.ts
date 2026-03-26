@@ -10,6 +10,10 @@ import {
 } from '../../resources/assistive-resources.js';
 import { BUDGET_LIST_RESOURCES, handleBudgetsResource } from '../../resources/budget-resources.js';
 import { TAG_LIST_RESOURCES, handleTagsResource } from '../../resources/tag-resources.js';
+import {
+  UNCATEGORIZED_LIST_RESOURCES,
+  handleUncategorizedResource,
+} from '../../resources/uncategorized-resources.js';
 
 export interface ResourceDefinition {
   name: string;
@@ -57,6 +61,13 @@ export const resourceDefinitions: ResourceDefinition[] = [
     uri: TAG_LIST_RESOURCES[0].uri,
     description: TAG_LIST_RESOURCES[0].description,
     mimeType: TAG_LIST_RESOURCES[0].mimeType,
+    kind: 'static',
+  },
+  {
+    name: UNCATEGORIZED_LIST_RESOURCES[0].name,
+    uri: UNCATEGORIZED_LIST_RESOURCES[0].uri,
+    description: UNCATEGORIZED_LIST_RESOURCES[0].description,
+    mimeType: UNCATEGORIZED_LIST_RESOURCES[0].mimeType,
     kind: 'static',
   },
   {
@@ -145,6 +156,16 @@ export function registerResources(server: McpServer): void {
       mimeType: TAG_LIST_RESOURCES[0].mimeType,
     },
     async (uri) => handleTagsResource(uri.href),
+  );
+
+  server.registerResource(
+    UNCATEGORIZED_LIST_RESOURCES[0].name,
+    UNCATEGORIZED_LIST_RESOURCES[0].uri,
+    {
+      description: UNCATEGORIZED_LIST_RESOURCES[0].description,
+      mimeType: UNCATEGORIZED_LIST_RESOURCES[0].mimeType,
+    },
+    async (uri) => handleUncategorizedResource(uri.href),
   );
 
   server.registerResource(
