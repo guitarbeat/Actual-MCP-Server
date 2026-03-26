@@ -24,6 +24,7 @@ export interface Transaction {
   transfer_id?: string | null;
   is_parent?: boolean;
   is_child?: boolean;
+  starting_balance_flag?: boolean | null;
   account_name?: string;
 }
 

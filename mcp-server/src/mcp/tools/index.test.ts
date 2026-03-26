@@ -12,15 +12,15 @@ function getTool(name: string) {
 
 describe('getToolDefinitions', () => {
   it('exposes 14 tools by default', () => {
-    expect(getToolDefinitions({ enableWrite: false, enableNini: false })).toHaveLength(15);
+    expect(getToolDefinitions({ enableWrite: false, enableNini: false })).toHaveLength(16);
   });
 
   it('exposes 43 tools with write enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableNini: false })).toHaveLength(44);
+    expect(getToolDefinitions({ enableWrite: true, enableNini: false })).toHaveLength(46);
   });
 
   it('exposes 51 tools with write and nini enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableNini: true })).toHaveLength(52);
+    expect(getToolDefinitions({ enableWrite: true, enableNini: true })).toHaveLength(54);
   });
 
   it('preserves the legacy schema for read tools', () => {
@@ -68,6 +68,27 @@ describe('getToolDefinitions', () => {
     expect(inputSchema.properties).toHaveProperty('accountId');
     expect(inputSchema.properties).toHaveProperty('groupLimit');
     expect(inputSchema.properties).toHaveProperty('samplePerGroup');
+  });
+
+  it('preserves the legacy schema for historical transfer audit tools', () => {
+    const tool = getTool('audit-historical-transfers');
+    const inputSchema = tool.inputSchema as {
+      properties?: Record<string, unknown>;
+    };
+
+    expect(inputSchema.properties).toHaveProperty('candidateLimit');
+    expect(inputSchema.properties).toHaveProperty('flaggedReviewLimit');
+  });
+
+  it('preserves the legacy schema for historical transfer apply tools', () => {
+    const tool = getTool('apply-historical-transfers');
+    const inputSchema = tool.inputSchema as {
+      properties?: Record<string, unknown>;
+      required?: string[];
+    };
+
+    expect(inputSchema.properties).toHaveProperty('candidateIds');
+    expect(inputSchema.required).toEqual(expect.arrayContaining(['candidateIds']));
   });
 
   it('preserves the legacy schema for write tools with rich validation', () => {

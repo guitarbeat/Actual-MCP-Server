@@ -5,6 +5,8 @@
 
 import type { z } from 'zod';
 import type {
+  ApplyHistoricalTransfersArgsSchema,
+  AuditHistoricalTransfersArgsSchema,
   AuditUncategorizedTransactionsArgsSchema,
   BalanceHistoryArgsSchema,
   BudgetReviewArgsSchema,
@@ -37,6 +39,8 @@ import type {
 // ----------------------------
 
 export type GetTransactionsArgs = z.infer<typeof GetTransactionsArgsSchema>;
+export type AuditHistoricalTransfersArgs = z.infer<typeof AuditHistoricalTransfersArgsSchema>;
+export type ApplyHistoricalTransfersArgs = z.infer<typeof ApplyHistoricalTransfersArgsSchema>;
 export type AuditUncategorizedTransactionsArgs = z.infer<
   typeof AuditUncategorizedTransactionsArgsSchema
 >;

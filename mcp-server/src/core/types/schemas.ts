@@ -135,6 +135,42 @@ export const AuditUncategorizedTransactionsArgsSchema = z.object({
     .describe('Maximum number of sample transactions to include per group. Defaults to 5.'),
 });
 
+export const AuditHistoricalTransfersArgsSchema = z.object({
+  startDate: DateSchema.optional().describe(
+    'Optional start date in YYYY-MM-DD format. If omitted, the audit scans all history starting from 1900-01-01.',
+  ),
+  endDate: DateSchema.optional().describe(
+    'Optional end date in YYYY-MM-DD format. If omitted, the audit ends on today.',
+  ),
+  candidateLimit: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .default(100)
+    .describe(
+      'Maximum number of strict historical transfer candidates to return. Defaults to 100, sorted by uncategorized impact and recency.',
+    ),
+  flaggedReviewLimit: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .default(25)
+    .describe(
+      'Maximum number of transfer-like manual-review groups to return. Defaults to 25.',
+    ),
+});
+
+export const ApplyHistoricalTransfersArgsSchema = z.object({
+  candidateIds: z
+    .array(z.string().min(1))
+    .min(1)
+    .describe(
+      'One or more candidate IDs returned by audit-historical-transfers. Each ID is a pair of transaction IDs joined by "::".',
+    ),
+});
+
 export const SpendingByCategoryArgsSchema = z.object({
   startDate: z
     .string()

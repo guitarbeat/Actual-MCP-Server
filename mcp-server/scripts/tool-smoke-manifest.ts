@@ -70,6 +70,12 @@ export const liveReadonlyToolCases: ToolSmokeCase[] = [
     expectedOutcome: 'success',
   },
   {
+    name: 'audit-historical-transfers',
+    phase: 'live-readonly',
+    setupDependencies: ['live-context.date-range'],
+    expectedOutcome: 'success',
+  },
+  {
     name: 'monthly-summary',
     phase: 'live-readonly',
     setupDependencies: ['live-context'],
@@ -184,6 +190,18 @@ export const sandboxFullToolCases: ToolSmokeCase[] = [
     name: 'create-transaction',
     phase: 'sandbox-full',
     setupDependencies: ['update-account', 'update-category', 'update-payee'],
+    expectedOutcome: 'success',
+  },
+  {
+    name: 'audit-historical-transfers',
+    phase: 'sandbox-full',
+    setupDependencies: ['create-transaction'],
+    expectedOutcome: 'success',
+  },
+  {
+    name: 'apply-historical-transfers',
+    phase: 'sandbox-full',
+    setupDependencies: ['audit-historical-transfers'],
     expectedOutcome: 'success',
   },
   {
