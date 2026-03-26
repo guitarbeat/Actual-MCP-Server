@@ -23,6 +23,13 @@ type ActualRuleAction = NonNullable<RuleEntity['actions']>[number];
 
 export type UncategorizedGroupSource = 'imported_payee' | 'payee';
 export type SuggestedAction = 'create-rule' | 'update-rule' | 'manual-review';
+export type RuleMatchType =
+  | 'imported_payee:is'
+  | 'imported_payee:oneOf'
+  | 'imported_payee:contains'
+  | 'imported_payee:matches'
+  | 'payee:is'
+  | 'payee:oneOf';
 
 export interface SuggestedRulePlan {
   mode: 'create-rule' | 'update-rule';
@@ -43,6 +50,7 @@ export interface RelatedRuleSummary {
   id: string;
   stage?: string | null;
   matchField: 'payee' | 'imported_payee';
+  ruleMatchType: RuleMatchType;
   categoryActionValue?: string;
   categoryActionName?: string;
 }
@@ -71,6 +79,7 @@ export interface UncategorizedAuditGroup {
   historicalCategoryHint: HistoricalCategoryHint | null;
   suggestedAction: SuggestedAction;
   suggestedRule: SuggestedRulePlan | null;
+  suggestionBlockedReason?: string;
 }
 
 export interface UncategorizedAuditSummary {
@@ -137,11 +146,23 @@ interface CategoryCounter {
 
 interface InternalRelatedRule extends RelatedRuleSummary {
   rule: RuleEntity;
+  accountScoped: boolean;
+  unsupportedConditions: string[];
+  unsupportedActions: string[];
+  categoryActionValues: string[];
+  matchScore: number;
 }
 
 interface Cluster {
   identity: GroupIdentity;
   transactions: Transaction[];
+}
+
+interface ConditionCompatibility {
+  status: 'match' | 'compatible' | 'incompatible' | 'unsupported';
+  matchType?: RuleMatchType;
+  accountScoped?: boolean;
+  reason?: string;
 }
 
 function toLowerTrimmed(value: string): string {
@@ -199,6 +220,10 @@ function shouldExcludeTransfer(transaction: Transaction): boolean {
   return Boolean(transaction.transfer_id || transaction.is_parent || transaction.is_child);
 }
 
+function getSiblingKey(identity: GroupIdentity): string {
+  return `${identity.groupSource}:${toLowerTrimmed(identity.groupLabel)}`;
+}
+
 function categoryActionValue(action: ActualRuleAction): string | undefined {
   if (!('field' in action) || action.field !== 'category') {
     return undefined;
@@ -211,62 +236,223 @@ function categoryActionValue(action: ActualRuleAction): string | undefined {
   return action.value;
 }
 
-function findCategoryAction(rule: RuleEntity): string | undefined {
-  return (rule.actions ?? []).map(categoryActionValue).find((value) => value !== undefined);
+function getCategoryActionValues(rule: RuleEntity): string[] {
+  return (rule.actions ?? [])
+    .map(categoryActionValue)
+    .filter((value): value is string => value !== undefined);
 }
 
-function payeeConditionMatches(condition: ActualRuleCondition, payeeIds: Set<string>): boolean {
-  if (condition.field !== 'payee' || payeeIds.size === 0) {
-    return false;
+function getMatchScore(matchType: RuleMatchType): number {
+  switch (matchType) {
+    case 'imported_payee:is':
+      return 600;
+    case 'imported_payee:oneOf':
+      return 500;
+    case 'payee:is':
+      return 400;
+    case 'payee:oneOf':
+      return 300;
+    case 'imported_payee:contains':
+      return 200;
+    case 'imported_payee:matches':
+      return 100;
+    default:
+      return 0;
+  }
+}
+
+function evaluateAccountCondition(
+  condition: ActualRuleCondition,
+  identity: GroupIdentity,
+): ConditionCompatibility {
+  if (condition.field !== 'account') {
+    return { status: 'unsupported' };
   }
 
   if (condition.op === 'is' && typeof condition.value === 'string') {
-    return payeeIds.has(condition.value);
+    if (condition.value !== identity.accountId) {
+      return { status: 'incompatible', reason: 'Existing rule scopes to a different account.' };
+    }
+
+    return { status: 'compatible', accountScoped: true };
   }
 
   if (condition.op === 'oneOf' && Array.isArray(condition.value)) {
-    return condition.value.some(
+    const accountIds = condition.value.filter(
+      (value): value is string => typeof value === 'string',
+    );
+
+    if (!accountIds.includes(identity.accountId)) {
+      return {
+        status: 'incompatible',
+        reason: 'Existing rule scopes to a different set of accounts.',
+      };
+    }
+
+    return { status: 'compatible', accountScoped: accountIds.length === 1 };
+  }
+
+  return {
+    status: 'unsupported',
+    reason: `Unsupported account condition: ${condition.op}`,
+  };
+}
+
+function evaluatePayeeCondition(
+  condition: ActualRuleCondition,
+  payeeIds: Set<string>,
+): ConditionCompatibility {
+  if (condition.field !== 'payee') {
+    return { status: 'unsupported' };
+  }
+
+  if (payeeIds.size === 0) {
+    return {
+      status: 'incompatible',
+      reason: 'Cluster does not have resolved payee IDs for payee-based rule matching.',
+    };
+  }
+
+  if (condition.op === 'is' && typeof condition.value === 'string') {
+    if (!payeeIds.has(condition.value)) {
+      return {
+        status: 'incompatible',
+        reason: 'Existing payee condition does not match this cluster.',
+      };
+    }
+
+    return { status: 'match', matchType: 'payee:is' };
+  }
+
+  if (condition.op === 'oneOf' && Array.isArray(condition.value)) {
+    const hasMatch = condition.value.some(
       (value): value is string => typeof value === 'string' && payeeIds.has(value),
     );
+
+    if (!hasMatch) {
+      return {
+        status: 'incompatible',
+        reason: 'Existing payee rule does not include this cluster payee.',
+      };
+    }
+
+    return { status: 'match', matchType: 'payee:oneOf' };
   }
 
-  return false;
+  return {
+    status: 'unsupported',
+    reason: `Unsupported payee condition: ${condition.op}`,
+  };
 }
 
-function importedPayeeConditionMatches(
+function evaluateImportedPayeeCondition(
   condition: ActualRuleCondition,
-  groupLabel: string,
-): boolean {
+  identity: GroupIdentity,
+): ConditionCompatibility {
   if (condition.field !== 'imported_payee') {
-    return false;
+    return { status: 'unsupported' };
   }
 
-  const normalizedLabel = toLowerTrimmed(groupLabel);
+  if (identity.groupSource !== 'imported_payee') {
+    return {
+      status: 'incompatible',
+      reason: 'Existing imported_payee rule does not match a payee-grouped cluster.',
+    };
+  }
+
+  const normalizedLabel = toLowerTrimmed(identity.groupLabel);
 
   if (condition.op === 'is' && typeof condition.value === 'string') {
-    return toLowerTrimmed(condition.value) === normalizedLabel;
-  }
+    if (toLowerTrimmed(condition.value) !== normalizedLabel) {
+      return {
+        status: 'incompatible',
+        reason: 'Existing imported_payee rule targets a different imported payee label.',
+      };
+    }
 
-  if (condition.op === 'contains' && typeof condition.value === 'string') {
-    return normalizedLabel.includes(toLowerTrimmed(condition.value));
+    return { status: 'match', matchType: 'imported_payee:is' };
   }
 
   if (condition.op === 'oneOf' && Array.isArray(condition.value)) {
-    return condition.value.some(
+    const hasMatch = condition.value.some(
       (value): value is string =>
         typeof value === 'string' && toLowerTrimmed(value) === normalizedLabel,
     );
+
+    if (!hasMatch) {
+      return {
+        status: 'incompatible',
+        reason: 'Existing imported_payee rule does not include this cluster label.',
+      };
+    }
+
+    return { status: 'match', matchType: 'imported_payee:oneOf' };
+  }
+
+  if (condition.op === 'contains' && typeof condition.value === 'string') {
+    if (!normalizedLabel.includes(toLowerTrimmed(condition.value))) {
+      return {
+        status: 'incompatible',
+        reason: 'Existing imported_payee contains rule does not match this cluster label.',
+      };
+    }
+
+    return { status: 'match', matchType: 'imported_payee:contains' };
   }
 
   if (condition.op === 'matches' && typeof condition.value === 'string') {
     try {
-      return new RegExp(condition.value, 'i').test(groupLabel);
+      if (!new RegExp(condition.value, 'i').test(identity.groupLabel)) {
+        return {
+          status: 'incompatible',
+          reason: 'Existing imported_payee regex rule does not match this cluster label.',
+        };
+      }
+
+      return { status: 'match', matchType: 'imported_payee:matches' };
     } catch {
-      return false;
+      return {
+        status: 'unsupported',
+        reason: `Unsupported imported_payee regex: ${condition.value}`,
+      };
     }
   }
 
-  return false;
+  return {
+    status: 'unsupported',
+    reason: `Unsupported imported_payee condition: ${condition.op}`,
+  };
+}
+
+function evaluateCondition(
+  condition: ActualRuleCondition,
+  identity: GroupIdentity,
+): ConditionCompatibility {
+  switch (condition.field) {
+    case 'account':
+      return evaluateAccountCondition(condition, identity);
+    case 'payee':
+      return evaluatePayeeCondition(condition, identity.payeeIds);
+    case 'imported_payee':
+      return evaluateImportedPayeeCondition(condition, identity);
+    case 'category':
+      return {
+        status: 'incompatible',
+        reason:
+          'Existing rule requires categorized transactions, but this cluster is uncategorized.',
+      };
+    case 'amount':
+    case 'date':
+      return {
+        status: 'unsupported',
+        reason: `Unsupported rule condition field: ${condition.field}`,
+      };
+    default:
+      return {
+        status: 'unsupported',
+        reason: `Unsupported rule condition field: ${condition.field}`,
+      };
+  }
 }
 
 function summarizeRelatedRules(
@@ -279,30 +465,78 @@ function summarizeRelatedRules(
   for (const rule of rules) {
     const conditions = rule.conditions ?? [];
 
-    for (const condition of conditions) {
-      const matched =
-        identity.groupSource === 'imported_payee'
-          ? importedPayeeConditionMatches(condition, identity.groupLabel)
-          : payeeConditionMatches(condition, identity.payeeIds);
+    let bestMatchType: RuleMatchType | null = null;
+    let accountScoped = false;
+    const unsupportedConditions: string[] = [];
+    let incompatible = false;
 
-      if (!matched) {
+    for (const condition of conditions) {
+      const evaluation = evaluateCondition(condition, identity);
+
+      if (evaluation.status === 'incompatible') {
+        incompatible = true;
+        break;
+      }
+
+      if (evaluation.status === 'unsupported') {
+        if (evaluation.reason) {
+          unsupportedConditions.push(evaluation.reason);
+        }
         continue;
       }
 
-      const categoryValue = findCategoryAction(rule);
-      related.push({
-        id: rule.id,
-        stage: rule.stage,
-        matchField: identity.groupSource === 'imported_payee' ? 'imported_payee' : 'payee',
-        categoryActionValue: categoryValue,
-        categoryActionName: categoryValue ? categoriesById[categoryValue]?.name : undefined,
-        rule,
-      });
-      break;
+      if (evaluation.accountScoped) {
+        accountScoped = true;
+      }
+
+      if (
+        evaluation.status === 'match' &&
+        evaluation.matchType &&
+        (!bestMatchType || getMatchScore(evaluation.matchType) > getMatchScore(bestMatchType))
+      ) {
+        bestMatchType = evaluation.matchType;
+      }
     }
+
+    if (incompatible || !bestMatchType) {
+      continue;
+    }
+
+    const categoryActionValues = getCategoryActionValues(rule);
+    const categoryValue = categoryActionValues[0];
+    const unsupportedActions = (rule.actions ?? [])
+      .map((action) =>
+        normalizeRuleAction(action) ? null : `Unsupported rule action: ${action.op}`,
+      )
+      .filter((reason): reason is string => reason !== null);
+
+    related.push({
+      id: rule.id,
+      stage: rule.stage,
+      matchField: bestMatchType.startsWith('imported_payee') ? 'imported_payee' : 'payee',
+      ruleMatchType: bestMatchType,
+      categoryActionValue: categoryValue,
+      categoryActionName: categoryValue ? categoriesById[categoryValue]?.name : undefined,
+      rule,
+      accountScoped,
+      unsupportedConditions,
+      unsupportedActions,
+      categoryActionValues,
+      matchScore: getMatchScore(bestMatchType),
+    });
   }
 
-  return related;
+  return related.sort((left, right) => {
+    if (left.accountScoped !== right.accountScoped) {
+      return left.accountScoped ? -1 : 1;
+    }
+
+    if (left.matchScore !== right.matchScore) {
+      return right.matchScore - left.matchScore;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
 }
 
 function inferCategoryHint(categorizedPeers: Transaction[]): HistoricalCategoryHint | null {
@@ -382,6 +616,14 @@ function buildRuleCondition(identity: GroupIdentity): RuleCondition | null {
   return null;
 }
 
+function buildAccountScopeCondition(identity: GroupIdentity): RuleCondition {
+  return {
+    field: 'account',
+    op: 'is',
+    value: identity.accountId,
+  };
+}
+
 function createRulePayload(identity: GroupIdentity, hint: HistoricalCategoryHint): RuleData | null {
   const condition = buildRuleCondition(identity);
 
@@ -391,7 +633,7 @@ function createRulePayload(identity: GroupIdentity, hint: HistoricalCategoryHint
 
   return {
     conditionsOp: 'and',
-    conditions: [condition],
+    conditions: [buildAccountScopeCondition(identity), condition],
     actions: [
       {
         field: 'category',
@@ -493,8 +735,10 @@ function updateRulePayload(rule: RuleEntity, hint: HistoricalCategoryHint): Rule
     value: hint.categoryId,
   });
 
+  const stage = rule.stage as RuleData['stage'];
+
   return {
-    stage: rule.stage === 'pre' || rule.stage === 'post' ? rule.stage : null,
+    stage: stage === 'pre' || stage === 'default' || stage === 'post' ? stage : null,
     conditionsOp: rule.conditionsOp === 'or' ? 'or' : 'and',
     conditions: (rule.conditions ?? [])
       .map((condition) => normalizeRuleCondition(condition))
@@ -503,13 +747,53 @@ function updateRulePayload(rule: RuleEntity, hint: HistoricalCategoryHint): Rule
   };
 }
 
+function hasSiblingHintConflict(
+  identity: GroupIdentity,
+  hint: HistoricalCategoryHint,
+  hintsBySiblingKey: Map<string, HistoricalCategoryHint[]>,
+): boolean {
+  const siblingHints = hintsBySiblingKey.get(getSiblingKey(identity)) ?? [];
+
+  return siblingHints.some((candidate) => candidate.categoryId !== hint.categoryId);
+}
+
+function getUpdateBlockedReason(
+  relatedRule: InternalRelatedRule,
+  hint: HistoricalCategoryHint,
+  hasConflictingSiblings: boolean,
+): string | null {
+  if (relatedRule.unsupportedConditions.length > 0 || relatedRule.unsupportedActions.length > 0) {
+    return 'Existing matching rule contains unsupported conditions or actions, so updating it could be lossy.';
+  }
+
+  if (relatedRule.categoryActionValues.length === 0) {
+    return 'Existing matching rule has no replaceable category action.';
+  }
+
+  if (relatedRule.categoryActionValues.length > 1) {
+    return 'Existing matching rule has multiple category actions, so there is no single safe category replacement.';
+  }
+
+  if (hasConflictingSiblings && !relatedRule.accountScoped) {
+    return 'Conflicting category hints exist in other accounts, and the matching rule is not safely account-scoped.';
+  }
+
+  if (relatedRule.categoryActionValues[0] === hint.categoryId) {
+    return null;
+  }
+
+  return null;
+}
+
 function chooseSuggestion(
   identity: GroupIdentity,
   hint: HistoricalCategoryHint | null,
   relatedRules: InternalRelatedRule[],
+  hasConflictingSiblings: boolean,
 ): {
   suggestedAction: SuggestedAction;
   suggestedRule: SuggestedRulePlan | null;
+  suggestionBlockedReason?: string;
 } {
   if (!hint) {
     return { suggestedAction: 'manual-review', suggestedRule: null };
@@ -524,22 +808,53 @@ function chooseSuggestion(
   }
 
   if (relatedRules.length > 0) {
-    const targetRule = relatedRules[0];
+    const updateCandidate = relatedRules.find(
+      (rule) => getUpdateBlockedReason(rule, hint, hasConflictingSiblings) === null,
+    );
+
+    if (updateCandidate) {
+      return {
+        suggestedAction: 'update-rule',
+        suggestedRule: {
+          mode: 'update-rule',
+          targetRuleId: updateCandidate.id,
+          payload: updateRulePayload(updateCandidate.rule, hint),
+          reason: `Existing ${updateCandidate.matchField} rule matches this cluster but does not set ${hint.categoryName}.`,
+        },
+      };
+    }
+
+    const blockedReason =
+      getUpdateBlockedReason(relatedRules[0], hint, hasConflictingSiblings) ??
+      'Existing matching rule could not be updated safely.';
+
     return {
-      suggestedAction: 'update-rule',
-      suggestedRule: {
-        mode: 'update-rule',
-        targetRuleId: targetRule.id,
-        payload: updateRulePayload(targetRule.rule, hint),
-        reason: `Existing ${targetRule.matchField} rule matches this cluster but does not set ${hint.categoryName}.`,
-      },
+      suggestedAction: 'manual-review',
+      suggestedRule: null,
+      suggestionBlockedReason: blockedReason,
     };
   }
 
   const payload = createRulePayload(identity, hint);
 
   if (!payload) {
-    return { suggestedAction: 'manual-review', suggestedRule: null };
+    return {
+      suggestedAction: 'manual-review',
+      suggestedRule: null,
+      suggestionBlockedReason: 'Could not build a safely scoped rule condition for this cluster.',
+    };
+  }
+
+  if (
+    hasConflictingSiblings &&
+    !payload.conditions.some((condition) => condition.field === 'account')
+  ) {
+    return {
+      suggestedAction: 'manual-review',
+      suggestedRule: null,
+      suggestionBlockedReason:
+        'Conflicting category hints exist in other accounts, so only an account-scoped rule would be safe.',
+    };
   }
 
   return {
@@ -600,6 +915,32 @@ export function buildUncategorizedAudit(
     });
   }
 
+  const hintsByGroupKey = new Map<string, HistoricalCategoryHint | null>();
+
+  for (const [key, categorizedPeers] of categorizedByKey.entries()) {
+    hintsByGroupKey.set(key, inferCategoryHint(categorizedPeers));
+  }
+
+  const hintsBySiblingKey = new Map<string, HistoricalCategoryHint[]>();
+
+  for (const cluster of uncategorizedByKey.values()) {
+    const hint = hintsByGroupKey.get(cluster.identity.key) ?? null;
+
+    if (!hint) {
+      continue;
+    }
+
+    const siblingKey = getSiblingKey(cluster.identity);
+    const existing = hintsBySiblingKey.get(siblingKey);
+
+    if (existing) {
+      existing.push(hint);
+      continue;
+    }
+
+    hintsBySiblingKey.set(siblingKey, [hint]);
+  }
+
   const allGroups = [...uncategorizedByKey.values()]
     .map((cluster) => {
       const sortedTransactions = sortTransactionsNewestFirst(cluster.transactions);
@@ -608,11 +949,15 @@ export function buildUncategorizedAudit(
         options.rules,
         options.categoriesById,
       );
-      const hint = inferCategoryHint(categorizedByKey.get(cluster.identity.key) ?? []);
-      const { suggestedAction, suggestedRule } = chooseSuggestion(
+      const hint = hintsByGroupKey.get(cluster.identity.key) ?? null;
+      const hasConflictingSiblings = hint
+        ? hasSiblingHintConflict(cluster.identity, hint, hintsBySiblingKey)
+        : false;
+      const { suggestedAction, suggestedRule, suggestionBlockedReason } = chooseSuggestion(
         cluster.identity,
         hint,
         relatedRules,
+        hasConflictingSiblings,
       );
 
       return {
@@ -642,6 +987,7 @@ export function buildUncategorizedAudit(
         historicalCategoryHint: hint,
         suggestedAction,
         suggestedRule,
+        ...(suggestionBlockedReason ? { suggestionBlockedReason } : {}),
       } satisfies UncategorizedAuditGroup;
     })
     .sort((left, right) => {
