@@ -77,6 +77,7 @@ interface SandboxState {
   ruleId?: string;
   scheduleId?: string;
   transactionId?: string;
+  historicalTransferCounterpartId?: string;
 }
 
 interface SmokeResult {
@@ -335,12 +336,12 @@ async function runRecordedCase(
 
 async function assertSurfaceCounts(): Promise<void> {
   const expectations: Array<{ label: string; flags: string[]; expectedCount: number }> = [
-    { label: 'default', flags: [], expectedCount: 13 },
-    { label: 'enable-write', flags: ['--enable-write'], expectedCount: 39 },
+    { label: 'default', flags: [], expectedCount: 16 },
+    { label: 'enable-write', flags: ['--enable-write'], expectedCount: 46 },
     {
       label: 'enable-write+enable-nini',
       flags: ['--enable-write', '--enable-nini'],
-      expectedCount: 47,
+      expectedCount: 54,
     },
   ];
 
@@ -425,6 +426,13 @@ function buildLiveArgs(toolName: string, context: LiveContext): Record<string, u
         startDate: context.previousMonthStart,
         endDate: context.currentDate,
         limit: 5,
+      };
+    case 'audit-historical-transfers':
+      return {
+        startDate: context.previousMonthStart,
+        endDate: context.currentDate,
+        candidateLimit: 5,
+        flaggedReviewLimit: 5,
       };
     case 'monthly-summary':
       return { months: 3 };
@@ -550,6 +558,20 @@ async function createHelperPayee(session: HarnessSession, name: string): Promise
   }
 
   return extractCreatedId(result, 'create-payee helper');
+}
+
+async function createHelperTransaction(
+  session: HarnessSession,
+  args: Record<string, unknown>,
+): Promise<string> {
+  const result = await callTool(session, 'create-transaction', args);
+
+  if (result.isError) {
+    const payload = parseGuardedError(result);
+    throw new Error(`Helper transaction creation failed: ${payload.message}`);
+  }
+
+  return extractCreatedId(result, 'create-transaction helper');
 }
 
 function extractIdFromDetail(detail: string, toolName: string): string {
@@ -708,6 +730,27 @@ async function buildSandboxArgs(
         category: state.names.categoryUpdated,
         notes: state.names.transactionNotes,
       };
+    case 'audit-historical-transfers':
+      return {
+        startDate: state.fixtureDate,
+        endDate: state.fixtureDate,
+        candidateLimit: 5,
+        flaggedReviewLimit: 5,
+      };
+    case 'apply-historical-transfers':
+      assertDefined(state.transactionId, 'transactionId', toolName);
+      assertDefined(
+        state.historicalTransferCounterpartId,
+        'historicalTransferCounterpartId',
+        toolName,
+      );
+      return {
+        candidateIds: [
+          [state.transactionId, state.historicalTransferCounterpartId]
+            .sort((left, right) => left.localeCompare(right))
+            .join('::'),
+        ],
+      };
     case 'update-transaction':
       assertDefined(state.transactionId, 'transactionId', toolName);
       return {
@@ -841,12 +884,23 @@ async function captureSandboxSideEffects(
       break;
     case 'create-transaction':
       state.transactionId = extractIdFromDetail(detail, toolName);
+      assertDefined(state.secondaryAccountId, 'secondaryAccountId', toolName);
+      assertDefined(state.merchantPayeeName, 'merchantPayeeName', toolName);
+      state.historicalTransferCounterpartId = await createHelperTransaction(session, {
+        account: state.secondaryAccountId,
+        date: state.fixtureDate,
+        amount: 12.34,
+        payee: state.merchantPayeeName,
+        category: state.names.categoryUpdated,
+        notes: `${state.prefix}-historical-transfer-counterpart`,
+      });
       break;
     case 'delete-schedule':
       state.scheduleId = undefined;
       break;
     case 'delete-transaction':
       state.transactionId = undefined;
+      state.historicalTransferCounterpartId = undefined;
       break;
     case 'delete-rule':
       state.ruleId = undefined;
@@ -896,6 +950,11 @@ async function bestEffortSandboxCleanup(
 
   if (state.transactionId) {
     await bestEffortTool(session, 'delete-transaction', { id: state.transactionId });
+  }
+  if (state.historicalTransferCounterpartId) {
+    await bestEffortTool(session, 'delete-transaction', {
+      id: state.historicalTransferCounterpartId,
+    });
   }
   if (state.scheduleId) {
     await bestEffortTool(session, 'delete-schedule', { id: state.scheduleId });

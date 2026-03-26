@@ -13,7 +13,10 @@ const accounts: Account[] = [
   { id: 'venmo', name: 'Venmo', offbudget: true, closed: false },
 ];
 
-function buildAudit(transactions: Transaction[], options?: { candidateLimit?: number; flaggedReviewLimit?: number }) {
+function buildAudit(
+  transactions: Transaction[],
+  options?: { candidateLimit?: number; flaggedReviewLimit?: number },
+) {
   return buildHistoricalTransferAudit({
     accounts,
     transactions,
@@ -177,9 +180,7 @@ describe('buildHistoricalTransferAudit', () => {
         count: 1,
       }),
     ]);
-    expect(
-      result.flaggedReviewGroups[0]?.sampleTransactionIds.includes('paired-out'),
-    ).toBe(false);
+    expect(result.flaggedReviewGroups[0]?.sampleTransactionIds.includes('paired-out')).toBe(false);
   });
 
   it('reports total versus returned counts when limits are applied', () => {
@@ -225,9 +226,7 @@ describe('buildHistoricalTransferAudit', () => {
     expect(result.summary.strictCandidateCount).toBe(DEFAULT_TRANSFER_CANDIDATE_LIMIT + 1);
     expect(result.summary.returnedStrictCandidateCount).toBe(5);
     expect(result.strictCandidates).toHaveLength(5);
-    expect(result.summary.flaggedReviewGroupCount).toBe(
-      DEFAULT_TRANSFER_FLAGGED_REVIEW_LIMIT + 1,
-    );
+    expect(result.summary.flaggedReviewGroupCount).toBe(DEFAULT_TRANSFER_FLAGGED_REVIEW_LIMIT + 1);
     expect(result.summary.returnedFlaggedReviewGroupCount).toBe(3);
     expect(result.flaggedReviewGroups).toHaveLength(3);
   });

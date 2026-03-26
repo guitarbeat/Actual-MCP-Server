@@ -157,9 +157,7 @@ export const AuditHistoricalTransfersArgsSchema = z.object({
     .positive()
     .optional()
     .default(25)
-    .describe(
-      'Maximum number of transfer-like manual-review groups to return. Defaults to 25.',
-    ),
+    .describe('Maximum number of transfer-like manual-review groups to return. Defaults to 25.'),
 });
 
 export const ApplyHistoricalTransfersArgsSchema = z.object({
