@@ -16,6 +16,7 @@ export type {
   CategorySpending,
   GroupSpending,
   Payee,
+  Tag,
   Transaction,
 } from './domain.js';
 // Response types

@@ -28,7 +28,7 @@ Use the blueprint when you want to host the MCP server itself on Render:
 
 1. Build and push this repository to GitHub.
 2. In Render, create a new Blueprint or web service from the repo.
-3. Set `ACTUAL_SERVER_URL`, `ACTUAL_PASSWORD`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
+3. Set `ACTUAL_SERVER_URL`, one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
 4. Deploy and use `/health` and `/ready` for platform checks.
 
 The Render Workflows SDK is a separate product from the MCP server runtime in this repo. Code like:

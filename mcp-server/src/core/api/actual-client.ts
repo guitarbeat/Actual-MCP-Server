@@ -8,19 +8,25 @@ import type {
   APICategoryGroupEntity,
   APIPayeeEntity,
   APIScheduleEntity,
+  APITagEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import type {
   RuleEntity,
   TransactionEntity,
 } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
+import { validateActualAuthStartupConfig } from '../auth/startup-guard.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { BudgetFile } from '../types/index.js';
 import { nameResolver } from '../utils/name-resolver.js';
 
 type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
-  updateSchedule?: (id: string, args: Record<string, unknown>) => Promise<unknown>;
+  updateSchedule?: (
+    id: string,
+    args: Record<string, unknown>,
+    resetNextDate?: boolean,
+  ) => Promise<unknown>;
   deleteSchedule?: (id: string) => Promise<unknown>;
   getSchedules?: () => Promise<APIScheduleEntity[]>;
   runBankSync?: (options?: { accountId: string }) => Promise<unknown>;
@@ -56,6 +62,7 @@ export interface ActualReadinessStatusExtended extends ActualReadinessStatus {
     serverUrl: string | null;
     budgetSyncId: boolean;
     hasPassword: boolean;
+    hasSessionToken: boolean;
     hasEncryptionPassword: boolean;
     autoSyncMinutes: string | null;
     readFreshnessMode: ActualReadFreshnessMode;
@@ -351,13 +358,27 @@ async function initializeApiConnection(): Promise<void> {
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
-  // * Removed JSON log to stdout - this was being interpreted as JSON-RPC in stdio mode
-  // * Configuration details are logged via MCP logging if needed
-  const config = {
+  validateActualAuthStartupConfig();
+
+  const config: {
+    dataDir: string;
+    serverURL?: string;
+    password?: string;
+    sessionToken?: string;
+  } = {
     dataDir,
-    serverURL: process.env.ACTUAL_SERVER_URL,
-    password: process.env.ACTUAL_PASSWORD,
   };
+
+  if (process.env.ACTUAL_SERVER_URL) {
+    config.serverURL = process.env.ACTUAL_SERVER_URL;
+
+    if (process.env.ACTUAL_SESSION_TOKEN) {
+      config.sessionToken = process.env.ACTUAL_SESSION_TOKEN;
+    } else if (process.env.ACTUAL_PASSWORD) {
+      config.password = process.env.ACTUAL_PASSWORD;
+    }
+  }
+
   // biome-ignore lint/suspicious/noExplicitAny: API types mismatch with env vars
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await api.init(config as any);
@@ -801,6 +822,7 @@ export async function getReadinessStatus(
         serverUrl: serverHostname,
         budgetSyncId: Boolean(process.env.ACTUAL_BUDGET_SYNC_ID),
         hasPassword: Boolean(process.env.ACTUAL_PASSWORD),
+        hasSessionToken: Boolean(process.env.ACTUAL_SESSION_TOKEN),
         hasEncryptionPassword: Boolean(
           process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD || process.env.ACTUAL_BUDGET_PASSWORD,
         ),
@@ -951,6 +973,13 @@ export async function getPayees(): Promise<APIPayeeEntity[]> {
 }
 
 /**
+ * Get all tags (ensures API is initialized)
+ */
+export async function getTags(): Promise<APITagEntity[]> {
+  return runReadOperation(() => api.getTags(), { cacheKey: 'tags:all' });
+}
+
+/**
  * Get transactions for a specific account and date range (ensures API is initialized)
  */
 export async function getTransactions(
@@ -1030,6 +1059,41 @@ export async function deletePayee(id: string): Promise<unknown> {
  */
 export async function createRule(args: Record<string, unknown>): Promise<RuleEntity> {
   return ensureConnection(() => api.createRule(args as Omit<RuleEntity, 'id'>), 'write');
+}
+
+/**
+ * Create a new tag (ensures API is initialized)
+ */
+export async function createTag(args: Record<string, unknown>): Promise<string> {
+  return ensureConnection(async () => {
+    if (!args.tag || typeof args.tag !== 'string') {
+      throw new Error('Tag label is required');
+    }
+
+    const result = await api.createTag(args as Omit<APITagEntity, 'id'>);
+    cacheService.invalidatePattern('tags:*');
+    return result;
+  }, 'write');
+}
+
+/**
+ * Update a tag (ensures API is initialized)
+ */
+export async function updateTag(id: string, args: Record<string, unknown>): Promise<void> {
+  return ensureConnection(async () => {
+    await api.updateTag(id, args as Partial<Omit<APITagEntity, 'id'>>);
+    cacheService.invalidatePattern('tags:*');
+  }, 'write');
+}
+
+/**
+ * Delete a tag (ensures API is initialized)
+ */
+export async function deleteTag(id: string): Promise<void> {
+  return ensureConnection(async () => {
+    await api.deleteTag(id);
+    cacheService.invalidatePattern('tags:*');
+  }, 'write');
 }
 
 /**
@@ -1274,9 +1338,13 @@ export async function updateAccount(id: string, args: Record<string, unknown>): 
 /**
  * Close an account (ensures API is initialized)
  */
-export async function closeAccount(id: string): Promise<unknown> {
+export async function closeAccount(
+  id: string,
+  transferAccountId?: string,
+  transferCategoryId?: string,
+): Promise<unknown> {
   return ensureConnection(async () => {
-    const result = await api.closeAccount(id);
+    const result = await api.closeAccount(id, transferAccountId, transferCategoryId);
     cacheService.invalidate('accounts:all');
     invalidateNameResolutionState();
     return result;
@@ -1386,12 +1454,16 @@ export async function createSchedule(args: Record<string, unknown>): Promise<str
 /**
  * Update a schedule (ensures API is initialized)
  */
-export async function updateSchedule(id: string, args: Record<string, unknown>): Promise<unknown> {
+export async function updateSchedule(
+  id: string,
+  args: Record<string, unknown>,
+  resetNextDate?: boolean,
+): Promise<unknown> {
   return ensureConnection(async () => {
     if (!extendedApi.updateSchedule) {
       throw new Error('updateSchedule method is not available in this version of the API');
     }
-    return extendedApi.updateSchedule(id, args);
+    return extendedApi.updateSchedule(id, args, resetNextDate);
   }, 'write');
 }
 

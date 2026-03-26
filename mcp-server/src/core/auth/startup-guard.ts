@@ -1,5 +1,7 @@
 export const MIN_BEARER_TOKEN_LENGTH = 32;
 
+export type ActualAuthMethod = 'password' | 'session-token' | 'none';
+
 export function validateBearerStartupConfig(enableBearer: boolean, expectedToken?: string): void {
   if (!enableBearer) {
     return;
@@ -12,6 +14,46 @@ export function validateBearerStartupConfig(enableBearer: boolean, expectedToken
   if (expectedToken.length < MIN_BEARER_TOKEN_LENGTH) {
     throw new Error(
       `BEARER_TOKEN must be at least ${MIN_BEARER_TOKEN_LENGTH} characters when --enable-bearer is enabled`,
+    );
+  }
+}
+
+export function getActualAuthMethod(env: NodeJS.ProcessEnv = process.env): ActualAuthMethod {
+  const hasPassword = Boolean(env.ACTUAL_PASSWORD);
+  const hasSessionToken = Boolean(env.ACTUAL_SESSION_TOKEN);
+
+  if (hasPassword && hasSessionToken) {
+    return 'none';
+  }
+
+  if (hasSessionToken) {
+    return 'session-token';
+  }
+
+  if (hasPassword) {
+    return 'password';
+  }
+
+  return 'none';
+}
+
+export function validateActualAuthStartupConfig(env: NodeJS.ProcessEnv = process.env): void {
+  if (!env.ACTUAL_SERVER_URL) {
+    return;
+  }
+
+  const hasPassword = Boolean(env.ACTUAL_PASSWORD);
+  const hasSessionToken = Boolean(env.ACTUAL_SESSION_TOKEN);
+
+  if (hasPassword && hasSessionToken) {
+    throw new Error(
+      'Set exactly one of ACTUAL_PASSWORD or ACTUAL_SESSION_TOKEN when ACTUAL_SERVER_URL is configured',
+    );
+  }
+
+  if (!hasPassword && !hasSessionToken) {
+    throw new Error(
+      'Set one of ACTUAL_PASSWORD or ACTUAL_SESSION_TOKEN when ACTUAL_SERVER_URL is configured',
     );
   }
 }

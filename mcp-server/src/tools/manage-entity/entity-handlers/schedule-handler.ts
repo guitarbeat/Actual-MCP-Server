@@ -72,10 +72,11 @@ export class ScheduleHandler implements EntityHandler<ScheduleData, ScheduleUpda
 
   async update(id: string, data: ScheduleUpdateData): Promise<void> {
     const validated = ScheduleUpdateDataSchema.parse(data);
-    const apiData = await this.buildScheduleUpdatePayload(id, validated);
+    const { resetNextDate, ...scheduleData } = validated;
+    const apiData = await this.buildScheduleUpdatePayload(id, scheduleData);
 
     try {
-      await updateSchedule(id, apiData);
+      await updateSchedule(id, apiData, resetNextDate);
     } catch (error) {
       this.handleScheduleApiError('update', error);
     }

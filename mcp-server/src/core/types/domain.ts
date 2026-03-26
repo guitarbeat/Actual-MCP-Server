@@ -7,6 +7,7 @@ export interface Account {
   offbudget?: boolean;
   closed?: boolean;
   balance?: number;
+  balance_current?: number | null;
 }
 
 export interface Transaction {
@@ -65,6 +66,13 @@ export interface Payee {
   id: string;
   name: string;
   transfer_acct?: string;
+}
+
+export interface Tag {
+  id: string;
+  tag: string;
+  color?: string | null;
+  description?: string | null;
 }
 
 export interface BudgetFile {

@@ -15,6 +15,7 @@ import {
   startBackgroundRetry,
 } from './core/api/actual-client.js';
 import {
+  validateActualAuthStartupConfig,
   shouldWarnAboutAutoSyncForRemote,
   validateBearerStartupConfig,
 } from './core/auth/startup-guard.js';
@@ -71,6 +72,9 @@ function validateEnv(): void {
   }
   console.error(`  ACTUAL_SERVER_URL: ${serverHostname}`);
   console.error(`  ACTUAL_PASSWORD: ${process.env.ACTUAL_PASSWORD ? '****' : '(not set)'}`);
+  console.error(
+    `  ACTUAL_SESSION_TOKEN: ${process.env.ACTUAL_SESSION_TOKEN ? '****' : '(not set)'}`,
+  );
   console.error(`  ACTUAL_BUDGET_SYNC_ID: ${process.env.ACTUAL_BUDGET_SYNC_ID || '(auto-detect)'}`);
   console.error(
     `  ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD ? '****' : '(not set)'}`,
@@ -84,6 +88,7 @@ function validateEnv(): void {
 }
 
 function validateRuntimeGuards(): void {
+  validateActualAuthStartupConfig();
   validateBearerStartupConfig(enableBearer, process.env.BEARER_TOKEN);
 
   if (

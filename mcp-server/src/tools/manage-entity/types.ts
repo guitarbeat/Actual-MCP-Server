@@ -135,6 +135,7 @@ export interface ScheduleData {
   payee?: string | null; // Optional, name or ID
   category?: string | null; // Optional, name or ID
   posts_transaction?: boolean; // Optional, defaults to false
+  resetNextDate?: boolean; // Optional, only used when updating an existing schedule
   // DO NOT include: rule, next_date, completed (auto-managed by API)
 }
 
@@ -295,6 +296,7 @@ export const ScheduleDataSchema = z
     payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
     category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
     posts_transaction: z.boolean().optional(),
+    resetNextDate: z.boolean().optional(),
   })
   .strict();
 
@@ -347,6 +349,7 @@ export interface AccountData {
   type?: AccountType;
   offbudget?: boolean;
   initialBalance?: number; // For create operation only, in cents
+  balanceCurrent?: number | null; // Reported bank balance, in cents
 }
 
 /**

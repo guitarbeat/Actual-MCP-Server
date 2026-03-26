@@ -44,8 +44,12 @@ async function handleAccountsDirectory(uri: string): Promise<ReadResourceResult>
       const closed = account.closed ? ' (CLOSED)' : '';
       const offBudget = account.offbudget ? ' (OFF BUDGET)' : '';
       const balance = account.balance !== undefined ? ` - ${formatAmount(account.balance)}` : '';
+      const reportedBalance =
+        account.balance_current != null
+          ? ` / reported ${formatAmount(account.balance_current)}`
+          : '';
 
-      return `- ${account.name}${closed}${offBudget}${balance} [ID: ${account.id}]`;
+      return `- ${account.name}${closed}${offBudget}${balance}${reportedBalance} [ID: ${account.id}]`;
     })
     .join('\n');
 
@@ -77,11 +81,14 @@ async function handleAccountOverview(uri: string, accountId: string): Promise<Re
   }
 
   const balance = await getAccountBalance(accountId);
+  const reportedBalance =
+    account.balance_current != null ? formatAmount(account.balance_current) : '(not set)';
   const details = `# Account: ${account.name}
 
 ID: ${account.id}
 Type: ${account.type || 'Unknown'}
 Balance: ${formatAmount(balance)}
+Reported Balance: ${reportedBalance}
 On Budget: ${!account.offbudget}
 Status: ${account.closed ? 'Closed' : 'Open'}
 

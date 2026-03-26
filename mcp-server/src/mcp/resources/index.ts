@@ -9,6 +9,7 @@ import {
   handleAssistiveResource,
 } from '../../resources/assistive-resources.js';
 import { BUDGET_LIST_RESOURCES, handleBudgetsResource } from '../../resources/budget-resources.js';
+import { TAG_LIST_RESOURCES, handleTagsResource } from '../../resources/tag-resources.js';
 
 export interface ResourceDefinition {
   name: string;
@@ -49,6 +50,13 @@ export const resourceDefinitions: ResourceDefinition[] = [
     uri: ASSISTIVE_LIST_RESOURCES[1].uri,
     description: ASSISTIVE_LIST_RESOURCES[1].description,
     mimeType: ASSISTIVE_LIST_RESOURCES[1].mimeType,
+    kind: 'static',
+  },
+  {
+    name: TAG_LIST_RESOURCES[0].name,
+    uri: TAG_LIST_RESOURCES[0].uri,
+    description: TAG_LIST_RESOURCES[0].description,
+    mimeType: TAG_LIST_RESOURCES[0].mimeType,
     kind: 'static',
   },
   {
@@ -127,6 +135,16 @@ export function registerResources(server: McpServer): void {
       mimeType: ASSISTIVE_LIST_RESOURCES[1].mimeType,
     },
     async (uri) => handleAssistiveResource(uri.href, 'rules', []),
+  );
+
+  server.registerResource(
+    TAG_LIST_RESOURCES[0].name,
+    TAG_LIST_RESOURCES[0].uri,
+    {
+      description: TAG_LIST_RESOURCES[0].description,
+      mimeType: TAG_LIST_RESOURCES[0].mimeType,
+    },
+    async (uri) => handleTagsResource(uri.href),
   );
 
   server.registerResource(

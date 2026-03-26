@@ -20,16 +20,18 @@ pnpm --filter actual-mcp build
 
 ## Configuration
 
-Copy the placeholders from [`.env.example`](./.env.example) and set these values:
+Copy the placeholders from [`.env.example`](./.env.example) and set these values. When `ACTUAL_SERVER_URL` is set, configure exactly one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`:
 
 ```bash
 ACTUAL_SERVER_URL=https://actual.example.com
 ACTUAL_PASSWORD=replace-with-your-actual-password
+# ACTUAL_SESSION_TOKEN=replace-with-your-actual-session-token
 ACTUAL_BUDGET_SYNC_ID=replace-with-your-budget-sync-id
 ```
 
 Optional variables:
 
+- `ACTUAL_SESSION_TOKEN` as an alternative to `ACTUAL_PASSWORD` for remote-server auth. Set exactly one of the two auth variables.
 - `ACTUAL_BUDGET_ENCRYPTION_PASSWORD` for encrypted budgets
 - `ACTUAL_READ_FRESHNESS_MODE` to control read freshness. Use `strict-live` to sync before every read and fail instead of serving stale data; default is `cached`.
 - `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID` for the full sandbox-only MCP smoke suite
@@ -73,7 +75,7 @@ This package can be deployed directly to Render as a web service. The repository
 Typical Render setup:
 
 1. Create the service from the repository Blueprint.
-2. Provide `ACTUAL_SERVER_URL`, `ACTUAL_PASSWORD`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
+2. Provide `ACTUAL_SERVER_URL`, one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
 3. Use `/health` as the liveness endpoint and `/ready` as the readiness endpoint.
 
 If you are looking at Render Workflows examples such as:
@@ -105,6 +107,8 @@ Claude Desktop uses `claude_desktop_config.json`:
 }
 ```
 
+Replace `ACTUAL_PASSWORD` with `ACTUAL_SESSION_TOKEN` if you prefer session-token auth. Do not set both.
+
 Codex uses `~/.codex/config.toml`:
 
 ```toml
@@ -117,6 +121,8 @@ ACTUAL_SERVER_URL = "https://actual.example.com"
 ACTUAL_PASSWORD = "replace-with-your-actual-password"
 ACTUAL_BUDGET_SYNC_ID = "replace-with-your-budget-sync-id"
 ```
+
+Replace `ACTUAL_PASSWORD` with `ACTUAL_SESSION_TOKEN` if you prefer session-token auth. Do not set both.
 
 Cursor uses `~/.cursor/mcp.json` or project-local `.cursor/mcp.json`:
 
@@ -135,6 +141,8 @@ Cursor uses `~/.cursor/mcp.json` or project-local `.cursor/mcp.json`:
   }
 }
 ```
+
+Replace `ACTUAL_PASSWORD` with `ACTUAL_SESSION_TOKEN` if you prefer session-token auth. Do not set both.
 
 Build the package first, then use the absolute path to `mcp-server/build/index.js` in your client configuration.
 
@@ -157,19 +165,21 @@ docker run --rm -p 3000:3000 \
   actual-mcp
 ```
 
+Use either `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN` in the container environment, not both.
+
 The container entrypoint starts the server in remote HTTP mode with `--enable-write` and `--enable-bearer`.
 
 ## MCP Surface
 
 <!-- TOOL_SURFACE:START -->
 
-Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 47 tools, 2 prompts, and 9 resources:
+Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 51 tools, 2 prompts, and 10 resources:
 
-- 13 read-only core tools
-- 26 write-enabled core tools
+- 14 read-only core tools
+- 29 write-enabled core tools
 - 8 advanced `--enable-nini` tools
 - 2 prompts
-- 4 static resources
+- 5 static resources
 - 5 templated resources
 
 The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).

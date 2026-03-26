@@ -10,14 +10,23 @@ import { nameResolver } from './core/utils/name-resolver.js';
 vi.mock('@actual-app/api', () => ({
   default: {
     init: vi.fn(),
+    closeAccount: vi.fn(),
+    createAccount: vi.fn(),
+    createSchedule: vi.fn(),
+    createTag: vi.fn(),
+    deleteTag: vi.fn(),
     downloadBudget: vi.fn(),
     getAccounts: vi.fn().mockResolvedValue([]),
     getBudgets: vi.fn(),
+    getTags: vi.fn().mockResolvedValue([]),
     loadBudget: vi.fn(),
     shutdown: vi.fn(),
     sync: vi.fn(),
     deleteTransaction: vi.fn(),
     importTransactions: vi.fn(),
+    updateAccount: vi.fn(),
+    updateSchedule: vi.fn(),
+    updateTag: vi.fn(),
     updateTransaction: vi.fn(),
   },
 }));
@@ -87,8 +96,6 @@ describe('Auto-load functionality', () => {
 
       expect(api.init).toHaveBeenCalledWith({
         dataDir: '/test/data',
-        serverURL: undefined,
-        password: undefined,
       });
       expect(api.downloadBudget).toHaveBeenCalledWith('test-sync-id');
     });
@@ -235,6 +242,61 @@ describe('Auto-load functionality', () => {
       await actualApi.initActualApi();
 
       expect(api.downloadBudget).toHaveBeenCalledWith('group-sync-id');
+    });
+  });
+
+  describe('session token authentication', () => {
+    it('should initialize with ACTUAL_SESSION_TOKEN when configured for a remote server', async () => {
+      process.env.ACTUAL_SERVER_URL = 'https://actual.example.com';
+      process.env.ACTUAL_SESSION_TOKEN = 'session-token';
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-sync-id',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+
+      expect(api.init).toHaveBeenCalledWith({
+        dataDir: '/test/data',
+        serverURL: 'https://actual.example.com',
+        sessionToken: 'session-token',
+      });
+
+      const readiness = await actualApi.getReadinessStatus(true);
+      expect(readiness.diagnostics.hasSessionToken).toBe(true);
+      expect(readiness.diagnostics.hasPassword).toBe(false);
+    });
+
+    it('should reject remote configuration when both auth methods are set', async () => {
+      process.env.ACTUAL_SERVER_URL = 'https://actual.example.com';
+      process.env.ACTUAL_PASSWORD = 'password';
+      process.env.ACTUAL_SESSION_TOKEN = 'session-token';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      await expect(actualApi.initActualApi()).rejects.toThrow(
+        'Set exactly one of ACTUAL_PASSWORD or ACTUAL_SESSION_TOKEN when ACTUAL_SERVER_URL is configured',
+      );
+      expect(api.init).not.toHaveBeenCalled();
+    });
+
+    it('should reject remote configuration when no auth method is set', async () => {
+      process.env.ACTUAL_SERVER_URL = 'https://actual.example.com';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      await expect(actualApi.initActualApi()).rejects.toThrow(
+        'Set one of ACTUAL_PASSWORD or ACTUAL_SESSION_TOKEN when ACTUAL_SERVER_URL is configured',
+      );
+      expect(api.init).not.toHaveBeenCalled();
     });
   });
 
@@ -994,6 +1056,108 @@ describe('Auto-load functionality', () => {
       await expect(actualApi.batchBudgetUpdates(callback)).rejects.toThrow(
         'batchBudgetUpdates method is not available in this version of the API',
       );
+    });
+  });
+
+  describe('tag wrappers', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+      vi.mocked(api.getTags).mockResolvedValue([
+        {
+          id: 'tag-1',
+          tag: 'reimbursable',
+          color: '#ff0000',
+          description: 'Expense to reimburse',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      vi.mocked(api.createTag).mockResolvedValue('tag-1');
+      vi.mocked(api.updateTag).mockResolvedValue(undefined);
+      vi.mocked(api.deleteTag).mockResolvedValue(undefined);
+    });
+
+    it('should return tags through the Actual client wrapper', async () => {
+      const tags = await actualApi.getTags();
+
+      expect(tags).toEqual([
+        {
+          id: 'tag-1',
+          tag: 'reimbursable',
+          color: '#ff0000',
+          description: 'Expense to reimburse',
+        },
+      ]);
+      expect(cacheService.getOrFetch).toHaveBeenCalledWith(
+        'tags:all',
+        expect.any(Function),
+        undefined,
+      );
+    });
+
+    it('should create a tag and invalidate tag caches', async () => {
+      const tagId = await actualApi.createTag({
+        tag: 'reimbursable',
+        color: '#ff0000',
+      });
+
+      expect(tagId).toBe('tag-1');
+      expect(api.createTag).toHaveBeenCalledWith({
+        tag: 'reimbursable',
+        color: '#ff0000',
+      });
+      expect(cacheService.invalidatePattern).toHaveBeenCalledWith('tags:*');
+    });
+
+    it('should update and delete tags through the wrapper', async () => {
+      await actualApi.updateTag('tag-1', { color: '#00ff00' });
+      await actualApi.deleteTag('tag-1');
+
+      expect(api.updateTag).toHaveBeenCalledWith('tag-1', { color: '#00ff00' });
+      expect(api.deleteTag).toHaveBeenCalledWith('tag-1');
+      expect(cacheService.invalidatePattern).toHaveBeenCalledWith('tags:*');
+    });
+  });
+
+  describe('account and schedule wrapper passthroughs', () => {
+    beforeEach(async () => {
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'test-budget',
+          name: 'Test Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+      vi.mocked(api.closeAccount).mockResolvedValue(undefined);
+      vi.mocked(api.updateSchedule).mockResolvedValue('schedule-1');
+    });
+
+    it('should pass transfer arguments through closeAccount', async () => {
+      await actualApi.closeAccount('account-1', 'account-2', 'category-1');
+
+      expect(api.closeAccount).toHaveBeenCalledWith('account-1', 'account-2', 'category-1');
+      expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
+    });
+
+    it('should pass resetNextDate through updateSchedule', async () => {
+      await actualApi.updateSchedule('schedule-1', { amount: -2500 }, true);
+
+      expect(api.updateSchedule).toHaveBeenCalledWith('schedule-1', { amount: -2500 }, true);
     });
   });
 });

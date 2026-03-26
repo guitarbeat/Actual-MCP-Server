@@ -95,6 +95,42 @@ describe('CRUD Factory Configuration Schemas', () => {
         );
       }
     });
+
+    it('should accept nullable balanceCurrent on update', () => {
+      const validData = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        balanceCurrent: null,
+      };
+      const result = update.schema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('Tag Schemas', () => {
+    const { create, update } = entityConfigurations.tag;
+
+    it('should fail when tag label is too long on create', () => {
+      const invalidData = {
+        tag: 'a'.repeat(101),
+      };
+      const result = create.schema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain(
+          'Tag label must be less than 100 characters',
+        );
+      }
+    });
+
+    it('should accept nullable tag fields on update', () => {
+      const validData = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        color: null,
+        description: null,
+      };
+      const result = update.schema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Category Group Schemas', () => {
