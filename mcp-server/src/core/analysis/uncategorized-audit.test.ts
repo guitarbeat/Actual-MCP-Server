@@ -46,7 +46,7 @@ describe('buildUncategorizedAudit', () => {
     vi.clearAllMocks();
   });
 
-  it('prefers imported_payee grouping and emits create-rule suggestions from strong peer history', () => {
+  it('emits account-scoped create-rule suggestions even when sibling accounts imply different categories', () => {
     const result = buildUncategorizedAudit({
       transactions: [
         {
@@ -109,6 +109,53 @@ describe('buildUncategorizedAudit', () => {
           category: 'cat-shopping',
           category_name: 'Shopping',
         },
+        {
+          id: 'uncat-3',
+          account: 'acc-2',
+          account_name: 'Business Checking',
+          date: '2026-03-13',
+          amount: -2500,
+          payee: 'payee-amazon-business',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: null,
+        },
+        {
+          id: 'peer-4',
+          account: 'acc-2',
+          account_name: 'Business Checking',
+          date: '2026-02-20',
+          amount: -2000,
+          payee: 'payee-amazon-business',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: 'cat-supplies',
+          category_name: 'Office Supplies',
+        },
+        {
+          id: 'peer-5',
+          account: 'acc-2',
+          account_name: 'Business Checking',
+          date: '2026-02-18',
+          amount: -1700,
+          payee: 'payee-amazon-business',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: 'cat-supplies',
+          category_name: 'Office Supplies',
+        },
+        {
+          id: 'peer-6',
+          account: 'acc-2',
+          account_name: 'Business Checking',
+          date: '2026-02-15',
+          amount: -2100,
+          payee: 'payee-amazon-business',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: 'cat-supplies',
+          category_name: 'Office Supplies',
+        },
       ],
       rules: [],
       categoriesById: {
@@ -117,16 +164,23 @@ describe('buildUncategorizedAudit', () => {
           name: 'Shopping',
           group_id: 'group-1',
         },
+        'cat-supplies': {
+          id: 'cat-supplies',
+          name: 'Office Supplies',
+          group_id: 'group-2',
+        },
       },
       startDate: '2026-01-01',
       endDate: '2026-03-25',
       accountScope: 'all-on-budget',
     });
 
-    expect(result.summary.uncategorizedTransactionCount).toBe(2);
-    expect(result.summary.ruleOpportunityCount).toBe(1);
-    expect(result.groups).toHaveLength(1);
-    expect(result.groups[0]).toMatchObject({
+    const checkingGroup = result.groups.find((group) => group.accountId === 'acc-1');
+
+    expect(result.summary.uncategorizedTransactionCount).toBe(3);
+    expect(result.summary.ruleOpportunityCount).toBe(2);
+    expect(result.groups).toHaveLength(2);
+    expect(checkingGroup).toMatchObject({
       groupSource: 'imported_payee',
       groupLabel: 'AMZN Mktp US',
       accountName: 'Checking',
@@ -140,9 +194,13 @@ describe('buildUncategorizedAudit', () => {
       },
       suggestedAction: 'create-rule',
     });
-    expect(result.groups[0].sampleTransactions[0].imported_payee).toBe('AMZN Mktp US');
-    expect(result.groups[0].suggestedRule?.mode).toBe('create-rule');
-    expect(() => RuleDataSchema.parse(result.groups[0].suggestedRule?.payload)).not.toThrow();
+    expect(checkingGroup?.sampleTransactions[0].imported_payee).toBe('AMZN Mktp US');
+    expect(checkingGroup?.suggestedRule?.mode).toBe('create-rule');
+    expect(checkingGroup?.suggestedRule?.payload.conditions).toEqual([
+      { field: 'account', op: 'is', value: 'acc-1' },
+      { field: 'imported_payee', op: 'is', value: 'AMZN Mktp US' },
+    ]);
+    expect(() => RuleDataSchema.parse(checkingGroup?.suggestedRule?.payload)).not.toThrow();
   });
 
   it('splits clusters by account and emits update-rule suggestions when a related rule exists', () => {
@@ -229,6 +287,7 @@ describe('buildUncategorizedAudit', () => {
     expect(result.groups[0].relatedRules[0]).toMatchObject({
       id: 'rule-1',
       matchField: 'payee',
+      ruleMatchType: 'payee:is',
       categoryActionValue: 'cat-old',
       categoryActionName: 'Misc',
     });
@@ -237,6 +296,7 @@ describe('buildUncategorizedAudit', () => {
       targetRuleId: 'rule-1',
     });
     expect(() => RuleDataSchema.parse(result.groups[0].suggestedRule?.payload)).not.toThrow();
+    expect(result.groups[0].suggestedRule?.payload.stage).toBe('default');
     expect(result.groups[0].suggestedRule?.payload.actions).toContainEqual({
       field: 'category',
       op: 'set',
@@ -298,6 +358,250 @@ describe('buildUncategorizedAudit', () => {
     expect(result.groups[0].historicalCategoryHint).toBeNull();
     expect(result.groups[0].suggestedAction).toBe('manual-review');
     expect(result.groups[0].suggestedRule).toBeNull();
+  });
+
+  it('does not treat rules with conflicting account conditions as related', () => {
+    const result = buildUncategorizedAudit({
+      transactions: [
+        {
+          id: 'uncat-1',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-03-20',
+          amount: -2500,
+          payee: 'payee-power',
+          payee_name: 'Power Co',
+          category: null,
+        },
+        {
+          id: 'peer-1',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-02-20',
+          amount: -2500,
+          payee: 'payee-power',
+          payee_name: 'Power Co',
+          category: 'cat-utilities',
+          category_name: 'Utilities',
+        },
+        {
+          id: 'peer-2',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-02-10',
+          amount: -2600,
+          payee: 'payee-power',
+          payee_name: 'Power Co',
+          category: 'cat-utilities',
+          category_name: 'Utilities',
+        },
+        {
+          id: 'peer-3',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-01-20',
+          amount: -2550,
+          payee: 'payee-power',
+          payee_name: 'Power Co',
+          category: 'cat-utilities',
+          category_name: 'Utilities',
+        },
+      ],
+      rules: [
+        makeRule({
+          id: 'rule-wrong-account',
+          stage: 'default',
+          conditionsOp: 'and',
+          conditions: [
+            { field: 'account', op: 'is', value: 'acc-2' },
+            { field: 'payee', op: 'is', value: 'payee-power' },
+          ],
+          actions: [{ field: 'category', op: 'set', value: 'cat-old' }],
+        }),
+      ],
+      categoriesById: {
+        'cat-old': { id: 'cat-old', name: 'Old', group_id: 'group-1' },
+        'cat-utilities': { id: 'cat-utilities', name: 'Utilities', group_id: 'group-1' },
+      },
+      startDate: '2026-01-01',
+      endDate: '2026-03-25',
+      accountScope: 'all-on-budget',
+    });
+
+    expect(result.groups[0].relatedRules).toEqual([]);
+    expect(result.groups[0].suggestedAction).toBe('create-rule');
+  });
+
+  it('blocks unsafe update suggestions when matching rules contain unsupported conditions or actions', () => {
+    const result = buildUncategorizedAudit({
+      transactions: [
+        {
+          id: 'uncat-1',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-03-18',
+          amount: -9900,
+          payee: 'payee-electric',
+          payee_name: 'Electric Co',
+          category: null,
+        },
+        {
+          id: 'peer-1',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-02-18',
+          amount: -10100,
+          payee: 'payee-electric',
+          payee_name: 'Electric Co',
+          category: 'cat-utilities',
+          category_name: 'Utilities',
+        },
+        {
+          id: 'peer-2',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-01-18',
+          amount: -9800,
+          payee: 'payee-electric',
+          payee_name: 'Electric Co',
+          category: 'cat-utilities',
+          category_name: 'Utilities',
+        },
+        {
+          id: 'peer-3',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2025-12-18',
+          amount: -10300,
+          payee: 'payee-electric',
+          payee_name: 'Electric Co',
+          category: 'cat-utilities',
+          category_name: 'Utilities',
+        },
+      ],
+      rules: [
+        makeRule({
+          id: 'rule-unsupported',
+          stage: 'default',
+          conditionsOp: 'and',
+          conditions: [
+            { field: 'payee', op: 'is', value: 'payee-electric' },
+            { field: 'amount', op: 'gt', value: 1000 },
+          ],
+          actions: [
+            { field: 'category', op: 'set', value: 'cat-old' },
+            { op: 'link-schedule', value: 'schedule-1' },
+          ],
+        }),
+      ],
+      categoriesById: {
+        'cat-old': { id: 'cat-old', name: 'Old', group_id: 'group-1' },
+        'cat-utilities': { id: 'cat-utilities', name: 'Utilities', group_id: 'group-1' },
+      },
+      startDate: '2025-12-01',
+      endDate: '2026-03-25',
+      accountScope: 'all-on-budget',
+    });
+
+    expect(result.groups[0].relatedRules[0]).toMatchObject({
+      id: 'rule-unsupported',
+      ruleMatchType: 'payee:is',
+    });
+    expect(result.groups[0].suggestedAction).toBe('manual-review');
+    expect(result.groups[0].suggestedRule).toBeNull();
+    expect(result.groups[0].suggestionBlockedReason).toContain('unsupported conditions or actions');
+  });
+
+  it('chooses the most specific compatible related rule deterministically', () => {
+    const result = buildUncategorizedAudit({
+      transactions: [
+        {
+          id: 'uncat-1',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-03-18',
+          amount: -9900,
+          payee: 'payee-amazon',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: null,
+        },
+        {
+          id: 'peer-1',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-02-18',
+          amount: -10100,
+          payee: 'payee-amazon',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: 'cat-shopping',
+          category_name: 'Shopping',
+        },
+        {
+          id: 'peer-2',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2026-01-18',
+          amount: -9800,
+          payee: 'payee-amazon',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: 'cat-shopping',
+          category_name: 'Shopping',
+        },
+        {
+          id: 'peer-3',
+          account: 'acc-1',
+          account_name: 'Checking',
+          date: '2025-12-18',
+          amount: -10300,
+          payee: 'payee-amazon',
+          payee_name: 'Amazon',
+          imported_payee: 'AMZN Mktp US',
+          category: 'cat-shopping',
+          category_name: 'Shopping',
+        },
+      ],
+      rules: [
+        makeRule({
+          id: 'rule-payee',
+          stage: 'default',
+          conditionsOp: 'and',
+          conditions: [
+            { field: 'account', op: 'is', value: 'acc-1' },
+            { field: 'payee', op: 'is', value: 'payee-amazon' },
+          ],
+          actions: [{ field: 'category', op: 'set', value: 'cat-old' }],
+        }),
+        makeRule({
+          id: 'rule-imported',
+          stage: 'default',
+          conditionsOp: 'and',
+          conditions: [
+            { field: 'account', op: 'is', value: 'acc-1' },
+            { field: 'imported_payee', op: 'is', value: 'AMZN Mktp US' },
+          ],
+          actions: [{ field: 'category', op: 'set', value: 'cat-old' }],
+        }),
+      ],
+      categoriesById: {
+        'cat-old': { id: 'cat-old', name: 'Old', group_id: 'group-1' },
+        'cat-shopping': { id: 'cat-shopping', name: 'Shopping', group_id: 'group-1' },
+      },
+      startDate: '2025-12-01',
+      endDate: '2026-03-25',
+      accountScope: 'all-on-budget',
+    });
+
+    expect(result.groups[0].relatedRules.map((rule) => rule.id)).toEqual([
+      'rule-imported',
+      'rule-payee',
+    ]);
+    expect(result.groups[0].suggestedRule).toMatchObject({
+      mode: 'update-rule',
+      targetRuleId: 'rule-imported',
+    });
   });
 });
 

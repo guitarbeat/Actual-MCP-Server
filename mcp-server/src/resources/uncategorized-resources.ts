@@ -29,7 +29,7 @@ function formatGroupSection(
             .map((rule) => {
               const category =
                 rule.categoryActionName || rule.categoryActionValue || 'no category action';
-              return `${rule.id} (${rule.matchField} -> ${category})`;
+              return `${rule.id} (${rule.ruleMatchType} -> ${category})`;
             })
             .join(', ')
         : 'None';
@@ -50,6 +50,9 @@ function formatGroupSection(
       `- Suggested action: ${group.suggestedAction}`,
       `- Historical hint: ${hint}`,
       `- Related rules: ${relatedRules}`,
+      ...(group.suggestionBlockedReason
+        ? [`- Why automation was withheld: ${group.suggestionBlockedReason}`]
+        : []),
       '',
       'Sample transactions:',
       samples,
