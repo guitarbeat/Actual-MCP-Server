@@ -34,6 +34,8 @@ export type {
 } from './responses.js';
 // Zod schemas for validation
 export {
+  ApplyHistoricalTransfersArgsSchema,
+  AuditHistoricalTransfersArgsSchema,
   AuditUncategorizedTransactionsArgsSchema,
   AmountSchema,
   BalanceHistoryArgsSchema,
@@ -67,6 +69,8 @@ export {
 } from './schemas.js';
 // Tool argument types
 export type {
+  ApplyHistoricalTransfersArgs,
+  AuditHistoricalTransfersArgs,
   AuditUncategorizedTransactionsArgs,
   BalanceHistoryArgs,
   BudgetReviewArgs,
