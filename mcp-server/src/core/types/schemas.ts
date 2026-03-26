@@ -97,6 +97,44 @@ export const GetTransactionsArgsSchema = z.object({
     ),
 });
 
+export const AuditUncategorizedTransactionsArgsSchema = z.object({
+  accountId: z
+    .string()
+    .optional()
+    .describe(
+      'Optional account name or ID to limit the audit to a specific account. If omitted, audits all on-budget accounts.',
+    ),
+  startDate: DateSchema.optional().describe(
+    'Optional start date in YYYY-MM-DD format. If omitted, the audit scans all history starting from 1900-01-01.',
+  ),
+  endDate: DateSchema.optional().describe(
+    'Optional end date in YYYY-MM-DD format. If omitted, the audit ends on today.',
+  ),
+  excludeTransfers: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      'Exclude transfer transactions between accounts. Defaults to true so the audit focuses on income and expense transactions that need categorization.',
+    ),
+  groupLimit: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .default(25)
+    .describe(
+      'Maximum number of grouped uncategorized clusters to return. Defaults to 25, ranked by count and recent activity.',
+    ),
+  samplePerGroup: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .default(5)
+    .describe('Maximum number of sample transactions to include per group. Defaults to 5.'),
+});
+
 export const SpendingByCategoryArgsSchema = z.object({
   startDate: z
     .string()

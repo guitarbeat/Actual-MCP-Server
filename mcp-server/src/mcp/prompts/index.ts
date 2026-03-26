@@ -61,6 +61,34 @@ export const promptDefinitions: PromptDefinition[] = [
       };
     },
   },
+  {
+    name: 'triage-uncategorized-transactions',
+    description:
+      'Audit uncategorized transactions, turn strong clusters into rule improvements, and leave ambiguous leftovers for manual cleanup',
+    argsSchema: {
+      accountId: z.string().optional().describe('Optional account name or ID to scope the audit'),
+    },
+    async buildMessages({ accountId }) {
+      const scope = accountId ? ` for account ${accountId}` : '';
+
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Please triage uncategorized transactions${scope}.
+1. Run 'audit-uncategorized-transactions' first${accountId ? ` with {"accountId": "${accountId}"}` : ''}.
+2. Review the grouped results for create-rule and update-rule opportunities.
+3. Use existing rule tools to improve high-confidence payee or imported_payee categorization.
+4. Leave ambiguous leftovers for manual cleanup with 'update-transaction'.
+5. Summarize what was automated versus what still needs manual review.`,
+            },
+          },
+        ],
+      };
+    },
+  },
 ];
 
 export function registerPrompts(server: McpServer): void {

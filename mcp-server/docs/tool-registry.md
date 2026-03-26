@@ -4,6 +4,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 
 ## Read-Only Core
 
+- `audit-uncategorized-transactions`: Audit uncategorized transactions at scale and group them into rule opportunities versus manual cleanup work.
 - `balance-history`: Track how an account balance has changed over time with monthly snapshots. Use this when the user asks about balance trends or account growth.
 - `get-account-balance`: Check the current or historical balance of a specific account. Use this when the user asks about a single account balance.
 - `get-accounts`: List all accounts with current balances. Use this when the user asks about accounts, balances, or needs to find an account name.
@@ -66,6 +67,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 
 - `analyze-monthly-spending`: Analyze spending for a specific month
 - `financial-health-check`: Perform a comprehensive check of financial health (balances, recent trends)
+- `triage-uncategorized-transactions`: Audit uncategorized transactions, turn strong clusters into rule improvements, and leave ambiguous leftovers for manual cleanup
 
 ## Resources
 
@@ -79,3 +81,4 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `actual://payees/{payeeId}/rules` (template): Payee Rules. Show Actual Budget rules associated with a payee.
 - `actual://rules` (static): Rule Directory. Browse Actual Budget automation rules.
 - `actual://tags` (static): Tag Directory. Browse all tags available in Actual Budget.
+- `actual://uncategorized` (static): Uncategorized Audit. Audit uncategorized transactions across all on-budget accounts.

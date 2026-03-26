@@ -5,6 +5,7 @@
 
 import type { z } from 'zod';
 import type {
+  AuditUncategorizedTransactionsArgsSchema,
   BalanceHistoryArgsSchema,
   BudgetReviewArgsSchema,
   CreateCategoryArgsSchema,
@@ -36,6 +37,9 @@ import type {
 // ----------------------------
 
 export type GetTransactionsArgs = z.infer<typeof GetTransactionsArgsSchema>;
+export type AuditUncategorizedTransactionsArgs = z.infer<
+  typeof AuditUncategorizedTransactionsArgsSchema
+>;
 export type SpendingByCategoryArgs = z.infer<typeof SpendingByCategoryArgsSchema>;
 export type MonthlySummaryArgs = z.infer<typeof MonthlySummaryArgsSchema>;
 export type BalanceHistoryArgs = z.infer<typeof BalanceHistoryArgsSchema>;

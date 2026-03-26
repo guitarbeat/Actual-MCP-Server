@@ -12,11 +12,13 @@ import * as getPayees from '../../tools/payees/get-payees/index.js';
 import * as getRules from '../../tools/rules/get-rules/index.js';
 import * as getSchedules from '../../tools/schedules/get-schedules/index.js';
 import * as getTags from '../../tools/tags/get-tags/index.js';
+import * as auditUncategorizedTransactions from '../../tools/transactions/audit-uncategorized-transactions/index.js';
 import * as spendingByCategory from '../../tools/spending-by-category/index.js';
 import * as getAccountBalance from '../../tools/accounts/get-account-balance/index.js';
 import { defineLegacyTool } from './common.js';
 
 export const readToolDefinitions = [
+  defineLegacyTool({ ...auditUncategorizedTransactions, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...getTransactions, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...spendingByCategory, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...monthlySummary, requiresWrite: false, category: 'core' }),
