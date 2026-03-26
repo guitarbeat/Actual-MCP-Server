@@ -83,15 +83,19 @@ describe('ScheduleHandler', () => {
       posts_transaction: true,
     });
 
-    expect(mockUpdateSchedule).toHaveBeenCalledWith('schedule-1', {
-      name: 'Rent',
-      account: 'account-checking',
-      payee: 'payee-landlord',
-      amount: -2500,
-      amountOp: 'is',
-      date: '2025-02-01',
-      posts_transaction: true,
-    });
+    expect(mockUpdateSchedule).toHaveBeenCalledWith(
+      'schedule-1',
+      {
+        name: 'Rent',
+        account: 'account-checking',
+        payee: 'payee-landlord',
+        amount: -2500,
+        amountOp: 'is',
+        date: '2025-02-01',
+        posts_transaction: true,
+      },
+      undefined,
+    );
   });
 
   it('throws a clear error when the target schedule cannot be loaded', async () => {
@@ -106,5 +110,40 @@ describe('ScheduleHandler', () => {
       }),
     ).rejects.toThrow("Schedule 'schedule-missing' could not be loaded.");
     expect(mockUpdateSchedule).not.toHaveBeenCalled();
+  });
+
+  it('passes resetNextDate through to the Actual API update call', async () => {
+    mockGetSchedules.mockResolvedValue([
+      {
+        id: 'schedule-1',
+        name: 'Rent',
+        account: 'account-checking',
+        payee: 'payee-landlord',
+        amount: -2500,
+        amountOp: 'is',
+        date: '2025-02-01',
+        posts_transaction: false,
+      },
+    ]);
+    mockUpdateSchedule.mockResolvedValue('schedule-1');
+
+    const handler = new ScheduleHandler();
+    await handler.update('schedule-1', {
+      resetNextDate: true,
+    });
+
+    expect(mockUpdateSchedule).toHaveBeenCalledWith(
+      'schedule-1',
+      {
+        name: 'Rent',
+        account: 'account-checking',
+        payee: 'payee-landlord',
+        amount: -2500,
+        amountOp: 'is',
+        date: '2025-02-01',
+        posts_transaction: false,
+      },
+      true,
+    );
   });
 });

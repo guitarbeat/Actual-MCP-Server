@@ -67,4 +67,16 @@ describe('update-schedule handler', () => {
     expect(payload.message).toBe('No fields provided for update');
     expect(mockUpdate).not.toHaveBeenCalled();
   });
+
+  it('allows resetNextDate as a standalone schedule update', async () => {
+    const response = await handler({
+      id: '970873c4-7dc3-4c20-a095-a60e3e7abc18',
+      resetNextDate: true,
+    });
+
+    expect(response.isError).toBeUndefined();
+    expect(mockUpdate).toHaveBeenCalledWith('970873c4-7dc3-4c20-a095-a60e3e7abc18', {
+      resetNextDate: true,
+    });
+  });
 });

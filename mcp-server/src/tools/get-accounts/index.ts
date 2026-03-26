@@ -25,7 +25,7 @@ export const schema = {
     '- "Show all accounts": {}\n' +
     '- "Find Chase accounts": {"accountId": "Chase"}\n' +
     '- "Include closed accounts": {"includeClosed": true}\n\n' +
-    'RETURNS: Account names, balances, types, and status',
+    'RETURNS: Account names, computed ledger balances, optional reported bank balances, types, and status',
   inputSchema: zodToJsonSchema(GetAccountsArgsSchema) as ToolInput,
 };
 

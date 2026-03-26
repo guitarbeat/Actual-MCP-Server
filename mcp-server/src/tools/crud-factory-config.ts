@@ -55,6 +55,7 @@ import { CategoryGroupHandler } from './manage-entity/entity-handlers/category-g
 import { CategoryHandler } from './manage-entity/entity-handlers/category-handler.js';
 import { PayeeHandler } from './manage-entity/entity-handlers/payee-handler.js';
 import { RuleHandler } from './manage-entity/entity-handlers/rule-handler.js';
+import { TagHandler } from './manage-entity/entity-handlers/tag-handler.js';
 import { RuleDataSchema } from './manage-entity/types.js';
 
 // ----------------------------
@@ -129,6 +130,56 @@ const DeletePayeeSchema = z.object({
 });
 
 // ----------------------------
+// TAG SCHEMAS
+// ----------------------------
+
+const CreateTagSchema = z.object({
+  tag: z
+    .string()
+    .min(1, 'Tag label is required')
+    .max(100, 'Tag label must be less than 100 characters')
+    .describe('Visible tag label (e.g., "reimbursable", "taxes", "vacation").'),
+  color: z
+    .string()
+    .max(50, 'Tag color must be less than 50 characters')
+    .nullable()
+    .optional()
+    .describe('Optional color string, typically a hex value like "#ff0000".'),
+  description: z
+    .string()
+    .max(500, 'Tag description must be less than 500 characters')
+    .nullable()
+    .optional()
+    .describe('Optional description explaining when to use the tag.'),
+});
+
+const UpdateTagSchema = z.object({
+  id: z.string().uuid('Tag ID must be a valid UUID').describe('UUID of the tag to update.'),
+  tag: z
+    .string()
+    .min(1, 'Tag label is required')
+    .max(100, 'Tag label must be less than 100 characters')
+    .optional()
+    .describe('New tag label.'),
+  color: z
+    .string()
+    .max(50, 'Tag color must be less than 50 characters')
+    .nullable()
+    .optional()
+    .describe('New optional color string, typically a hex value like "#00ff00".'),
+  description: z
+    .string()
+    .max(500, 'Tag description must be less than 500 characters')
+    .nullable()
+    .optional()
+    .describe('New optional description.'),
+});
+
+const DeleteTagSchema = z.object({
+  id: z.string().uuid('Tag ID must be a valid UUID').describe('UUID of the tag to delete.'),
+});
+
+// ----------------------------
 // ACCOUNT SCHEMAS
 // ----------------------------
 
@@ -145,6 +196,7 @@ const CreateAccountSchema = z.object({
   }),
   offbudget: z.boolean().optional(),
   initialBalance: z.number().int().optional(), // In cents
+  balanceCurrent: z.number().int().nullable().optional(), // In cents
 });
 
 const UpdateAccountSchema = z.object({
@@ -154,6 +206,7 @@ const UpdateAccountSchema = z.object({
     .enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'])
     .optional(),
   offbudget: z.boolean().optional(),
+  balanceCurrent: z.number().int().nullable().optional(),
 });
 
 const DeleteAccountSchema = z.object({
@@ -434,6 +487,91 @@ export const entityConfigurations = {
     PayeeHandler
   >,
 
+  tag: {
+    entityName: 'tag',
+    displayName: 'tag',
+    handlerClass: TagHandler,
+    create: {
+      schema: CreateTagSchema,
+      description:
+        'Create a new tag in Actual Budget.\n\n' +
+        'REQUIRED:\n' +
+        '- tag: Tag label\n\n' +
+        'OPTIONAL:\n' +
+        '- color: Optional color string\n' +
+        '- description: Optional description\n\n' +
+        'EXAMPLES:\n' +
+        '- {"tag": "reimbursable"}\n' +
+        '- {"tag": "taxes", "color": "#ff0000"}\n' +
+        '- {"tag": "vacation", "color": "#00a86b", "description": "Travel-related spending"}\n\n' +
+        'COMMON USE CASES:\n' +
+        '- Create reusable transaction labels\n' +
+        '- Mark reimbursable or tax-related transactions\n' +
+        '- Standardize custom reporting labels\n\n' +
+        'SEE ALSO:\n' +
+        '- Use get-tags to list existing tags\n' +
+        '- Use update-tag to modify tags\n' +
+        '- Use delete-tag to remove tags\n\n' +
+        'NOTES:\n' +
+        '- Tag labels should be short and recognizable',
+      requiresWrite: true,
+      category: 'core' as const,
+    },
+    update: {
+      schema: UpdateTagSchema,
+      description:
+        'Update an existing tag in Actual Budget.\n\n' +
+        'REQUIRED:\n' +
+        '- id: Tag ID (UUID)\n\n' +
+        'OPTIONAL (at least one required):\n' +
+        '- tag: New tag label\n' +
+        '- color: New optional color string\n' +
+        '- description: New optional description\n\n' +
+        'EXAMPLES:\n' +
+        '- {"id": "tag-id", "tag": "medical"}\n' +
+        '- {"id": "tag-id", "color": "#0057b8"}\n' +
+        '- {"id": "tag-id", "description": "Updated usage guidance"}\n\n' +
+        'COMMON USE CASES:\n' +
+        '- Rename a tag\n' +
+        '- Refresh tag colors\n' +
+        '- Clarify how the tag should be used\n\n' +
+        'SEE ALSO:\n' +
+        '- Use get-tags to find tag IDs\n' +
+        '- Use create-tag to add new tags\n' +
+        '- Use delete-tag to remove tags\n\n' +
+        'NOTES:\n' +
+        '- Only provided fields will be updated',
+      requiresWrite: true,
+      category: 'core' as const,
+    },
+    delete: {
+      schema: DeleteTagSchema,
+      description:
+        'Delete a tag from Actual Budget.\n\n' +
+        'REQUIRED:\n' +
+        '- id: Tag ID (UUID)\n\n' +
+        'EXAMPLE:\n' +
+        '{"id": "tag-id"}\n\n' +
+        'COMMON USE CASES:\n' +
+        '- Remove unused tags\n' +
+        '- Clean up test tags\n' +
+        '- Consolidate an old labeling system\n\n' +
+        'SEE ALSO:\n' +
+        '- Use get-tags to find tag IDs\n' +
+        '- Use create-tag to add new tags\n' +
+        '- Use update-tag to modify tags\n\n' +
+        'NOTES:\n' +
+        '- âš ï¸ WARNING: Deletion is permanent and cannot be undone',
+      requiresWrite: true,
+      category: 'core' as const,
+    },
+  } satisfies EntityCRUDConfig<
+    typeof CreateTagSchema,
+    typeof UpdateTagSchema,
+    typeof DeleteTagSchema,
+    TagHandler
+  >,
+
   account: {
     entityName: 'account',
     displayName: 'account',
@@ -453,14 +591,17 @@ export const entityConfigurations = {
         '- type: checking, savings, credit, investment, mortgage, debt, or other\n\n' +
         'OPTIONAL:\n' +
         '- offbudget: Set true for tracking-only accounts (default: false)\n' +
-        '- initialBalance: Starting balance in cents (default: 0)\n\n' +
+        '- initialBalance: Starting balance in cents (default: 0)\n' +
+        '- balanceCurrent: Reported bank balance in cents for reconciliation visibility\n\n' +
         'EXAMPLES:\n' +
         '- "Add checking account": {"name": "Chase Checking", "type": "checking"}\n' +
         '- "Create savings with $10k": {"name": "High Yield Savings", "type": "savings", "initialBalance": 1000000}\n' +
+        '- "Create importer account with reported balance": {"name": "Checking", "type": "checking", "balanceCurrent": 245000}\n' +
         '- "Add credit card": {"name": "Amazon Card", "type": "credit"}\n' +
         '- "Track 401k off-budget": {"name": "401k", "type": "investment", "offbudget": true}\n\n' +
         'NOTES:\n' +
         '- Initial balance in cents (100000 = $1,000)\n' +
+        '- balanceCurrent stores the reported bank balance separately from ledger history\n' +
         "- Off-budget accounts don't affect budget calculations",
       requiresWrite: true,
       category: 'nini' as const,
@@ -480,10 +621,12 @@ export const entityConfigurations = {
         'OPTIONAL:\n' +
         '- name: New account name\n' +
         '- type: checking, savings, credit, investment, mortgage, debt, or other\n' +
-        '- offbudget: true/false\n\n' +
+        '- offbudget: true/false\n' +
+        '- balanceCurrent: Reported bank balance in cents (or null to clear it)\n\n' +
         'EXAMPLES:\n' +
         '- "Rename account": {"id": "abc-123", "name": "New Name"}\n' +
         '- "Change to savings": {"id": "abc-123", "type": "savings"}\n' +
+        '- "Update reported balance": {"id": "abc-123", "balanceCurrent": 245000}\n' +
         '- "Move off-budget": {"id": "abc-123", "offbudget": true}\n\n' +
         'NOTES: Use get-accounts to find the account ID first',
       requiresWrite: true,

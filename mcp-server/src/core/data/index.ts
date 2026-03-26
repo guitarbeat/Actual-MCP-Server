@@ -10,6 +10,7 @@ export {
 } from './fetch-categories.js';
 export { fetchAllPayees } from './fetch-payees.js';
 export { fetchAllRules } from './fetch-rules.js';
+export { fetchAllTags } from './fetch-tags.js';
 export {
   enrichTransactionsBatch,
   fetchAllOnBudgetTransactions,

@@ -11,6 +11,7 @@ import * as monthlySummary from '../../tools/monthly-summary/index.js';
 import * as getPayees from '../../tools/payees/get-payees/index.js';
 import * as getRules from '../../tools/rules/get-rules/index.js';
 import * as getSchedules from '../../tools/schedules/get-schedules/index.js';
+import * as getTags from '../../tools/tags/get-tags/index.js';
 import * as spendingByCategory from '../../tools/spending-by-category/index.js';
 import * as getAccountBalance from '../../tools/accounts/get-account-balance/index.js';
 import { defineLegacyTool } from './common.js';
@@ -24,6 +25,7 @@ export const readToolDefinitions = [
   defineLegacyTool({ ...getAccounts, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...getGroupedCategories, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...getPayees, requiresWrite: false, category: 'core' }),
+  defineLegacyTool({ ...getTags, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...getRules, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...recommendBudgetPlan, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...getSchedules, requiresWrite: false, category: 'core' }),
