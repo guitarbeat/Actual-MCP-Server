@@ -36,6 +36,8 @@
     "amazon:audit": "tsx scripts/amazon-audit.ts",
     "amazon:apply": "tsx scripts/amazon-apply.ts",
     "amazon:sync-notes": "tsx scripts/amazon-sync-notes.ts",
+    "timeline:audit": "tsx scripts/timeline-audit.ts",
+    "timeline:apply": "tsx scripts/timeline-apply.ts",
     "lint": "eslint . --ext .ts,.tsx,.js",
     "lint:fix": "eslint . --ext .ts,.tsx,.js --fix",
     "format": "prettier --write .",
