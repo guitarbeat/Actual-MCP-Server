@@ -22,3 +22,5 @@ This repository keeps a few implementation notes in version control so contribut
 - Keep remote runtime concerns in `mcp-server/src/runtime/`; transport, auth, readiness, and HTTP wiring should not leak into domain handlers.
 - Reuse legacy tool handlers when practical, but prefer moving repeated parsing and orchestration into shared services instead of growing new registry boilerplate.
 - Treat `mcp-server/src/index.ts` as a thin bootstrap layer only.
+- Keep `mcp-server/src/core/analysis/timeline-reconciliation.ts` as a thin facade; parser logic, heuristics, audit I/O, and apply flow now live under `mcp-server/src/core/analysis/timeline-reconciliation/`.
+- Keep `mcp-server/src/core/api/actual-client.ts` as the stable entrypoint, but prefer extracting pure helper concerns into `mcp-server/src/core/api/actual-client/` before growing the facade further.
