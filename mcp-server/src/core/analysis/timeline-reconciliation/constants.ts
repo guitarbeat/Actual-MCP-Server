@@ -87,9 +87,23 @@ export const HOUSEHOLD_KEYWORDS = [
 
 export const PET_KEYWORDS = ['pretty litter', 'litter', 'cat', 'pet', 'vet', 'dog', 'aquacatsusa'];
 export const BEAUTY_KEYWORDS = ['beauty', 'salon', 'cosmetic', 'skin', 'hair', 'makeup', 'spa'];
-export const MEDICINE_KEYWORDS = ['pharmacy', 'medical', 'medicine', 'clinic', 'urgent care', 'drug'];
+export const MEDICINE_KEYWORDS = [
+  'pharmacy',
+  'medical',
+  'medicine',
+  'clinic',
+  'urgent care',
+  'drug',
+];
 export const HEALTH_INSURANCE_KEYWORDS = ['healthplan', 'insurance', 'health plan'];
-export const INVESTMENT_KEYWORDS = ['robinhood', 'kalshi', 'broker', 'stock', 'crypto', 'investment'];
+export const INVESTMENT_KEYWORDS = [
+  'robinhood',
+  'kalshi',
+  'broker',
+  'stock',
+  'crypto',
+  'investment',
+];
 export const FEE_KEYWORDS = ['fee', 'interest', 'late fee', 'returned payment', 'payment returned'];
 export const GOVERNMENT_KEYWORDS = [
   'department',
@@ -153,9 +167,9 @@ export const INELIGIBLE_MERCHANT_PATTERNS = [
 ];
 
 export const EXTERNAL_CATEGORY_ALIASES: Record<string, string> = {
-  groceries: 'ðŸ›’ Groceries',
-  shopping: 'ðŸ›ï¸ Shopping / Marketplace',
-  entertainment: 'ðŸŽ­ Experiences',
-  'personal care': 'ðŸ§´ Personal Care & Beauty',
-  'travel vacation': 'âœˆï¸ One-Off / Travel',
+  groceries: '🛒 Groceries',
+  shopping: '🛍️ Shopping / Marketplace',
+  entertainment: '🎭 Experiences',
+  'personal care': '🧴 Personal Care & Beauty',
+  'travel vacation': '✈️ One-Off / Travel',
 };
