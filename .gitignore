@@ -42,3 +42,12 @@ Thumbs.db
 
 # Upstream comparison artifacts
 upstream-comparison
+
+# Private local Amazon export workspace
+downloaded-amazon-data/
+
+# Private local budget / billing reconciliation artifacts
+bilt-recon/
+3-26-recon/
+docs/budget-side-audit-*.md
+tmp/
