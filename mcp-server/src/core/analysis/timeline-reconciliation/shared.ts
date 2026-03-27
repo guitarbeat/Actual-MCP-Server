@@ -105,7 +105,11 @@ export function buildMapsSearchUrl(latitude: number, longitude: number, placeId?
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coords)}`;
 }
 
-export function buildPlaceKey(placeId: string | undefined, latitude: number, longitude: number): string {
+export function buildPlaceKey(
+  placeId: string | undefined,
+  latitude: number,
+  longitude: number,
+): string {
   return placeId ? `place:${placeId}` : `coord:${latitude.toFixed(5)},${longitude.toFixed(5)}`;
 }
 

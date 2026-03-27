@@ -53,6 +53,9 @@ const accounts: Account[] = [
 type AmazonChargeEvent =
   Parameters<typeof inferPaymentMethodMappings>[0] extends Map<string, infer T> ? T : never;
 type AmazonAuditInput = Parameters<typeof buildAmazonAudit>[0];
+type AmazonOrderHistoryRow = AmazonExportData['orderHistoryRows'][number];
+type AmazonRefundDetailsRow = AmazonExportData['refundDetailsRows'][number];
+type AmazonDigitalOrderRow = AmazonExportData['digitalOrderRows'][number];
 
 function buildAmazonExportData(overrides: Partial<AmazonExportData> = {}): AmazonExportData {
   return {
@@ -91,11 +94,11 @@ function buildCategoryGroups(groups: APICategoryGroupEntity[]): APICategoryGroup
   return groups;
 }
 
-function buildOrderHistoryCsv(rows: Array<Record<string, string>>): string {
+function buildOrderHistoryCsv(rows: AmazonOrderHistoryRow[]): string {
   return stringifyCsv(rows, { header: true });
 }
 
-function buildOrderRow(overrides: Record<string, string>): Record<string, string> {
+function buildOrderRow(overrides: Partial<AmazonOrderHistoryRow>): AmazonOrderHistoryRow {
   return {
     ASIN: 'ASIN-1',
     'Billing Address': '',
@@ -129,7 +132,7 @@ function buildOrderRow(overrides: Record<string, string>): Record<string, string
   };
 }
 
-function buildRefundRow(overrides: Record<string, string>): Record<string, string> {
+function buildRefundRow(overrides: Partial<AmazonRefundDetailsRow>): AmazonRefundDetailsRow {
   return {
     'Creation Date': '2024-01-17',
     Currency: 'USD',
@@ -148,7 +151,7 @@ function buildRefundRow(overrides: Record<string, string>): Record<string, strin
   };
 }
 
-function buildDigitalRow(overrides: Record<string, string>): Record<string, string> {
+function buildDigitalRow(overrides: Partial<AmazonDigitalOrderRow>): AmazonDigitalOrderRow {
   return {
     ASIN: 'DIGITAL-1',
     'Affected Item Quantity': '1',

@@ -3,114 +3,61 @@ import os from 'node:os';
 import path from 'node:path';
 import api from '@actual-app/api';
 import type {
+  RuleEntity,
+  TransactionEntity,
+} from '@actual-app/api/@types/loot-core/src/types/models/index.js';
+import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
+import type {
+  ActualConnectionState,
+  ActualReadFreshnessMode,
+  ActualReadinessStatus,
+  ActualReadinessStatusExtended,
   APIAccountEntity,
   APICategoryEntity,
   APICategoryGroupEntity,
   APIPayeeEntity,
   APIScheduleEntity,
   APITagEntity,
-} from '@actual-app/api/@types/loot-core/src/server/api-models.js';
-import type {
-  RuleEntity,
-  TransactionEntity,
-} from '@actual-app/api/@types/loot-core/src/types/models/index.js';
-import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
+  ExtendedActualApi,
+  HistoricalTransferApplyCandidateResult,
+  HistoricalTransferApplyResult,
+} from './actual-client/types.js';
 import {
   getDateDiffInDays,
   parseHistoricalTransferCandidateId,
-  shiftDateByDays,
-  toActualDbDate,
 } from '../analysis/historical-transfer-utils.js';
 import { validateActualAuthStartupConfig } from '../auth/startup-guard.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { BudgetFile } from '../types/index.js';
-import { nameResolver } from '../utils/name-resolver.js';
+import {
+  describeBudgetIdentifiers,
+  getBudgetDownloadIdentifier,
+  loadBudgetByResolvedIdentifier,
+  matchesBudgetIdentifier,
+} from './actual-client/budget-resolution.js';
+import {
+  invalidateAllReadState,
+  invalidateNameResolutionState,
+} from './actual-client/cache-helpers.js';
+import {
+  getHistoricalTransferCounterpartIds,
+  getHistoricalTransferInternalLayer,
+  isValidHistoricalTransferTransaction,
+} from './actual-client/historical-transfers.js';
 
-type ExtendedActualApi = typeof api & {
-  createSchedule?: (args: Record<string, unknown>) => Promise<string>;
-  updateSchedule?: (
-    id: string,
-    args: Record<string, unknown>,
-    resetNextDate?: boolean,
-  ) => Promise<unknown>;
-  deleteSchedule?: (id: string) => Promise<unknown>;
-  getSchedules?: () => Promise<APIScheduleEntity[]>;
-  runBankSync?: (options?: { accountId: string }) => Promise<unknown>;
-  getServerVersion?: () => Promise<{ error?: string } | { version: string }>;
-  getIDByName?: (args: { type: string; string: string }) => Promise<string>;
-  internal?: {
-    send?: (name: string, args: Record<string, unknown>) => Promise<unknown>;
-    db?: {
-      getTransaction?: (id: string) => Promise<HistoricalTransferInternalTransaction | null>;
-      all?: (sql: string, params: unknown[]) => Promise<Array<{ id: string }>>;
-    };
-  };
-};
-
-interface HistoricalTransferInternalTransaction {
-  id: string;
-  account: string;
-  amount: number;
-  date: string;
-  payee?: string | null;
-  category?: string | null;
-  transfer_id?: string | null;
-  is_parent?: boolean | null;
-  is_child?: boolean | null;
-  starting_balance_flag?: boolean | null;
-  tombstone?: boolean | null;
-}
-
-interface HistoricalTransferApplyCandidateResult {
-  candidateId: string;
-  transactionIds: [string, string];
-  status: 'applied' | 'rejected';
-  categoriesCleared?: boolean;
-  reason?: string;
-}
-
-export interface HistoricalTransferApplyResult {
-  requestedCandidateCount: number;
-  appliedCount: number;
-  rejectedCount: number;
-  results: HistoricalTransferApplyCandidateResult[];
-}
+export type {
+  ActualConnectionState,
+  ActualConnectionStatus,
+  ActualReadFreshnessMode,
+  ActualReadinessStatus,
+  ActualReadinessStatusExtended,
+  HistoricalTransferApplyResult,
+} from './actual-client/types.js';
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
-
-export type ActualReadFreshnessMode = 'cached' | 'strict-live';
-
-export type ActualConnectionStatus = 'disconnected' | 'initializing' | 'ready' | 'error';
-
-export interface ActualConnectionState {
-  status: ActualConnectionStatus;
-  lastReadyAt: string | null;
-  lastSyncAt: string | null;
-  lastError: string | null;
-  debugError: string | null;
-  activeBudgetId: string | null;
-}
-
-export interface ActualReadinessStatus extends ActualConnectionState {
-  ready: boolean;
-  reason: string;
-}
-
-export interface ActualReadinessStatusExtended extends ActualReadinessStatus {
-  diagnostics: {
-    serverUrl: string | null;
-    budgetSyncId: boolean;
-    hasPassword: boolean;
-    hasSessionToken: boolean;
-    hasEncryptionPassword: boolean;
-    autoSyncMinutes: string | null;
-    readFreshnessMode: ActualReadFreshnessMode;
-    retrying: boolean;
-  };
-}
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   status: 'disconnected',
@@ -268,77 +215,6 @@ function markSyncSuccess(): void {
   });
 }
 
-function invalidateAllReadState(): void {
-  cacheService.clear();
-  nameResolver.clearCache();
-}
-
-function invalidateNameResolutionState(): void {
-  nameResolver.clearCache();
-}
-
-function getHistoricalTransferInternalLayer(): {
-  send: NonNullable<NonNullable<ExtendedActualApi['internal']>['send']>;
-  db: NonNullable<NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>>;
-} {
-  const { internal } = extendedApi;
-
-  if (!internal?.send || !internal.db?.getTransaction || !internal.db?.all) {
-    throw new Error(
-      'Historical transfer tools require Actual local data access. This environment does not expose the internal Actual data layer needed to link existing transactions safely.',
-    );
-  }
-
-  const { send, db } = internal;
-
-  return {
-    send,
-    db,
-  };
-}
-
-function isValidHistoricalTransferTransaction(
-  transaction: HistoricalTransferInternalTransaction | null,
-): transaction is HistoricalTransferInternalTransaction {
-  return Boolean(
-    transaction &&
-    !transaction.tombstone &&
-    !transaction.starting_balance_flag &&
-    !transaction.is_parent &&
-    !transaction.is_child &&
-    !transaction.transfer_id,
-  );
-}
-
-async function getHistoricalTransferCounterpartIds(
-  db: NonNullable<NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>>,
-  transaction: HistoricalTransferInternalTransaction,
-): Promise<string[]> {
-  const rows = (await db.all(
-    `SELECT id
-       FROM v_transactions
-      WHERE tombstone = 0
-        AND id != ?
-        AND (starting_balance_flag = 0 OR starting_balance_flag IS NULL)
-        AND (is_parent = 0 OR is_parent IS NULL)
-        AND (is_child = 0 OR is_child IS NULL)
-        AND transfer_id IS NULL
-        AND account != ?
-        AND amount = ?
-        AND date >= ?
-        AND date <= ?`,
-    [
-      transaction.id,
-      transaction.account,
-      transaction.amount * -1,
-      toActualDbDate(shiftDateByDays(transaction.date, -3)),
-      toActualDbDate(shiftDateByDays(transaction.date, 3)),
-    ],
-  )) as Array<{ id: string }>;
-
-  return rows.map((row) => row.id);
-}
-
 function createLiveSyncRequiredError(error: unknown): Error {
   const message = error instanceof Error ? error.message : String(error ?? 'unknown error');
   return new Error(`Live sync required before read failed: ${message}`);
@@ -488,41 +364,6 @@ async function initializeApiConnection(): Promise<void> {
   await api.init(config as any);
 }
 
-function getBudgetIdentifiers(budget: BudgetFile): string[] {
-  return [budget.groupId, budget.cloudFileId, budget.id].filter(
-    (value): value is string => typeof value === 'string' && value.length > 0,
-  );
-}
-
-function matchesBudgetIdentifier(budget: BudgetFile, identifier: string): boolean {
-  return getBudgetIdentifiers(budget).includes(identifier);
-}
-
-function getBudgetDownloadIdentifier(budget: BudgetFile): string {
-  return budget.groupId || budget.cloudFileId || budget.id || '';
-}
-
-function getBudgetLocalIdentifier(budget: BudgetFile): string | null {
-  return typeof budget.id === 'string' && budget.id.length > 0 ? budget.id : null;
-}
-
-function describeBudgetIdentifiers(budget: BudgetFile): string {
-  return getBudgetIdentifiers(budget).join(' | ');
-}
-
-async function loadBudgetByResolvedIdentifier(identifier: string): Promise<string> {
-  const budgets: BudgetFile[] = await api.getBudgets();
-  const matchingBudget = budgets.find((budget) => matchesBudgetIdentifier(budget, identifier));
-  const loadableBudgetId = matchingBudget ? getBudgetLocalIdentifier(matchingBudget) : null;
-
-  if (loadableBudgetId && typeof api.loadBudget === 'function') {
-    await api.loadBudget(loadableBudgetId);
-    return loadableBudgetId;
-  }
-
-  return identifier;
-}
-
 /**
  * Download and load budget during initialization
  * @returns Object with budgetId and budgets array
@@ -545,7 +386,7 @@ async function downloadAndLoadBudget(): Promise<{
         .map((b) => `${b.name || 'unnamed'} (${describeBudgetIdentifiers(b)})`)
         .join(', ');
       console.error(
-        `[CONNECTION] ⚠️  ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
+        `[CONNECTION] ??  ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
       );
       console.error(`[CONNECTION] Available budgets: ${availableIds}`);
       console.error(
@@ -583,7 +424,7 @@ async function downloadAndLoadBudget(): Promise<{
 
   if (budgetPassword && hasEncryptionMetadata && !isEncrypted) {
     console.error(
-      '[CONNECTION] ⚠️  Encryption password provided but budget is not encrypted. Ignoring password.',
+      '[CONNECTION] ??  Encryption password provided but budget is not encrypted. Ignoring password.',
     );
   }
 
@@ -610,13 +451,13 @@ function logSuccessfulInitialization(
   // Track initialization time for performance logging
   initializationTime = Date.now() - startTime;
   if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-    console.error(`[PERF] 🔌 API initialized in ${initializationTime}ms`);
+    console.error(`[PERF] ?? API initialized in ${initializationTime}ms`);
   }
 
   // Find the budget name for logging
   const loadedBudget = budgets.find((b) => matchesBudgetIdentifier(b, budgetId));
   const budgetName = loadedBudget?.name || budgetId;
-  console.error(`✓ Budget loaded: ${budgetName}`);
+  console.error(`? Budget loaded: ${budgetName}`);
   if (process.env.ACTUAL_BUDGET_SYNC_ID) {
     console.error(`  Using ACTUAL_BUDGET_SYNC_ID: ${budgetId}`);
   }
@@ -637,7 +478,7 @@ function handleInitializationError(error: unknown): never {
     errorStr.includes('migration') ||
     errorStr.includes('database is out of sync')
   ) {
-    console.error('✗ Database migration error detected');
+    console.error('? Database migration error detected');
     console.error('  Error:', errorMessage);
     console.error('');
     console.error('  This is an Actual Budget server issue, not an MCP server issue.');
@@ -664,7 +505,7 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
       const timeSaved = initializationTime || 600;
       console.error(
-        `[PERF] ⚡ Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
+        `[PERF] ? Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
       );
     }
     return;
@@ -742,14 +583,14 @@ export function startBackgroundRetry(): void {
     backgroundRetryTimer = setTimeout(async () => {
       try {
         await initActualApi(true);
-        console.error('[CONNECTION] ✅ Background retry succeeded!');
+        console.error('[CONNECTION] ? Background retry succeeded!');
         backgroundRetryTimer = null;
       } catch (error) {
         if (attempt < MAX_RETRY_ATTEMPTS) {
           retry();
         } else {
           console.error(
-            `[CONNECTION] ❌ All ${MAX_RETRY_ATTEMPTS} retry attempts failed. Manual intervention required.`,
+            `[CONNECTION] ? All ${MAX_RETRY_ATTEMPTS} retry attempts failed. Manual intervention required.`,
           );
           backgroundRetryTimer = null;
         }
@@ -791,14 +632,14 @@ function setupAutoSync(): void {
     try {
       await sync();
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-        console.error(`[AUTO-SYNC] ✓ Budget synced successfully`);
+        console.error(`[AUTO-SYNC] ? Budget synced successfully`);
       }
     } catch (error) {
       console.error('[AUTO-SYNC] Failed to sync budget:', error);
     }
   }, intervalMs);
 
-  console.error(`✓ Auto-sync enabled: every ${minutes} minute${minutes !== 1 ? 's' : ''}`);
+  console.error(`? Auto-sync enabled: every ${minutes} minute${minutes !== 1 ? 's' : ''}`);
 }
 
 /**
@@ -1414,7 +1255,7 @@ export async function applyHistoricalTransfers(
   candidateIds: string[],
 ): Promise<HistoricalTransferApplyResult> {
   return ensureConnection(async () => {
-    const { send, db } = getHistoricalTransferInternalLayer();
+    const { send, db } = getHistoricalTransferInternalLayer(extendedApi);
     const uniqueCandidateIds = [...new Set(candidateIds)];
     const [accounts, payees] = await Promise.all([api.getAccounts(), api.getPayees()]);
     const accountsById = new Map(accounts.map((account) => [account.id, account]));
@@ -1817,7 +1658,7 @@ export async function downloadBudget(budgetId: string, password?: string): Promi
       await api.downloadBudget(budgetId);
     }
 
-    const activeBudgetId = await loadBudgetByResolvedIdentifier(budgetId);
+    const activeBudgetId = await loadBudgetByResolvedIdentifier(api, budgetId);
     markConnectionReady(activeBudgetId);
     markSyncSuccess();
     invalidateAllReadState();
