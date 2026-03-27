@@ -211,3 +211,4 @@ The tool smoke runner talks to the built stdio server over MCP and validates the
 - `pnpm run test:tools:all` runs both phases, skipping the sandbox phase when no sandbox budget ID is configured.
 
 The live smoke pass enables `--enable-nini` so safe budget-file discovery via `get-budget-files` is covered without exposing write tools. The sandbox pass uses test-prefixed fixtures and switches back to the configured budget before exiting.
+For a persistent destructive-test budget, the recommended budget name is `Sandbox`. Set `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID` to that budget's sync/group ID so the write-phase smoke tests always target the dedicated sandbox instead of your primary budget.
