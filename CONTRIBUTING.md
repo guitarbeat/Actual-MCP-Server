@@ -39,7 +39,17 @@ We also provide a `.pre-commit-config.yaml` for users of the [pre-commit](https:
 
 - Never commit real credentials, bearer tokens, sync IDs, local machine paths, or client-specific configuration files.
 - Keep local assistant and IDE state out of git. The repository ignores `.agent/`, `.cursor/`, and `.jules/`.
+- Keep private financial data and reconciliation artifacts under `.local-reconciliation/` only.
+- Treat `.actual-data/`, `.playwright-cli/`, and `tmp/` as local-only machine state, not project assets.
 - Run the secret-scanning checks before pushing changes intended for public branches.
+
+## Public Vs. Private Files
+
+Use these rules when deciding where a file belongs:
+
+- Put public code, tests, docs, and config in tracked paths like `mcp-server/`, `docs/`, `.github/`, and the repo root.
+- Put bank exports, statement PDFs, budget backups, reconciliation CSVs, audit reports, and scratch analysis under `.local-reconciliation/`.
+- Do not create new top-level folders for local financial work. Extend `.local-reconciliation/` instead so the public/private boundary stays obvious.
 
 ## Engineering Notes
 

@@ -9,6 +9,12 @@ const packageRoot = resolve(__dirname, '..');
 const repoRoot = resolve(packageRoot, '..');
 
 const FORBIDDEN_TRACKED_PATH_PREFIXES = ['.agent/', '.cursor/', '.jules/'];
+const FORBIDDEN_LOCAL_ONLY_TRACKED_PATH_PREFIXES = [
+  '.actual-data/',
+  '.local-reconciliation/',
+  '.playwright-cli/',
+  'tmp/',
+];
 const FORBIDDEN_TRACKED_PATHS = new Set(['.env', '.env.local', '.env.production']);
 const CONTENT_SCAN_EXCLUDES = new Set(['mcp-server/scripts/public-repo-check.ts']);
 const TEXT_FILE_EXTENSIONS = new Set([
@@ -75,6 +81,10 @@ function getTrackedPathFindings(files: string[]): string[] {
 
     if (FORBIDDEN_TRACKED_PATH_PREFIXES.some((prefix) => filePath.startsWith(prefix))) {
       findings.push(`Tracked local-assistant artifact is not allowed: ${filePath}`);
+    }
+
+    if (FORBIDDEN_LOCAL_ONLY_TRACKED_PATH_PREFIXES.some((prefix) => filePath.startsWith(prefix))) {
+      findings.push(`Tracked local-only workspace artifact is not allowed: ${filePath}`);
     }
   });
 
