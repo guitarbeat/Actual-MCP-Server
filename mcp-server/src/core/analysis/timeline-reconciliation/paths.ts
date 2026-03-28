@@ -10,13 +10,14 @@ import {
   TIMELINE_RECON_MANUAL_REVIEW_FILENAME,
 } from './constants.js';
 import type { TimelineReconPaths } from './types.js';
+import { resolveLocalReconciliationPath } from '../local-reconciliation-workspace.js';
 
 function repoRootFromModule(): string {
   return resolve(fileURLToPath(new URL('../../../../../', import.meta.url)));
 }
 
 export function resolveTimelineReconPaths(repoRoot = repoRootFromModule()): TimelineReconPaths {
-  const reconDir = resolve(repoRoot, '3-26-recon');
+  const reconDir = resolveLocalReconciliationPath('timeline', repoRoot);
 
   return {
     repoRoot,
