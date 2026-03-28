@@ -34,17 +34,15 @@ Thumbs.db
 .agent
 .jules
 
-# Cache
+# Private local workspaces and cache
 .eslintcache
 .smart-coding-cache
 .actual-data
+.local-reconciliation/
 .playwright-cli
 
 # Upstream comparison artifacts
 upstream-comparison
-
-# Private local reconciliation workspace
-.local-reconciliation/
 
 # Legacy local reconciliation/report outputs
 docs/budget-side-audit-*.md

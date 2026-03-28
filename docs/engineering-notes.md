@@ -2,6 +2,13 @@
 
 This repository keeps a few implementation notes in version control so contributors can preserve hard-earned context without relying on personal local tooling.
 
+## Repository Boundaries
+
+- Keep public code and documentation in tracked paths only.
+- Keep private financial exports, statement files, backups, and reconciliation scratch work under `.local-reconciliation/`.
+- Treat `.actual-data/`, `.playwright-cli/`, and `tmp/` as disposable local state, not durable project structure.
+- Prefer extending the existing private workspace layout over adding new ignored top-level directories.
+
 ## Performance
 
 - Prefer persistent connections and cache reuse over re-initializing the Actual API on every request.

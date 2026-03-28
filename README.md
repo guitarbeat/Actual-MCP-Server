@@ -8,6 +8,16 @@ This repository contains a source-buildable Actual Budget MCP server in [`mcp-se
 - [`mcp-server/README.md`](./mcp-server/README.md) is the authoritative guide for installation, configuration, client setup, and tool inventory.
 - [`docs/engineering-notes.md`](./docs/engineering-notes.md) contains contributor-facing implementation notes.
 
+## Public Vs. Private Layout
+
+This repository is organized around a simple rule:
+
+- Public, shareable project assets stay in tracked paths such as `mcp-server/`, `docs/`, `.github/`, and the root config files.
+- Private financial exports, reconciliation scratch files, backups, and other local-only artifacts belong under `.local-reconciliation/`, which is gitignored on purpose.
+- Local runtime caches such as `.actual-data/`, `.playwright-cli/`, and `tmp/` are also private and should never be committed.
+
+If you need a place for budget-specific working files, put them under `.local-reconciliation/` instead of creating a new top-level folder.
+
 ## Quick Start
 
 ```bash
@@ -50,13 +60,18 @@ If you want both:
 - Rotate any previously exposed credentials, bearer tokens, sync IDs, and local inspector tokens before sharing the repository.
 - Rewrite git history to remove previously committed secret-bearing files or values before pushing a public branch.
 - Run `pre-commit run --all-files` and `pnpm --filter actual-mcp public:check` to verify the working tree is public-safe.
+- Keep private reconciliation data, statement exports, backup zips, and ad hoc audit outputs under `.local-reconciliation/` only.
 
 ## Repository Layout
 
 ```text
 .
-├── mcp-server/           # Actual Budget MCP server package
-├── docs/                 # Contributor-facing engineering notes
-├── render.yaml           # Render blueprint for the MCP server
-└── .pre-commit-config.yaml
++-- mcp-server/             # Public product code and package scripts
++-- docs/                   # Public contributor docs
++-- .github/                # Public CI and repo automation
++-- .local-reconciliation/  # Private local-only financial workspace (ignored)
++-- .actual-data/           # Private local Actual cache/state (ignored)
++-- tmp/                    # Private scratch outputs (ignored)
++-- render.yaml             # Public deployment blueprint
+`-- .pre-commit-config.yaml # Public repo hygiene checks
 ```
