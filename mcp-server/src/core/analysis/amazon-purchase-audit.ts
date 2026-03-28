@@ -11,6 +11,7 @@ import {
   getCategoryGroups,
   updateTransaction,
 } from '../api/actual-client.js';
+import { resolveLocalReconciliationPath } from './local-reconciliation-workspace.js';
 import { fetchAllAccounts } from '../data/fetch-accounts.js';
 import { fetchAllOnBudgetTransactionsWithMetadata } from '../data/fetch-transactions.js';
 import type { Account, Category, CategoryGroup, Transaction } from '../types/domain.js';
@@ -389,7 +390,7 @@ function repoRootFromModule(): string {
 }
 
 export function resolveAmazonWorkspacePaths(repoRoot = repoRootFromModule()): AmazonWorkspacePaths {
-  const amazonDataDir = resolve(repoRoot, 'downloaded-amazon-data');
+  const amazonDataDir = resolveLocalReconciliationPath('amazon', repoRoot);
 
   return {
     repoRoot,
