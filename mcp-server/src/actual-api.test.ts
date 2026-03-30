@@ -794,6 +794,32 @@ describe('Auto-load functionality', () => {
       const readiness = await actualApi.getReadinessStatus();
       expect(readiness.lastError).toBe('live_sync_failed');
     });
+
+    it('should preserve structured non-Error failures from read operations', async () => {
+      vi.mocked(api.getAccounts).mockRejectedValueOnce({
+        message: 'Accounts unavailable',
+        code: 'E_ACCOUNTS',
+      });
+
+      await expect(actualApi.getAccounts()).rejects.toThrow(
+        '{"message":"Accounts unavailable","code":"E_ACCOUNTS"}',
+      );
+    });
+
+    it('should serialize connection-like object failures into readiness debug state', async () => {
+      vi.mocked(api.getAccounts).mockRejectedValue({
+        message: 'Network timeout',
+        code: 'ETIMEDOUT',
+      });
+
+      await expect(actualApi.getAccounts()).rejects.toThrow(
+        '{"message":"Network timeout","code":"ETIMEDOUT"}',
+      );
+
+      const readiness = await actualApi.getReadinessStatus();
+      expect(readiness.lastError).toBe('connection_timeout');
+      expect(readiness.debugError).toBe('{"message":"Network timeout","code":"ETIMEDOUT"}');
+    });
   });
 
   describe('updateTransaction', () => {

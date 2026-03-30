@@ -4,6 +4,7 @@
 
 import { ZodError } from 'zod';
 import type { ContentItem, ErrorContext, ErrorPayload, MCPResponse } from './types.js';
+import { serializeUnknownError } from '../utils/error-serialization.js';
 
 /**
  * Default error suggestion when no specific suggestion can be inferred
@@ -226,25 +227,7 @@ export function errorFromCatch(err: unknown, context: ErrorContext = {}): MCPRes
  * @returns Serialized error message
  */
 function serializeErrorMessage(err: unknown): string {
-  try {
-    if (err instanceof Error) {
-      return err.message || 'Unknown error';
-    }
-    if (typeof err === 'string') {
-      return err;
-    }
-    if (err === null || err === undefined) {
-      return String(err);
-    }
-    // Try to stringify, but catch circular reference errors
-    try {
-      return JSON.stringify(err);
-    } catch {
-      return String(err);
-    }
-  } catch {
-    return 'Unknown error (could not serialize)';
-  }
+  return serializeUnknownError(err);
 }
 
 /**
