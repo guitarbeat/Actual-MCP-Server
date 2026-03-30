@@ -34,10 +34,11 @@ Thumbs.db
 .agent
 .jules
 
-# Cache
+# Private local workspaces and cache
 .eslintcache
 .smart-coding-cache
 .actual-data
+.local-reconciliation/
 .playwright-cli
 
 # Upstream comparison artifacts
