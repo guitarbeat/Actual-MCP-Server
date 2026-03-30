@@ -44,6 +44,7 @@ import {
   getHistoricalTransferInternalLayer,
   isValidHistoricalTransferTransaction,
 } from './actual-client/historical-transfers.js';
+import { normalizeUnknownError, serializeUnknownError } from '../utils/error-serialization.js';
 
 export type {
   ActualConnectionState,
@@ -102,7 +103,7 @@ function isStrictLiveReadMode(): boolean {
 }
 
 function sanitizeConnectionError(error: unknown): string {
-  const errorMessage = error instanceof Error ? error.message : String(error ?? 'unknown error');
+  const errorMessage = serializeUnknownError(error ?? 'unknown error');
   const errorStr = errorMessage.toLowerCase();
 
   if (errorStr.includes('live sync required before read failed')) {
@@ -200,7 +201,7 @@ function markConnectionReady(budgetId: string): void {
 
 function markConnectionError(error: unknown): void {
   initialized = false;
-  const rawMessage = error instanceof Error ? error.message : String(error ?? 'unknown');
+  const rawMessage = serializeUnknownError(error ?? 'unknown');
   updateConnectionState({
     status: 'error',
     lastError: sanitizeConnectionError(error),
@@ -216,7 +217,7 @@ function markSyncSuccess(): void {
 }
 
 function createLiveSyncRequiredError(error: unknown): Error {
-  const message = error instanceof Error ? error.message : String(error ?? 'unknown error');
+  const message = serializeUnknownError(error ?? 'unknown error');
   return new Error(`Live sync required before read failed: ${message}`);
 }
 
@@ -303,7 +304,8 @@ async function checkConnectionHealth(): Promise<boolean> {
     await api.getAccounts();
     return true;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const normalizedError = normalizeUnknownError(error);
+    const errorMessage = normalizedError.message;
     const errorStr = errorMessage.toLowerCase();
 
     // Check for connection-related errors
@@ -317,13 +319,21 @@ async function checkConnectionHealth(): Promise<boolean> {
       errorStr.includes('budget file') // Catch other budget-related errors
     ) {
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-        console.error('[CONNECTION] Health check failed - connection lost or budget closed');
+        console.error(
+          `[CONNECTION] Health check failed - connection lost or budget closed: ${errorMessage}`,
+        );
       }
-      markConnectionError(error);
+      markConnectionError(normalizedError);
       return false;
     }
 
-    // Other errors might be valid (e.g., no accounts), so assume connection is OK
+    // Unexpected non-connection errors should not flip readiness, but we still log them.
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error(
+        `[CONNECTION] Health check encountered a non-connection error but kept readiness: ${errorMessage}`,
+      );
+    }
+
     return true;
   } finally {
     checkingHealth = false;
@@ -841,7 +851,7 @@ async function ensureConnection<T>(
     try {
       return await operation();
     } catch (error) {
-      const resolvedError = error instanceof Error ? error : new Error(String(error));
+      const resolvedError = normalizeUnknownError(error);
       if (isConnectionError(resolvedError.message.toLowerCase())) {
         markConnectionError(resolvedError);
       }
@@ -857,10 +867,13 @@ async function ensureConnection<T>(
       await ensureReadConnectionAvailable();
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = normalizeUnknownError(error);
       const shouldRetry =
         isConnectionError(lastError.message.toLowerCase()) && attempt < maxRetries;
       if (!shouldRetry) {
+        if (isConnectionError(lastError.message.toLowerCase())) {
+          markConnectionError(lastError);
+        }
         throw lastError;
       }
 
