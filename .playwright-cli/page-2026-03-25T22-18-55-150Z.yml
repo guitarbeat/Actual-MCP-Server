@@ -1,0 +1,30 @@
+- generic [ref=e5]:
+  - img [ref=e7]
+  - generic [ref=e12]:
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]: Files
+        - button "Refresh" [ref=e29]:
+          - img [ref=e30]
+      - grid "Budget files" [ref=e32]:
+        - row "My Finances" [ref=e33]:
+          - gridcell "My Finances Available for download Menu" [ref=e34]:
+            - generic [ref=e35] [cursor=pointer]:
+              - generic [ref=e36]:
+                - generic [ref=e38]: My Finances
+                - generic [ref=e40]:
+                  - img [ref=e41]
+                  - generic [ref=e44]: Available for download
+              - button "Menu" [ref=e48]:
+                - img [ref=e49]
+      - generic [ref=e51]:
+        - button "Import file" [ref=e52]
+        - button "Create new file" [ref=e53] [cursor=pointer]
+    - button "Server online" [ref=e56]
+  - generic [ref=e19]:
+    - generic [ref=e20]:
+      - text: "Using server:"
+      - strong [ref=e21]: https://actual.alw.lol
+    - link "Change" [ref=e22] [cursor=pointer]:
+      - /url: /config-server
+  - generic [ref=e23]: "App: v26.3.0 | Server: v26.3.0"
