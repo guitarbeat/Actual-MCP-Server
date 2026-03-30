@@ -32,4 +32,4 @@ RUN echo 'if (typeof globalThis.navigator === "undefined") { globalThis.navigato
 
 ENV NODE_ENV=production
 EXPOSE 3000
-ENTRYPOINT ["node", "--require", "./polyfill.cjs", "build/index.js", "--sse", "--enable-write"]
+ENTRYPOINT ["node", "--require", "./polyfill.cjs", "build/index.js", "--sse", "--enable-bearer", "--enable-write"]
