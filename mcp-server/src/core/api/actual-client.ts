@@ -396,7 +396,7 @@ async function downloadAndLoadBudget(): Promise<{
         .map((b) => `${b.name || 'unnamed'} (${describeBudgetIdentifiers(b)})`)
         .join(', ');
       console.error(
-        `[CONNECTION] ??  ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
+        `[CONNECTION] WARNING: ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
       );
       console.error(`[CONNECTION] Available budgets: ${availableIds}`);
       console.error(
@@ -434,7 +434,7 @@ async function downloadAndLoadBudget(): Promise<{
 
   if (budgetPassword && hasEncryptionMetadata && !isEncrypted) {
     console.error(
-      '[CONNECTION] ??  Encryption password provided but budget is not encrypted. Ignoring password.',
+      '[CONNECTION] WARNING: Encryption password provided but budget is not encrypted. Ignoring password.',
     );
   }
 
@@ -461,13 +461,13 @@ function logSuccessfulInitialization(
   // Track initialization time for performance logging
   initializationTime = Date.now() - startTime;
   if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-    console.error(`[PERF] ?? API initialized in ${initializationTime}ms`);
+    console.error(`[PERF] API initialized in ${initializationTime}ms`);
   }
 
   // Find the budget name for logging
   const loadedBudget = budgets.find((b) => matchesBudgetIdentifier(b, budgetId));
   const budgetName = loadedBudget?.name || budgetId;
-  console.error(`? Budget loaded: ${budgetName}`);
+  console.error(`[CONNECTION] Budget loaded: ${budgetName}`);
   if (process.env.ACTUAL_BUDGET_SYNC_ID) {
     console.error(`  Using ACTUAL_BUDGET_SYNC_ID: ${budgetId}`);
   }
@@ -488,7 +488,7 @@ function handleInitializationError(error: unknown): never {
     errorStr.includes('migration') ||
     errorStr.includes('database is out of sync')
   ) {
-    console.error('? Database migration error detected');
+    console.error('[CONNECTION] Database migration error detected');
     console.error('  Error:', errorMessage);
     console.error('');
     console.error('  This is an Actual Budget server issue, not an MCP server issue.');
@@ -515,7 +515,7 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
       const timeSaved = initializationTime || 600;
       console.error(
-        `[PERF] ? Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
+        `[PERF] Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
       );
     }
     return;
@@ -593,14 +593,14 @@ export function startBackgroundRetry(): void {
     backgroundRetryTimer = setTimeout(async () => {
       try {
         await initActualApi(true);
-        console.error('[CONNECTION] ? Background retry succeeded!');
+        console.error('[CONNECTION] Background retry succeeded');
         backgroundRetryTimer = null;
       } catch (error) {
         if (attempt < MAX_RETRY_ATTEMPTS) {
           retry();
         } else {
           console.error(
-            `[CONNECTION] ? All ${MAX_RETRY_ATTEMPTS} retry attempts failed. Manual intervention required.`,
+            `[CONNECTION] All ${MAX_RETRY_ATTEMPTS} retry attempts failed. Manual intervention required.`,
           );
           backgroundRetryTimer = null;
         }
@@ -642,14 +642,14 @@ function setupAutoSync(): void {
     try {
       await sync();
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-        console.error(`[AUTO-SYNC] ? Budget synced successfully`);
+        console.error('[AUTO-SYNC] Budget synced successfully');
       }
     } catch (error) {
       console.error('[AUTO-SYNC] Failed to sync budget:', error);
     }
   }, intervalMs);
 
-  console.error(`? Auto-sync enabled: every ${minutes} minute${minutes !== 1 ? 's' : ''}`);
+  console.error(`[AUTO-SYNC] Enabled: every ${minutes} minute${minutes !== 1 ? 's' : ''}`);
 }
 
 /**

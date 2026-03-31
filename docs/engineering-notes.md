@@ -31,3 +31,9 @@ This repository keeps a few implementation notes in version control so contribut
 - Treat `mcp-server/src/index.ts` as a thin bootstrap layer only.
 - Keep `mcp-server/src/core/analysis/timeline-reconciliation.ts` as a thin facade; parser logic, heuristics, audit I/O, and apply flow now live under `mcp-server/src/core/analysis/timeline-reconciliation/`.
 - Keep `mcp-server/src/core/api/actual-client.ts` as the stable entrypoint, but prefer extracting pure helper concerns into `mcp-server/src/core/api/actual-client/` before growing the facade further.
+
+## Refactor Backlog
+
+- Split `mcp-server/src/core/analysis/amazon-purchase-audit.ts` by behavior so parsing, matching, categorization, and report formatting evolve independently while preserving the existing test surface.
+- Continue the `mcp-server/src/core/api/actual-client.ts` decomposition by extracting connection lifecycle, entity operations, transaction workflows, and budget/query helpers behind the current facade.
+- Defer `mcp-server/src/core/analysis/uncategorized-audit.ts` decomposition until the Amazon and Actual client refactors are scoped, then split shared heuristics and report assembly into focused helpers.

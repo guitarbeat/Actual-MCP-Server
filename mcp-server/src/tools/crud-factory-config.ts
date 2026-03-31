@@ -561,7 +561,7 @@ export const entityConfigurations = {
         '- Use create-tag to add new tags\n' +
         '- Use update-tag to modify tags\n\n' +
         'NOTES:\n' +
-        '- âš ï¸ WARNING: Deletion is permanent and cannot be undone',
+        '- WARNING: Deletion is permanent and cannot be undone',
       requiresWrite: true,
       category: 'core' as const,
     },
