@@ -19,7 +19,7 @@ describe('createHttpRuntime', () => {
     const { app } = createHttpRuntime({
       version: 'test',
       enableWrite: false,
-      enableNini: false,
+      enableAdvanced: false,
       enableBearer: true,
       bearerToken: '12345678901234567890123456789012',
     });
@@ -46,7 +46,7 @@ describe('createHttpRuntime', () => {
     const { app } = createHttpRuntime({
       version: 'test',
       enableWrite: false,
-      enableNini: false,
+      enableAdvanced: false,
       enableBearer: false,
     });
 
@@ -72,7 +72,7 @@ describe('createHttpRuntime', () => {
     const { app } = createHttpRuntime({
       version: 'test',
       enableWrite: false,
-      enableNini: false,
+      enableAdvanced: false,
       enableBearer: false,
     });
 

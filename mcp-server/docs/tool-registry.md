@@ -54,7 +54,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `update-tag`: Update an existing tag in Actual Budget.
 - `update-transaction`: Modify an existing transaction. Use this when the user wants to fix or change transaction details.
 
-## Advanced (`--enable-nini`)
+## Advanced (`--enable-advanced`)
 
 - `close-account`: Close an account in Actual Budget. This keeps transaction history but marks the account as closed.
 - `create-account`: Add a new account to the budget. Use this when the user wants to set up a new bank account, credit card, or investment account.

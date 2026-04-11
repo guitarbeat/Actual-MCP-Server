@@ -604,7 +604,7 @@ export const entityConfigurations = {
         '- balanceCurrent stores the reported bank balance separately from ledger history\n' +
         "- Off-budget accounts don't affect budget calculations",
       requiresWrite: true,
-      category: 'nini' as const,
+      category: 'advanced' as const,
     },
     update: {
       schema: UpdateAccountSchema,
@@ -650,7 +650,7 @@ export const entityConfigurations = {
         '- Consider close-account instead to keep transaction history\n' +
         '- Use get-accounts to find the account ID first',
       requiresWrite: true,
-      category: 'nini' as const,
+      category: 'advanced' as const,
     },
   } satisfies EntityCRUDConfig<
     typeof CreateAccountSchema,

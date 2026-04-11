@@ -4,7 +4,7 @@ Actual Budget MCP server for Claude Desktop, Codex, Cursor, and other MCP client
 
 ## Highlights
 
-- Actual Budget reads and writes over MCP, with separate read-only, write, and advanced (`--enable-nini`) tool surfaces.
+- Actual Budget reads and writes over MCP, with separate read-only, write, and advanced (`--enable-advanced`) tool surfaces.
 - Declarative MCP registration for tools, prompts, and resources under `src/mcp/`.
 - Transfer-aware transaction creation, starting-balance repair, account reconciliation, budget planning, schedule management, and batch transaction import.
 - Hono-based remote runtime with streamable HTTP MCP transport, bearer auth, health checks, and stdio support for desktop clients.
@@ -58,7 +58,7 @@ node build/index.js --sse --enable-write --enable-bearer
 Useful flags:
 
 - `--enable-write` exposes write-capable tools
-- `--enable-nini` exposes advanced account and budget-file tools
+- `--enable-advanced` exposes advanced account and budget-file tools
 - `--enable-bearer` requires `BEARER_TOKEN`, enforces a minimum token length at startup, and protects the remote `/mcp` endpoint
 - `--host` and `--port` override the HTTP listener
 
@@ -177,7 +177,7 @@ Generated from the declarative MCP modules under `src/mcp/`. The current surface
 
 - 16 read-only core tools
 - 30 write-enabled core tools
-- 8 advanced `--enable-nini` tools
+- 8 advanced `--enable-advanced` tools
 - 3 prompts
 - 6 static resources
 - 5 templated resources
@@ -207,8 +207,8 @@ The inspector runs locally and should never be committed with live session URLs,
 The tool smoke runner talks to the built stdio server over MCP and validates the tool surface in two phases:
 
 - `pnpm run test:tools:live` runs read-only live checks against the configured budget and forces `ACTUAL_READ_FRESHNESS_MODE=strict-live` for the spawned server.
-- `pnpm run test:tools:sandbox` runs the full write and `--enable-nini` pass only when `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID` is set.
+- `pnpm run test:tools:sandbox` runs the full write and `--enable-advanced` pass only when `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID` is set.
 - `pnpm run test:tools:all` runs both phases, skipping the sandbox phase when no sandbox budget ID is configured.
 
-The live smoke pass enables `--enable-nini` so safe budget-file discovery via `get-budget-files` is covered without exposing write tools. The sandbox pass uses test-prefixed fixtures and switches back to the configured budget before exiting.
+The live smoke pass enables `--enable-advanced` so safe budget-file discovery via `get-budget-files` is covered without exposing write tools. The sandbox pass uses test-prefixed fixtures and switches back to the configured budget before exiting.
 For a persistent destructive-test budget, the recommended budget name is `Sandbox`. Set `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID` to that budget's sync/group ID so the write-phase smoke tests always target the dedicated sandbox instead of your primary budget.

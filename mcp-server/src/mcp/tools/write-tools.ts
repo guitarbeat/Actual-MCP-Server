@@ -33,8 +33,8 @@ export const writeToolDefinitions = [
   defineLegacyTool({ ...applyHistoricalTransfers, requiresWrite: true, category: 'core' }),
   defineLegacyTool({ ...updateTransaction, requiresWrite: true, category: 'core' }),
   defineLegacyTool({ ...deleteTransaction, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...closeAccount, requiresWrite: true, category: 'nini' }),
-  defineLegacyTool({ ...reopenAccount, requiresWrite: true, category: 'nini' }),
-  defineLegacyTool({ ...holdBudget, requiresWrite: true, category: 'nini' }),
-  defineLegacyTool({ ...resetBudgetHold, requiresWrite: true, category: 'nini' }),
+  defineLegacyTool({ ...closeAccount, requiresWrite: true, category: 'advanced' }),
+  defineLegacyTool({ ...reopenAccount, requiresWrite: true, category: 'advanced' }),
+  defineLegacyTool({ ...holdBudget, requiresWrite: true, category: 'advanced' }),
+  defineLegacyTool({ ...resetBudgetHold, requiresWrite: true, category: 'advanced' }),
 ];

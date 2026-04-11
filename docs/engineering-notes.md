@@ -37,3 +37,4 @@ This repository keeps a few implementation notes in version control so contribut
 - Split `mcp-server/src/core/analysis/amazon-purchase-audit.ts` by behavior so parsing, matching, categorization, and report formatting evolve independently while preserving the existing test surface.
 - Continue the `mcp-server/src/core/api/actual-client.ts` decomposition by extracting connection lifecycle, entity operations, transaction workflows, and budget/query helpers behind the current facade.
 - Defer `mcp-server/src/core/analysis/uncategorized-audit.ts` decomposition until the Amazon and Actual client refactors are scoped, then split shared heuristics and report assembly into focused helpers.
+- Split `mcp-server/src/tools/crud-factory-config.ts` by entity domain so account, transaction, and metadata tool definitions stop accumulating in a single 800+ line registry.

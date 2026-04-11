@@ -76,10 +76,10 @@ async function buildToolCollections(): Promise<{
   resources: ResourceDefinition[];
 }> {
   const { getToolDefinitions, promptDefinitions, resourceDefinitions } = await loadMcpSurface();
-  const readOnlyCore = getToolDefinitions({ enableWrite: false, enableNini: false });
-  const writeAndReadCore = getToolDefinitions({ enableWrite: true, enableNini: false });
+  const readOnlyCore = getToolDefinitions({ enableWrite: false, enableAdvanced: false });
+  const writeAndReadCore = getToolDefinitions({ enableWrite: true, enableAdvanced: false });
   const writeCore = writeAndReadCore.filter((tool) => tool.requiresWrite);
-  const advanced = getToolDefinitions({ enableWrite: true, enableNini: true }).filter(
+  const advanced = getToolDefinitions({ enableWrite: true, enableAdvanced: true }).filter(
     (tool) => !writeAndReadCore.some((candidate) => candidate.name === tool.name),
   );
 
@@ -105,7 +105,7 @@ async function buildReadmeToolSurface(): Promise<string> {
     '',
     `- ${readOnlyCore.length} read-only core tools`,
     `- ${writeCore.length} write-enabled core tools`,
-    `- ${advanced.length} advanced \`--enable-nini\` tools`,
+    `- ${advanced.length} advanced \`--enable-advanced\` tools`,
     `- ${prompts.length} prompts`,
     `- ${staticResources.length} static resources`,
     `- ${templateResources.length} templated resources`,
@@ -132,7 +132,7 @@ async function buildRegistryDocument(): Promise<string> {
     '',
     formatToolList(writeCore),
     '',
-    '## Advanced (`--enable-nini`)',
+    '## Advanced (`--enable-advanced`)',
     '',
     formatToolList(advanced),
     '',

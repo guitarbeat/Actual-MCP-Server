@@ -15,16 +15,16 @@ export const toolDefinitions: DeclarativeToolDefinition[] = [
 
 export function getToolDefinitions(options: {
   enableWrite: boolean;
-  enableNini: boolean;
+  enableAdvanced: boolean;
 }): DeclarativeToolDefinition[] {
-  const { enableWrite, enableNini } = options;
+  const { enableWrite, enableAdvanced } = options;
 
   return toolDefinitions.filter((tool) => {
     if (tool.requiresWrite && !enableWrite) {
       return false;
     }
 
-    if (tool.category === 'nini' && !enableNini) {
+    if (tool.category === 'advanced' && !enableAdvanced) {
       return false;
     }
 
@@ -34,7 +34,7 @@ export function getToolDefinitions(options: {
 
 export function registerTools(
   server: McpServer,
-  options: { enableWrite: boolean; enableNini: boolean },
+  options: { enableWrite: boolean; enableAdvanced: boolean },
 ): void {
   const availableTools = getToolDefinitions(options);
 

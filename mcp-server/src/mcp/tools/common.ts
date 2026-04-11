@@ -1,7 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ToolInput } from '../../core/types/index.js';
 
-export type ToolCategory = 'core' | 'nini';
+export type ToolCategory = 'core' | 'advanced';
 
 export interface DeclarativeToolDefinition {
   name: string;

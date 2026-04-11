@@ -34,7 +34,8 @@ const {
     sse: useHttpTransport,
     'enable-write': enableWrite,
     'enable-bearer': enableBearer,
-    'enable-nini': enableNini,
+    'enable-advanced': enableAdvancedFlag,
+    'enable-nini': enableNiniAlias,
     port,
     'test-resources': testResourcesOption,
     'test-custom': testCustomOption,
@@ -45,6 +46,7 @@ const {
     sse: { type: 'boolean', default: false },
     'enable-write': { type: 'boolean', default: false },
     'enable-bearer': { type: 'boolean', default: false },
+    'enable-advanced': { type: 'boolean', default: false },
     'enable-nini': { type: 'boolean', default: false },
     port: { type: 'string' },
     'test-resources': { type: 'boolean', default: false },
@@ -53,6 +55,12 @@ const {
   },
   allowPositionals: true,
 });
+
+const enableAdvanced = enableAdvancedFlag || enableNiniAlias;
+
+if (enableNiniAlias) {
+  console.error('Warning: --enable-nini is deprecated. Use --enable-advanced instead.');
+}
 
 const resolvedPort = port
   ? Number.parseInt(port, 10)
@@ -205,7 +213,7 @@ async function main(): Promise<void> {
     activeHttpRuntime = createHttpRuntime({
       version,
       enableWrite,
-      enableNini,
+      enableAdvanced,
       enableBearer,
       bearerToken: process.env.BEARER_TOKEN,
     });
@@ -230,7 +238,7 @@ async function main(): Promise<void> {
   activeServer = createActualMcpServer({
     version,
     enableWrite,
-    enableNini,
+    enableAdvanced,
   });
   const transport = new StdioServerTransport();
   await activeServer.connect(transport);

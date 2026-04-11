@@ -339,8 +339,8 @@ async function assertSurfaceCounts(): Promise<void> {
     { label: 'default', flags: [], expectedCount: 16 },
     { label: 'enable-write', flags: ['--enable-write'], expectedCount: 46 },
     {
-      label: 'enable-write+enable-nini',
-      flags: ['--enable-write', '--enable-nini'],
+      label: 'enable-write+enable-advanced',
+      flags: ['--enable-write', '--enable-advanced'],
       expectedCount: 54,
     },
   ];
@@ -452,7 +452,7 @@ function buildLiveArgs(toolName: string, context: LiveContext): Record<string, u
 }
 
 async function runLivePhase(results: SmokeResult[]): Promise<void> {
-  const session = await createHarnessSession(['--enable-nini']);
+  const session = await createHarnessSession(['--enable-advanced']);
 
   try {
     const listed = await session.client.listTools();
@@ -991,7 +991,7 @@ async function runSandboxPhase(results: SmokeResult[]): Promise<void> {
     return;
   }
 
-  const session = await createHarnessSession(['--enable-write', '--enable-nini']);
+  const session = await createHarnessSession(['--enable-write', '--enable-advanced']);
   const state = createSandboxState();
 
   try {
