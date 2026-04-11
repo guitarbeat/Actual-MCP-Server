@@ -1,2 +1,2 @@
-pnpm exec lint-staged
-pnpm run public:check
+pnpm --filter actual-mcp exec lint-staged
+pnpm --filter actual-mcp run public:check
