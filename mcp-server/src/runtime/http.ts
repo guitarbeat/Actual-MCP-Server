@@ -9,6 +9,7 @@ import { createActualMcpServer } from './server.js';
 interface SessionConnection {
   server: ReturnType<typeof createActualMcpServer>;
   transport: WebStandardStreamableHTTPServerTransport;
+  lastSeenAt: number;
 }
 
 export interface HttpRuntime {
@@ -29,8 +30,25 @@ export function createHttpRuntime(options: {
     enableBearer: options.enableBearer,
     expectedToken: options.bearerToken,
   });
+  const sessionTtlMs = parseSessionTtl(process.env.MCP_SESSION_TTL_MINUTES);
   const allowedOrigins = parseAllowedOrigins(process.env.MCP_ALLOWED_ORIGINS);
   const isProduction = process.env.NODE_ENV === 'production';
+
+  const pruneStaleSessions = (): void => {
+    if (!sessionTtlMs) {
+      return;
+    }
+
+    const now = Date.now();
+    for (const [sessionId, session] of sessions.entries()) {
+      if (now - session.lastSeenAt <= sessionTtlMs) {
+        continue;
+      }
+
+      sessions.delete(sessionId);
+      void session.server.close();
+    }
+  };
 
   app.use('*', async (c, next) => {
     const origin = c.req.header('origin');
@@ -100,6 +118,7 @@ export function createHttpRuntime(options: {
           );
         }
 
+        existing.lastSeenAt = Date.now();
         return existing.transport.handleRequest(c.req.raw, { parsedBody });
       }
 
@@ -123,7 +142,11 @@ export function createHttpRuntime(options: {
       const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (initializedSessionId) => {
-          sessions.set(initializedSessionId, { server, transport });
+          sessions.set(initializedSessionId, {
+            server,
+            transport,
+            lastSeenAt: Date.now(),
+          });
         },
         onsessionclosed: async (closedSessionId) => {
           const existing = sessions.get(closedSessionId);
@@ -146,6 +169,8 @@ export function createHttpRuntime(options: {
           void existing.server.close();
         }
       };
+
+      pruneStaleSessions();
 
       await server.connect(transport);
       return transport.handleRequest(c.req.raw, { parsedBody });
@@ -174,12 +199,14 @@ export function createHttpRuntime(options: {
       );
     }
 
+    existing.lastSeenAt = Date.now();
     return existing.transport.handleRequest(c.req.raw);
   });
 
   return {
     app,
     async close() {
+      pruneStaleSessions();
       await Promise.all(
         [...sessions.values()].map(async ({ server }) => {
           await server.close();
@@ -205,6 +232,19 @@ function parseAllowedOrigins(value?: string): string[] {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+}
+
+function parseSessionTtl(value?: string): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return parsed * 60 * 1000;
 }
 
 function isOriginAllowed(
