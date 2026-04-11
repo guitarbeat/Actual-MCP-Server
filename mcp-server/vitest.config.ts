@@ -13,6 +13,12 @@ export default defineConfig({
       reporter: ['text', 'json', 'json-summary', 'html'],
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.test.ts', 'src/core/types/domain.ts'],
+      thresholds: {
+        statements: 55,
+        branches: 65,
+        functions: 50,
+        lines: 55,
+      },
     },
     alias: {
       '^(\\.{1,2}/.*)\\.js$': '$1', // Handle .js imports in TypeScript

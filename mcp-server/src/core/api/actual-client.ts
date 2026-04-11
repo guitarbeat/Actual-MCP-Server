@@ -30,7 +30,6 @@ import { validateActualAuthStartupConfig } from '../auth/startup-guard.js';
 import { cacheService } from '../cache/cache-service.js';
 import type { BudgetFile } from '../types/index.js';
 import {
-  describeBudgetIdentifiers,
   getBudgetDownloadIdentifier,
   loadBudgetByResolvedIdentifier,
   matchesBudgetIdentifier,
@@ -392,17 +391,9 @@ async function downloadAndLoadBudget(): Promise<{
   if (specifiedId) {
     const matchingBudget = budgets.find((b) => matchesBudgetIdentifier(b, specifiedId));
     if (!matchingBudget) {
-      const availableIds = budgets
-        .map((b) => `${b.name || 'unnamed'} (${describeBudgetIdentifiers(b)})`)
-        .join(', ');
-      console.error(
-        `[CONNECTION] WARNING: ACTUAL_BUDGET_SYNC_ID="${specifiedId}" not found in budget list.`,
+      throw new Error(
+        `ACTUAL_BUDGET_SYNC_ID "${specifiedId}" was not found in the available budgets. Update the configured sync ID before starting the server.`,
       );
-      console.error(`[CONNECTION] Available budgets: ${availableIds}`);
-      console.error(
-        `[CONNECTION] Falling back to first budget: ${budgets[0].name || getBudgetDownloadIdentifier(budgets[0])}`,
-      );
-      // Fall back to first budget instead of failing
     }
   }
 
@@ -412,7 +403,9 @@ async function downloadAndLoadBudget(): Promise<{
     if (sid) {
       const match = budgets.find((b) => matchesBudgetIdentifier(b, sid));
       if (match) return sid;
-      console.error(`[CONNECTION] ACTUAL_BUDGET_SYNC_ID="${sid}" not found, using first budget`);
+      throw new Error(
+        `ACTUAL_BUDGET_SYNC_ID "${sid}" was not found in the available budgets. Update the configured sync ID before starting the server.`,
+      );
     }
     return getBudgetDownloadIdentifier(budgets[0]);
   })();
@@ -468,9 +461,6 @@ function logSuccessfulInitialization(
   const loadedBudget = budgets.find((b) => matchesBudgetIdentifier(b, budgetId));
   const budgetName = loadedBudget?.name || budgetId;
   console.error(`[CONNECTION] Budget loaded: ${budgetName}`);
-  if (process.env.ACTUAL_BUDGET_SYNC_ID) {
-    console.error(`  Using ACTUAL_BUDGET_SYNC_ID: ${budgetId}`);
-  }
 }
 
 /**

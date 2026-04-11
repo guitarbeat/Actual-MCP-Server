@@ -3,6 +3,7 @@ import {
   MIN_BEARER_TOKEN_LENGTH,
   shouldWarnAboutAutoSyncForRemote,
   validateBearerStartupConfig,
+  validateHttpBindStartupConfig,
 } from './startup-guard.js';
 
 describe('startup-guard', () => {
@@ -26,6 +27,18 @@ describe('startup-guard', () => {
     expect(() =>
       validateBearerStartupConfig(true, 'a'.repeat(MIN_BEARER_TOKEN_LENGTH)),
     ).not.toThrow();
+  });
+
+  it('rejects non-loopback HTTP binds when bearer auth is disabled', () => {
+    expect(() => validateHttpBindStartupConfig(false, '0.0.0.0')).toThrow(
+      'A non-loopback --host requires --enable-bearer.',
+    );
+  });
+
+  it('allows loopback-only HTTP binds when bearer auth is disabled', () => {
+    expect(() => validateHttpBindStartupConfig(false, '127.0.0.1')).not.toThrow();
+    expect(() => validateHttpBindStartupConfig(false, 'localhost')).not.toThrow();
+    expect(() => validateHttpBindStartupConfig(false, '::1')).not.toThrow();
   });
 
   it('warns when remote auto-sync is unset or disabled', () => {

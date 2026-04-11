@@ -161,6 +161,27 @@ describe('Auto-load functionality', () => {
       expect(api.downloadBudget).toHaveBeenCalledWith('group-sync-id');
     });
 
+    it('should reject an unknown ACTUAL_BUDGET_SYNC_ID instead of falling back', async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'missing-budget';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      vi.mocked(api.getBudgets).mockResolvedValue([
+        {
+          id: 'budget-1',
+          cloudFileId: 'valid-budget',
+          name: 'Valid Budget',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(api.init).mockResolvedValue(undefined as any);
+
+      await expect(actualApi.initActualApi()).rejects.toThrow(
+        'ACTUAL_BUDGET_SYNC_ID "missing-budget" was not found in the available budgets.',
+      );
+      expect(api.downloadBudget).not.toHaveBeenCalled();
+    });
+
     it('should use budget password when ACTUAL_BUDGET_PASSWORD is set', async () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'encrypted-budget-id';
       process.env.ACTUAL_BUDGET_PASSWORD = 'secret-password';
@@ -459,7 +480,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getBudgets).mockResolvedValue([
         {
           id: 'budget-1',
-          cloudFileId: 'valid-budget',
+          cloudFileId: 'invalid-budget-id',
           name: 'Valid Budget',
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

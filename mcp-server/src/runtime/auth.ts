@@ -19,7 +19,8 @@ export function createBearerMiddleware(options: {
     }
 
     const header = c.req.header('authorization');
-    const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
+    const bearerPrefix = /^Bearer\s+/i;
+    const token = header?.match(bearerPrefix) ? header.replace(bearerPrefix, '') : undefined;
 
     if (!token) {
       c.header('WWW-Authenticate', 'Bearer realm="Actual Budget MCP Server"');

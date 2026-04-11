@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import { getConnectionState, getReadinessStatus } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
 import { createActualMcpServer } from './server.js';
@@ -16,6 +17,11 @@ export interface HttpRuntime {
   app: Hono;
   close: () => Promise<void>;
 }
+
+type PublicReadinessStatus = Pick<
+  ActualReadinessStatus,
+  'ready' | 'status' | 'reason' | 'lastReadyAt' | 'lastSyncAt' | 'lastError'
+>;
 
 export function createHttpRuntime(options: {
   version: string;
@@ -96,10 +102,12 @@ export function createHttpRuntime(options: {
 
   app.get('/ready', async (c) => {
     const readiness = await getReadinessStatus(true);
-    return c.json(readiness, readiness.ready ? 200 : 503);
+    return c.json(toPublicReadinessStatus(readiness), readiness.ready ? 200 : 503);
   });
 
   app.all('/mcp', async (c) => {
+    pruneStaleSessions();
+
     const sessionId = c.req.header('mcp-session-id');
 
     if (c.req.method === 'POST') {
@@ -225,6 +233,17 @@ export function createHttpApp(options: {
   bearerToken?: string;
 }): Hono {
   return createHttpRuntime(options).app;
+}
+
+function toPublicReadinessStatus(readiness: ActualReadinessStatus): PublicReadinessStatus {
+  return {
+    ready: readiness.ready,
+    status: readiness.status,
+    reason: readiness.reason,
+    lastReadyAt: readiness.lastReadyAt,
+    lastSyncAt: readiness.lastSyncAt,
+    lastError: readiness.lastError,
+  };
 }
 
 function parseAllowedOrigins(value?: string): string[] {

@@ -21,6 +21,7 @@ const TEXT_FILE_EXTENSIONS = new Set([
   '',
   '.cjs',
   '.css',
+  '.example',
   '.html',
   '.js',
   '.json',
@@ -34,7 +35,12 @@ const TEXT_FILE_EXTENSIONS = new Set([
   '.yaml',
   '.yml',
 ]);
-const LOCAL_PATH_PATTERNS = [/\/Users\//, /C:\\Users\\/];
+const LOCAL_PATH_PATTERNS = [
+  /\/Users\//,
+  /C:\\Users\\/,
+  /\/home\/[^/\s]+\//,
+  /\/var\/home\/[^/\s]+\//,
+];
 const FORBIDDEN_CONTENT_PATTERNS: Array<{ pattern: RegExp; message: string }> = [
   {
     pattern: new RegExp(['MCP_PROXY_AUTH_', 'TOKEN='].join('')),
