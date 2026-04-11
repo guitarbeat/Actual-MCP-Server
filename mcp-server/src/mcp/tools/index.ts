@@ -1,8 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi } from '../../core/api/actual-client.js';
-import { error, errorFromCatch } from '../../core/response/index.js';
-import type { DeclarativeToolDefinition } from './common.js';
+import { errorFromCatch } from '../../core/response/index.js';
+import { normalizeToolResult, type DeclarativeToolDefinition } from './common.js';
 import { crudToolDefinitions } from './crud-tools.js';
 import { readToolDefinitions } from './read-tools.js';
 import { writeToolDefinitions } from './write-tools.js';
@@ -38,39 +37,34 @@ export function registerTools(
 ): void {
   const availableTools = getToolDefinitions(options);
 
-  server.server.setRequestHandler(ListToolsRequestSchema, () => {
-    return {
-      tools: availableTools.map((tool) => ({
-        name: tool.name,
+  availableTools.forEach((tool) => {
+    server.registerTool(
+      tool.name,
+      {
+        title: tool.title,
         description: tool.description,
-        inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
-      })),
-    };
-  });
-
-  server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    try {
-      await initActualApi();
-      const { name, arguments: args } = request.params;
-      const tool = availableTools.find((candidate) => candidate.name === name);
-
-      if (!tool) {
-        return error(
-          `Unknown tool '${name}'`,
-          'Call list-tools to inspect supported tool names before retrying this request.',
-        );
-      }
-
-      return await tool.execute((args ?? {}) as Record<string, unknown>);
-    } catch (err) {
-      return errorFromCatch(err, {
-        fallbackMessage: `Failed to execute tool ${request.params.name}`,
-        suggestion:
-          'Check the Actual Budget server logs and ensure the provided arguments match the tool schema before retrying.',
-        tool: request.params.name,
-        operation: 'tool_execution',
-        args: request.params.arguments,
-      });
-    }
+        inputSchema: tool.sdkInputSchema,
+        annotations: tool.annotations,
+      },
+      async (args) => {
+        try {
+          await initActualApi();
+          const result = await tool.execute((args ?? {}) as Record<string, unknown>);
+          return normalizeToolResult(tool, result);
+        } catch (err) {
+          return normalizeToolResult(
+            tool,
+            errorFromCatch(err, {
+              fallbackMessage: `Failed to execute tool ${tool.name}`,
+              suggestion:
+                'Check the Actual Budget server logs and ensure the provided arguments match the tool schema before retrying.',
+              tool: tool.name,
+              operation: 'tool_execution',
+              args,
+            }),
+          );
+        }
+      },
+    );
   });
 }
