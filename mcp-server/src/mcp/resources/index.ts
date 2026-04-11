@@ -1,4 +1,8 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type {
+  McpServer,
+  ReadResourceCallback,
+  ReadResourceTemplateCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   ACCOUNT_LIST_RESOURCES,
@@ -26,7 +30,7 @@ export interface ResourceDefinition {
 interface TemplateResourceDefinition extends ResourceDefinition {
   kind: 'template';
   template: ResourceTemplate;
-  handler: Parameters<McpServer['registerResource']>[3];
+  handler: ReadResourceTemplateCallback;
 }
 
 interface ListResourceDefinition {
@@ -36,7 +40,7 @@ interface ListResourceDefinition {
     description: string;
     mimeType: string;
   };
-  handler: Parameters<McpServer['registerResource']>[3];
+  handler: ReadResourceCallback;
 }
 
 function firstValue(value: string | string[]): string {
@@ -51,11 +55,11 @@ const ASSISTIVE_LIST_KIND_BY_URI: Record<string, 'health' | 'rules'> = {
 const LIST_RESOURCES: ListResourceDefinition[] = [
   ...ACCOUNT_LIST_RESOURCES.map((resource) => ({
     resource,
-    handler: async (uri) => handleAccountsResource(uri.href, []),
+    handler: async (uri: URL) => handleAccountsResource(uri.href, []),
   })),
   ...BUDGET_LIST_RESOURCES.map((resource) => ({
     resource,
-    handler: async (uri) => handleBudgetsResource(uri.href, []),
+    handler: async (uri: URL) => handleBudgetsResource(uri.href, []),
   })),
   ...ASSISTIVE_LIST_RESOURCES.map((resource) => {
     const assistiveKind = ASSISTIVE_LIST_KIND_BY_URI[resource.uri];
@@ -65,16 +69,16 @@ const LIST_RESOURCES: ListResourceDefinition[] = [
 
     return {
       resource,
-      handler: async (uri) => handleAssistiveResource(uri.href, assistiveKind, []),
+      handler: async (uri: URL) => handleAssistiveResource(uri.href, assistiveKind, []),
     };
   }),
   ...TAG_LIST_RESOURCES.map((resource) => ({
     resource,
-    handler: async (uri) => handleTagsResource(uri.href),
+    handler: async (uri: URL) => handleTagsResource(uri.href),
   })),
   ...UNCATEGORIZED_LIST_RESOURCES.map((resource) => ({
     resource,
-    handler: async (uri) => handleUncategorizedResource(uri.href),
+    handler: async (uri: URL) => handleUncategorizedResource(uri.href),
   })),
 ];
 
@@ -138,11 +142,11 @@ export const resourceDefinitions: ResourceDefinition[] = [
     uri: resource.uri,
     description: resource.description,
     mimeType: resource.mimeType,
-    kind: 'static',
+    kind: 'static' as const,
   })),
-  ...TEMPLATE_RESOURCES.map(({ template: _template, handler: _handler, ...definition }) => ({
-    ...definition,
-  })),
+  ...TEMPLATE_RESOURCES.map(
+    ({ template: _template, handler: _handler, ...definition }) => definition,
+  ),
 ];
 
 export function registerResources(server: McpServer): void {
