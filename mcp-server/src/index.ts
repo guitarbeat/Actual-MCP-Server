@@ -19,7 +19,6 @@ import {
   shouldWarnAboutAutoSyncForRemote,
   validateBearerStartupConfig,
 } from './core/auth/startup-guard.js';
-import { getDeprecatedAdvancedFlagWarning, resolveAdvancedFlag } from './cli/feature-flags.js';
 import { createHttpRuntime } from './runtime/http.js';
 import { createActualMcpServer } from './runtime/server.js';
 
@@ -35,8 +34,7 @@ const {
     sse: useHttpTransport,
     'enable-write': enableWrite,
     'enable-bearer': enableBearer,
-    'enable-advanced': enableAdvancedFlag,
-    'enable-nini': enableNiniAlias,
+    'enable-advanced': enableAdvanced,
     port,
     'test-resources': testResourcesOption,
     'test-custom': testCustomOption,
@@ -48,7 +46,6 @@ const {
     'enable-write': { type: 'boolean', default: false },
     'enable-bearer': { type: 'boolean', default: false },
     'enable-advanced': { type: 'boolean', default: false },
-    'enable-nini': { type: 'boolean', default: false },
     port: { type: 'string' },
     'test-resources': { type: 'boolean', default: false },
     'test-custom': { type: 'boolean', default: false },
@@ -56,16 +53,6 @@ const {
   },
   allowPositionals: true,
 });
-
-const enableAdvanced = resolveAdvancedFlag({
-  enableAdvanced: enableAdvancedFlag,
-  enableNiniAlias,
-});
-const deprecatedAdvancedFlagWarning = getDeprecatedAdvancedFlagWarning({ enableNiniAlias });
-
-if (deprecatedAdvancedFlagWarning) {
-  console.error(deprecatedAdvancedFlagWarning);
-}
 
 const resolvedPort = port
   ? Number.parseInt(port, 10)
