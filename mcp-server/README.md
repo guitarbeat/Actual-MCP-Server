@@ -40,6 +40,7 @@ Optional variables:
 - `PORT` for HTTP/SSE mode
 - `AUTO_SYNC_INTERVAL_MINUTES`, `CACHE_ENABLED`, and `CACHE_TTL_SECONDS` for runtime behavior. Remote deployments should set a non-zero sync interval.
 - `MCP_ALLOWED_ORIGINS` to allow browser-based MCP clients in production; server-to-server clients without an `Origin` header remain allowed.
+- `MCP_SESSION_TTL_MINUTES` to expire inactive streamable HTTP sessions and prevent unbounded session growth.
 
 ## Run Modes
 
