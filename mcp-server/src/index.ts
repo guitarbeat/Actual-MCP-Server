@@ -19,6 +19,7 @@ import {
   shouldWarnAboutAutoSyncForRemote,
   validateBearerStartupConfig,
 } from './core/auth/startup-guard.js';
+import { getDeprecatedAdvancedFlagWarning, resolveAdvancedFlag } from './cli/feature-flags.js';
 import { createHttpRuntime } from './runtime/http.js';
 import { createActualMcpServer } from './runtime/server.js';
 
@@ -56,10 +57,14 @@ const {
   allowPositionals: true,
 });
 
-const enableAdvanced = enableAdvancedFlag || enableNiniAlias;
+const enableAdvanced = resolveAdvancedFlag({
+  enableAdvanced: enableAdvancedFlag,
+  enableNiniAlias,
+});
+const deprecatedAdvancedFlagWarning = getDeprecatedAdvancedFlagWarning({ enableNiniAlias });
 
-if (enableNiniAlias) {
-  console.error('Warning: --enable-nini is deprecated. Use --enable-advanced instead.');
+if (deprecatedAdvancedFlagWarning) {
+  console.error(deprecatedAdvancedFlagWarning);
 }
 
 const resolvedPort = port

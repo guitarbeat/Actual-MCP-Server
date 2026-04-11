@@ -59,6 +59,7 @@ Useful flags:
 
 - `--enable-write` exposes write-capable tools
 - `--enable-advanced` exposes advanced account and budget-file tools
+- `--enable-nini` remains accepted as a deprecated compatibility alias during migration
 - `--enable-bearer` requires `BEARER_TOKEN`, enforces a minimum token length at startup, and protects the remote `/mcp` endpoint
 - `--host` and `--port` override the HTTP listener
 
