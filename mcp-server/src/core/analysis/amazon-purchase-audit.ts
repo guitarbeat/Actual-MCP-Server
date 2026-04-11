@@ -159,7 +159,6 @@ interface AmazonDigitalOrdersRow {
   'List Price Tax Amount': string;
   'List Price Tax Currency Code': string;
   Marketplace: string;
-  'Multifactor Authentication Status (depreciated)': string;
   'Offer Type Code': string;
   'Offering SKU': string;
   'Order Date': string;

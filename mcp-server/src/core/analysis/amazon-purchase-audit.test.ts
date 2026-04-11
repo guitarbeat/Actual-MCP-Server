@@ -195,7 +195,6 @@ function buildDigitalRow(overrides: Partial<AmazonDigitalOrderRow>): AmazonDigit
     'List Price Tax Amount': '0.00',
     'List Price Tax Currency Code': 'USD',
     Marketplace: 'Amazon.com',
-    'Multifactor Authentication Status (depreciated)': '',
     'Offer Type Code': '',
     'Offering SKU': '',
     'Order Date': '2024-03-01',
