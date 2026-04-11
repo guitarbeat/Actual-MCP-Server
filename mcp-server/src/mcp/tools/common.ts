@@ -37,9 +37,3 @@ export function defineLegacyTool<TArgs>(tool: LegacyToolLike<TArgs>): Declarativ
     execute: (args) => tool.handler(args as TArgs),
   };
 }
-
-export function defineLegacyTools<const TArgs extends readonly LegacyToolLike<unknown>[]>(
-  tools: TArgs,
-): DeclarativeToolDefinition[] {
-  return tools.map((tool) => defineLegacyTool(tool));
-}
