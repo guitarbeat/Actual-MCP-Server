@@ -23,59 +23,71 @@ export interface ResourceDefinition {
   kind: 'static' | 'template';
 }
 
+interface TemplateResourceDefinition extends ResourceDefinition {
+  kind: 'template';
+  template: ResourceTemplate;
+  handler: Parameters<McpServer['registerResource']>[3];
+}
+
+interface ListResourceDefinition {
+  resource: {
+    name: string;
+    uri: string;
+    description: string;
+    mimeType: string;
+  };
+  handler: Parameters<McpServer['registerResource']>[3];
+}
+
 function firstValue(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export const resourceDefinitions: ResourceDefinition[] = [
-  {
-    name: ACCOUNT_LIST_RESOURCES[0].name,
-    uri: ACCOUNT_LIST_RESOURCES[0].uri,
-    description: ACCOUNT_LIST_RESOURCES[0].description,
-    mimeType: ACCOUNT_LIST_RESOURCES[0].mimeType,
-    kind: 'static',
-  },
-  {
-    name: BUDGET_LIST_RESOURCES[0].name,
-    uri: BUDGET_LIST_RESOURCES[0].uri,
-    description: BUDGET_LIST_RESOURCES[0].description,
-    mimeType: BUDGET_LIST_RESOURCES[0].mimeType,
-    kind: 'static',
-  },
-  {
-    name: ASSISTIVE_LIST_RESOURCES[0].name,
-    uri: ASSISTIVE_LIST_RESOURCES[0].uri,
-    description: ASSISTIVE_LIST_RESOURCES[0].description,
-    mimeType: ASSISTIVE_LIST_RESOURCES[0].mimeType,
-    kind: 'static',
-  },
-  {
-    name: ASSISTIVE_LIST_RESOURCES[1].name,
-    uri: ASSISTIVE_LIST_RESOURCES[1].uri,
-    description: ASSISTIVE_LIST_RESOURCES[1].description,
-    mimeType: ASSISTIVE_LIST_RESOURCES[1].mimeType,
-    kind: 'static',
-  },
-  {
-    name: TAG_LIST_RESOURCES[0].name,
-    uri: TAG_LIST_RESOURCES[0].uri,
-    description: TAG_LIST_RESOURCES[0].description,
-    mimeType: TAG_LIST_RESOURCES[0].mimeType,
-    kind: 'static',
-  },
-  {
-    name: UNCATEGORIZED_LIST_RESOURCES[0].name,
-    uri: UNCATEGORIZED_LIST_RESOURCES[0].uri,
-    description: UNCATEGORIZED_LIST_RESOURCES[0].description,
-    mimeType: UNCATEGORIZED_LIST_RESOURCES[0].mimeType,
-    kind: 'static',
-  },
+const ASSISTIVE_LIST_KIND_BY_URI: Record<string, 'health' | 'rules'> = {
+  'actual://health': 'health',
+  'actual://rules': 'rules',
+};
+
+const LIST_RESOURCES: ListResourceDefinition[] = [
+  ...ACCOUNT_LIST_RESOURCES.map((resource) => ({
+    resource,
+    handler: async (uri) => handleAccountsResource(uri.href, []),
+  })),
+  ...BUDGET_LIST_RESOURCES.map((resource) => ({
+    resource,
+    handler: async (uri) => handleBudgetsResource(uri.href, []),
+  })),
+  ...ASSISTIVE_LIST_RESOURCES.map((resource) => {
+    const assistiveKind = ASSISTIVE_LIST_KIND_BY_URI[resource.uri];
+    if (!assistiveKind) {
+      throw new Error(`Unknown assistive list resource: ${resource.uri}`);
+    }
+
+    return {
+      resource,
+      handler: async (uri) => handleAssistiveResource(uri.href, assistiveKind, []),
+    };
+  }),
+  ...TAG_LIST_RESOURCES.map((resource) => ({
+    resource,
+    handler: async (uri) => handleTagsResource(uri.href),
+  })),
+  ...UNCATEGORIZED_LIST_RESOURCES.map((resource) => ({
+    resource,
+    handler: async (uri) => handleUncategorizedResource(uri.href),
+  })),
+];
+
+const TEMPLATE_RESOURCES: TemplateResourceDefinition[] = [
   {
     name: 'Account Overview',
     uri: 'actual://accounts/{accountId}',
     description: 'Provides balance, status, and metadata for a specific account.',
     mimeType: 'text/markdown',
     kind: 'template',
+    template: new ResourceTemplate('actual://accounts/{accountId}', { list: undefined }),
+    handler: async (uri, { accountId }) =>
+      handleAccountsResource(uri.href, [firstValue(accountId)]),
   },
   {
     name: 'Account Transactions',
@@ -83,6 +95,11 @@ export const resourceDefinitions: ResourceDefinition[] = [
     description: 'Shows recent transactions for an account across the default reporting window.',
     mimeType: 'text/markdown',
     kind: 'template',
+    template: new ResourceTemplate('actual://accounts/{accountId}/transactions', {
+      list: undefined,
+    }),
+    handler: async (uri, { accountId }) =>
+      handleAccountsResource(uri.href, [firstValue(accountId), 'transactions']),
   },
   {
     name: 'Monthly Budget',
@@ -90,6 +107,8 @@ export const resourceDefinitions: ResourceDefinition[] = [
     description: 'Detailed budget breakdown for a specific month (YYYY-MM format).',
     mimeType: 'text/markdown',
     kind: 'template',
+    template: new ResourceTemplate('actual://budgets/{month}', { list: undefined }),
+    handler: async (uri, { month }) => handleBudgetsResource(uri.href, [firstValue(month)]),
   },
   {
     name: 'Monthly Health Dashboard',
@@ -97,6 +116,9 @@ export const resourceDefinitions: ResourceDefinition[] = [
     description: 'Budget health dashboard for a specific month (YYYY-MM format).',
     mimeType: 'text/markdown',
     kind: 'template',
+    template: new ResourceTemplate('actual://health/{month}', { list: undefined }),
+    handler: async (uri, { month }) =>
+      handleAssistiveResource(uri.href, 'health', [firstValue(month)]),
   },
   {
     name: 'Payee Rules',
@@ -104,119 +126,47 @@ export const resourceDefinitions: ResourceDefinition[] = [
     description: 'Show Actual Budget rules associated with a payee.',
     mimeType: 'text/markdown',
     kind: 'template',
+    template: new ResourceTemplate('actual://payees/{payeeId}/rules', { list: undefined }),
+    handler: async (uri, { payeeId }) =>
+      handleAssistiveResource(uri.href, 'payees', [firstValue(payeeId), 'rules']),
   },
 ];
 
+export const resourceDefinitions: ResourceDefinition[] = [
+  ...LIST_RESOURCES.map(({ resource }) => ({
+    name: resource.name,
+    uri: resource.uri,
+    description: resource.description,
+    mimeType: resource.mimeType,
+    kind: 'static',
+  })),
+  ...TEMPLATE_RESOURCES.map(({ template: _template, handler: _handler, ...definition }) => ({
+    ...definition,
+  })),
+];
+
 export function registerResources(server: McpServer): void {
-  server.registerResource(
-    ACCOUNT_LIST_RESOURCES[0].name,
-    ACCOUNT_LIST_RESOURCES[0].uri,
-    {
-      description: ACCOUNT_LIST_RESOURCES[0].description,
-      mimeType: ACCOUNT_LIST_RESOURCES[0].mimeType,
-    },
-    async (uri) => handleAccountsResource(uri.href, []),
-  );
+  LIST_RESOURCES.forEach(({ resource, handler }) => {
+    server.registerResource(
+      resource.name,
+      resource.uri,
+      {
+        description: resource.description,
+        mimeType: resource.mimeType,
+      },
+      handler,
+    );
+  });
 
-  server.registerResource(
-    BUDGET_LIST_RESOURCES[0].name,
-    BUDGET_LIST_RESOURCES[0].uri,
-    {
-      description: BUDGET_LIST_RESOURCES[0].description,
-      mimeType: BUDGET_LIST_RESOURCES[0].mimeType,
-    },
-    async (uri) => handleBudgetsResource(uri.href, []),
-  );
-
-  server.registerResource(
-    ASSISTIVE_LIST_RESOURCES[0].name,
-    ASSISTIVE_LIST_RESOURCES[0].uri,
-    {
-      description: ASSISTIVE_LIST_RESOURCES[0].description,
-      mimeType: ASSISTIVE_LIST_RESOURCES[0].mimeType,
-    },
-    async (uri) => handleAssistiveResource(uri.href, 'health', []),
-  );
-
-  server.registerResource(
-    ASSISTIVE_LIST_RESOURCES[1].name,
-    ASSISTIVE_LIST_RESOURCES[1].uri,
-    {
-      description: ASSISTIVE_LIST_RESOURCES[1].description,
-      mimeType: ASSISTIVE_LIST_RESOURCES[1].mimeType,
-    },
-    async (uri) => handleAssistiveResource(uri.href, 'rules', []),
-  );
-
-  server.registerResource(
-    TAG_LIST_RESOURCES[0].name,
-    TAG_LIST_RESOURCES[0].uri,
-    {
-      description: TAG_LIST_RESOURCES[0].description,
-      mimeType: TAG_LIST_RESOURCES[0].mimeType,
-    },
-    async (uri) => handleTagsResource(uri.href),
-  );
-
-  server.registerResource(
-    UNCATEGORIZED_LIST_RESOURCES[0].name,
-    UNCATEGORIZED_LIST_RESOURCES[0].uri,
-    {
-      description: UNCATEGORIZED_LIST_RESOURCES[0].description,
-      mimeType: UNCATEGORIZED_LIST_RESOURCES[0].mimeType,
-    },
-    async (uri) => handleUncategorizedResource(uri.href),
-  );
-
-  server.registerResource(
-    'Account Overview',
-    new ResourceTemplate('actual://accounts/{accountId}', { list: undefined }),
-    {
-      description: 'Provides balance, status, and metadata for a specific account.',
-      mimeType: 'text/markdown',
-    },
-    async (uri, { accountId }) => handleAccountsResource(uri.href, [firstValue(accountId)]),
-  );
-
-  server.registerResource(
-    'Account Transactions',
-    new ResourceTemplate('actual://accounts/{accountId}/transactions', { list: undefined }),
-    {
-      description: 'Shows recent transactions for an account across the default reporting window.',
-      mimeType: 'text/markdown',
-    },
-    async (uri, { accountId }) =>
-      handleAccountsResource(uri.href, [firstValue(accountId), 'transactions']),
-  );
-
-  server.registerResource(
-    'Monthly Budget',
-    new ResourceTemplate('actual://budgets/{month}', { list: undefined }),
-    {
-      description: 'Detailed budget breakdown for a specific month (YYYY-MM format).',
-      mimeType: 'text/markdown',
-    },
-    async (uri, { month }) => handleBudgetsResource(uri.href, [firstValue(month)]),
-  );
-
-  server.registerResource(
-    'Monthly Health Dashboard',
-    new ResourceTemplate('actual://health/{month}', { list: undefined }),
-    {
-      description: 'Budget health dashboard for a specific month (YYYY-MM format).',
-      mimeType: 'text/markdown',
-    },
-    async (uri, { month }) => handleAssistiveResource(uri.href, 'health', [firstValue(month)]),
-  );
-
-  server.registerResource(
-    'Payee Rules',
-    new ResourceTemplate('actual://payees/{payeeId}/rules', { list: undefined }),
-    {
-      description: 'Show Actual Budget rules associated with a payee.',
-      mimeType: 'text/markdown',
-    },
-    async (uri, { payeeId }) =>
-      handleAssistiveResource(uri.href, 'payees', [firstValue(payeeId), 'rules']),
-  );
+  TEMPLATE_RESOURCES.forEach(({ name, template, description, mimeType, handler }) => {
+    server.registerResource(
+      name,
+      template,
+      {
+        description,
+        mimeType,
+      },
+      handler,
+    );
+  });
 }
