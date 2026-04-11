@@ -241,13 +241,62 @@ function formatErrorContext(context: ErrorContext): string {
   if (context.tool) contextParts.push(`tool=${context.tool}`);
   if (context.args) {
     try {
-      contextParts.push(`args=${JSON.stringify(context.args)}`);
+      contextParts.push(`args=${stringifyArgsForLog(context.args)}`);
     } catch {
       contextParts.push(`args=[non-serializable]`);
     }
   }
 
   return contextParts.length > 0 ? ` [${contextParts.join(', ')}]` : '';
+}
+
+const SENSITIVE_KEY_REGEX =
+  /pass(word|phrase)|(?<!(input|output|max|total)_)token|secret|(private|api|access).?key|authorization|bearer|credential/i;
+const BEARER_TOKEN_REGEX = /Bearer\\s+([a-zA-Z0-9._-]+)/gi;
+const MAX_LOG_STRING_LENGTH = 500;
+const MAX_LOG_DEPTH = 4;
+
+function sanitizeLogValue(value: unknown, depth: number, seen: WeakSet<object>): unknown {
+  if (depth > MAX_LOG_DEPTH) {
+    return '[Truncated]';
+  }
+
+  if (typeof value === 'string') {
+    const redacted = value.replace(BEARER_TOKEN_REGEX, 'Bearer [REDACTED]');
+    return redacted.length > MAX_LOG_STRING_LENGTH
+      ? `${redacted.slice(0, MAX_LOG_STRING_LENGTH)}…`
+      : redacted;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeLogValue(entry, depth + 1, seen));
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+    seen.add(value);
+
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      if (SENSITIVE_KEY_REGEX.test(key)) {
+        sanitized[key] = '[REDACTED]';
+        continue;
+      }
+      sanitized[key] = sanitizeLogValue(entry, depth + 1, seen);
+    }
+
+    return sanitized;
+  }
+
+  return value;
+}
+
+function stringifyArgsForLog(args: unknown): string {
+  const seen = new WeakSet<object>();
+  const sanitized = sanitizeLogValue(args, 0, seen);
+  return JSON.stringify(sanitized);
 }
 
 /**
