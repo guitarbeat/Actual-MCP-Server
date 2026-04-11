@@ -47,7 +47,7 @@
     "docs:check": "tsx scripts/sync-tool-docs.ts --check",
     "public:check": "tsx scripts/public-repo-check.ts",
     "quality": "pnpm run lint && pnpm run format:check && pnpm run type-check",
-    "prepare": "husky",
+    "prepare": "cd .. && husky mcp-server/.husky",
     "prepublishOnly": "pnpm run build && pnpm run docs:check && pnpm run public:check"
   },
   "dependencies": {
