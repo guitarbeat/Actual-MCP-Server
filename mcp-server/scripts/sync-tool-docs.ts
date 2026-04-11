@@ -13,6 +13,8 @@ const docsDir = resolve(packageRoot, 'docs');
 const registryPath = resolve(docsDir, 'tool-registry.md');
 const toolSurfaceStart = '<!-- TOOL_SURFACE:START -->';
 const toolSurfaceEnd = '<!-- TOOL_SURFACE:END -->';
+const operationsStart = '<!-- OPERATIONS_REFERENCE:START -->';
+const operationsEnd = '<!-- OPERATIONS_REFERENCE:END -->';
 
 function sortByName<T extends { name: string }>(items: T[]): T[] {
   return [...items].sort((left, right) => left.name.localeCompare(right.name));
@@ -116,6 +118,36 @@ async function buildReadmeToolSurface(): Promise<string> {
   ].join('\n');
 }
 
+function buildOperationsReference(): string {
+  return [
+    operationsStart,
+    '',
+    'These commands are generated from the package scripts and container entrypoint so `pnpm docs:check` can detect drift:',
+    '',
+    '```bash',
+    'pnpm --filter actual-mcp start',
+    'node build/index.js --sse --enable-write --enable-bearer',
+    'docker build -f mcp-server/Dockerfile -t actual-mcp .',
+    'docker run --rm -p 3000:3000 \\',
+    '  -e ACTUAL_SERVER_URL=https://actual.example.com \\',
+    '  -e ACTUAL_PASSWORD=replace-with-your-actual-password \\',
+    '  -e ACTUAL_BUDGET_SYNC_ID=replace-with-your-budget-sync-id \\',
+    '  -e BEARER_TOKEN=replace-with-a-long-random-token \\',
+    '  actual-mcp',
+    'pnpm run inspector',
+    'pnpm run test:tools:live',
+    'pnpm run test:tools:sandbox',
+    'pnpm run test:tools:all',
+    'pnpm run test:startup-smoke',
+    'pnpm run docs:generate',
+    'pnpm run docs:check',
+    'pnpm run public:check',
+    '```',
+    '',
+    operationsEnd,
+  ].join('\n');
+}
+
 async function buildRegistryDocument(): Promise<string> {
   const { readOnlyCore, writeCore, advanced, prompts, resources } = await buildToolCollections();
 
@@ -147,17 +179,20 @@ async function buildRegistryDocument(): Promise<string> {
   ].join('\n');
 }
 
-function replaceMarkedSection(content: string, replacement: string): string {
-  const startIndex = content.indexOf(toolSurfaceStart);
-  const endIndex = content.indexOf(toolSurfaceEnd);
+function replaceSection(
+  content: string,
+  startMarker: string,
+  endMarker: string,
+  replacement: string,
+): string {
+  const startIndex = content.indexOf(startMarker);
+  const endIndex = content.indexOf(endMarker);
 
   if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-    throw new Error('README is missing tool surface markers.');
+    throw new Error(`README is missing marker pair ${startMarker} / ${endMarker}.`);
   }
 
-  return `${content.slice(0, startIndex)}${replacement}${content.slice(
-    endIndex + toolSurfaceEnd.length,
-  )}`;
+  return `${content.slice(0, startIndex)}${replacement}${content.slice(endIndex + endMarker.length)}`;
 }
 
 function writeIfChanged(path: string, nextContent: string): boolean {
@@ -174,7 +209,14 @@ function writeIfChanged(path: string, nextContent: string): boolean {
 async function main(): Promise<void> {
   const shouldWrite = process.argv.includes('--write');
   const generatedReadmeSection = await buildReadmeToolSurface();
-  const nextReadme = replaceMarkedSection(readFileSync(readmePath, 'utf8'), generatedReadmeSection);
+  const generatedOperationsSection = buildOperationsReference();
+  const currentReadme = readFileSync(readmePath, 'utf8');
+  const nextReadme = replaceSection(
+    replaceSection(currentReadme, toolSurfaceStart, toolSurfaceEnd, generatedReadmeSection),
+    operationsStart,
+    operationsEnd,
+    generatedOperationsSection,
+  );
   const nextRegistry = await buildRegistryDocument();
 
   mkdirSync(docsDir, { recursive: true });

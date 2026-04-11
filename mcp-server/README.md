@@ -170,6 +170,34 @@ Use either `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN` in the container environm
 
 The container entrypoint starts the server in remote HTTP mode with `--enable-write` and `--enable-bearer`.
 
+## Operations Reference
+
+<!-- OPERATIONS_REFERENCE:START -->
+
+These commands are generated from the package scripts and container entrypoint so `pnpm docs:check` can detect drift:
+
+```bash
+pnpm --filter actual-mcp start
+node build/index.js --sse --enable-write --enable-bearer
+docker build -f mcp-server/Dockerfile -t actual-mcp .
+docker run --rm -p 3000:3000 \
+  -e ACTUAL_SERVER_URL=https://actual.example.com \
+  -e ACTUAL_PASSWORD=replace-with-your-actual-password \
+  -e ACTUAL_BUDGET_SYNC_ID=replace-with-your-budget-sync-id \
+  -e BEARER_TOKEN=replace-with-a-long-random-token \
+  actual-mcp
+pnpm run inspector
+pnpm run test:tools:live
+pnpm run test:tools:sandbox
+pnpm run test:tools:all
+pnpm run test:startup-smoke
+pnpm run docs:generate
+pnpm run docs:check
+pnpm run public:check
+```
+
+<!-- OPERATIONS_REFERENCE:END -->
+
 ## MCP Surface
 
 <!-- TOOL_SURFACE:START -->

@@ -30,6 +30,7 @@
     "test:unit:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:startup-smoke": "tsx scripts/startup-smoke.ts",
     "test:tools:live": "pnpm run build && tsx scripts/test-tool-smoke.ts --phase live",
     "test:tools:sandbox": "pnpm run build && tsx scripts/test-tool-smoke.ts --phase sandbox",
     "test:tools:all": "pnpm run build && tsx scripts/test-tool-smoke.ts --phase all",

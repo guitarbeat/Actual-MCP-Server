@@ -18,6 +18,7 @@ import {
   validateActualAuthStartupConfig,
   shouldWarnAboutAutoSyncForRemote,
   validateBearerStartupConfig,
+  validateHttpBindStartupConfig,
 } from './core/auth/startup-guard.js';
 import { createHttpRuntime } from './runtime/http.js';
 import { createActualMcpServer } from './runtime/server.js';
@@ -75,7 +76,9 @@ function validateEnv(): void {
   console.error(
     `  ACTUAL_SESSION_TOKEN: ${process.env.ACTUAL_SESSION_TOKEN ? '****' : '(not set)'}`,
   );
-  console.error(`  ACTUAL_BUDGET_SYNC_ID: ${process.env.ACTUAL_BUDGET_SYNC_ID || '(auto-detect)'}`);
+  console.error(
+    `  ACTUAL_BUDGET_SYNC_ID: ${process.env.ACTUAL_BUDGET_SYNC_ID ? '(set)' : '(auto-detect)'}`,
+  );
   console.error(
     `  ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD ? '****' : '(not set)'}`,
   );
@@ -90,6 +93,7 @@ function validateEnv(): void {
 function validateRuntimeGuards(): void {
   validateActualAuthStartupConfig();
   validateBearerStartupConfig(enableBearer, process.env.BEARER_TOKEN);
+  validateHttpBindStartupConfig(enableBearer, host);
 
   if (
     useHttpTransport &&
