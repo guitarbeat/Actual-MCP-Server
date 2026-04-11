@@ -12,7 +12,7 @@ import type { EntityHandler } from './manage-entity/entity-handlers/base-handler
 /**
  * Tool category for feature flag filtering
  */
-type ToolCategory = 'core' | 'nini';
+type ToolCategory = 'core' | 'advanced';
 
 /**
  * Extended tool definition with category for feature flag filtering
@@ -53,7 +53,7 @@ export interface CRUDOperationConfig<TSchema extends z.ZodType> {
   description: string;
   /** Whether this operation requires write permission - checked by tool registry */
   requiresWrite: boolean;
-  /** Tool category (core or nini) - used for feature flag filtering */
+  /** Tool category (core or advanced) - used for feature flag filtering */
   category: ToolCategory;
 }
 

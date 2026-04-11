@@ -19,7 +19,7 @@ export interface HttpRuntime {
 export function createHttpRuntime(options: {
   version: string;
   enableWrite: boolean;
-  enableNini: boolean;
+  enableAdvanced: boolean;
   enableBearer: boolean;
   bearerToken?: string;
 }): HttpRuntime {
@@ -117,7 +117,7 @@ export function createHttpRuntime(options: {
       const server = createActualMcpServer({
         version: options.version,
         enableWrite: options.enableWrite,
-        enableNini: options.enableNini,
+        enableAdvanced: options.enableAdvanced,
       });
 
       const transport = new WebStandardStreamableHTTPServerTransport({
@@ -193,7 +193,7 @@ export function createHttpRuntime(options: {
 export function createHttpApp(options: {
   version: string;
   enableWrite: boolean;
-  enableNini: boolean;
+  enableAdvanced: boolean;
   enableBearer: boolean;
   bearerToken?: string;
 }): Hono {

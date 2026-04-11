@@ -7,7 +7,7 @@ import { registerTools } from '../mcp/tools/index.js';
 export function createActualMcpServer(options: {
   version: string;
   enableWrite: boolean;
-  enableNini: boolean;
+  enableAdvanced: boolean;
 }): McpServer {
   const server = new ActualMcpServer(
     {
@@ -28,7 +28,7 @@ export function createActualMcpServer(options: {
   registerPrompts(server);
   registerTools(server, {
     enableWrite: options.enableWrite,
-    enableNini: options.enableNini,
+    enableAdvanced: options.enableAdvanced,
   });
 
   return server;

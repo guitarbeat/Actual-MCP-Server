@@ -35,6 +35,6 @@ export const readToolDefinitions = [
   defineLegacyTool({ ...getSchedules, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...getAccountBalance, requiresWrite: false, category: 'core' }),
   defineLegacyTool({ ...getBudget, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getBudgets, requiresWrite: false, category: 'nini' }),
-  defineLegacyTool({ ...switchBudget, requiresWrite: true, category: 'nini' }),
+  defineLegacyTool({ ...getBudgets, requiresWrite: false, category: 'advanced' }),
+  defineLegacyTool({ ...switchBudget, requiresWrite: true, category: 'advanced' }),
 ];

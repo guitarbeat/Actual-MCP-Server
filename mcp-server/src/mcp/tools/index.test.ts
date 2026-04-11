@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getToolDefinitions } from './index.js';
 
 function getTool(name: string) {
-  const tool = getToolDefinitions({ enableWrite: true, enableNini: true }).find(
+  const tool = getToolDefinitions({ enableWrite: true, enableAdvanced: true }).find(
     (candidate) => candidate.name === name,
   );
 
@@ -12,15 +12,15 @@ function getTool(name: string) {
 
 describe('getToolDefinitions', () => {
   it('exposes 16 tools by default', () => {
-    expect(getToolDefinitions({ enableWrite: false, enableNini: false })).toHaveLength(16);
+    expect(getToolDefinitions({ enableWrite: false, enableAdvanced: false })).toHaveLength(16);
   });
 
   it('exposes 46 tools with write enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableNini: false })).toHaveLength(46);
+    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: false })).toHaveLength(46);
   });
 
-  it('exposes 54 tools with write and nini enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableNini: true })).toHaveLength(54);
+  it('exposes 54 tools with write and advanced enabled', () => {
+    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: true })).toHaveLength(54);
   });
 
   it('preserves the legacy schema for read tools', () => {
