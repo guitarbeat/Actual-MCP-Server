@@ -5,7 +5,7 @@ Actual Budget MCP server for Claude Desktop, Codex, Cursor, and other MCP client
 ## Highlights
 
 - Actual Budget reads and writes over MCP, with separate read-only, write, and advanced (`--enable-advanced`) tool surfaces.
-- Declarative MCP registration for tools, prompts, and resources under `src/mcp/`.
+- Declarative MCP registration for tools, prompts, and resources under `src/mcp/`, with native SDK tool registration, explicit safety annotations, and structured tool results for newer clients.
 - Transfer-aware transaction creation, starting-balance repair, account reconciliation, budget planning, schedule management, and batch transaction import.
 - Hono-based remote runtime with streamable HTTP MCP transport, bearer auth, health checks, and stdio support for desktop clients.
 
