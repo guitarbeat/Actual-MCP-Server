@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, success } from '../../../core/response/index.js';
+import { executeMutationTool } from '../../shared/mutation-tool.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import type { CloseAccountData } from '../../manage-entity/entity-handlers/account-handler.js';
 import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
@@ -43,16 +43,14 @@ export const schema = {
 };
 
 export async function handler(args: z.infer<typeof CloseAccountSchema>) {
-  try {
-    const validated = CloseAccountSchema.parse(args);
-    const { id, ...closeData } = validated;
-    const accountHandler = new AccountHandler();
-    await accountHandler.close(id, closeData as CloseAccountData);
-    accountHandler.invalidateCache();
-    return success(`Successfully closed account with id ${id}`);
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to close account',
-    });
-  }
+  return executeMutationTool(args, {
+    parse: CloseAccountSchema.parse,
+    createHandler: () => new AccountHandler(),
+    execute: (accountHandler, validated) => {
+      const { id, ...closeData } = validated;
+      return accountHandler.close(id, closeData as CloseAccountData);
+    },
+    successMessage: ({ id }) => `Successfully closed account with id ${id}`,
+    fallbackMessage: 'Failed to close account',
+  });
 }

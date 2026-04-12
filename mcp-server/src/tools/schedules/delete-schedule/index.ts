@@ -4,14 +4,10 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import {
-  errorFromCatch,
-  isMCPResponse,
-  type MCPResponse,
-  success,
-} from '../../../core/response/index.js';
+import type { MCPResponse } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
+import { executeMutationTool } from '../../shared/mutation-tool.js';
 
 const DeleteScheduleSchema = z.object({
   id: z.string().uuid('Schedule ID must be a valid UUID'),
@@ -40,19 +36,12 @@ export const schema = {
 };
 
 export async function handler(args: z.infer<typeof DeleteScheduleSchema>): Promise<MCPResponse> {
-  try {
-    const validated = DeleteScheduleSchema.parse(args);
-    const scheduleHandler = new ScheduleHandler();
-    await scheduleHandler.delete(validated.id);
-    scheduleHandler.invalidateCache();
-    return success(`Successfully deleted schedule with id ${validated.id}`);
-  } catch (error) {
-    if (isMCPResponse(error)) {
-      return error;
-    }
-
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to delete schedule',
-    });
-  }
+  return executeMutationTool(args, {
+    parse: DeleteScheduleSchema.parse,
+    createHandler: () => new ScheduleHandler(),
+    execute: (scheduleHandler, validated) => scheduleHandler.delete(validated.id),
+    successMessage: ({ id }) => `Successfully deleted schedule with id ${id}`,
+    fallbackMessage: 'Failed to delete schedule',
+    allowMcpResponsePassthrough: true,
+  });
 }

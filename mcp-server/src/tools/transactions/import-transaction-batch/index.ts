@@ -1,9 +1,10 @@
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
+import { successWithJson } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
-import { ImportTransactionBatchDataFetcher } from './data-fetcher.js';
-import { ImportTransactionBatchInputParser } from './input-parser.js';
-import { ImportTransactionBatchReportGenerator } from './report-generator.js';
+import { executeToolAction } from '../../shared/tool-action.js';
+import { importPreparedTransactionBatch, prepareImportTransactionBatches } from './data-fetcher.js';
+import { parseImportTransactionBatchInput } from './input-parser.js';
+import { generateImportTransactionBatchReport } from './report-generator.js';
 import type { ImportAccountResult } from './types.js';
 import { ImportTransactionBatchArgsSchema } from './types.js';
 
@@ -29,79 +30,75 @@ export const schema = {
   inputSchema: zodToJsonSchema(ImportTransactionBatchArgsSchema) as ToolInput,
 };
 
-export async function handler(
-  args: unknown,
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    const parsed = new ImportTransactionBatchInputParser().parse(args);
-    const fetcher = new ImportTransactionBatchDataFetcher();
-    const batches = await fetcher.prepareBatches(parsed.transactions);
-    const accountResults: ImportAccountResult[] = [];
+export async function handler(args: unknown) {
+  return executeToolAction(args, {
+    parse: parseImportTransactionBatchInput,
+    execute: async (parsed) => {
+      const batches = await prepareImportTransactionBatches(parsed.transactions);
+      const accountResults: ImportAccountResult[] = [];
 
-    for (const batch of batches) {
-      const preparedCount = batch.transactions.length;
-      const failedPreparationCount = batch.preparationFailures.length;
+      for (const batch of batches) {
+        const preparedCount = batch.transactions.length;
+        const failedPreparationCount = batch.preparationFailures.length;
 
-      if (preparedCount === 0) {
-        accountResults.push({
-          accountId: batch.accountId,
-          accountReferences: batch.accountReferences,
-          requested: batch.requested,
-          prepared: 0,
-          added: 0,
-          updated: 0,
-          failed: failedPreparationCount,
-          errors: batch.preparationFailures.map((failure) => failure.error),
-        });
-        continue;
+        if (preparedCount === 0) {
+          accountResults.push({
+            accountId: batch.accountId,
+            accountReferences: batch.accountReferences,
+            requested: batch.requested,
+            prepared: 0,
+            added: 0,
+            updated: 0,
+            failed: failedPreparationCount,
+            errors: batch.preparationFailures.map((failure) => failure.error),
+          });
+          continue;
+        }
+
+        try {
+          const result = await importPreparedTransactionBatch(batch, {
+            defaultCleared: parsed.defaultCleared,
+            dryRun: parsed.dryRun,
+            reimportDeleted: parsed.reimportDeleted,
+          });
+
+          accountResults.push({
+            accountId: batch.accountId,
+            accountReferences: batch.accountReferences,
+            requested: batch.requested,
+            prepared: preparedCount,
+            added: result.added.length,
+            updated: result.updated.length,
+            failed: failedPreparationCount,
+            errors: batch.preparationFailures.map((failure) => failure.error),
+          });
+        } catch (error) {
+          accountResults.push({
+            accountId: batch.accountId,
+            accountReferences: batch.accountReferences,
+            requested: batch.requested,
+            prepared: preparedCount,
+            added: 0,
+            updated: 0,
+            failed: preparedCount + failedPreparationCount,
+            errors: [
+              ...batch.preparationFailures.map((failure) => failure.error),
+              error instanceof Error ? error.message : String(error),
+            ],
+          });
+        }
       }
 
-      try {
-        const result = await fetcher.importBatch(batch, {
-          defaultCleared: parsed.defaultCleared,
-          dryRun: parsed.dryRun,
-          reimportDeleted: parsed.reimportDeleted,
-        });
-
-        accountResults.push({
-          accountId: batch.accountId,
-          accountReferences: batch.accountReferences,
-          requested: batch.requested,
-          prepared: preparedCount,
-          added: result.added.length,
-          updated: result.updated.length,
-          failed: failedPreparationCount,
-          errors: batch.preparationFailures.map((failure) => failure.error),
-        });
-      } catch (error) {
-        accountResults.push({
-          accountId: batch.accountId,
-          accountReferences: batch.accountReferences,
-          requested: batch.requested,
-          prepared: preparedCount,
-          added: 0,
-          updated: 0,
-          failed: preparedCount + failedPreparationCount,
-          errors: [
-            ...batch.preparationFailures.map((failure) => failure.error),
-            error instanceof Error ? error.message : String(error),
-          ],
-        });
-      }
-    }
-
-    return successWithJson(
-      new ImportTransactionBatchReportGenerator().generate(
+      return {
         batches,
         accountResults,
-        parsed.dryRun ?? false,
-      ),
-    );
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to import transaction batch',
-      suggestion:
-        'Verify that each transaction includes a valid accountId, YYYY-MM-DD date, and amount in cents before retrying.',
-    });
-  }
+        dryRun: parsed.dryRun ?? false,
+      };
+    },
+    buildResponse: (_parsed, { batches, accountResults, dryRun }) =>
+      successWithJson(generateImportTransactionBatchReport(batches, accountResults, dryRun)),
+    fallbackMessage: 'Failed to import transaction batch',
+    suggestion:
+      'Verify that each transaction includes a valid accountId, YYYY-MM-DD date, and amount in cents before retrying.',
+  });
 }

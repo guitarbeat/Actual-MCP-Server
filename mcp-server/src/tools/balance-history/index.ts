@@ -2,13 +2,14 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { formatDate } from '../../core/formatting/index.js';
-import { errorFromCatch, success } from '../../core/response/index.js';
+import { success } from '../../core/response/index.js';
 import { BalanceHistoryArgsSchema } from '../../core/types/index.js';
 import type { ToolInput, BalanceHistoryArgs } from '../../core/types/index.js';
+import { executeToolAction } from '../shared/tool-action.js';
 import { BalanceHistoryCalculator } from './balance-calculator.js';
 import { BalanceHistoryDataFetcher } from './data-fetcher.js';
-import { BalanceHistoryInputParser } from './input-parser.js';
-import { BalanceHistoryReportGenerator } from './report-generator.js';
+import { parseBalanceHistoryInput } from './input-parser.js';
+import { generateBalanceHistoryReport } from './report-generator.js';
 
 export const schema = {
   name: 'balance-history',
@@ -31,43 +32,50 @@ export const schema = {
 };
 
 export async function handler(args: BalanceHistoryArgs): Promise<CallToolResult> {
-  try {
-    const input = new BalanceHistoryInputParser().parse(args);
-    const { accountId, months } = input;
+  return executeToolAction(args, {
+    parse: (rawArgs) => parseBalanceHistoryInput(rawArgs as BalanceHistoryArgs),
+    execute: async (input) => {
+      const { accountId, months } = input;
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setMonth(endDate.getMonth() - months);
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+      const data = await new BalanceHistoryDataFetcher().fetchAll(accountId, start, end);
 
-    // Calculate date range
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setMonth(endDate.getMonth() - months);
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
+      return {
+        ...data,
+        months,
+        endDate,
+        start,
+        end,
+      };
+    },
+    buildResponse: (
+      _input,
+      { account, accounts, transactions, warnings, months, endDate, start, end },
+    ) => {
+      const sortedMonths = new BalanceHistoryCalculator().calculate(
+        account,
+        accounts,
+        transactions,
+        months,
+        endDate,
+      );
+      const markdown = generateBalanceHistoryReport(
+        account,
+        { start, end },
+        sortedMonths,
+        warnings,
+      );
 
-    // Fetch data
-    const { account, accounts, transactions, warnings } =
-      await new BalanceHistoryDataFetcher().fetchAll(accountId, start, end);
-
-    // Calculate balance history
-    const sortedMonths = new BalanceHistoryCalculator().calculate(
-      account,
-      accounts,
-      transactions,
-      months,
-      endDate,
-    );
-
-    // Generate report
-    const markdown = new BalanceHistoryReportGenerator().generate(
-      account,
-      { start, end },
-      sortedMonths,
-      warnings,
-    );
-    return success(markdown);
-  } catch (err) {
-    return errorFromCatch(err, {
+      return success(markdown);
+    },
+    fallbackMessage: 'Failed to calculate balance history',
+    errorContext: {
       tool: 'balance-history',
       operation: 'calculate_balance_history',
       args,
-    });
-  }
+    },
+  });
 }

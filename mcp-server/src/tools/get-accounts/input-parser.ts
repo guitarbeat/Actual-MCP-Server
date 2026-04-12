@@ -10,17 +10,9 @@ export interface ParsedGetAccountsInput {
   includeClosed: boolean;
 }
 
-export class GetAccountsInputParser {
-  /**
-   * Parse and validate get accounts arguments
-   *
-   * @param args - Raw input arguments
-   * @returns Parsed input with defaults applied
-   */
-  parse(args: GetAccountsArgs = {}): ParsedGetAccountsInput {
-    return {
-      accountId: args.accountId,
-      includeClosed: args.includeClosed ?? false,
-    };
-  }
+export function parseGetAccountsInput(args: GetAccountsArgs = {}): ParsedGetAccountsInput {
+  return {
+    accountId: args.accountId,
+    includeClosed: args.includeClosed ?? false,
+  };
 }

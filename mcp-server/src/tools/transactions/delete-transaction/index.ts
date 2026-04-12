@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, success } from '../../../core/response/index.js';
+import { executeMutationTool } from '../../shared/mutation-tool.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
 
@@ -39,19 +39,11 @@ export const schema = {
 };
 
 export async function handler(args: z.infer<typeof DeleteTransactionSchema>) {
-  try {
-    // Validate input
-    const validated = DeleteTransactionSchema.parse(args);
-
-    // Use TransactionHandler to delete transaction
-    const transactionHandler = new TransactionHandler();
-    await transactionHandler.delete(validated.id);
-    transactionHandler.invalidateCache();
-
-    return success(`Successfully deleted transaction with id ${validated.id}`);
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to delete transaction',
-    });
-  }
+  return executeMutationTool(args, {
+    parse: DeleteTransactionSchema.parse,
+    createHandler: () => new TransactionHandler(),
+    execute: (transactionHandler, validated) => transactionHandler.delete(validated.id),
+    successMessage: ({ id }) => `Successfully deleted transaction with id ${id}`,
+    fallbackMessage: 'Failed to delete transaction',
+  });
 }

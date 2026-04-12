@@ -5,8 +5,9 @@
 
 import { setBudgetAmount, setBudgetCarryover } from '../../core/api/actual-client.js';
 import { formatAmount } from '../../core/formatting/index.js';
-import { errorFromCatch, successWithJson } from '../../core/response/index.js';
+import { successWithJson } from '../../core/response/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
+import { executeToolAction } from '../shared/tool-action.js';
 import { SetBudgetArgsSchema } from './types.js';
 
 export const schema = {
@@ -68,40 +69,30 @@ export const schema = {
  * @param args - Set budget arguments
  * @returns Success or error response
  */
-export async function handler(
-  args: unknown,
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    // Validate arguments
-    const parsedArgs = SetBudgetArgsSchema.parse(args);
+export async function handler(args: unknown) {
+  return executeToolAction(args, {
+    parse: SetBudgetArgsSchema.parse,
+    execute: async (parsedArgs) => {
+      const categoryId = await nameResolver.resolveCategory(parsedArgs.category);
+      const operations: string[] = [];
 
-    // Resolve category name to ID if needed (provides helpful error with available categories)
-    const categoryId = await nameResolver.resolveCategory(parsedArgs.category);
+      if (parsedArgs.amount !== undefined) {
+        await setBudgetAmount(parsedArgs.month, categoryId, parsedArgs.amount);
+        operations.push(`amount set to ${formatAmount(parsedArgs.amount)}`);
+      }
 
-    const operations: string[] = [];
+      if (parsedArgs.carryover !== undefined) {
+        await setBudgetCarryover(parsedArgs.month, categoryId, parsedArgs.carryover);
+        operations.push(`carryover ${parsedArgs.carryover ? 'enabled' : 'disabled'}`);
+      }
 
-    // Set amount if provided (already converted to cents by schema transform)
-    if (parsedArgs.amount !== undefined) {
-      await setBudgetAmount(parsedArgs.month, categoryId, parsedArgs.amount);
-      // Format amount for display using formatAmount utility
-      operations.push(`amount set to ${formatAmount(parsedArgs.amount)}`);
-    }
-
-    // Set carryover if provided
-    if (parsedArgs.carryover !== undefined) {
-      await setBudgetCarryover(parsedArgs.month, categoryId, parsedArgs.carryover);
-      operations.push(`carryover ${parsedArgs.carryover ? 'enabled' : 'disabled'}`);
-    }
-
-    return successWithJson(
-      `Successfully updated budget for category '${parsedArgs.category}' in ${parsedArgs.month}: ${operations.join(', ')}`,
-    );
-  } catch (err) {
-    // NameResolver already provides helpful error messages with available categories
-    // errorFromCatch will preserve those messages
-    return errorFromCatch(err, {
-      fallbackMessage: 'Failed to set budget',
-      suggestion: 'Check that the category name/ID is correct and the month is in YYYY-MM format.',
-    });
-  }
+      return operations;
+    },
+    buildResponse: (parsedArgs, operations) =>
+      successWithJson(
+        `Successfully updated budget for category '${parsedArgs.category}' in ${parsedArgs.month}: ${operations.join(', ')}`,
+      ),
+    fallbackMessage: 'Failed to set budget',
+    suggestion: 'Check that the category name/ID is correct and the month is in YYYY-MM format.',
+  });
 }

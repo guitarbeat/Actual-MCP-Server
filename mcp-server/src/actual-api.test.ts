@@ -64,6 +64,56 @@ vi.mock('./core/utils/name-resolver.js', () => ({
 }));
 
 type MockApiInitResult = Awaited<ReturnType<typeof api.init>>;
+type BudgetList = NonNullable<Awaited<ReturnType<typeof api.getBudgets>>>;
+type Budget = BudgetList[number];
+type AccountList = Awaited<ReturnType<typeof api.getAccounts>>;
+type Account = AccountList[number];
+type PayeeList = Awaited<ReturnType<typeof api.getPayees>>;
+type Payee = PayeeList[number];
+type TagList = Awaited<ReturnType<typeof api.getTags>>;
+type Tag = TagList[number];
+type ApiWithBatchBudgetUpdates = Omit<typeof api, 'batchBudgetUpdates'> & {
+  batchBudgetUpdates: ((callback: () => Promise<unknown>) => Promise<unknown>) | undefined;
+};
+
+const MOCK_API_INIT_RESULT = undefined as unknown as MockApiInitResult;
+const apiWithBatchBudgetUpdates = api as ApiWithBatchBudgetUpdates;
+
+function createBudget(budget: Pick<Budget, 'id' | 'name'> & Partial<Budget>): Budget {
+  return budget as Budget;
+}
+
+function mockBudgets(...budgets: Array<Pick<Budget, 'id' | 'name'> & Partial<Budget>>): void {
+  vi.mocked(api.getBudgets).mockResolvedValue(budgets.map(createBudget) as BudgetList);
+}
+
+function createAccount(account: Pick<Account, 'id' | 'name'> & Partial<Account>): Account {
+  return account as Account;
+}
+
+function mockAccounts(...accounts: Array<Pick<Account, 'id' | 'name'> & Partial<Account>>): void {
+  vi.mocked(api.getAccounts).mockResolvedValue(accounts.map(createAccount) as AccountList);
+}
+
+function createPayee(payee: Pick<Payee, 'id' | 'name'> & Partial<Payee>): Payee {
+  return payee as Payee;
+}
+
+function mockPayees(...payees: Array<Pick<Payee, 'id' | 'name'> & Partial<Payee>>): void {
+  vi.mocked(api.getPayees).mockResolvedValue(payees.map(createPayee) as PayeeList);
+}
+
+function createTag(tag: Pick<Tag, 'id'> & Partial<Tag>): Tag {
+  return tag as Tag;
+}
+
+function mockTags(...tags: Array<Pick<Tag, 'id'> & Partial<Tag>>): void {
+  vi.mocked(api.getTags).mockResolvedValue(tags.map(createTag) as TagList);
+}
+
+function mockInitSuccess(): void {
+  vi.mocked(api.init).mockResolvedValue(MOCK_API_INIT_RESULT);
+}
 
 describe('Auto-load functionality', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -71,7 +121,7 @@ describe('Auto-load functionality', () => {
   beforeEach(async () => {
     originalEnv = { ...process.env };
     vi.clearAllMocks();
-    vi.mocked(api.getAccounts).mockResolvedValue([]);
+    mockAccounts();
 
     // Reset initialization state by calling shutdown
     await actualApi.shutdownActualApi();
@@ -88,16 +138,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -112,7 +158,7 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'specific-budget-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
+      mockBudgets(
         {
           id: 'budget-1',
           cloudFileId: 'first-budget',
@@ -128,10 +174,8 @@ describe('Auto-load functionality', () => {
           cloudFileId: 'third-budget',
           name: 'Third Budget',
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      );
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -143,17 +187,13 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'group-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'cloud-file-id',
-          groupId: 'group-sync-id',
-          name: 'Actual Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'cloud-file-id',
+        groupId: 'group-sync-id',
+        name: 'Actual Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -165,16 +205,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'missing-budget';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'valid-budget',
-          name: 'Valid Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'valid-budget',
+        name: 'Valid Budget',
+      });
+      mockInitSuccess();
 
       await expect(actualApi.initActualApi()).rejects.toThrow(
         'ACTUAL_BUDGET_SYNC_ID "missing-budget" was not found in the available budgets.',
@@ -187,16 +223,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_PASSWORD = 'secret-password';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'encrypted-budget-id',
-          name: 'Encrypted Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'encrypted-budget-id',
+        name: 'Encrypted Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -212,7 +244,7 @@ describe('Auto-load functionality', () => {
       delete process.env.ACTUAL_BUDGET_SYNC_ID;
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
+      mockBudgets(
         {
           id: 'budget-1',
           cloudFileId: 'first-budget',
@@ -223,10 +255,8 @@ describe('Auto-load functionality', () => {
           cloudFileId: 'second-budget',
           name: 'Second Budget',
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      );
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -238,12 +268,8 @@ describe('Auto-load functionality', () => {
       delete process.env.ACTUAL_BUDGET_SYNC_ID;
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        { id: 'local-budget-id', name: 'Local Budget' },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({ id: 'local-budget-id', name: 'Local Budget' });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -255,17 +281,13 @@ describe('Auto-load functionality', () => {
       delete process.env.ACTUAL_BUDGET_SYNC_ID;
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'cloud-file-id',
-          groupId: 'group-sync-id',
-          name: 'Actual Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'cloud-file-id',
+        groupId: 'group-sync-id',
+        name: 'Actual Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -281,16 +303,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -334,16 +352,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -373,16 +387,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -399,16 +409,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
       process.env.ACTUAL_READ_FRESHNESS_MODE = 'strict-live';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -423,14 +429,11 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
 
       const initResult = {} as MockApiInitResult;
       let resolveInit: (() => void) | undefined;
@@ -458,9 +461,8 @@ describe('Auto-load functionality', () => {
     it('should throw error when no budgets are found', async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets();
+      mockInitSuccess();
 
       await expect(actualApi.initActualApi()).rejects.toThrow('No budgets found');
     });
@@ -477,16 +479,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'invalid-budget-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'invalid-budget-id',
-          name: 'Valid Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'invalid-budget-id',
+        name: 'Valid Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockRejectedValue(new Error('Budget not found'));
 
       await expect(actualApi.initActualApi()).rejects.toThrow('Budget not found');
@@ -498,16 +496,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/new-data';
 
       vi.mocked(fs.existsSync).mockReturnValue(false);
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -521,16 +515,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_DATA_DIR = '/test/existing-data';
 
       vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
@@ -552,16 +542,12 @@ describe('Auto-load functionality', () => {
       process.env.AUTO_SYNC_INTERVAL_MINUTES = '5';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
 
@@ -582,16 +568,12 @@ describe('Auto-load functionality', () => {
       process.env.AUTO_SYNC_INTERVAL_MINUTES = '0';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
 
@@ -607,16 +589,12 @@ describe('Auto-load functionality', () => {
       delete process.env.AUTO_SYNC_INTERVAL_MINUTES;
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
 
@@ -632,16 +610,12 @@ describe('Auto-load functionality', () => {
       process.env.AUTO_SYNC_INTERVAL_MINUTES = '1';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockRejectedValue(new Error('Sync failed'));
 
@@ -658,16 +632,12 @@ describe('Auto-load functionality', () => {
       process.env.AUTO_SYNC_INTERVAL_MINUTES = '5';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
       vi.mocked(api.shutdown).mockResolvedValue(undefined);
@@ -690,16 +660,12 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.loadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
@@ -738,25 +704,18 @@ describe('Auto-load functionality', () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-sync-id',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.sync).mockResolvedValue(undefined);
-      vi.mocked(api.getAccounts).mockResolvedValue([
-        {
-          id: 'account-1',
-          name: 'Checking',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
+      mockAccounts({
+        id: 'account-1',
+        name: 'Checking',
+      });
 
       await actualApi.initActualApi();
       vi.mocked(api.sync).mockClear();
@@ -846,16 +805,12 @@ describe('Auto-load functionality', () => {
   describe('updateTransaction', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
     });
 
@@ -912,19 +867,14 @@ describe('Auto-load functionality', () => {
   describe('deleteTransaction', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.deleteTransaction).mockResolvedValue(undefined as any);
+      vi.mocked(api.deleteTransaction).mockResolvedValue([]);
     });
 
     it('should call API initialization before deletion', async () => {
@@ -958,16 +908,12 @@ describe('Auto-load functionality', () => {
   describe('importTransactions', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(cacheService.invalidate).mockClear();
       vi.mocked(api.importTransactions).mockResolvedValue({
@@ -1067,21 +1013,16 @@ describe('Auto-load functionality', () => {
   describe('batchBudgetUpdates', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       // Setup batchBudgetUpdates mock
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (api as any).batchBudgetUpdates = vi.fn().mockImplementation(async (cb) => {
+      apiWithBatchBudgetUpdates.batchBudgetUpdates = vi.fn().mockImplementation(async (cb) => {
         return cb();
       });
     });
@@ -1097,15 +1038,13 @@ describe('Auto-load functionality', () => {
       const callback = vi.fn().mockResolvedValue('result');
       const result = await actualApi.batchBudgetUpdates(callback);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((api as any).batchBudgetUpdates).toHaveBeenCalledWith(callback);
+      expect(apiWithBatchBudgetUpdates.batchBudgetUpdates).toHaveBeenCalledWith(callback);
       expect(callback).toHaveBeenCalled();
       expect(result).toBe('result');
     });
 
     it('should throw if api.batchBudgetUpdates is not a function', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (api as any).batchBudgetUpdates = undefined;
+      apiWithBatchBudgetUpdates.batchBudgetUpdates = undefined;
       const callback = vi.fn().mockResolvedValue(undefined);
 
       await expect(actualApi.batchBudgetUpdates(callback)).rejects.toThrow(
@@ -1117,26 +1056,19 @@ describe('Auto-load functionality', () => {
   describe('tag wrappers', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
-      vi.mocked(api.getTags).mockResolvedValue([
-        {
-          id: 'tag-1',
-          tag: 'reimbursable',
-          color: '#ff0000',
-          description: 'Expense to reimburse',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
+      mockTags({
+        id: 'tag-1',
+        tag: 'reimbursable',
+        color: '#ff0000',
+        description: 'Expense to reimburse',
+      });
       vi.mocked(api.createTag).mockResolvedValue('tag-1');
       vi.mocked(api.updateTag).mockResolvedValue(undefined);
       vi.mocked(api.deleteTag).mockResolvedValue(undefined);
@@ -1187,16 +1119,12 @@ describe('Auto-load functionality', () => {
   describe('account and schedule wrapper passthroughs', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
       vi.mocked(api.closeAccount).mockResolvedValue(undefined);
       vi.mocked(api.updateSchedule).mockResolvedValue('schedule-1');
@@ -1219,27 +1147,21 @@ describe('Auto-load functionality', () => {
   describe('historical transfer application', () => {
     beforeEach(async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
-      vi.mocked(api.getBudgets).mockResolvedValue([
-        {
-          id: 'budget-1',
-          cloudFileId: 'test-budget',
-          name: 'Test Budget',
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(api.init).mockResolvedValue(undefined as any);
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-budget',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
-      vi.mocked(api.getAccounts).mockResolvedValue([
+      mockAccounts(
         { id: 'checking', name: 'Checking', offbudget: false, closed: false },
         { id: 'credit', name: 'Credit Card', offbudget: false, closed: false },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
-      vi.mocked(api.getPayees).mockResolvedValue([
+      );
+      mockPayees(
         { id: 'payee-checking', name: 'Transfer: Checking', transfer_acct: 'checking' },
         { id: 'payee-credit', name: 'Transfer: Credit Card', transfer_acct: 'credit' },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any);
+      );
 
       const internalDb = api.internal.db;
       vi.mocked(internalDb.getTransaction).mockImplementation(async (id: string) => {

@@ -4,12 +4,13 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { GroupAggregator } from '../../core/aggregation/group-by.js';
 import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.js';
 import { CategoryMapper } from '../../core/mapping/category-mapper.js';
-import { errorFromCatch, success } from '../../core/response/index.js';
+import { success } from '../../core/response/index.js';
 import { SpendingByCategoryArgsSchema } from '../../core/types/index.js';
 import type { ToolInput, Account, SpendingByCategoryArgs } from '../../core/types/index.js';
+import { executeToolAction } from '../shared/tool-action.js';
 import { SpendingByCategoryDataFetcher } from './data-fetcher.js';
 import type { SpendingByCategoryInput } from './input-parser.js';
-import { SpendingByCategoryInputParser } from './input-parser.js';
+import { parseSpendingByCategoryInput } from './input-parser.js';
 import { SpendingByCategoryReportGenerator } from './report-generator.js';
 
 export const schema = {
@@ -20,39 +21,55 @@ export const schema = {
 };
 
 export async function handler(args: SpendingByCategoryArgs): Promise<CallToolResult> {
-  try {
-    const input: SpendingByCategoryInput = new SpendingByCategoryInputParser().parse(args);
-    const { startDate, endDate, accountId, includeIncome } = input;
-    const { accounts, categories, categoryGroups, transactions, warnings } =
-      await new SpendingByCategoryDataFetcher().fetchAll(accountId, startDate, endDate);
-    const categoryMapper = new CategoryMapper(categories, categoryGroups);
-    const spendingByCategory = new TransactionGrouper().groupByCategory(
-      transactions,
-      (categoryId) => categoryMapper.getCategoryName(categoryId),
-      (categoryId) => categoryMapper.getGroupInfo(categoryId),
-      includeIncome,
-    );
-    const sortedGroups = new GroupAggregator().aggregateAndSort(spendingByCategory);
+  return executeToolAction(args, {
+    parse: (rawArgs) => parseSpendingByCategoryInput(rawArgs) as SpendingByCategoryInput,
+    execute: async (input) => {
+      const { startDate, endDate, accountId } = input;
+      const data = await new SpendingByCategoryDataFetcher().fetchAll(
+        accountId,
+        startDate,
+        endDate,
+      );
 
-    let accountLabel = 'Accounts: All on-budget accounts';
-    if (accountId) {
-      const account: Account | undefined = accounts.find((a) => a.id === accountId);
-      accountLabel = `Account: ${account ? account.name : accountId}`;
-    }
+      return {
+        ...data,
+        input,
+      };
+    },
+    buildResponse: (
+      _rawInput,
+      { accounts, categories, categoryGroups, transactions, warnings, input },
+    ) => {
+      const { startDate, endDate, accountId, includeIncome } = input;
+      const categoryMapper = new CategoryMapper(categories, categoryGroups);
+      const spendingByCategory = new TransactionGrouper().groupByCategory(
+        transactions,
+        (categoryId) => categoryMapper.getCategoryName(categoryId),
+        (categoryId) => categoryMapper.getGroupInfo(categoryId),
+        includeIncome,
+      );
+      const sortedGroups = new GroupAggregator().aggregateAndSort(spendingByCategory);
 
-    const markdown = new SpendingByCategoryReportGenerator().generate(
-      sortedGroups,
-      { start: startDate, end: endDate },
-      accountLabel,
-      includeIncome,
-      warnings,
-    );
-    return success(markdown);
-  } catch (err) {
-    return errorFromCatch(err, {
+      let accountLabel = 'Accounts: All on-budget accounts';
+      if (accountId) {
+        const account: Account | undefined = accounts.find((a) => a.id === accountId);
+        accountLabel = `Account: ${account ? account.name : accountId}`;
+      }
+
+      const markdown = new SpendingByCategoryReportGenerator().generate(
+        sortedGroups,
+        { start: startDate, end: endDate },
+        accountLabel,
+        includeIncome,
+        warnings,
+      );
+      return success(markdown);
+    },
+    fallbackMessage: 'Failed to calculate spending breakdown',
+    errorContext: {
       tool: 'spending-by-category',
       operation: 'calculate_spending_breakdown',
       args,
-    });
-  }
+    },
+  });
 }
