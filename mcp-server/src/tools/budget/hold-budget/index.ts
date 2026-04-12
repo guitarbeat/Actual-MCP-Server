@@ -5,8 +5,9 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { holdBudgetForNextMonth } from '../../../core/api/actual-client.js';
-import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
+import { successWithJson } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
+import { executeToolAction } from '../../shared/tool-action.js';
 
 const HoldBudgetSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),
@@ -39,18 +40,16 @@ export const schema = {
   inputSchema: zodToJsonSchema(HoldBudgetSchema) as ToolInput,
 };
 
-export async function handler(
-  args: z.infer<typeof HoldBudgetSchema>,
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    const validated = HoldBudgetSchema.parse(args);
-    await holdBudgetForNextMonth(validated.month, validated.amount);
-    return successWithJson(
-      `Successfully held budget amount ${validated.amount} cents for month ${validated.month}`,
-    );
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to hold budget',
-    });
-  }
+export async function handler(args: z.infer<typeof HoldBudgetSchema>) {
+  return executeToolAction(args, {
+    parse: HoldBudgetSchema.parse,
+    execute: async (validated) => {
+      await holdBudgetForNextMonth(validated.month, validated.amount);
+    },
+    buildResponse: (validated) =>
+      successWithJson(
+        `Successfully held budget amount ${validated.amount} cents for month ${validated.month}`,
+      ),
+    fallbackMessage: 'Failed to hold budget',
+  });
 }

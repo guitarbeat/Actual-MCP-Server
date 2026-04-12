@@ -8,13 +8,11 @@ export interface BalanceHistoryInput {
   months: number;
 }
 
-export class BalanceHistoryInputParser {
-  parse(args: BalanceHistoryArgs): BalanceHistoryInput {
-    const { accountId, includeOffBudget, months } = args;
-    return {
-      accountId,
-      includeOffBudget: typeof includeOffBudget === 'boolean' ? includeOffBudget : false,
-      months: typeof months === 'number' && months > 0 ? months : 12,
-    };
-  }
+export function parseBalanceHistoryInput(args: BalanceHistoryArgs): BalanceHistoryInput {
+  const { accountId, includeOffBudget, months } = args;
+  return {
+    accountId,
+    includeOffBudget: typeof includeOffBudget === 'boolean' ? includeOffBudget : false,
+    months: typeof months === 'number' && months > 0 ? months : 12,
+  };
 }

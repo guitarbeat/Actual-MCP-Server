@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GetAccountsDataFetcher } from './data-fetcher.js';
+import { fetchAccounts } from './data-fetcher.js';
 
 // Mock dependencies
 const mockFetchAllAccounts = vi.fn();
@@ -19,7 +19,7 @@ vi.mock('../../core/utils/name-resolver.js', () => ({
   },
 }));
 
-describe('GetAccountsDataFetcher', () => {
+describe('fetchAccounts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -37,8 +37,7 @@ describe('GetAccountsDataFetcher', () => {
       return 0;
     });
 
-    const fetcher = new GetAccountsDataFetcher();
-    const result = await fetcher.fetchAccounts({ includeClosed: false });
+    const result = await fetchAccounts({ includeClosed: false });
 
     expect(result.partial).toBe(false);
     expect(result.warnings).toEqual([]);
@@ -62,8 +61,7 @@ describe('GetAccountsDataFetcher', () => {
     mockFetchAllAccounts.mockResolvedValue(accounts);
     mockGetAccountBalance.mockResolvedValue(100);
 
-    const fetcher = new GetAccountsDataFetcher();
-    const result = await fetcher.fetchAccounts({ includeClosed: false });
+    const result = await fetchAccounts({ includeClosed: false });
 
     expect(result.partial).toBe(false);
     expect(result.warnings).toEqual([]);
@@ -82,8 +80,7 @@ describe('GetAccountsDataFetcher', () => {
     mockFetchAllAccounts.mockResolvedValue(accounts);
     mockGetAccountBalance.mockResolvedValue(100);
 
-    const fetcher = new GetAccountsDataFetcher();
-    const result = await fetcher.fetchAccounts({ includeClosed: true });
+    const result = await fetchAccounts({ includeClosed: true });
 
     expect(result.partial).toBe(false);
     expect(result.warnings).toEqual([]);

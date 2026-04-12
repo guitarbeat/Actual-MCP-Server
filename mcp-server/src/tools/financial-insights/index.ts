@@ -9,9 +9,10 @@ import {
   generateInsightsSummary,
 } from '../../core/analysis/financial-analyzer.js';
 import { formatAmount } from '../../core/formatting/index.js';
-import { errorFromCatch, successWithJson } from '../../core/response/index.js';
+import { successWithJson } from '../../core/response/index.js';
 import type { ToolInput } from '../../core/types/index.js';
 import { FinancialInsightsArgsSchema } from '../../core/types/schemas.js';
+import { executeToolAction } from '../shared/tool-action.js';
 
 export const schema = {
   name: 'get-financial-insights',
@@ -90,21 +91,16 @@ function formatInsights(insights: FinancialInsightsSummary): object {
 /**
  * Handler for the get-financial-insights tool
  */
-export async function handler(
-  args: unknown,
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    const input = FinancialInsightsArgsSchema.parse(args);
-    const insights = await generateInsightsSummary(input.month, {
-      includeSchedules: input.includeSchedules,
-      scheduleDays: input.scheduleDays,
-    });
-
-    return successWithJson(formatInsights(insights));
-  } catch (err) {
-    return errorFromCatch(err, {
-      fallbackMessage: 'Failed to generate financial insights',
-      suggestion: 'Check that the month is in YYYY-MM format and try again.',
-    });
-  }
+export async function handler(args: unknown) {
+  return executeToolAction(args, {
+    parse: FinancialInsightsArgsSchema.parse,
+    execute: (input) =>
+      generateInsightsSummary(input.month, {
+        includeSchedules: input.includeSchedules,
+        scheduleDays: input.scheduleDays,
+      }),
+    buildResponse: (_input, insights) => successWithJson(formatInsights(insights)),
+    fallbackMessage: 'Failed to generate financial insights',
+    suggestion: 'Check that the month is in YYYY-MM format and try again.',
+  });
 }

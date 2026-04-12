@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, success } from '../../../core/response/index.js';
+import { executeMutationTool } from '../../shared/mutation-tool.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
 
@@ -35,15 +35,11 @@ export const schema = {
 };
 
 export async function handler(args: z.infer<typeof ReopenAccountSchema>) {
-  try {
-    const validated = ReopenAccountSchema.parse(args);
-    const accountHandler = new AccountHandler();
-    await accountHandler.reopen(validated.id);
-    accountHandler.invalidateCache();
-    return success(`Successfully reopened account with id ${validated.id}`);
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to reopen account',
-    });
-  }
+  return executeMutationTool(args, {
+    parse: ReopenAccountSchema.parse,
+    createHandler: () => new AccountHandler(),
+    execute: (accountHandler, validated) => accountHandler.reopen(validated.id),
+    successMessage: ({ id }) => `Successfully reopened account with id ${id}`,
+    fallbackMessage: 'Failed to reopen account',
+  });
 }

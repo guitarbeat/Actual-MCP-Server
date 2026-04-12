@@ -57,6 +57,7 @@ pnpm --filter actual-mcp start
 pnpm --filter actual-mcp inspector
 pnpm --filter actual-mcp inspector:custom
 pnpm --filter actual-mcp test
+pnpm --filter actual-mcp test:startup-smoke
 pnpm --filter actual-mcp test:unit:watch
 pnpm --filter actual-mcp test:ui
 pnpm --filter actual-mcp test:coverage
@@ -79,7 +80,8 @@ pnpm --filter actual-mcp quality
 2. Make the change.
 3. Run `pnpm --filter actual-mcp quality`.
 4. Run `pnpm --filter actual-mcp test`.
-5. If entrypoints or packaging changed, run `pnpm --filter actual-mcp build`.
+5. Run `pnpm --filter actual-mcp build` if entrypoints or packaging changed.
+6. Run `pnpm --filter actual-mcp test:startup-smoke` when you change the built entrypoint, remote runtime startup, or packaging behavior.
 
 ### MCP surface or docs change
 
@@ -142,7 +144,8 @@ pnpm --filter actual-mcp format:check
 pnpm --filter actual-mcp docs:check
 pnpm --filter actual-mcp type-check
 pnpm --filter actual-mcp build
-pnpm --filter actual-mcp test
+pnpm --filter actual-mcp test:startup-smoke
+pnpm --filter actual-mcp test:coverage
 ```
 
 ### Docker workflow

@@ -4,10 +4,11 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { error, errorFromCatch, success } from '../../../core/response/index.js';
+import { error } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import type { TransactionData } from '../../manage-entity/entity-handlers/transaction-handler.js';
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
+import { executeMutationTool } from '../../shared/mutation-tool.js';
 
 // Transaction update schema
 const UpdateTransactionSchema = z.object({
@@ -84,24 +85,19 @@ export const schema = {
 };
 
 export async function handler(args: z.infer<typeof UpdateTransactionSchema>) {
-  try {
-    // Validate input
-    const validated = UpdateTransactionSchema.parse(args);
-    const { id, ...updateData } = validated;
-
-    if (Object.keys(updateData).length === 0) {
-      return error('No fields provided for update', 'Provide at least one field to update');
-    }
-
-    // Use TransactionHandler to update transaction
-    const transactionHandler = new TransactionHandler();
-    await transactionHandler.update(id, updateData as TransactionData);
-    transactionHandler.invalidateCache();
-
-    return success(`Successfully updated transaction with id ${id}`);
-  } catch (err) {
-    return errorFromCatch(err, {
-      fallbackMessage: 'Failed to update transaction',
-    });
-  }
+  return executeMutationTool(args, {
+    parse: UpdateTransactionSchema.parse,
+    createHandler: () => new TransactionHandler(),
+    validate: ({ id, ...updateData }) => {
+      if (Object.keys(updateData).length === 0) {
+        return error('No fields provided for update', 'Provide at least one field to update');
+      }
+    },
+    execute: (transactionHandler, validated) => {
+      const { id, ...updateData } = validated;
+      return transactionHandler.update(id, updateData as TransactionData);
+    },
+    successMessage: ({ id }) => `Successfully updated transaction with id ${id}`,
+    fallbackMessage: 'Failed to update transaction',
+  });
 }

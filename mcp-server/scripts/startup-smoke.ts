@@ -57,7 +57,8 @@ async function waitForListening(
   getLogs: () => string,
   getChildError: () => Error | null,
 ): Promise<void> {
-  const listeningPattern = `[HTTP] MCP server listening on http://0.0.0.0:${port}/mcp`;
+  const listeningPattern = `MCP server listening on http://`;
+  const listeningSuffix = `:${port}/mcp`;
   const start = Date.now();
   const timeoutMs = 30000;
 
@@ -73,7 +74,8 @@ async function waitForListening(
       throw new Error(`Server exited before listening.\n${getLogs()}`);
     }
 
-    if (getLogs().includes(listeningPattern)) {
+    const logs = getLogs();
+    if (logs.includes(listeningPattern) && logs.includes(listeningSuffix)) {
       return;
     }
 

@@ -3,16 +3,12 @@
 // ----------------------------
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import {
-  errorFromCatch,
-  isMCPResponse,
-  type MCPResponse,
-  success,
-} from '../../../core/response/index.js';
+import type { MCPResponse } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-handler.js';
 import type { ScheduleData } from '../../manage-entity/types.js';
 import { ScheduleDataSchema } from '../../manage-entity/types.js';
+import { executeMutationTool } from '../../shared/mutation-tool.js';
 
 export const schema = {
   name: 'create-schedule',
@@ -53,21 +49,13 @@ export const schema = {
 };
 
 export async function handler(args: ScheduleData): Promise<MCPResponse> {
-  try {
-    const validated = ScheduleDataSchema.parse(args);
-    const scheduleHandler = new ScheduleHandler();
-    const scheduleId = await scheduleHandler.create(validated);
-    scheduleHandler.invalidateCache();
-    return success(
+  return executeMutationTool(args, {
+    parse: ScheduleDataSchema.parse,
+    createHandler: () => new ScheduleHandler(),
+    execute: (scheduleHandler, validated) => scheduleHandler.create(validated),
+    successMessage: (validated, scheduleId) =>
       `Successfully created schedule "${validated.name || 'Unnamed'}" with id ${scheduleId}`,
-    );
-  } catch (error) {
-    if (isMCPResponse(error)) {
-      return error;
-    }
-
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to create schedule',
-    });
-  }
+    fallbackMessage: 'Failed to create schedule',
+    allowMcpResponsePassthrough: true,
+  });
 }

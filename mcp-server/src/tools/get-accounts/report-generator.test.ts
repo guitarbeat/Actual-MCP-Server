@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { GetAccountsReportGenerator } from './report-generator.js';
+import { generateAccountsReport } from './report-generator.js';
 
-describe('GetAccountsReportGenerator', () => {
+describe('generateAccountsReport', () => {
   it('includes reportedBalance when balance_current is available', () => {
-    const report = new GetAccountsReportGenerator().generate([
+    const report = generateAccountsReport([
       {
         id: 'account-1',
         name: 'Checking',
@@ -29,7 +29,7 @@ describe('GetAccountsReportGenerator', () => {
   });
 
   it('omits reportedBalance when balance_current is null or undefined', () => {
-    const report = new GetAccountsReportGenerator().generate([
+    const report = generateAccountsReport([
       {
         id: 'account-1',
         name: 'Checking',

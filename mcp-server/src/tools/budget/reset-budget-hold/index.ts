@@ -5,8 +5,9 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { resetBudgetHold } from '../../../core/api/actual-client.js';
-import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
+import { successWithJson } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
+import { executeToolAction } from '../../shared/tool-action.js';
 
 const ResetBudgetHoldSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),
@@ -34,16 +35,14 @@ export const schema = {
   inputSchema: zodToJsonSchema(ResetBudgetHoldSchema) as ToolInput,
 };
 
-export async function handler(
-  args: z.infer<typeof ResetBudgetHoldSchema>,
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    const validated = ResetBudgetHoldSchema.parse(args);
-    await resetBudgetHold(validated.month);
-    return successWithJson(`Successfully reset budget hold for month ${validated.month}`);
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to reset budget hold',
-    });
-  }
+export async function handler(args: z.infer<typeof ResetBudgetHoldSchema>) {
+  return executeToolAction(args, {
+    parse: ResetBudgetHoldSchema.parse,
+    execute: async (validated) => {
+      await resetBudgetHold(validated.month);
+    },
+    buildResponse: (validated) =>
+      successWithJson(`Successfully reset budget hold for month ${validated.month}`),
+    fallbackMessage: 'Failed to reset budget hold',
+  });
 }

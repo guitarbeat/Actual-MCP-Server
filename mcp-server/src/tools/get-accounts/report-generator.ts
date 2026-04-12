@@ -22,28 +22,23 @@ export interface GetAccountsReport {
   warnings: string[];
 }
 
-export class GetAccountsReportGenerator {
-  /**
-   * Generate formatted account data
-   *
-   * @param accounts - Array of accounts with balances
-   * @returns Array of formatted account objects
-   */
-  generate(accounts: AccountWithBalance[], warnings: string[] = []): GetAccountsReport {
-    return {
-      accounts: accounts.map((account) => ({
-        id: account.id,
-        name: account.name,
-        type: account.type || 'Account',
-        balance: formatAmount(account.balance),
-        ...(account.balance_current != null
-          ? { reportedBalance: formatAmount(account.balance_current) }
-          : {}),
-        closed: account.closed ?? false,
-        offBudget: account.offbudget ?? false,
-      })),
-      partial: warnings.length > 0,
-      warnings,
-    };
-  }
+export function generateAccountsReport(
+  accounts: AccountWithBalance[],
+  warnings: string[] = [],
+): GetAccountsReport {
+  return {
+    accounts: accounts.map((account) => ({
+      id: account.id,
+      name: account.name,
+      type: account.type || 'Account',
+      balance: formatAmount(account.balance),
+      ...(account.balance_current != null
+        ? { reportedBalance: formatAmount(account.balance_current) }
+        : {}),
+      closed: account.closed ?? false,
+      offBudget: account.offbudget ?? false,
+    })),
+    partial: warnings.length > 0,
+    warnings,
+  };
 }

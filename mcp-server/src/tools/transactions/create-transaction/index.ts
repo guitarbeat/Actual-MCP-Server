@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, success } from '../../../core/response/index.js';
+import { executeMutationTool } from '../../shared/mutation-tool.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import type { TransactionData } from '../../manage-entity/entity-handlers/transaction-handler.js';
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
@@ -121,19 +121,13 @@ export const schema = {
 };
 
 export async function handler(args: z.infer<typeof CreateTransactionSchema>) {
-  try {
-    // Validate input
-    const validated = CreateTransactionSchema.parse(args);
-
-    // Use TransactionHandler to create transaction
-    const transactionHandler = new TransactionHandler();
-    const transactionId = await transactionHandler.create(validated as TransactionData);
-    transactionHandler.invalidateCache();
-
-    return success(`Successfully created transaction with id ${transactionId}`);
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to create transaction',
-    });
-  }
+  return executeMutationTool(args, {
+    parse: CreateTransactionSchema.parse,
+    createHandler: () => new TransactionHandler(),
+    execute: (transactionHandler, validated) =>
+      transactionHandler.create(validated as TransactionData),
+    successMessage: (_validated, transactionId) =>
+      `Successfully created transaction with id ${transactionId}`,
+    fallbackMessage: 'Failed to create transaction',
+  });
 }

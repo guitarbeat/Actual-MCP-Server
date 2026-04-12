@@ -1,12 +1,13 @@
 // Orchestrator for get-accounts tool
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, successWithJson } from '../../core/response/index.js';
+import { successWithJson } from '../../core/response/index.js';
 import { GetAccountsArgsSchema } from '../../core/types/index.js';
 import type { ToolInput, GetAccountsArgs } from '../../core/types/index.js';
-import { GetAccountsDataFetcher } from './data-fetcher.js';
-import { GetAccountsInputParser } from './input-parser.js';
-import { GetAccountsReportGenerator } from './report-generator.js';
+import { executeToolAction } from '../shared/tool-action.js';
+import { fetchAccounts } from './data-fetcher.js';
+import { parseGetAccountsInput } from './input-parser.js';
+import { generateAccountsReport } from './report-generator.js';
 
 export const schema = {
   name: 'get-accounts',
@@ -29,29 +30,18 @@ export const schema = {
   inputSchema: zodToJsonSchema(GetAccountsArgsSchema) as ToolInput,
 };
 
-export async function handler(
-  args: GetAccountsArgs = {},
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    // Parse input
-    const parser = new GetAccountsInputParser();
-    const parsed = parser.parse(args);
-
-    // Fetch accounts with balances
-    const { accounts, warnings } = await new GetAccountsDataFetcher().fetchAccounts({
-      accountId: parsed.accountId,
-      includeClosed: parsed.includeClosed,
-    });
-
-    // Generate formatted report
-    const structured = new GetAccountsReportGenerator().generate(accounts, warnings);
-
-    return successWithJson(structured);
-  } catch (err) {
-    return errorFromCatch(err, {
-      fallbackMessage: 'Failed to retrieve accounts from Actual.',
-      suggestion:
-        'Verify the Actual Budget server is reachable and that the service user has permission to list accounts.',
-    });
-  }
+export async function handler(args: GetAccountsArgs = {}) {
+  return executeToolAction(args, {
+    parse: (rawArgs) => parseGetAccountsInput(rawArgs as GetAccountsArgs),
+    execute: async (parsed) =>
+      fetchAccounts({
+        accountId: parsed.accountId,
+        includeClosed: parsed.includeClosed,
+      }),
+    buildResponse: (_parsed, { accounts, warnings }) =>
+      successWithJson(generateAccountsReport(accounts, warnings)),
+    fallbackMessage: 'Failed to retrieve accounts from Actual.',
+    suggestion:
+      'Verify the Actual Budget server is reachable and that the service user has permission to list accounts.',
+  });
 }
