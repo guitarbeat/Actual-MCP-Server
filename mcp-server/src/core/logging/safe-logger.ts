@@ -37,7 +37,7 @@ const performanceMetrics: Map<string, { start: number; end?: number; duration?: 
 // Sensitive data patterns for redaction
 const SENSITIVE_KEY_REGEX =
   /pass(word|phrase)|(?<!(input|output|max|total)_)token|secret|(private|api|access).?key|authorization|bearer|credential/i;
-const BEARER_TOKEN_REGEX = /Bearer\s+([a-zA-Z0-9._-]+)/gi;
+const BEARER_TOKEN_REGEX = /(Bearer\s+)[a-zA-Z0-9\-._~+/]+=*/gi;
 
 /**
  * Redacts sensitive information from objects and strings.
@@ -55,10 +55,8 @@ function redactValue(key: string, value: unknown): unknown {
 
   // Redact sensitive patterns in string values
   if (typeof value === 'string') {
-    // Redact Bearer tokens
-    if (value.match(BEARER_TOKEN_REGEX)) {
-      return value.replace(BEARER_TOKEN_REGEX, 'Bearer [REDACTED]');
-    }
+    // Redact Bearer tokens using capture groups to preserve prefix/whitespace
+    return value.replace(BEARER_TOKEN_REGEX, '$1[REDACTED]');
   }
 
   return value;
@@ -228,8 +226,8 @@ export function formatMessage(args: unknown[]): string {
           return JSON.stringify(arg, redactValue, 2);
         } catch {
           // Fallback to basic string representation if stringify fails
-          // We can't easily redact here without string parsing, but this case is rare (circular refs)
-          return String(arg);
+          // Ensure we still attempt to redact sensitive patterns from the resulting string
+          return String(redactValue('', String(arg)));
         }
       }
       // Handle primitive strings that might contain sensitive data
