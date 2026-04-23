@@ -228,8 +228,8 @@ export function formatMessage(args: unknown[]): string {
           return JSON.stringify(arg, redactValue, 2);
         } catch {
           // Fallback to basic string representation if stringify fails
-          // We can't easily redact here without string parsing, but this case is rare (circular refs)
-          return String(arg);
+          // Ensure we still redact sensitive patterns in the string representation
+          return String(redactValue('', String(arg)));
         }
       }
       // Handle primitive strings that might contain sensitive data
