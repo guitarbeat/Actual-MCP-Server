@@ -28,7 +28,8 @@ COPY --from=builder /out ./
 # Polyfill browser globals required by @actual-app/api at module load time.
 # navigator.platform is referenced at the top level of bundle.api.js; Node.js
 # has no navigator global so the process crashes on startup without this.
-RUN echo 'if (typeof globalThis.navigator === "undefined") { globalThis.navigator = { platform: process.platform, userAgent: "node" }; }' > polyfill.cjs
+# The file is committed to the repo so the smoke test can also --require it.
+COPY mcp-server/polyfill.cjs ./polyfill.cjs
 
 ENV NODE_ENV=production
 EXPOSE 3000

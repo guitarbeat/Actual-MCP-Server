@@ -91,7 +91,15 @@ async function main(): Promise<void> {
   const port = await getFreePort();
   const child = spawn(
     process.execPath,
-    ['build/index.js', '--sse', '--enable-bearer', '--port', String(port)],
+    [
+      '--require',
+      resolve(packageRoot, 'polyfill.cjs'),
+      'build/index.js',
+      '--sse',
+      '--enable-bearer',
+      '--port',
+      String(port),
+    ],
     {
       cwd: packageRoot,
       env: {
