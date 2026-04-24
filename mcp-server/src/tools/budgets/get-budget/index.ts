@@ -40,7 +40,7 @@ export const schema = {
  * @param month - Month string to validate
  * @throws Error if format is invalid
  */
-function validateMonthFormat(month: string): void {
+export function validateMonthFormat(month: string): void {
   // Check format matches YYYY-MM pattern
   if (!/^\d{4}-\d{2}$/.test(month)) {
     throw new Error('Invalid month format. Expected YYYY-MM format (e.g., 2024-01)');
