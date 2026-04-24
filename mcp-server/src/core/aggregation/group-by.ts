@@ -67,7 +67,6 @@ export class GroupAggregator {
    * @returns Record mapping IDs to items
    */
   byId<T extends { id: string }>(list: T[]): Record<string, T> {
-    // Optimization: Use for...of loop instead of reduce to avoid function call overhead
     const result: Record<string, T> = {};
     for (const item of list) {
       result[item.id] = item;

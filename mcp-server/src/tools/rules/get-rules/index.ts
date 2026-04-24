@@ -3,7 +3,6 @@
 // ----------------------------
 
 import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
-// import type { Rule } from '../../../core/types/index.js';
 import { fetchAllRules } from '../../../core/data/fetch-rules.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 

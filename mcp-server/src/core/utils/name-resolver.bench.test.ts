@@ -37,8 +37,5 @@ describe('NameResolver N+1 Benchmark', () => {
 
     console.log(`Duration for 100 missing lookups: ${duration.toFixed(2)}ms`);
     console.log(`fetchAllAccounts called ${vi.mocked(fetchAllAccounts).mock.calls.length} times`);
-
-    // We expect it to be called 100 times in the unoptimized version
-    // expect(vi.mocked(fetchAllAccounts).mock.calls.length).toBe(100);
   });
 });
