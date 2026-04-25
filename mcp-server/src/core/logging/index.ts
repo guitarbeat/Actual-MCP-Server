@@ -11,3 +11,5 @@ export {
   withRequestId,
   withRequestIdAsync,
 } from './safe-logger.js';
+
+export { redactValue } from './redactor.js';
