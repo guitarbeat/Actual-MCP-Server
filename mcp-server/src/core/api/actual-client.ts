@@ -41,7 +41,6 @@ import {
 import {
   getAllPotentialHistoricalTransferCounterparts,
   getBatchHistoricalTransferTransactions,
-  getHistoricalTransferCounterpartIds,
   getHistoricalTransferInternalLayer,
   isValidHistoricalTransferTransaction,
 } from './actual-client/historical-transfers.js';
@@ -1269,32 +1268,37 @@ export async function applyHistoricalTransfers(
         .filter((payee) => typeof payee.transfer_acct === 'string' && payee.transfer_acct)
         .map((payee) => [payee.transfer_acct as string, payee.id]),
     );
-
-    const allRequestedTransactionIds = uniqueCandidateIds.flatMap((id) =>
-      parseHistoricalTransferCandidateId(id),
-    );
-    const allTransactions = await getBatchHistoricalTransferTransactions(
-      db,
-      allRequestedTransactionIds,
-    );
-    const transactionsById = new Map(allTransactions.map((tx) => [tx.id, tx]));
-
-    const validTransactionsForCounterpartSearch = allTransactions.filter(
-      isValidHistoricalTransferTransaction,
-    );
-    const potentialCounterpartsMap = await getAllPotentialHistoricalTransferCounterparts(
-      db,
-      validTransactionsForCounterpartSearch,
-    );
-
     const reservedTransactionIds = new Set<string>();
     const results: HistoricalTransferApplyCandidateResult[] = [];
-    const pendingUpdates: Array<{
-      id: string;
-      payee: string;
-      transfer_id: string;
-      category?: null;
-    }> = [];
+
+    // Pre-fetch all involved transactions in one batch
+    const allCandidateTransactionIds = uniqueCandidateIds.flatMap((cid) => {
+      try {
+        return parseHistoricalTransferCandidateId(cid);
+      } catch {
+        return [];
+      }
+    });
+
+    const allInvolvedTransactions = await getBatchHistoricalTransferTransactions(
+      db,
+      allCandidateTransactionIds,
+    );
+    const transactionsById = new Map(allInvolvedTransactions.map((tx) => [tx.id, tx]));
+
+    // Pre-fetch all potential counterparts for all involved transactions in one batch
+    const allPotentialCounterparts = await getAllPotentialHistoricalTransferCounterparts(
+      db,
+      allInvolvedTransactions,
+    );
+
+    // Index counterparts by amount and date for efficient O(1) lookup
+    const counterpartsByAmount = new Map<number, HistoricalTransferInternalTransaction[]>();
+    for (const counterpart of allPotentialCounterparts) {
+      const existing = counterpartsByAmount.get(counterpart.amount) ?? [];
+      existing.push(counterpart);
+      counterpartsByAmount.set(counterpart.amount, existing);
+    }
 
     for (const candidateId of uniqueCandidateIds) {
       try {
@@ -1331,52 +1335,66 @@ export async function applyHistoricalTransfers(
           continue;
         }
 
-        // TypeScript safety (isValidHistoricalTransferTransaction already checked for null)
-        const firstTx = firstTransaction!;
-        const secondTx = secondTransaction!;
+        // TypeScript safety after isValidHistoricalTransferTransaction check
+        const tx1 = firstTransaction!;
+        const tx2 = secondTransaction!;
 
-        if (firstTx.account === secondTx.account) {
+        if (tx1.account === tx2.account) {
           results.push({
             candidateId,
-            transactionIds: [firstTx.id, secondTx.id],
+            transactionIds: [tx1.id, tx2.id],
             status: 'rejected',
             reason: 'Historical transfer pairs must come from different accounts.',
           });
           continue;
         }
 
-        if (firstTx.amount !== secondTx.amount * -1) {
+        if (tx1.amount !== tx2.amount * -1) {
           results.push({
             candidateId,
-            transactionIds: [firstTx.id, secondTx.id],
+            transactionIds: [tx1.id, tx2.id],
             status: 'rejected',
             reason: 'Historical transfer pairs must have exact inverse amounts.',
           });
           continue;
         }
 
-        if (Math.abs(getDateDiffInDays(firstTx.date, secondTx.date)) > 3) {
+        if (Math.abs(getDateDiffInDays(tx1.date, tx2.date)) > 3) {
           results.push({
             candidateId,
-            transactionIds: [firstTx.id, secondTx.id],
+            transactionIds: [tx1.id, tx2.id],
             status: 'rejected',
             reason: 'Historical transfer pairs must fall within 3 days of each other.',
           });
           continue;
         }
 
-        const firstCounterpartIds = potentialCounterpartsMap.get(firstTx.id) ?? [];
-        const secondCounterpartIds = potentialCounterpartsMap.get(secondTx.id) ?? [];
+        // Efficient in-memory counterpart lookup
+        const findCounterparts = (tx: HistoricalTransferInternalTransaction) => {
+          const inverseAmount = tx.amount * -1;
+          const matches = counterpartsByAmount.get(inverseAmount) ?? [];
+          return matches
+            .filter(
+              (m) =>
+                m.id !== tx.id &&
+                m.account !== tx.account &&
+                Math.abs(getDateDiffInDays(tx.date, m.date)) <= 3,
+            )
+            .map((m) => m.id);
+        };
+
+        const firstCounterpartIds = findCounterparts(tx1);
+        const secondCounterpartIds = findCounterparts(tx2);
 
         if (
           firstCounterpartIds.length !== 1 ||
-          firstCounterpartIds[0] !== secondTx.id ||
+          firstCounterpartIds[0] !== tx2.id ||
           secondCounterpartIds.length !== 1 ||
-          secondCounterpartIds[0] !== firstTx.id
+          secondCounterpartIds[0] !== tx1.id
         ) {
           results.push({
             candidateId,
-            transactionIds: [firstTx.id, secondTx.id],
+            transactionIds: [tx1.id, tx2.id],
             status: 'rejected',
             reason:
               'This candidate no longer has a unique exact inverse counterpart, so it cannot be linked safely.',
@@ -1384,44 +1402,47 @@ export async function applyHistoricalTransfers(
           continue;
         }
 
-        const firstTransferPayeeId = transferPayeeByAccountId.get(secondTx.account);
-        const secondTransferPayeeId = transferPayeeByAccountId.get(firstTx.account);
+        const firstTransferPayeeId = transferPayeeByAccountId.get(tx2.account);
+        const secondTransferPayeeId = transferPayeeByAccountId.get(tx1.account);
 
         if (!firstTransferPayeeId || !secondTransferPayeeId) {
           results.push({
             candidateId,
-            transactionIds: [firstTx.id, secondTx.id],
+            transactionIds: [tx1.id, tx2.id],
             status: 'rejected',
             reason: 'A required transfer payee was not found for one of the accounts in this pair.',
           });
           continue;
         }
 
-        const firstAccount = accountsById.get(firstTx.account);
-        const secondAccount = accountsById.get(secondTx.account);
+        const firstAccount = accountsById.get(tx1.account);
+        const secondAccount = accountsById.get(tx2.account);
         const categoriesCleared =
           Boolean(firstAccount?.offbudget) === Boolean(secondAccount?.offbudget);
 
-        pendingUpdates.push(
-          {
-            id: firstTx.id,
-            payee: firstTransferPayeeId,
-            transfer_id: secondTx.id,
-            ...(categoriesCleared ? { category: null } : {}),
-          },
-          {
-            id: secondTx.id,
-            payee: secondTransferPayeeId,
-            transfer_id: firstTx.id,
-            ...(categoriesCleared ? { category: null } : {}),
-          },
-        );
+        await send('transactions-batch-update', {
+          updated: [
+            {
+              id: tx1.id,
+              payee: firstTransferPayeeId,
+              transfer_id: tx2.id,
+              ...(categoriesCleared ? { category: null } : {}),
+            },
+            {
+              id: tx2.id,
+              payee: secondTransferPayeeId,
+              transfer_id: tx1.id,
+              ...(categoriesCleared ? { category: null } : {}),
+            },
+          ],
+          runTransfers: false,
+        });
 
-        reservedTransactionIds.add(firstTx.id);
-        reservedTransactionIds.add(secondTx.id);
+        reservedTransactionIds.add(tx1.id);
+        reservedTransactionIds.add(tx2.id);
         results.push({
           candidateId,
-          transactionIds: [firstTx.id, secondTx.id],
+          transactionIds: [tx1.id, tx2.id],
           status: 'applied',
           categoriesCleared,
         });
@@ -1443,12 +1464,7 @@ export async function applyHistoricalTransfers(
       }
     }
 
-    if (pendingUpdates.length > 0) {
-      await send('transactions-batch-update', {
-        updated: pendingUpdates,
-        runTransfers: false,
-      });
-
+    if (results.some((result) => result.status === 'applied')) {
       cacheService.invalidatePattern('transactions:*');
       cacheService.invalidate('accounts:all');
       invalidateNameResolutionState();
