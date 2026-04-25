@@ -14,6 +14,7 @@ import {
   shutdownActualApi,
   startBackgroundRetry,
 } from './core/api/actual-client.js';
+import { redactValue } from './core/logging/index.js';
 import {
   validateActualAuthStartupConfig,
   shouldWarnAboutAutoSyncForRemote,
@@ -72,21 +73,25 @@ function validateEnv(): void {
     }
   }
   console.error(`  ACTUAL_SERVER_URL: ${serverHostname}`);
-  console.error(`  ACTUAL_PASSWORD: ${process.env.ACTUAL_PASSWORD ? '****' : '(not set)'}`);
   console.error(
-    `  ACTUAL_SESSION_TOKEN: ${process.env.ACTUAL_SESSION_TOKEN ? '****' : '(not set)'}`,
+    `  ACTUAL_PASSWORD: ${redactValue('ACTUAL_PASSWORD', process.env.ACTUAL_PASSWORD) || '(not set)'}`,
+  );
+  console.error(
+    `  ACTUAL_SESSION_TOKEN: ${redactValue('ACTUAL_SESSION_TOKEN', process.env.ACTUAL_SESSION_TOKEN) || '(not set)'}`,
   );
   console.error(
     `  ACTUAL_BUDGET_SYNC_ID: ${process.env.ACTUAL_BUDGET_SYNC_ID ? '(set)' : '(auto-detect)'}`,
   );
   console.error(
-    `  ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD ? '****' : '(not set)'}`,
+    `  ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${redactValue('ACTUAL_BUDGET_ENCRYPTION_PASSWORD', process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD) || '(not set)'}`,
   );
   console.error(`  ACTUAL_DATA_DIR: ${process.env.ACTUAL_DATA_DIR || '(default)'}`);
   console.error(
     `  AUTO_SYNC_INTERVAL_MINUTES: ${process.env.AUTO_SYNC_INTERVAL_MINUTES || '(disabled)'}`,
   );
-  console.error(`  BEARER_TOKEN: ${process.env.BEARER_TOKEN ? '****' : '(not set)'}`);
+  console.error(
+    `  BEARER_TOKEN: ${redactValue('BEARER_TOKEN', process.env.BEARER_TOKEN) || '(not set)'}`,
+  );
   console.error('---');
 }
 
