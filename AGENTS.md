@@ -168,3 +168,25 @@ The container entrypoint starts `node build/index.js --sse --enable-bearer --ena
 - Prefer workspace-root `pnpm` commands over ad hoc `npm` commands.
 - Desktop MCP client configs should point to the built local entrypoint at `mcp-server/build/index.js` with `node`; do not assume an `npx` install flow.
 - `prepublishOnly` for the package runs `build`, `docs:check`, and `public:check`, so changes that affect packaging or docs must keep all three green.
+
+## Cursor Cloud specific instructions
+
+### Polyfill requirement
+
+`@actual-app/api` references `navigator.platform` at module load time. Node.js 20 does not provide this global, so every invocation of the built server or any script that imports the API must include `--require mcp-server/polyfill.cjs`. The startup smoke test and Dockerfile already do this. When running the server locally use:
+
+```bash
+node --require mcp-server/polyfill.cjs mcp-server/build/index.js --sse --enable-write
+```
+
+### Native addon build approval
+
+`better-sqlite3` and `esbuild` require native build scripts. The root `package.json` includes `pnpm.onlyBuiltDependencies` to approve these non-interactively. Without this, `pnpm install` will skip native compilation and the server will fail at runtime.
+
+### Running without an Actual Budget server
+
+The MCP server starts and responds on `/health` and `/mcp` even without a configured Actual Budget backend. `/ready` will report `no_budgets_found`, and budget-specific tools will error, but the HTTP runtime and MCP protocol handshake work normally. This is sufficient for development and testing of non-budget-dependent code paths.
+
+### Quick verification commands
+
+See the Common Commands and CI parity workflow sections above. Key commands: `pnpm lint`, `pnpm test`, `pnpm build`, `pnpm --filter actual-mcp test:startup-smoke`.
