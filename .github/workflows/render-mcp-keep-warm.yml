@@ -1,0 +1,73 @@
+# Optional: periodic HTTP ping so a Render free/spin-down web service sees traffic
+# and is less likely to stay cold between real MCP clients. This does not replace
+# a paid always-on instance; it only triggers lightweight GETs from GitHub-hosted runners.
+#
+# Setup (repository Settings → Secrets and variables → Actions):
+#   Secret: RENDER_MCP_HEALTH_URL = https://your-service.onrender.com/health
+#   (Optional) Variable with the same name is used if the secret is unset.
+#
+# /health is unauthenticated; a secret is optional but fine if you prefer not to expose the URL in variables.
+
+name: Render MCP keep-warm
+
+on:
+  schedule:
+    # Every 10 minutes UTC (adjust if you want fewer Actions minutes)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: render-mcp-keep-warm
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    name: Ping health endpoint
+    timeout-minutes: 8
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Warm Render instance
+        env:
+          HEALTH_URL_SECRET: ${{ secrets.RENDER_MCP_HEALTH_URL }}
+          HEALTH_URL_VAR: ${{ vars.RENDER_MCP_HEALTH_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "${HEALTH_URL_SECRET:-}" ]; then
+            HEALTH_URL="$HEALTH_URL_SECRET"
+          elif [ -n "${HEALTH_URL_VAR:-}" ]; then
+            HEALTH_URL="$HEALTH_URL_VAR"
+          else
+            echo "Configure RENDER_MCP_HEALTH_URL as a repository secret or variable (Actions settings)."
+            exit 1
+          fi
+
+          max_attempts=6
+          sleep_seconds=15
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            http_code=$(
+              curl -sS -o /tmp/health.json -w '%{http_code}' \
+                --connect-timeout 20 --max-time 60 \
+                "$HEALTH_URL" || true
+            )
+            if [ -z "$http_code" ]; then
+              http_code=000
+            fi
+
+            if [ "$http_code" = "200" ]; then
+              echo "Health OK (attempt ${attempt}/${max_attempts})"
+              health_size=$(wc -c < /tmp/health.json 2>/dev/null || echo "unknown")
+              echo "Health response size: ${health_size} bytes"
+              exit 0
+            fi
+
+            echo "Attempt ${attempt}/${max_attempts}: HTTP ${http_code}"
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              sleep "$sleep_seconds"
+            fi
+          done
+
+          echo "Health check failed after ${max_attempts} attempts"
+          exit 1
