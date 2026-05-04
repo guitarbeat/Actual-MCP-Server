@@ -1197,43 +1197,67 @@ describe('Auto-load functionality', () => {
 
         return null;
       });
-      const txnOutRow = {
-        id: 'txn-out',
-        account: 'checking',
-        amount: -1234,
-        date: '2025-01-15',
-        category: 'cat-1',
-        transfer_id: null,
-        starting_balance_flag: false,
-        is_parent: false,
-        is_child: false,
-        tombstone: false,
-      };
-      const txnInRow = {
-        id: 'txn-in',
-        account: 'credit',
-        amount: 1234,
-        date: '2025-01-16',
-        category: 'cat-2',
-        transfer_id: null,
-        starting_balance_flag: false,
-        is_parent: false,
-        is_child: false,
-        tombstone: false,
-      };
-
       vi.mocked(internalDb.all).mockImplementation(async (sql: string, params: unknown[]) => {
-        if (sql.includes('WHERE id IN (')) {
+        if (sql.includes('id IN')) {
+          // getBatchHistoricalTransferTransactions — return full transaction objects
           const ids = params as string[];
-          return ids.flatMap((id) => {
-            if (id === 'txn-out') return [txnOutRow];
-            if (id === 'txn-in') return [txnInRow];
-            return [];
-          });
+          const txns: Record<string, Record<string, unknown>> = {
+            'txn-out': {
+              id: 'txn-out',
+              account: 'checking',
+              amount: -1234,
+              date: '2025-01-15',
+              category: 'cat-1',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+            'txn-in': {
+              id: 'txn-in',
+              account: 'credit',
+              amount: 1234,
+              date: '2025-01-16',
+              category: 'cat-2',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+          };
+          return ids.filter((id) => id in txns).map((id) => txns[id]);
         }
 
-        if (sql.includes('AND amount IN (')) {
-          return [txnOutRow, txnInRow];
+        if (sql.includes('amount IN')) {
+          // getAllPotentialHistoricalTransferCounterparts — return matching counterparts
+          return [
+            {
+              id: 'txn-out',
+              account: 'checking',
+              amount: -1234,
+              date: '2025-01-15',
+              category: 'cat-1',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+            {
+              id: 'txn-in',
+              account: 'credit',
+              amount: 1234,
+              date: '2025-01-16',
+              category: 'cat-2',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+          ];
         }
 
         return [];
@@ -1276,13 +1300,15 @@ describe('Auto-load functionality', () => {
         ],
         runTransfers: false,
       });
-      expect(api.internal.db.all).toHaveBeenNthCalledWith(1, expect.any(String), [
+      // Batch fetch of involved transactions
+      expect(api.internal.db.all).toHaveBeenNthCalledWith(1, expect.stringContaining('id IN'), [
         'txn-in',
         'txn-out',
       ]);
+      // Batch fetch of potential counterparts by inverse amounts and date range
       expect(api.internal.db.all).toHaveBeenNthCalledWith(
         2,
-        expect.any(String),
+        expect.stringContaining('amount IN'),
         expect.arrayContaining([-1234, 1234, 20250112, 20250119]),
       );
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
@@ -1290,55 +1316,78 @@ describe('Auto-load functionality', () => {
     });
 
     it('rejects candidates that no longer have a unique exact counterpart', async () => {
-      const txnOutRow = {
-        id: 'txn-out',
-        account: 'checking',
-        amount: -1234,
-        date: '2025-01-15',
-        category: 'cat-1',
-        transfer_id: null,
-        starting_balance_flag: false,
-        is_parent: false,
-        is_child: false,
-        tombstone: false,
-      };
-      const txnInRow = {
-        id: 'txn-in',
-        account: 'credit',
-        amount: 1234,
-        date: '2025-01-16',
-        category: 'cat-2',
-        transfer_id: null,
-        starting_balance_flag: false,
-        is_parent: false,
-        is_child: false,
-        tombstone: false,
-      };
-      const txnOtherRow = {
-        id: 'txn-other',
-        account: 'savings',
-        amount: -1234,
-        date: '2025-01-16',
-        category: null,
-        transfer_id: null,
-        starting_balance_flag: false,
-        is_parent: false,
-        is_child: false,
-        tombstone: false,
-      };
-
       vi.mocked(api.internal.db.all).mockImplementation(async (sql: string, params: unknown[]) => {
-        if (sql.includes('WHERE id IN (')) {
+        if (sql.includes('id IN')) {
           const ids = params as string[];
-          return ids.flatMap((id) => {
-            if (id === 'txn-out') return [txnOutRow];
-            if (id === 'txn-in') return [txnInRow];
-            return [];
-          });
+          const txns: Record<string, Record<string, unknown>> = {
+            'txn-out': {
+              id: 'txn-out',
+              account: 'checking',
+              amount: -1234,
+              date: '2025-01-15',
+              category: 'cat-1',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+            'txn-in': {
+              id: 'txn-in',
+              account: 'credit',
+              amount: 1234,
+              date: '2025-01-16',
+              category: 'cat-2',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+          };
+          return ids.filter((id) => id in txns).map((id) => txns[id]);
         }
 
-        if (sql.includes('AND amount IN (')) {
-          return [txnOutRow, txnInRow, txnOtherRow];
+        if (sql.includes('amount IN')) {
+          // Return an extra counterpart to make the match non-unique
+          return [
+            {
+              id: 'txn-out',
+              account: 'checking',
+              amount: -1234,
+              date: '2025-01-15',
+              category: 'cat-1',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+            {
+              id: 'txn-in',
+              account: 'credit',
+              amount: 1234,
+              date: '2025-01-16',
+              category: 'cat-2',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+            {
+              id: 'txn-other',
+              account: 'savings',
+              amount: 1234,
+              date: '2025-01-15',
+              category: 'cat-3',
+              transfer_id: null,
+              starting_balance_flag: false,
+              is_parent: false,
+              is_child: false,
+              tombstone: false,
+            },
+          ];
         }
 
         return [];
