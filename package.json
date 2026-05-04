@@ -2,6 +2,13 @@
   "name": "actual-mcp-workspace",
   "private": true,
   "packageManager": "pnpm@10.27.0",
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.10",
+      "uuid": "^14.0.0",
+      "vite": "^7.3.2"
+    }
+  },
   "engines": {
     "node": ">=20.0.0"
   },

@@ -35,7 +35,6 @@ const performanceEnabled = process.env.DEBUG_PERFORMANCE === 'true';
 const performanceMetrics: Map<string, { start: number; end?: number; duration?: number }> =
   new Map();
 
-
 /**
  * Setup safe logging for stdio mode.
  * Overrides console methods to route logs through MCP logging protocol,

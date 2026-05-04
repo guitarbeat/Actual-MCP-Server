@@ -21,6 +21,7 @@ import type {
   ExtendedActualApi,
   HistoricalTransferApplyCandidateResult,
   HistoricalTransferApplyResult,
+  HistoricalTransferInternalTransaction,
 } from './actual-client/types.js';
 import {
   getDateDiffInDays,

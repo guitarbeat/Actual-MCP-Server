@@ -1197,15 +1197,43 @@ describe('Auto-load functionality', () => {
 
         return null;
       });
-      vi.mocked(internalDb.all).mockImplementation(async (_sql: string, params: unknown[]) => {
-        const transactionId = params[0];
+      const txnOutRow = {
+        id: 'txn-out',
+        account: 'checking',
+        amount: -1234,
+        date: '2025-01-15',
+        category: 'cat-1',
+        transfer_id: null,
+        starting_balance_flag: false,
+        is_parent: false,
+        is_child: false,
+        tombstone: false,
+      };
+      const txnInRow = {
+        id: 'txn-in',
+        account: 'credit',
+        amount: 1234,
+        date: '2025-01-16',
+        category: 'cat-2',
+        transfer_id: null,
+        starting_balance_flag: false,
+        is_parent: false,
+        is_child: false,
+        tombstone: false,
+      };
 
-        if (transactionId === 'txn-out') {
-          return [{ id: 'txn-in' }];
+      vi.mocked(internalDb.all).mockImplementation(async (sql: string, params: unknown[]) => {
+        if (sql.includes('WHERE id IN (')) {
+          const ids = params as string[];
+          return ids.flatMap((id) => {
+            if (id === 'txn-out') return [txnOutRow];
+            if (id === 'txn-in') return [txnInRow];
+            return [];
+          });
         }
 
-        if (transactionId === 'txn-in') {
-          return [{ id: 'txn-out' }];
+        if (sql.includes('AND amount IN (')) {
+          return [txnOutRow, txnInRow];
         }
 
         return [];
@@ -1250,32 +1278,67 @@ describe('Auto-load functionality', () => {
       });
       expect(api.internal.db.all).toHaveBeenNthCalledWith(1, expect.any(String), [
         'txn-in',
-        'credit',
-        -1234,
-        20250113,
-        20250119,
-      ]);
-      expect(api.internal.db.all).toHaveBeenNthCalledWith(2, expect.any(String), [
         'txn-out',
-        'checking',
-        1234,
-        20250112,
-        20250118,
       ]);
+      expect(api.internal.db.all).toHaveBeenNthCalledWith(
+        2,
+        expect.any(String),
+        expect.arrayContaining([-1234, 1234, 20250112, 20250119]),
+      );
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
       expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
     });
 
     it('rejects candidates that no longer have a unique exact counterpart', async () => {
-      vi.mocked(api.internal.db.all).mockImplementation(async (_sql: string, params: unknown[]) => {
-        const transactionId = params[0];
+      const txnOutRow = {
+        id: 'txn-out',
+        account: 'checking',
+        amount: -1234,
+        date: '2025-01-15',
+        category: 'cat-1',
+        transfer_id: null,
+        starting_balance_flag: false,
+        is_parent: false,
+        is_child: false,
+        tombstone: false,
+      };
+      const txnInRow = {
+        id: 'txn-in',
+        account: 'credit',
+        amount: 1234,
+        date: '2025-01-16',
+        category: 'cat-2',
+        transfer_id: null,
+        starting_balance_flag: false,
+        is_parent: false,
+        is_child: false,
+        tombstone: false,
+      };
+      const txnOtherRow = {
+        id: 'txn-other',
+        account: 'savings',
+        amount: -1234,
+        date: '2025-01-16',
+        category: null,
+        transfer_id: null,
+        starting_balance_flag: false,
+        is_parent: false,
+        is_child: false,
+        tombstone: false,
+      };
 
-        if (transactionId === 'txn-out') {
-          return [{ id: 'txn-in' }, { id: 'txn-other' }];
+      vi.mocked(api.internal.db.all).mockImplementation(async (sql: string, params: unknown[]) => {
+        if (sql.includes('WHERE id IN (')) {
+          const ids = params as string[];
+          return ids.flatMap((id) => {
+            if (id === 'txn-out') return [txnOutRow];
+            if (id === 'txn-in') return [txnInRow];
+            return [];
+          });
         }
 
-        if (transactionId === 'txn-in') {
-          return [{ id: 'txn-out' }];
+        if (sql.includes('AND amount IN (')) {
+          return [txnOutRow, txnInRow, txnOtherRow];
         }
 
         return [];
