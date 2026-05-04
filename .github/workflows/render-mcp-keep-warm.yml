@@ -2,10 +2,11 @@
 # and is less likely to stay cold between real MCP clients. This does not replace
 # a paid always-on instance; it only triggers lightweight GETs from GitHub-hosted runners.
 #
-# Setup (repository Settings → Secrets and variables → Actions → Variables):
-#   RENDER_MCP_HEALTH_URL = https://your-service.onrender.com/health
+# Setup (repository Settings → Secrets and variables → Actions):
+#   Secret: RENDER_MCP_HEALTH_URL = https://your-service.onrender.com/health
+#   (Optional) Variable with the same name is used if the secret is unset.
 #
-# If the variable is unset, scheduled runs still appear in Actions but the job is skipped.
+# /health is unauthenticated; a secret is optional but fine if you prefer not to expose the URL in variables.
 
 name: Render MCP keep-warm
 
@@ -24,14 +25,24 @@ jobs:
     name: Ping health endpoint
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ vars.RENDER_MCP_HEALTH_URL != '' }}
     permissions: {}
     steps:
       - name: Warm Render instance
         env:
-          HEALTH_URL: ${{ vars.RENDER_MCP_HEALTH_URL }}
+          HEALTH_URL_SECRET: ${{ secrets.RENDER_MCP_HEALTH_URL }}
+          HEALTH_URL_VAR: ${{ vars.RENDER_MCP_HEALTH_URL }}
         run: |
           set -euo pipefail
+
+          if [ -n "${HEALTH_URL_SECRET:-}" ]; then
+            HEALTH_URL="$HEALTH_URL_SECRET"
+          elif [ -n "${HEALTH_URL_VAR:-}" ]; then
+            HEALTH_URL="$HEALTH_URL_VAR"
+          else
+            echo "Configure RENDER_MCP_HEALTH_URL as a repository secret or variable (Actions settings)."
+            exit 1
+          fi
+
           max_attempts=6
           sleep_seconds=15
 
