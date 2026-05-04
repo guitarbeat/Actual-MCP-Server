@@ -425,6 +425,10 @@ describe('Auto-load functionality', () => {
   });
 
   describe('single-flight initialization', () => {
+    afterEach(() => {
+      mockInitSuccess();
+    });
+
     it('should reuse the same initialization promise for concurrent callers', async () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
@@ -448,6 +452,8 @@ describe('Auto-load functionality', () => {
       const firstInit = actualApi.initActualApi();
       const secondInit = actualApi.initActualApi();
 
+      // Let the mutex microtask run so `api.init` runs and assigns `resolveInit` in its executor.
+      await Promise.resolve();
       resolveInit?.();
       await Promise.all([firstInit, secondInit]);
 
