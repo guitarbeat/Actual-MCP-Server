@@ -1,3 +1,4 @@
+import '../../../polyfill.js';
 import api from '@actual-app/api';
 import type {
   APIAccountEntity,

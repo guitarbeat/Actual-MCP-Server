@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import '../../polyfill.js';
 import api from '@actual-app/api';
 import type {
   RuleEntity,
@@ -73,7 +74,8 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
 // API initialization state
 let initialized = false;
 let initializationError: Error | null = null;
-let initializationPromise: Promise<void> | null = null;
+/** Serializes init/reconnect/shutdown so concurrent callers cannot interleave or race on shared API state. */
+let initMutexChain: Promise<void> = Promise.resolve();
 let checkingHealth = false; // Prevent recursion in health checks
 let connectionState: ActualConnectionState = { ...INITIAL_CONNECTION_STATE };
 
@@ -263,25 +265,25 @@ async function runReadOperation<T>(
   });
 }
 
-async function waitForInitialization(timeoutMs = 55000): Promise<void> {
-  if (!initializationPromise) {
-    return;
-  }
-
-  let timeoutHandle: NodeJS.Timeout | null = null;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(() => {
-      reject(new Error(`Initialization timed out after ${Math.floor(timeoutMs / 1000)} seconds`));
-    }, timeoutMs);
+function enqueueInit<T>(work: () => Promise<T>, timeoutMs = 55000): Promise<T> {
+  const next = initMutexChain.then(() => {
+    let timeoutHandle: NodeJS.Timeout | null = null;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        reject(new Error(`Initialization timed out after ${Math.floor(timeoutMs / 1000)} seconds`));
+      }, timeoutMs);
+    });
+    return Promise.race([work(), timeoutPromise]).finally(() => {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+    });
   });
-
-  try {
-    await Promise.race([initializationPromise, timeoutPromise]);
-  } finally {
-    if (timeoutHandle) {
-      clearTimeout(timeoutHandle);
-    }
-  }
+  initMutexChain = next.then(
+    () => {},
+    () => {},
+  );
+  return next;
 }
 
 /**
@@ -488,6 +490,11 @@ function handleInitializationError(error: unknown): never {
     console.error('  1. Update Actual Budget server to the latest version');
     console.error('  2. Restart the Actual Budget service - migrations will auto-apply');
     console.error('  3. If the issue persists, check Actual Budget server logs');
+  } else if (error instanceof Error) {
+    console.error('Failed to initialize Actual Budget API:', errorMessage);
+    if (error.stack) {
+      console.error(error.stack);
+    }
   } else {
     console.error('Failed to initialize Actual Budget API:', error);
   }
@@ -502,33 +509,25 @@ function handleInitializationError(error: unknown): never {
  * @param forceReconnect - If true, force reconnection even if already initialized
  */
 export async function initActualApi(forceReconnect = false): Promise<void> {
-  if (initialized && !forceReconnect) {
-    initializationSkipCount++;
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      const timeSaved = initializationTime || 600;
-      console.error(
-        `[PERF] Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
-      );
+  return enqueueInit(async () => {
+    if (initialized && !forceReconnect) {
+      initializationSkipCount++;
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        const timeSaved = initializationTime || 600;
+        console.error(
+          `[PERF] Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
+        );
+      }
+      return;
     }
-    return;
-  }
 
-  if (initializationPromise) {
-    await waitForInitialization();
-    if (initializationError) {
-      throw initializationError;
+    if (forceReconnect && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error('[CONNECTION] Forcing reconnection...');
     }
-    return;
-  }
 
-  if (forceReconnect && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-    console.error('[CONNECTION] Forcing reconnection...');
-  }
+    initializationError = null;
+    markConnectionInitializing();
 
-  initializationError = null;
-  markConnectionInitializing();
-
-  initializationPromise = (async () => {
     const startTime = Date.now();
 
     try {
@@ -553,15 +552,8 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
       setupAutoSync();
     } catch (error) {
       handleInitializationError(error);
-    } finally {
-      initializationPromise = null;
     }
-  })();
-
-  await waitForInitialization();
-  if (initializationError) {
-    throw initializationError;
-  }
+  });
 }
 
 /**
@@ -648,37 +640,39 @@ function setupAutoSync(): void {
  * Shutdown the Actual Budget API
  */
 export async function shutdownActualApi(): Promise<void> {
-  // Clean up auto-sync interval
-  if (autoSyncInterval) {
-    clearInterval(autoSyncInterval);
-    autoSyncInterval = null;
-  }
+  await enqueueInit(async () => {
+    // Clean up auto-sync interval
+    if (autoSyncInterval) {
+      clearInterval(autoSyncInterval);
+      autoSyncInterval = null;
+    }
 
-  // Clean up background retry timer
-  if (backgroundRetryTimer) {
-    clearTimeout(backgroundRetryTimer);
-    backgroundRetryTimer = null;
-  }
+    // Clean up background retry timer
+    if (backgroundRetryTimer) {
+      clearTimeout(backgroundRetryTimer);
+      backgroundRetryTimer = null;
+    }
 
-  if (!initialized) {
-    initializationError = null;
-    updateConnectionState({
-      status: 'disconnected',
-    });
-    return;
-  }
+    if (!initialized) {
+      initializationError = null;
+      updateConnectionState({
+        status: 'disconnected',
+      });
+      return;
+    }
 
-  try {
-    await api.shutdown();
-  } catch (error) {
-    console.error('Error shutting down Actual Budget API:', error);
-  } finally {
-    initialized = false;
-    initializationError = null;
-    updateConnectionState({
-      status: 'disconnected',
-    });
-  }
+    try {
+      await api.shutdown();
+    } catch (error) {
+      console.error('Error shutting down Actual Budget API:', error);
+    } finally {
+      initialized = false;
+      initializationError = null;
+      updateConnectionState({
+        status: 'disconnected',
+      });
+    }
+  });
 }
 
 /**
@@ -708,7 +702,7 @@ export function isInitialized(): boolean {
  * Check if the API is currently initializing
  */
 export function isInitializing(): boolean {
-  return initializationPromise !== null || connectionState.status === 'initializing';
+  return connectionState.status === 'initializing';
 }
 
 /**
@@ -803,10 +797,6 @@ function isConnectionError(errorMessage: string): boolean {
 }
 
 async function ensureReadConnectionAvailable(): Promise<void> {
-  if (initializationPromise) {
-    await waitForInitialization();
-  }
-
   if (initialized && connectionState.status === 'ready') {
     return;
   }
@@ -815,10 +805,6 @@ async function ensureReadConnectionAvailable(): Promise<void> {
 }
 
 async function ensureWriteConnectionAvailable(): Promise<void> {
-  if (initializationPromise) {
-    await waitForInitialization();
-  }
-
   if (!initialized || connectionState.status !== 'ready') {
     await initActualApi(connectionState.status === 'error' || initializationError !== null);
   }

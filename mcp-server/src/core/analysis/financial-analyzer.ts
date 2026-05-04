@@ -3,6 +3,7 @@
 // Server-side analysis to reduce context window load
 // ----------------------------
 
+import '../../polyfill.js';
 import { q } from '@actual-app/api';
 import { getAccounts, getBudgetMonth, getSchedules, runAQL } from '../api/actual-client.js';
 import { fetchAccountBalances } from '../data/fetch-account-balances.js';
