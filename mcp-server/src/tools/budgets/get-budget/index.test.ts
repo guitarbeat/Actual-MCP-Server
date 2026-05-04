@@ -103,7 +103,7 @@ describe('get-budget-month tool', () => {
       const payload = parseJsonResponse(response);
 
       expect(response.isError).toBe(true);
-      expect(payload.message).toContain('Failed to retrieve budget data');
+      expect(payload.message).toContain('Some API error');
     });
   });
 });
