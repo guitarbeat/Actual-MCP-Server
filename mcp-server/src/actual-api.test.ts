@@ -1309,7 +1309,7 @@ describe('Auto-load functionality', () => {
       expect(api.internal.db.all).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining('amount IN'),
-        expect.arrayContaining([-1234, 1234]),
+        expect.arrayContaining([-1234, 1234, 20250112, 20250119]),
       );
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
       expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
