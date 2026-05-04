@@ -58,8 +58,8 @@ jobs:
 
             if [ "$http_code" = "200" ]; then
               echo "Health OK (attempt ${attempt}/${max_attempts})"
-              cat /tmp/health.json
-              echo
+              health_size=$(wc -c < /tmp/health.json 2>/dev/null || echo "unknown")
+              echo "Health response size: ${health_size} bytes"
               exit 0
             fi
 
