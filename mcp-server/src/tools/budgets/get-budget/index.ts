@@ -87,8 +87,10 @@ export async function handler(
               'Use the get-budget-month tool without a month parameter to list available months.',
           });
         }
-        // Re-throw to be caught by outer catch
-        throw apiError;
+        return errorFromCatch(`Failed to retrieve budget data: ${errorMessage}`, {
+          suggestion:
+            'Use the get-budget-month tool without a month parameter to list available months.',
+        });
       }
     } else {
       const months = await getBudgetMonths();
