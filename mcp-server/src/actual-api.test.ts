@@ -463,6 +463,53 @@ describe('Auto-load functionality', () => {
     });
   });
 
+  describe('Reconnect teardown', () => {
+    beforeEach(() => {
+      process.env.ACTUAL_SERVER_URL = 'https://actual.example.test';
+      process.env.ACTUAL_PASSWORD = 'secret-password';
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+    });
+
+    it('calls api.shutdown before api.init when forceReconnect follows a healthy load', async () => {
+      vi.mocked(api.shutdown).mockClear();
+
+      await actualApi.initActualApi();
+      expect(api.shutdown).not.toHaveBeenCalled();
+
+      vi.clearAllMocks();
+      mockInitSuccess();
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi(true);
+
+      expect(api.shutdown).toHaveBeenCalledTimes(1);
+      expect(api.init).toHaveBeenCalled();
+    });
+
+    it('calls api.shutdown before recovering after initialization fails mid-flight', async () => {
+      vi.mocked(api.shutdown).mockClear();
+
+      vi.mocked(api.init).mockRejectedValueOnce(new Error('Connection failed'));
+
+      await expect(actualApi.initActualApi()).rejects.toThrow('Connection failed');
+
+      mockInitSuccess();
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+
+      expect(api.shutdown).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('Error handling', () => {
     it('should throw error when no budgets are found', async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
