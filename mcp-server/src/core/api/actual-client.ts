@@ -76,8 +76,26 @@ let initialized = false;
 let initializationError: Error | null = null;
 /** Serializes init/reconnect/shutdown so concurrent callers cannot interleave or race on shared API state. */
 let initMutexChain: Promise<void> = Promise.resolve();
-let checkingHealth = false; // Prevent recursion in health checks
 let connectionState: ActualConnectionState = { ...INITIAL_CONNECTION_STATE };
+
+/** Bounded 3s–300s. Controls how often read paths probe with `checkConnectionHealth` when idle. */
+function getConnectionHealthTtlMs(): number {
+  const raw = Number.parseInt(process.env.ACTUAL_CONNECTION_HEALTH_TTL_MS || '20000', 10);
+  if (Number.isNaN(raw)) {
+    return 20000;
+  }
+  return Math.min(Math.max(raw, 3000), 300_000);
+}
+
+/** Last confirmed healthy interaction with `@actual-app/api` (init, health probe, or successful operation). */
+let lastHealthyAt = 0;
+
+/** Dedup concurrent `checkConnectionHealth` calls so callers never mistakenly treat "check in flight" as "healthy". */
+let pendingHealthCheck: Promise<boolean> | null = null;
+
+function bumpHealthyTimestamp(): void {
+  lastHealthyAt = Date.now();
+}
 
 // Performance tracking for initialization
 let initializationTime: number | null = null;
@@ -193,6 +211,7 @@ function markConnectionInitializing(): void {
 
 function markConnectionReady(budgetId: string): void {
   initialized = true;
+  bumpHealthyTimestamp();
   updateConnectionState({
     status: 'ready',
     lastReadyAt: nowAsIsoString(),
@@ -217,6 +236,61 @@ function markSyncSuccess(): void {
     lastSyncAt: nowAsIsoString(),
     lastError: null,
   });
+}
+
+async function settlePendingHealthCheck(): Promise<void> {
+  if (!pendingHealthCheck) {
+    return;
+  }
+  const inflight = pendingHealthCheck;
+  try {
+    await inflight;
+  } catch {
+    // Ignore; teardown or the next init will replace the session.
+  }
+}
+
+/**
+ * Fully tear down the `@actual-app/api` session and local caches. Always call this before a second
+ * `api.init()` — re-initializing without `shutdown()` leaves the client in a broken state on many versions.
+ */
+async function disposeActualBudgetSession(reason: string): Promise<void> {
+  await settlePendingHealthCheck();
+
+  if (autoSyncInterval) {
+    clearInterval(autoSyncInterval);
+    autoSyncInterval = null;
+  }
+
+  if (backgroundRetryTimer) {
+    clearTimeout(backgroundRetryTimer);
+    backgroundRetryTimer = null;
+  }
+
+  initialized = false;
+  lastHealthyAt = 0;
+
+  try {
+    await api.shutdown();
+  } catch (error) {
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.warn(
+        `[CONNECTION] api.shutdown during dispose (${reason}): ${serializeUnknownError(error)}`,
+      );
+    }
+  }
+
+  try {
+    invalidateAllReadState();
+  } catch (error) {
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.warn(
+        `[CONNECTION] cache clear during dispose (${reason}): ${serializeUnknownError(error)}`,
+      );
+    }
+  }
+
+  connectionState = { ...INITIAL_CONNECTION_STATE };
 }
 
 function createLiveSyncRequiredError(error: unknown): Error {
@@ -295,52 +369,52 @@ async function checkConnectionHealth(): Promise<boolean> {
     return false;
   }
 
-  // Prevent recursion - if we're already checking health, skip
-  if (checkingHealth) {
-    return true; // Assume healthy to avoid recursion
+  if (pendingHealthCheck) {
+    return pendingHealthCheck;
   }
 
-  checkingHealth = true;
-  try {
-    // Use a lightweight API call to verify connection
-    // Call raw API directly to avoid recursion with ensureConnection wrapper
-    await api.getAccounts();
-    return true;
-  } catch (error) {
-    const normalizedError = normalizeUnknownError(error);
-    const errorMessage = normalizedError.message;
-    const errorStr = errorMessage.toLowerCase();
+  pendingHealthCheck = (async (): Promise<boolean> => {
+    try {
+      await api.getAccounts();
+      bumpHealthyTimestamp();
+      return true;
+    } catch (error) {
+      const normalizedError = normalizeUnknownError(error);
+      const errorMessage = normalizedError.message;
+      const errorStr = errorMessage.toLowerCase();
 
-    // Check for connection-related errors
-    if (
-      errorStr.includes('not connected') ||
-      errorStr.includes('connection') ||
-      errorStr.includes('econnrefused') ||
-      errorStr.includes('network') ||
-      errorStr.includes('timeout') ||
-      errorStr.includes('no budget file is open') || // Budget was closed or lost
-      errorStr.includes('budget file') // Catch other budget-related errors
-    ) {
+      // Check for connection-related errors
+      if (
+        errorStr.includes('not connected') ||
+        errorStr.includes('connection') ||
+        errorStr.includes('econnrefused') ||
+        errorStr.includes('network') ||
+        errorStr.includes('timeout') ||
+        errorStr.includes('no budget file is open') ||
+        errorStr.includes('budget file')
+      ) {
+        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+          console.error(
+            `[CONNECTION] Health check failed - connection lost or budget closed: ${errorMessage}`,
+          );
+        }
+        markConnectionError(normalizedError);
+        return false;
+      }
+
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
         console.error(
-          `[CONNECTION] Health check failed - connection lost or budget closed: ${errorMessage}`,
+          `[CONNECTION] Health check encountered a non-connection error but kept readiness: ${errorMessage}`,
         );
       }
-      markConnectionError(normalizedError);
-      return false;
-    }
 
-    // Unexpected non-connection errors should not flip readiness, but we still log them.
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error(
-        `[CONNECTION] Health check encountered a non-connection error but kept readiness: ${errorMessage}`,
-      );
+      return true;
+    } finally {
+      pendingHealthCheck = null;
     }
+  })();
 
-    return true;
-  } finally {
-    checkingHealth = false;
-  }
+  return pendingHealthCheck;
 }
 
 /**
@@ -495,8 +569,11 @@ function handleInitializationError(error: unknown): never {
     if (error.stack) {
       console.error(error.stack);
     }
+    if ('cause' in error && error.cause !== undefined && error.cause !== null) {
+      console.error('  Cause:', serializeUnknownError(error.cause));
+    }
   } else {
-    console.error('Failed to initialize Actual Budget API:', error);
+    console.error('Failed to initialize Actual Budget API:', serializeUnknownError(error));
   }
 
   initializationError = error instanceof Error ? error : new Error(String(error));
@@ -526,6 +603,14 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
     }
 
     initializationError = null;
+
+    const shouldDispose = initialized || forceReconnect || connectionState.status === 'error';
+    if (shouldDispose) {
+      await disposeActualBudgetSession(
+        forceReconnect ? 'before_force_reconnect' : 'before_reinit_after_error_or_existing_session',
+      );
+    }
+
     markConnectionInitializing();
 
     const startTime = Date.now();
@@ -641,37 +726,8 @@ function setupAutoSync(): void {
  */
 export async function shutdownActualApi(): Promise<void> {
   await enqueueInit(async () => {
-    // Clean up auto-sync interval
-    if (autoSyncInterval) {
-      clearInterval(autoSyncInterval);
-      autoSyncInterval = null;
-    }
-
-    // Clean up background retry timer
-    if (backgroundRetryTimer) {
-      clearTimeout(backgroundRetryTimer);
-      backgroundRetryTimer = null;
-    }
-
-    if (!initialized) {
-      initializationError = null;
-      updateConnectionState({
-        status: 'disconnected',
-      });
-      return;
-    }
-
-    try {
-      await api.shutdown();
-    } catch (error) {
-      console.error('Error shutting down Actual Budget API:', error);
-    } finally {
-      initialized = false;
-      initializationError = null;
-      updateConnectionState({
-        status: 'disconnected',
-      });
-    }
+    await disposeActualBudgetSession('explicit_shutdown');
+    initializationError = null;
   });
 }
 
@@ -804,6 +860,30 @@ async function ensureReadConnectionAvailable(): Promise<void> {
   await initActualApi(connectionState.status === 'error' || initializationError !== null);
 }
 
+/**
+ * Cached read paths bypass `ensureWriteConnectionAvailable()`, so readiness can look "fine" until the API is
+ * actually touched. Probe occasionally and reconnect before reads when the budget has gone quiet longer than TTL.
+ */
+async function reconnectStaleBudgetBeforeRead(reason: string): Promise<void> {
+  if (!initialized || connectionState.status !== 'ready') {
+    return;
+  }
+
+  const ttlMs = getConnectionHealthTtlMs();
+  if (Date.now() - lastHealthyAt < ttlMs) {
+    return;
+  }
+
+  if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+    console.error(`[CONNECTION] Read-time health probe (${reason}, ttlMs=${String(ttlMs)})`);
+  }
+
+  const healthy = await checkConnectionHealth();
+  if (!healthy) {
+    await initActualApi(true);
+  }
+}
+
 async function ensureWriteConnectionAvailable(): Promise<void> {
   if (!initialized || connectionState.status !== 'ready') {
     await initActualApi(connectionState.status === 'error' || initializationError !== null);
@@ -827,7 +907,9 @@ async function ensureConnection<T>(
   if (mode === 'write') {
     await ensureWriteConnectionAvailable();
     try {
-      return await operation();
+      const result = await operation();
+      bumpHealthyTimestamp();
+      return result;
     } catch (error) {
       const resolvedError = normalizeUnknownError(error);
       if (isConnectionError(resolvedError.message.toLowerCase())) {
@@ -843,7 +925,10 @@ async function ensureConnection<T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       await ensureReadConnectionAvailable();
-      return await operation();
+      await reconnectStaleBudgetBeforeRead(`read_attempt_${attempt + 1}`);
+      const result = await operation();
+      bumpHealthyTimestamp();
+      return result;
     } catch (error) {
       lastError = normalizeUnknownError(error);
       const shouldRetry =
