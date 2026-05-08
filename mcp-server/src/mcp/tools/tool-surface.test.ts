@@ -50,7 +50,9 @@ describe('tool-surface', () => {
   it('indexes every declarative tool exactly once across tiers', () => {
     const surface = buildToolSurfaceJson();
 
-    expect(surface.schemaVersion).toBe(1);
+    expect(surface.schemaVersion).toBe(2);
+    expect(surface.recommendedWorkflows.length).toBe(8);
+    expect(surface.registeredPrompts.length).toBeGreaterThanOrEqual(8);
     expect(surface.totalTools).toBeGreaterThan(0);
 
     const discovered = new Set<string>();

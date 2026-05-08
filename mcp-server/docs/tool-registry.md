@@ -16,7 +16,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `get-rules`: List auto-categorization rules that automatically assign categories to transactions. Use this when the user asks about rules or automatic categorization.
 - `get-schedules`: Retrieve all recurring transaction schedules.
 - `get-tags`: List all tags in Actual Budget, or search for specific tags. Use this when you need tag IDs before creating, updating, or deleting tags.
-- `get-transactions`: Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category.
+- `get-transactions`: Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category. Results are sorted newest-first; use limit/offset for pagination (defaults apply when limit is omitted—see report footer for hasMore and next_offset).
 - `monthly-summary`: Generate high-level financial overview showing income, expenses, savings, and savings rate trends for a specified period (default 3 months).
 - `recommend-budget-plan`: Analyze recent budget history and recommend category targets for a month without mutating data.
 - `spending-by-category`: Break down spending by category to show where money is going. Useful for analyzing spending patterns, top categories, or budget analysis.
@@ -69,6 +69,11 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 
 - `analyze-monthly-spending`: Analyze spending for a specific month
 - `financial-health-check`: Perform a comprehensive check of financial health (balances, recent trends)
+- `historical-transfer-review`: Audit strict historical-transfer candidates then selectively apply ONLY explicit candidate IDs from the audit output.
+- `import-sync-checklist`: Safe checklist after bank import then validate with sampled transactions (requires written import tool).
+- `monthly-budget-review`: Compare budget vs actual spending for one month then optionally request non-destructive replan hints (requires read tools).
+- `reconcile-accounts-pass`: Structured pass to reconcile one account against a stated statement balance using write-aware tools.
+- `schedule-health-check`: Review recurring schedules against recent postings to detect drift or dormant rules (read-heavy).
 - `triage-uncategorized-transactions`: Audit uncategorized transactions, turn strong clusters into rule improvements, and leave ambiguous leftovers for manual cleanup
 
 ## Resources

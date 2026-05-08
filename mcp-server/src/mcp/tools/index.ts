@@ -7,6 +7,7 @@ import {
   truncateCorrelationId,
 } from '../../runtime/mcp-invocation-context.js';
 import { normalizeToolResult, type DeclarativeToolDefinition } from './common.js';
+import { recordToolInvocation } from './tool-usage-stats.js';
 import { crudToolDefinitions } from './crud-tools.js';
 import { readToolDefinitions } from './read-tools.js';
 import { writeToolDefinitions } from './write-tools.js';
@@ -66,6 +67,7 @@ export function registerTools(
           if (process.env.MCP_TOOL_CORRELATION_LOGS === 'true') {
             console.error(`${correlationPrefixForToolCall()}[TOOL_EXEC] ${tool.name}`);
           }
+          recordToolInvocation(tool.name);
           await ensureBudgetReadyForTools();
           const result = await tool.execute((args ?? {}) as Record<string, unknown>);
           return normalizeToolResult(tool, result);

@@ -17,6 +17,7 @@ export class GetTransactionsInputParser {
       categoryName,
       payeeName,
       limit,
+      offset,
       excludeTransfers,
     } = argsObj;
     if (!accountId || typeof accountId !== 'string') {
@@ -31,6 +32,7 @@ export class GetTransactionsInputParser {
       categoryName: typeof categoryName === 'string' ? categoryName : undefined,
       payeeName: typeof payeeName === 'string' ? payeeName : undefined,
       limit: typeof limit === 'number' ? limit : undefined,
+      offset: typeof offset === 'number' ? offset : undefined,
       excludeTransfers: typeof excludeTransfers === 'boolean' ? excludeTransfers : undefined,
     };
   }
