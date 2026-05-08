@@ -12,6 +12,7 @@ import { formatAccountDataWarnings } from '../../core/utils/partial-results.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsInputParser } from './input-parser.js';
+import { resolveGetTransactionsPagination } from './pagination.js';
 import { GetTransactionsReportGenerator } from './report-generator.js';
 
 /**
@@ -25,11 +26,10 @@ function filterTransactions(
     categoryName?: string;
     payeeName?: string;
     excludeTransfers?: boolean;
-    limit?: number;
   },
 ): Transaction[] {
   let filtered = [...transactions];
-  const { minAmount, maxAmount, categoryName, payeeName, excludeTransfers, limit } = criteria;
+  const { minAmount, maxAmount, categoryName, payeeName, excludeTransfers } = criteria;
 
   if (minAmount !== undefined) {
     filtered = filtered.filter((t) => t.amount >= minAmount * 100);
@@ -54,9 +54,7 @@ function filterTransactions(
   if (excludeTransfers) {
     filtered = filtered.filter((t) => !t.is_parent && !t.is_child && t.transfer_id == null);
   }
-  if (limit && filtered.length > limit) {
-    filtered = filtered.slice(0, limit);
-  }
+
   return filtered;
 }
 
@@ -68,18 +66,27 @@ function buildAppliedFilters(criteria: {
   maxAmount?: number;
   categoryName?: string;
   payeeName?: string;
-  limit?: number;
 }): string[] {
   const filters: string[] = [];
-  const { minAmount, maxAmount, categoryName, payeeName, limit } = criteria;
+  const { minAmount, maxAmount, categoryName, payeeName } = criteria;
 
   if (minAmount !== undefined) filters.push(`Minimum amount: $${minAmount.toFixed(2)}`);
   if (maxAmount !== undefined) filters.push(`Maximum amount: $${maxAmount.toFixed(2)}`);
   if (categoryName) filters.push(`Category contains: "${categoryName}"`);
   if (payeeName) filters.push(`Payee contains: "${payeeName}"`);
-  if (limit !== undefined) filters.push(`Result limit: ${limit}`);
 
   return filters;
+}
+
+function sortTransactionsNewestFirst(transactions: Transaction[]): Transaction[] {
+  return [...transactions].sort((left, right) => {
+    const dateCompare = right.date.localeCompare(left.date);
+    if (dateCompare !== 0) {
+      return dateCompare;
+    }
+
+    return String(left.id).localeCompare(String(right.id));
+  });
 }
 
 /**
@@ -99,7 +106,7 @@ function generateAccountSummary(filtered: Transaction[]): { accountName: string;
 export const schema = {
   name: 'get-transactions',
   description:
-    'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category.',
+    'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category. Results are sorted newest-first; use limit/offset for pagination (defaults apply when limit is omitted—see report footer for hasMore and next_offset).',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 
@@ -115,8 +122,10 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       categoryName,
       payeeName,
       limit,
+      offset,
       excludeTransfers,
     } = input;
+    const pagination = resolveGetTransactionsPagination({ limit, offset });
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
     let resolvedAccountId: string;
@@ -138,40 +147,50 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       });
     }
 
-    // Apply filtering
-    const filtered = filterTransactions(transactions, {
+    const afterFilters = filterTransactions(transactions, {
       minAmount,
       maxAmount,
       categoryName,
       payeeName,
       excludeTransfers,
-      limit,
     });
 
-    const mapped = new TransactionMapper().map(filtered);
+    const sorted = sortTransactionsNewestFirst(afterFilters);
+    const windowed = sorted.slice(pagination.offset, pagination.offset + pagination.limit);
+    const hasMore = pagination.offset + windowed.length < sorted.length;
+
+    const mapped = new TransactionMapper().map(windowed);
     const appliedFilters = buildAppliedFilters({
       minAmount,
       maxAmount,
       categoryName,
       payeeName,
-      limit,
     });
 
     // Generate summary if needed
     const accountSummary =
-      accountId.toLowerCase() === 'all' ? generateAccountSummary(filtered) : undefined;
-    const totalAmount = filtered.reduce((sum, t) => sum + t.amount, 0);
+      accountId.toLowerCase() === 'all' ? generateAccountSummary(sorted) : undefined;
+    const totalAmount = windowed.reduce((sum, t) => sum + t.amount, 0);
 
     const markdown = new GetTransactionsReportGenerator().generate(mapped, {
       accountReference: accountId,
       resolvedAccountId,
       dateRange: { start, end },
       appliedFilters,
-      filteredCount: filtered.length,
+      filteredCount: windowed.length,
       totalFetched: transactions.length,
+      totalMatchingFilters: sorted.length,
       totalAmount,
       accountSummary,
       warnings,
+      pagination: {
+        offset: pagination.offset,
+        limit: pagination.limit,
+        hasMore,
+        nextOffset: hasMore ? pagination.offset + pagination.limit : undefined,
+        cappedToMax: pagination.cappedToMax,
+        defaultedLimit: pagination.defaultedLimit,
+      },
     });
     return success(markdown);
   } catch (err) {
