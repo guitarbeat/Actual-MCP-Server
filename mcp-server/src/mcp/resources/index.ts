@@ -18,6 +18,7 @@ import {
   UNCATEGORIZED_LIST_RESOURCES,
   handleUncategorizedResource,
 } from '../../resources/uncategorized-resources.js';
+import { buildToolSurfaceJson } from '../tools/tool-surface.js';
 
 export interface ResourceDefinition {
   name: string;
@@ -52,7 +53,29 @@ const ASSISTIVE_LIST_KIND_BY_URI: Record<string, 'health' | 'rules'> = {
   'actual://rules': 'rules',
 };
 
+const MCP_TOOL_SURFACE_RESOURCES: ListResourceDefinition[] = [
+  {
+    resource: {
+      uri: 'actual://mcp/tool-surface',
+      name: 'MCP Tool Surface Catalog',
+      description:
+        'JSON grouping of MCP tools by read/write/advanced tiers plus one-line hints for discovery.',
+      mimeType: 'application/json',
+    },
+    handler: async (_uri: URL) => ({
+      contents: [
+        {
+          uri: 'actual://mcp/tool-surface',
+          mimeType: 'application/json',
+          text: JSON.stringify(buildToolSurfaceJson(), null, 2),
+        },
+      ],
+    }),
+  },
+];
+
 const LIST_RESOURCES: ListResourceDefinition[] = [
+  ...MCP_TOOL_SURFACE_RESOURCES,
   ...ACCOUNT_LIST_RESOURCES.map((resource) => ({
     resource,
     handler: async (uri: URL) => handleAccountsResource(uri.href, []),

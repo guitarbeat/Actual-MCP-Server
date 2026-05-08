@@ -41,6 +41,19 @@ Optional variables:
 - `AUTO_SYNC_INTERVAL_MINUTES`, `CACHE_ENABLED`, and `CACHE_TTL_SECONDS` for runtime behavior. Remote deployments should set a non-zero sync interval.
 - `MCP_ALLOWED_ORIGINS` to allow browser-based MCP clients in production; server-to-server clients without an `Origin` header remain allowed.
 - `MCP_SESSION_TTL_MINUTES` to expire inactive streamable HTTP sessions and prevent unbounded session growth.
+- `MCP_TOOL_CORRELATION_LOGS` set to `true` to stderr-log MCP tool executions with shortened request/session identifiers on streamable HTTP.
+- `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` set to a positive integer for periodic `[MCP_DIAG]` lines (connection status, truncated budget id, RSS megabytes, plus `ready_epochs`, `forced_inits`, and `init_skips` counters).
+- `MCP_READINESS_TRANSITION_LOGS` set to `true` so each **change** in the public `/ready` payload (`ready|status|reason`) emits a correlated stderr line `[READINESS]` with the HTTP status that would be returned (suppresses duplicate probes when nothing changed).
+
+### Streamable HTTP sessions and budget scope
+
+Remote mode allocates one MCP server instance (`McpServer`) per authenticated streamable HTTP session, but **`@actual-app/api` and this package's Actual client remain process-global**. Idle sessions prune independently via `MCP_SESSION_TTL_MINUTES`, yet every active session still shares **one loaded budget**, cache layers, sync loops, `switch-budget` effects, and connection health probes. Provision **separate deployments or isolated processes** when you need mutually exclusive budgets—not additional bearer tokens against the same process.
+
+Grouped tool discovery is available as JSON via the MCP resource **`actual://mcp/tool-surface`** (tier metadata only; Actual data still requires authenticated tools/resources).
+
+### Actual server compatibility
+
+The published npm package pins `@actual-app/api` to **26.3.0** (see [`package.json`](./package.json)). Bump that dependency only alongside an Actual Server version you validated end-to-end, and rerun `pnpm --filter actual-mcp test` plus startup smoke whenever either side jumps major/minor trains.
 
 ## Run Modes
 
@@ -78,8 +91,8 @@ Typical Render setup:
 1. Create the service from the repository Blueprint.
 2. Provide `ACTUAL_SERVER_URL`, one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
 3. Use `/health` as the liveness endpoint and `/ready` as the readiness endpoint.
-
-If you are looking at Render Workflows examples such as:
+4. Optional tuneables such as `MCP_SESSION_TTL_MINUTES`, `ACTUAL_CONNECTION_HEALTH_TTL_MS`, `AUTO_SYNC_INTERVAL_MINUTES`, `MCP_ALLOWED_ORIGINS`, `MCP_TOOL_CORRELATION_LOGS`, `MCP_READINESS_TRANSITION_LOGS`, or `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` are documented in `.env.example` / `README`; add them in the Render Dashboard when you rely on defaults other than ours.
+   If you are looking at Render Workflows examples such as:
 
 ```ts
 import { task } from '@renderinc/sdk/workflows';
@@ -202,13 +215,13 @@ pnpm run public:check
 
 <!-- TOOL_SURFACE:START -->
 
-Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 54 tools, 3 prompts, and 11 resources:
+Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 54 tools, 3 prompts, and 12 resources:
 
 - 16 read-only core tools
 - 30 write-enabled core tools
 - 8 advanced `--enable-advanced` tools
 - 3 prompts
-- 6 static resources
+- 7 static resources
 - 5 templated resources
 
 The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).

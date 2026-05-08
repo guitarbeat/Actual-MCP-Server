@@ -12,6 +12,7 @@ import {
   getConnectionState,
   getAccounts,
   initActualApi,
+  scheduleConnectionDiagnosticsIfEnabled,
   shutdownActualApi,
   startBackgroundRetry,
 } from './core/api/actual-client.js';
@@ -209,6 +210,7 @@ async function main(): Promise<void> {
 
   validateEnv();
   validateRuntimeGuards();
+  scheduleConnectionDiagnosticsIfEnabled();
 
   if (useHttpTransport) {
     const bindHost = host || (enableBearer ? '0.0.0.0' : '127.0.0.1');

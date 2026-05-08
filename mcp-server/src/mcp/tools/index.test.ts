@@ -3,12 +3,12 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { createToolAnnotations, jsonSchemaToZodRawShape, normalizeToolResult } from './common.js';
 import { getToolDefinitions, registerTools } from './index.js';
 
-const { mockInitActualApi } = vi.hoisted(() => ({
-  mockInitActualApi: vi.fn(),
+const { mockEnsureBudgetReadyForTools } = vi.hoisted(() => ({
+  mockEnsureBudgetReadyForTools: vi.fn(),
 }));
 
 vi.mock('../../core/api/actual-client.js', () => ({
-  initActualApi: mockInitActualApi,
+  ensureBudgetReadyForTools: mockEnsureBudgetReadyForTools,
 }));
 
 function getTool(name: string) {
@@ -43,8 +43,8 @@ function createServerCapture(): { captures: RegisteredToolCapture[]; server: Mcp
 }
 
 beforeEach(() => {
-  mockInitActualApi.mockReset();
-  mockInitActualApi.mockResolvedValue(undefined);
+  mockEnsureBudgetReadyForTools.mockReset();
+  mockEnsureBudgetReadyForTools.mockResolvedValue(undefined);
 });
 
 describe('getToolDefinitions', () => {
@@ -265,7 +265,7 @@ describe('registerTools', () => {
   });
 
   it('normalizes infrastructure failures into structured tool errors', async () => {
-    mockInitActualApi.mockRejectedValueOnce(new Error('offline'));
+    mockEnsureBudgetReadyForTools.mockRejectedValueOnce(new Error('offline'));
     const { captures, server } = createServerCapture();
     registerTools(server, { enableWrite: false, enableAdvanced: false });
 
