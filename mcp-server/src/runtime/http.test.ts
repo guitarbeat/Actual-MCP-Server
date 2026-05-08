@@ -272,7 +272,7 @@ describe('GET /diagnostics', () => {
         hasBudgetId: true,
         hasPassword: true,
         dataDir: expect.any(String),
-      }
+      },
     });
     expect(data.server).toMatchObject({
       uptime: expect.any(Number),
