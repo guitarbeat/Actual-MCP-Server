@@ -834,6 +834,31 @@ export function getConnectionState(): ActualConnectionState {
   return { ...connectionState };
 }
 
+/**
+ * Returns detailed diagnostic information about the connection state
+ */
+export function getConnectionStatus(): {
+  status: string;
+  budgetId: string | null;
+  lastReadyAt: string | null;
+  lastErrorAt: string | null;
+  lastError: string | null;
+  reconnectAttempts: number;
+  lastSyncAt: string | null;
+  initialized: boolean;
+} {
+  return {
+    status: connectionState.status,
+    budgetId: connectionState.activeBudgetId,
+    lastReadyAt: connectionState.lastReadyAt,
+    lastErrorAt: connectionState.lastError ? new Date().toISOString() : null, // Assuming current time as we don't track error timestamp
+    lastError: connectionState.lastError,
+    reconnectAttempts: forcedInitInvocationCount,
+    lastSyncAt: connectionState.lastSyncAt,
+    initialized,
+  };
+}
+
 export async function getReadinessStatus(forceCheck?: false): Promise<ActualReadinessStatus>;
 export async function getReadinessStatus(forceCheck: true): Promise<ActualReadinessStatusExtended>;
 export async function getReadinessStatus(

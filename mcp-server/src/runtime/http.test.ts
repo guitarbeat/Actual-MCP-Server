@@ -1,14 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHttpRuntime } from './http.js';
 
-const { mockGetConnectionState, mockGetReadinessStatus } = vi.hoisted(() => ({
-  mockGetConnectionState: vi.fn(),
-  mockGetReadinessStatus: vi.fn(),
-}));
+const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus } = vi.hoisted(
+  () => ({
+    mockGetConnectionState: vi.fn(),
+    mockGetReadinessStatus: vi.fn(),
+    mockGetConnectionStatus: vi.fn(),
+  }),
+);
 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
+  getConnectionStatus: mockGetConnectionStatus,
 }));
 
 const ORIGINAL_ENV = {
@@ -31,7 +35,18 @@ const SAMPLE_READINESS_DIAGNOSTICS = {
 beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
+  mockGetConnectionStatus.mockReset();
   mockGetConnectionState.mockReturnValue({ status: 'ready' });
+  mockGetConnectionStatus.mockReturnValue({
+    status: 'ready',
+    budgetId: 'test-budget',
+    lastReadyAt: '2026-04-11T00:00:00.000Z',
+    lastErrorAt: null,
+    lastError: null,
+    reconnectAttempts: 0,
+    lastSyncAt: '2026-04-11T00:00:00.000Z',
+    initialized: true,
+  });
   mockGetReadinessStatus.mockResolvedValue({
     ready: true,
     status: 'ready',
@@ -226,5 +241,67 @@ describe('createHttpRuntime', () => {
     );
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('GET /diagnostics', () => {
+  it('should return diagnostics data without exposing secrets', async () => {
+    process.env.ACTUAL_SERVER_URL = 'http://localhost:5006';
+    process.env.ACTUAL_SYNC_ID = 'test-sync-id';
+    process.env.ACTUAL_PASSWORD = 'test-password';
+
+    const { app } = createHttpRuntime({
+      version: '1.2.3',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(new Request('http://localhost/diagnostics'));
+    expect(response.status).toBe(200);
+
+    const data = await response.json();
+    expect(data).toMatchObject({
+      connection: {
+        status: 'ready',
+        budgetId: 'test-budget',
+        initialized: true,
+      },
+      config: {
+        serverUrl: 'http://localhost:5006',
+        hasBudgetId: true,
+        hasPassword: true,
+        dataDir: expect.any(String),
+      }
+    });
+    expect(data.server).toMatchObject({
+      uptime: expect.any(Number),
+      nodeVersion: expect.any(String),
+      memoryUsageMB: expect.any(Number),
+    });
+
+    // Ensure sensitive data is not exposed
+    expect(data.config.serverUrl).toBe('http://localhost:5006');
+    expect(data.config).not.toHaveProperty('ACTUAL_PASSWORD');
+    expect(data.config).not.toHaveProperty('ACTUAL_SYNC_ID');
+  });
+
+  it('should return 500 when diagnostics are unavailable', async () => {
+    mockGetConnectionStatus.mockImplementation(() => {
+      throw new Error('Test error');
+    });
+
+    const { app } = createHttpRuntime({
+      version: '1.2.3',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(new Request('http://localhost/diagnostics'));
+    expect(response.status).toBe(500);
+
+    const data = await response.json();
+    expect(data).toEqual({ error: 'diagnostics unavailable' });
   });
 });
