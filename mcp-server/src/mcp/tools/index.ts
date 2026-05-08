@@ -1,10 +1,25 @@
+import { randomUUID } from 'node:crypto';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { initActualApi } from '../../core/api/actual-client.js';
+import { ensureBudgetReadyForTools } from '../../core/api/actual-client.js';
 import { errorFromCatch } from '../../core/response/index.js';
+import {
+  formatMcpCorrelationLogPrefix,
+  truncateCorrelationId,
+} from '../../runtime/mcp-invocation-context.js';
 import { normalizeToolResult, type DeclarativeToolDefinition } from './common.js';
 import { crudToolDefinitions } from './crud-tools.js';
 import { readToolDefinitions } from './read-tools.js';
 import { writeToolDefinitions } from './write-tools.js';
+
+function correlationPrefixForToolCall(): string {
+  const prefix = formatMcpCorrelationLogPrefix();
+  const trimmed = prefix.trim();
+  if (trimmed.length > 0) {
+    return prefix;
+  }
+
+  return `[mcp corr=${truncateCorrelationId(randomUUID())}] `;
+}
 
 export const toolDefinitions: DeclarativeToolDefinition[] = [
   ...readToolDefinitions,
@@ -48,7 +63,10 @@ export function registerTools(
       },
       async (args) => {
         try {
-          await initActualApi();
+          if (process.env.MCP_TOOL_CORRELATION_LOGS === 'true') {
+            console.error(`${correlationPrefixForToolCall()}[TOOL_EXEC] ${tool.name}`);
+          }
+          await ensureBudgetReadyForTools();
           const result = await tool.execute((args ?? {}) as Record<string, unknown>);
           return normalizeToolResult(tool, result);
         } catch (err) {

@@ -14,7 +14,7 @@
  * - Permission and feature flag metadata
  *
  * To add a new entity type:
- * 1. Define Zod schemas for create, update, and delete operations
+ * 1. Define Zod schemas for create, update, and delete operations in `crud-factory-entity-schemas.ts`
  * 2. Add entity configuration to `entityConfigurations` object
  * 3. Generate tools in `tools/index.ts` using `createCRUDTools()`
  *
@@ -48,8 +48,26 @@
  * ```
  */
 
-import { z } from 'zod';
 import type { EntityCRUDConfig } from './crud-factory.js';
+import {
+  CreateAccountSchema,
+  CreateCategoryGroupSchema,
+  CreateCategorySchema,
+  CreatePayeeSchema,
+  CreateTagSchema,
+  DeleteAccountSchema,
+  DeleteCategoryGroupSchema,
+  DeleteCategorySchema,
+  DeletePayeeSchema,
+  DeleteRuleSchema,
+  DeleteTagSchema,
+  UpdateAccountSchema,
+  UpdateCategoryGroupSchema,
+  UpdateCategorySchema,
+  UpdatePayeeSchema,
+  UpdateRuleSchema,
+  UpdateTagSchema,
+} from './crud-factory-entity-schemas.js';
 import { AccountHandler } from './manage-entity/entity-handlers/account-handler.js';
 import { CategoryGroupHandler } from './manage-entity/entity-handlers/category-group-handler.js';
 import { CategoryHandler } from './manage-entity/entity-handlers/category-handler.js';
@@ -57,207 +75,6 @@ import { PayeeHandler } from './manage-entity/entity-handlers/payee-handler.js';
 import { RuleHandler } from './manage-entity/entity-handlers/rule-handler.js';
 import { TagHandler } from './manage-entity/entity-handlers/tag-handler.js';
 import { RuleDataSchema } from './manage-entity/types.js';
-
-// ----------------------------
-// CATEGORY SCHEMAS
-// ----------------------------
-
-const CreateCategorySchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Category name is required')
-    .max(100, 'Category name must be less than 100 characters')
-    .describe('Name of the new category (e.g., "Groceries", "Rent").'),
-  groupId: z
-    .string()
-    .uuid('Group ID must be a valid UUID')
-    .describe(
-      'UUID of the category group to add the category to. Use get-grouped-categories to find group IDs.',
-    ),
-});
-
-const UpdateCategorySchema = z.object({
-  id: z
-    .string()
-    .uuid('Category ID must be a valid UUID')
-    .describe('UUID of the category to update.'),
-  name: z
-    .string()
-    .min(1)
-    .max(100, 'Category name must be less than 100 characters')
-    .optional()
-    .describe('New name for the category.'),
-  groupId: z
-    .string()
-    .uuid()
-    .optional()
-    .describe('New category group UUID to move the category to.'),
-});
-
-const DeleteCategorySchema = z.object({
-  id: z
-    .string()
-    .uuid('Category ID must be a valid UUID')
-    .describe('UUID of the category to delete.'),
-});
-
-// ----------------------------
-// PAYEE SCHEMAS
-// ----------------------------
-
-const CreatePayeeSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Payee name is required')
-    .max(100, 'Payee name must be less than 100 characters')
-    .describe('Name of the new payee/merchant.'),
-  transferAccount: z.string().optional().describe('Account UUID if this is a transfer payee.'),
-});
-
-const UpdatePayeeSchema = z.object({
-  id: z.string().uuid('Payee ID must be a valid UUID').describe('UUID of the payee to update.'),
-  name: z
-    .string()
-    .min(1)
-    .max(100, 'Payee name must be less than 100 characters')
-    .optional()
-    .describe('New name for the payee.'),
-  transferAccount: z.string().optional().describe('New account UUID for transfer payee.'),
-});
-
-const DeletePayeeSchema = z.object({
-  id: z.string().uuid('Payee ID must be a valid UUID').describe('UUID of the payee to delete.'),
-});
-
-// ----------------------------
-// TAG SCHEMAS
-// ----------------------------
-
-const CreateTagSchema = z.object({
-  tag: z
-    .string()
-    .min(1, 'Tag label is required')
-    .max(100, 'Tag label must be less than 100 characters')
-    .describe('Visible tag label (e.g., "reimbursable", "taxes", "vacation").'),
-  color: z
-    .string()
-    .max(50, 'Tag color must be less than 50 characters')
-    .nullable()
-    .optional()
-    .describe('Optional color string, typically a hex value like "#ff0000".'),
-  description: z
-    .string()
-    .max(500, 'Tag description must be less than 500 characters')
-    .nullable()
-    .optional()
-    .describe('Optional description explaining when to use the tag.'),
-});
-
-const UpdateTagSchema = z.object({
-  id: z.string().uuid('Tag ID must be a valid UUID').describe('UUID of the tag to update.'),
-  tag: z
-    .string()
-    .min(1, 'Tag label is required')
-    .max(100, 'Tag label must be less than 100 characters')
-    .optional()
-    .describe('New tag label.'),
-  color: z
-    .string()
-    .max(50, 'Tag color must be less than 50 characters')
-    .nullable()
-    .optional()
-    .describe('New optional color string, typically a hex value like "#00ff00".'),
-  description: z
-    .string()
-    .max(500, 'Tag description must be less than 500 characters')
-    .nullable()
-    .optional()
-    .describe('New optional description.'),
-});
-
-const DeleteTagSchema = z.object({
-  id: z.string().uuid('Tag ID must be a valid UUID').describe('UUID of the tag to delete.'),
-});
-
-// ----------------------------
-// ACCOUNT SCHEMAS
-// ----------------------------
-
-const CreateAccountSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Account name is required')
-    .max(100, 'Account name must be less than 100 characters'),
-  type: z.enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'], {
-    errorMap: () => ({
-      message:
-        'Account type must be one of: checking, savings, credit, investment, mortgage, debt, other',
-    }),
-  }),
-  offbudget: z.boolean().optional(),
-  initialBalance: z.number().int().optional(), // In cents
-  balanceCurrent: z.number().int().nullable().optional(), // In cents
-});
-
-const UpdateAccountSchema = z.object({
-  id: z.string().uuid('Account ID must be a valid UUID'),
-  name: z.string().min(1).max(100, 'Account name must be less than 100 characters').optional(),
-  type: z
-    .enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'])
-    .optional(),
-  offbudget: z.boolean().optional(),
-  balanceCurrent: z.number().int().nullable().optional(),
-});
-
-const DeleteAccountSchema = z.object({
-  id: z.string().uuid('Account ID must be a valid UUID'),
-});
-
-// ----------------------------
-// RULE SCHEMAS
-// ----------------------------
-
-const UpdateRuleSchema = z
-  .object({
-    id: z.string().uuid('Rule ID must be a valid UUID'),
-  })
-  .merge(RuleDataSchema.partial());
-
-const DeleteRuleSchema = z.object({
-  id: z.string().uuid('Rule ID must be a valid UUID'),
-});
-
-// ----------------------------
-// CATEGORY GROUP SCHEMAS
-// ----------------------------
-
-const CreateCategoryGroupSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Category group name is required')
-    .max(100, 'Category group name must be less than 100 characters')
-    .describe('Name of the new category group (e.g., "Fixed Expenses").'),
-});
-
-const UpdateCategoryGroupSchema = z.object({
-  id: z
-    .string()
-    .uuid('Category group ID must be a valid UUID')
-    .describe('UUID of the category group to update.'),
-  name: z
-    .string()
-    .min(1)
-    .max(100, 'Category group name must be less than 100 characters')
-    .optional()
-    .describe('New name for the category group.'),
-});
-
-const DeleteCategoryGroupSchema = z.object({
-  id: z
-    .string()
-    .uuid('Category group ID must be a valid UUID')
-    .describe('UUID of the category group to delete.'),
-});
 
 // ----------------------------
 // ENTITY CONFIGURATIONS

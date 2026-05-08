@@ -6,6 +6,7 @@ services:
     dockerfilePath: mcp-server/Dockerfile
     healthCheckPath: /health
     envVars:
+      # Secret pairings (Rendered as sync: false placeholders)
       - key: ACTUAL_SERVER_URL
         sync: false
       - key: ACTUAL_PASSWORD
@@ -16,3 +17,12 @@ services:
         sync: false
       - key: ACTUAL_BUDGET_ENCRYPTION_PASSWORD
         sync: false
+    # Optional knobs (omit to fall back to code defaults documented in README + mcp-server/.env.example):
+    # - MCP_SESSION_TTL_MINUTES — prune inactive streamable MCP sessions
+    # - ACTUAL_CONNECTION_HEALTH_TTL_MS — read idle health TTL for @actual-app/api probing
+    # - AUTO_SYNC_INTERVAL_MINUTES — background sync cadence for remote freshness
+    # - MCP_ALLOWED_ORIGINS — browser MCP allowlist when NODE_ENV=production
+    # - ACTUAL_SESSION_TOKEN — alternative single-factor auth vs ACTUAL_PASSWORD
+    # - MCP_TOOL_CORRELATION_LOGS=true — correlate stderr tool executions with HTTP request ids
+    # - MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC — periodic [MCP_DIAG] lines (RSS, conn state, epoch counters)
+    # - MCP_READINESS_TRANSITION_LOGS=true — correlate /ready flips vs 503/200 responses

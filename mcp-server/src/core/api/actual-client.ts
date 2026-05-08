@@ -101,6 +101,12 @@ function bumpHealthyTimestamp(): void {
 let initializationTime: number | null = null;
 let initializationSkipCount = 0;
 
+/** Increments each time `markConnectionReady` runs (successful ready epochs). */
+let budgetReadyEpochCount = 0;
+
+/** Counts `initActualApi(true)` runs that entered the serialized init body (forced reconnect path). */
+let forcedInitInvocationCount = 0;
+
 // Auto-sync state
 let autoSyncInterval: NodeJS.Timeout | null = null;
 
@@ -108,6 +114,8 @@ let autoSyncInterval: NodeJS.Timeout | null = null;
 let backgroundRetryTimer: NodeJS.Timeout | null = null;
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_RETRY_DELAY_MS = 10000; // 10 seconds
+
+let connectionDiagnosticsInterval: NodeJS.Timeout | null = null;
 
 function nowAsIsoString(): string {
   return new Date().toISOString();
@@ -210,6 +218,7 @@ function markConnectionInitializing(): void {
 }
 
 function markConnectionReady(budgetId: string): void {
+  budgetReadyEpochCount++;
   initialized = true;
   bumpHealthyTimestamp();
   updateConnectionState({
@@ -587,6 +596,10 @@ function handleInitializationError(error: unknown): never {
  */
 export async function initActualApi(forceReconnect = false): Promise<void> {
   return enqueueInit(async () => {
+    if (forceReconnect) {
+      forcedInitInvocationCount++;
+    }
+
     if (initialized && !forceReconnect) {
       initializationSkipCount++;
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
@@ -639,6 +652,48 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
       handleInitializationError(error);
     }
   });
+}
+
+/**
+ * MCP tool entry fast path: when the budget session is ready, avoid mutex/enqueue overhead from
+ * {@link initActualApi}. Individual tool handlers still use `ensureConnection` for staleness and retries.
+ */
+export async function ensureBudgetReadyForTools(): Promise<void> {
+  if (initialized && connectionState.status === 'ready') {
+    return;
+  }
+
+  await initActualApi(shouldForceInitReconnect());
+}
+
+/**
+ * Emit periodic `[MCP_DIAG]` lines when `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` is a positive integer.
+ * Intended for correlating reconnect issues with RSS on constrained hosts without full APM.
+ */
+export function scheduleConnectionDiagnosticsIfEnabled(): void {
+  if (connectionDiagnosticsInterval) {
+    return;
+  }
+
+  const parsed = Number.parseInt(process.env.MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC ?? '', 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return;
+  }
+
+  connectionDiagnosticsInterval = setInterval(() => {
+    const memory = process.memoryUsage();
+    const state = getConnectionState();
+    const budgetTail =
+      typeof state.activeBudgetId === 'string' && state.activeBudgetId.length > 8
+        ? state.activeBudgetId.slice(-8)
+        : (state.activeBudgetId ?? 'none');
+
+    console.error(
+      `[MCP_DIAG] conn=${state.status} budget_tail=${budgetTail} rss_mb=${Math.round(memory.rss / (1024 * 1024))} ready_epochs=${budgetReadyEpochCount} forced_inits=${forcedInitInvocationCount} init_skips=${initializationSkipCount}`,
+    );
+  }, parsed * 1000);
+
+  connectionDiagnosticsInterval.unref?.();
 }
 
 /**
@@ -725,6 +780,11 @@ function setupAutoSync(): void {
  * Shutdown the Actual Budget API
  */
 export async function shutdownActualApi(): Promise<void> {
+  if (connectionDiagnosticsInterval) {
+    clearInterval(connectionDiagnosticsInterval);
+    connectionDiagnosticsInterval = null;
+  }
+
   await enqueueInit(async () => {
     await disposeActualBudgetSession('explicit_shutdown');
     initializationError = null;
@@ -766,6 +826,8 @@ export function isInitializing(): boolean {
  */
 export function resetInitializationStats(): void {
   initializationSkipCount = 0;
+  budgetReadyEpochCount = 0;
+  forcedInitInvocationCount = 0;
 }
 
 export function getConnectionState(): ActualConnectionState {
@@ -852,12 +914,21 @@ function isConnectionError(errorMessage: string): boolean {
   );
 }
 
+/** True when `initActualApi(false)` fast-path must not run (`initialized && !force` skips real work). */
+function shouldForceInitReconnect(): boolean {
+  return (
+    connectionState.status === 'error' ||
+    initializationError !== null ||
+    (initialized && connectionState.status !== 'ready')
+  );
+}
+
 async function ensureReadConnectionAvailable(): Promise<void> {
   if (initialized && connectionState.status === 'ready') {
     return;
   }
 
-  await initActualApi(connectionState.status === 'error' || initializationError !== null);
+  await initActualApi(shouldForceInitReconnect());
 }
 
 /**

@@ -80,6 +80,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `actual://budgets/{month}` (template): Monthly Budget. Detailed budget breakdown for a specific month (YYYY-MM format).
 - `actual://health` (static): Current Month Health Dashboard. High-level budget health dashboard for the current month.
 - `actual://health/{month}` (template): Monthly Health Dashboard. Budget health dashboard for a specific month (YYYY-MM format).
+- `actual://mcp/tool-surface` (static): MCP Tool Surface Catalog. JSON grouping of MCP tools by read/write/advanced tiers plus one-line hints for discovery.
 - `actual://payees/{payeeId}/rules` (template): Payee Rules. Show Actual Budget rules associated with a payee.
 - `actual://rules` (static): Rule Directory. Browse Actual Budget automation rules.
 - `actual://tags` (static): Tag Directory. Browse all tags available in Actual Budget.
