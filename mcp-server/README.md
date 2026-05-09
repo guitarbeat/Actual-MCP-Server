@@ -104,8 +104,8 @@ Typical Render setup:
 
 1. Create the service from the repository Blueprint.
 2. Provide `ACTUAL_SERVER_URL`, one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
-3. Use `/health` as the liveness endpoint and `/ready` as the readiness endpoint.
-4. Optional tuneables such as `MCP_SESSION_TTL_MINUTES`, `ACTUAL_CONNECTION_HEALTH_TTL_MS`, `AUTO_SYNC_INTERVAL_MINUTES`, `MCP_ALLOWED_ORIGINS`, `MCP_TOOL_CORRELATION_LOGS`, `MCP_READINESS_TRANSITION_LOGS`, or `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` are documented in `.env.example` / `README`; add them in the Render Dashboard when you rely on defaults other than ours.
+3. Use `/health` as the liveness endpoint and `/ready` as the readiness endpoint. Root **`GET /`** also returns `connectionStatus`, `reason`, and `lastError` (plus legacy connection `ready`).
+4. Optional tuneables such as `MCP_SESSION_TTL_MINUTES`, `ACTUAL_CONNECTION_HEALTH_TTL_MS`, `AUTO_SYNC_INTERVAL_MINUTES`, `MCP_ALLOWED_ORIGINS`, `MCP_TOOL_CORRELATION_LOGS`, `MCP_READINESS_TRANSITION_LOGS`, or `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` are documented in `.env.example` / `README`; add them in the Render Dashboard when you rely on defaults other than ours. See the repository root **Render troubleshooting** section for hosted debugging.
 
 If you are looking at Render Workflows examples such as:
 

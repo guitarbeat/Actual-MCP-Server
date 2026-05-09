@@ -371,6 +371,25 @@ describe('Auto-load functionality', () => {
       expect(readiness.lastSyncAt).toBeTruthy();
     });
 
+    it('getReadinessSnapshot matches getReadinessStatus(false) without a health probe', async () => {
+      process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
+      process.env.ACTUAL_DATA_DIR = '/test/data';
+
+      mockBudgets({
+        id: 'budget-1',
+        cloudFileId: 'test-sync-id',
+        name: 'Test Budget',
+      });
+      mockInitSuccess();
+      vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
+
+      await actualApi.initActualApi();
+
+      const snapshot = actualApi.getReadinessSnapshot();
+      const asyncSnapshot = await actualApi.getReadinessStatus(false);
+      expect(snapshot).toEqual(asyncSnapshot);
+    });
+
     it('should report error state when initialization fails', async () => {
       process.env.ACTUAL_DATA_DIR = '/test/data';
       vi.mocked(api.init).mockRejectedValue(new Error('Connection failed'));

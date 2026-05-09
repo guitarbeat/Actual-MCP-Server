@@ -1,3 +1,10 @@
+# Render web service blueprint for Actual Budget MCP (streamable HTTP).
+#
+# Health vs readiness:
+# - healthCheckPath -> GET /health: liveness only (process listening). Use for Render deploy checks.
+# - GET /ready: returns 200 when Actual API + budget are ready, else 503. Use for dependency readiness.
+# - GET /: includes connectionStatus, reason, lastError plus legacy ready (connection-level).
+# Optional: set MCP_READINESS_TRANSITION_LOGS=true in the dashboard to log each /ready state change.
 services:
   - type: web
     name: actual-mcp
@@ -6,6 +13,9 @@ services:
     dockerfilePath: mcp-server/Dockerfile
     healthCheckPath: /health
     envVars:
+      # Remote deployments should keep cached reads fresh (see mcp-server/.env.example).
+      - key: AUTO_SYNC_INTERVAL_MINUTES
+        value: "5"
       # Secret pairings (Rendered as sync: false placeholders)
       - key: ACTUAL_SERVER_URL
         sync: false
@@ -20,7 +30,7 @@ services:
     # Optional knobs (omit to fall back to code defaults documented in README + mcp-server/.env.example):
     # - MCP_SESSION_TTL_MINUTES — prune inactive streamable MCP sessions
     # - ACTUAL_CONNECTION_HEALTH_TTL_MS — read idle health TTL for @actual-app/api probing
-    # - AUTO_SYNC_INTERVAL_MINUTES — background sync cadence for remote freshness
+    # - AUTO_SYNC_INTERVAL_MINUTES — background sync cadence (Blueprint sets 5; override in dashboard if needed)
     # - MCP_ALLOWED_ORIGINS — browser MCP allowlist when NODE_ENV=production
     # - ACTUAL_SESSION_TOKEN — alternative single-factor auth vs ACTUAL_PASSWORD
     # - MCP_TOOL_CORRELATION_LOGS=true — correlate stderr tool executions with HTTP request ids

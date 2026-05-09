@@ -851,18 +851,11 @@ export function getConnectionState(): ActualConnectionState {
   return { ...connectionState };
 }
 
-export async function getReadinessStatus(forceCheck?: false): Promise<ActualReadinessStatus>;
-export async function getReadinessStatus(forceCheck: true): Promise<ActualReadinessStatusExtended>;
-export async function getReadinessStatus(
-  forceCheck = false,
-): Promise<ActualReadinessStatus | ActualReadinessStatusExtended> {
-  if (forceCheck && initialized && connectionState.status === 'ready') {
-    const isHealthy = await checkConnectionHealth();
-    if (!isHealthy && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error('[READINESS] Readiness probe detected an unhealthy Actual connection');
-    }
-  }
-
+/**
+ * Cheap synchronous readiness snapshot (no `getAccounts` health probe).
+ * Matches {@link getReadinessStatus}(false) after any optional forced check in that API.
+ */
+export function getReadinessSnapshot(): ActualReadinessStatus {
   const snapshot = getConnectionState();
   let reason = snapshot.lastError || 'not_initialized';
 
@@ -876,11 +869,26 @@ export async function getReadinessStatus(
     reason = snapshot.lastError || 'budget_not_loaded';
   }
 
-  const base: ActualReadinessStatus = {
+  return {
     ...snapshot,
     ready: snapshot.status === 'ready' && Boolean(snapshot.activeBudgetId),
     reason,
   };
+}
+
+export async function getReadinessStatus(forceCheck?: false): Promise<ActualReadinessStatus>;
+export async function getReadinessStatus(forceCheck: true): Promise<ActualReadinessStatusExtended>;
+export async function getReadinessStatus(
+  forceCheck = false,
+): Promise<ActualReadinessStatus | ActualReadinessStatusExtended> {
+  if (forceCheck && initialized && connectionState.status === 'ready') {
+    const isHealthy = await checkConnectionHealth();
+    if (!isHealthy && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error('[READINESS] Readiness probe detected an unhealthy Actual connection');
+    }
+  }
+
+  const base = getReadinessSnapshot();
 
   if (forceCheck) {
     let serverHostname: string | null = null;
@@ -892,7 +900,7 @@ export async function getReadinessStatus(
       }
     }
 
-    const extended: ActualReadinessStatusExtended = {
+    return {
       ...base,
       diagnostics: {
         serverUrl: serverHostname,
@@ -907,7 +915,6 @@ export async function getReadinessStatus(
         retrying: backgroundRetryTimer !== null,
       },
     };
-    return extended;
   }
 
   return base;

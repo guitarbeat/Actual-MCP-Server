@@ -1,14 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHttpRuntime } from './http.js';
 
-const { mockGetConnectionState, mockGetReadinessStatus } = vi.hoisted(() => ({
-  mockGetConnectionState: vi.fn(),
-  mockGetReadinessStatus: vi.fn(),
-}));
+const { mockGetConnectionState, mockGetReadinessStatus, mockGetReadinessSnapshot } = vi.hoisted(
+  () => ({
+    mockGetConnectionState: vi.fn(),
+    mockGetReadinessStatus: vi.fn(),
+    mockGetReadinessSnapshot: vi.fn(),
+  }),
+);
 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
+  getReadinessSnapshot: mockGetReadinessSnapshot,
 }));
 
 const ORIGINAL_ENV = {
@@ -31,7 +35,18 @@ const SAMPLE_READINESS_DIAGNOSTICS = {
 beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
+  mockGetReadinessSnapshot.mockReset();
   mockGetConnectionState.mockReturnValue({ status: 'ready' });
+  mockGetReadinessSnapshot.mockReturnValue({
+    ready: true,
+    status: 'ready',
+    reason: 'ready',
+    lastReadyAt: '2026-04-11T00:00:00.000Z',
+    lastSyncAt: '2026-04-11T00:00:00.000Z',
+    lastError: null,
+    debugError: 'sensitive-debug-error',
+    activeBudgetId: 'budget-123',
+  });
   mockGetReadinessStatus.mockResolvedValue({
     ready: true,
     status: 'ready',
@@ -127,6 +142,49 @@ describe('createHttpRuntime', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+  });
+
+  it('exposes connection snapshot fields on GET / without forcing a health probe', async () => {
+    mockGetConnectionState.mockReturnValue({
+      status: 'error',
+      lastReadyAt: null,
+      lastSyncAt: null,
+      lastError: 'connection_failed',
+      debugError: null,
+      activeBudgetId: null,
+    });
+    mockGetReadinessSnapshot.mockReturnValue({
+      ready: false,
+      status: 'error',
+      reason: 'connection_failed',
+      lastReadyAt: null,
+      lastSyncAt: null,
+      lastError: 'connection_failed',
+      debugError: null,
+      activeBudgetId: null,
+    });
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(new Request('http://localhost/'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      name: 'Actual Budget MCP',
+      version: 'test',
+      transport: 'streamable-http',
+      ready: false,
+      connectionStatus: 'error',
+      reason: 'connection_failed',
+      lastError: 'connection_failed',
+    });
+    expect(mockGetReadinessSnapshot).toHaveBeenCalled();
+    expect(mockGetReadinessStatus).not.toHaveBeenCalled();
   });
 
   it('does not expose internal readiness diagnostics from /ready', async () => {

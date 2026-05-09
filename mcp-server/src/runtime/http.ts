@@ -3,7 +3,11 @@ import { Hono } from 'hono';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
-import { getConnectionState, getReadinessStatus } from '../core/api/actual-client.js';
+import {
+  getConnectionState,
+  getReadinessSnapshot,
+  getReadinessStatus,
+} from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
@@ -96,14 +100,19 @@ export function createHttpRuntime(options: {
 
   app.use('/mcp', requireBearer);
 
-  app.get('/', (c) =>
-    c.json({
+  app.get('/', (c) => {
+    const snapshot = getConnectionState();
+    const readiness = getReadinessSnapshot();
+    return c.json({
       name: 'Actual Budget MCP',
       version: options.version,
       transport: 'streamable-http',
-      ready: getConnectionState().status === 'ready',
-    }),
-  );
+      ready: snapshot.status === 'ready',
+      connectionStatus: readiness.status,
+      reason: readiness.reason,
+      lastError: readiness.lastError,
+    });
+  });
 
   app.get('/health', (c) =>
     c.json({
