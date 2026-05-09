@@ -12,8 +12,36 @@ import { formatAccountDataWarnings } from '../../core/utils/partial-results.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsInputParser } from './input-parser.js';
-import { resolveGetTransactionsPagination } from './pagination.js';
+import { readGetTransactionsMaxLimit, resolveGetTransactionsPagination } from './pagination.js';
 import { GetTransactionsReportGenerator } from './report-generator.js';
+
+function transactionToJsonRow(t: Transaction): {
+  id: string;
+  date: string;
+  amount: number;
+  payee_name: string | null;
+  imported_payee: string | null;
+  notes: string | null;
+  category_name: string | null;
+  transfer_id: string | null;
+  is_parent: boolean;
+  is_child: boolean;
+  starting_balance_flag: boolean;
+} {
+  return {
+    id: String(t.id),
+    date: t.date,
+    amount: t.amount,
+    payee_name: (t.payee_name ?? t.payee ?? null) as string | null,
+    imported_payee: (t.imported_payee ?? null) as string | null,
+    notes: (t.notes ?? null) as string | null,
+    category_name: (t.category_name ?? null) as string | null,
+    transfer_id: (t.transfer_id ?? null) as string | null,
+    is_parent: Boolean(t.is_parent),
+    is_child: Boolean(t.is_child),
+    starting_balance_flag: Boolean(t.starting_balance_flag),
+  };
+}
 
 /**
  * Filter transactions based on provided criteria
@@ -106,7 +134,7 @@ function generateAccountSummary(filtered: Transaction[]): { accountName: string;
 export const schema = {
   name: 'get-transactions',
   description:
-    'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category. Results are sorted newest-first; use limit/offset for pagination (defaults apply when limit is omitted—see report footer for hasMore and next_offset).',
+    'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category. Use outputFormat=json for structured rows suitable for deterministic reconciliation tooling. Markdown results are sorted newest-first; use limit/offset for pagination.',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 
@@ -124,8 +152,11 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       limit,
       offset,
       excludeTransfers,
+      outputFormat,
     } = input;
-    const pagination = resolveGetTransactionsPagination({ limit, offset });
+    const effectiveLimit =
+      outputFormat === 'json' && limit === undefined ? readGetTransactionsMaxLimit() : limit;
+    const pagination = resolveGetTransactionsPagination({ limit: effectiveLimit, offset });
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
     let resolvedAccountId: string;
@@ -177,6 +208,30 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     const accountSummary =
       accountId.toLowerCase() === 'all' ? generateAccountSummary(sorted) : undefined;
     const totalAmount = windowed.reduce((sum, t) => sum + t.amount, 0);
+
+    if (outputFormat === 'json') {
+      return successWithJson({
+        ok: true,
+        accountReference: accountId,
+        resolvedAccountId,
+        dateRange: { start, end },
+        warnings: reportWarnings,
+        pagination: {
+          offset: pagination.offset,
+          limit: pagination.limit,
+          hasMore,
+          nextOffset: hasMore ? pagination.offset + pagination.limit : undefined,
+          cappedToMax: pagination.cappedToMax,
+          defaultedLimit: pagination.defaultedLimit,
+        },
+        totals: {
+          fetchedInResolvedWindow: transactions.length,
+          matchingAfterFilters: sorted.length,
+          returnedCount: windowed.length,
+        },
+        transactions: windowed.map(transactionToJsonRow),
+      });
+    }
 
     const markdown = new GetTransactionsReportGenerator().generate(mapped, {
       accountReference: accountId,
