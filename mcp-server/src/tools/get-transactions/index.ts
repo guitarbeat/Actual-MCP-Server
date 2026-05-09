@@ -166,6 +166,12 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       categoryName,
       payeeName,
     });
+    const reportWarnings = [...warnings];
+    if (categoryName?.toLowerCase() === 'uncategorized' && !excludeTransfers) {
+      reportWarnings.push(
+        'Uncategorized results can include transfer-related rows. For cleaner categorization triage, rerun with `excludeTransfers: true`.',
+      );
+    }
 
     // Generate summary if needed
     const accountSummary =
@@ -182,7 +188,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       totalMatchingFilters: sorted.length,
       totalAmount,
       accountSummary,
-      warnings,
+      warnings: reportWarnings,
       pagination: {
         offset: pagination.offset,
         limit: pagination.limit,
