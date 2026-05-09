@@ -384,9 +384,24 @@ async function checkConnectionHealth(): Promise<boolean> {
 
   pendingHealthCheck = (async (): Promise<boolean> => {
     try {
-      await api.getAccounts();
-      bumpHealthyTimestamp();
-      return true;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await api.getAccounts();
+          bumpHealthyTimestamp();
+          return true;
+        } catch (error) {
+          const msg = normalizeUnknownError(error).message.toLowerCase();
+          const maybeOpening = msg.includes('no budget file is open') && attempt < 2;
+          if (!maybeOpening) {
+            throw error;
+          }
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 100);
+          });
+        }
+      }
+      // Not reachable at runtime (loop returns true or throws); satisfies TS exhaustiveness.
+      return false;
     } catch (error) {
       const normalizedError = normalizeUnknownError(error);
       const errorMessage = normalizedError.message;
@@ -709,7 +724,9 @@ export function startBackgroundRetry(): void {
       return;
     }
     attempt++;
-    const delay = Math.min(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), 120000); // Max 2 minutes
+    const base = Math.min(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), 120_000);
+    const isRateLimited = initializationError?.message?.toLowerCase().includes('too-many-requests');
+    const delay = isRateLimited ? Math.max(base, 120_000) : base;
     console.error(
       `[CONNECTION] Background retry attempt ${attempt}/${MAX_RETRY_ATTEMPTS} in ${Math.round(delay / 1000)}s...`,
     );
@@ -902,6 +919,9 @@ export async function getReadinessStatus(
  * @returns True if it's a connection error
  */
 function isConnectionError(errorMessage: string): boolean {
+  if (errorMessage.includes('too-many-requests')) {
+    return false;
+  }
   return (
     errorMessage.includes('not connected') ||
     errorMessage.includes('connection') ||
