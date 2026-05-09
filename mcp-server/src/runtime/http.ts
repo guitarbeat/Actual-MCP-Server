@@ -105,7 +105,6 @@ export function createHttpRuntime(options: {
     const readiness = getReadinessSnapshot();
     return c.json({
       name: 'Actual Budget MCP',
-      version: options.version,
       transport: 'streamable-http',
       ready: snapshot.status === 'ready',
       connectionStatus: readiness.status,

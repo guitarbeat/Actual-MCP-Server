@@ -176,7 +176,6 @@ describe('createHttpRuntime', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       name: 'Actual Budget MCP',
-      version: 'test',
       transport: 'streamable-http',
       ready: false,
       connectionStatus: 'error',
