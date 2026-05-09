@@ -126,6 +126,7 @@ export function createHttpRuntime(options: {
     const publicBody = toPublicReadinessStatus(readiness);
 
     if (process.env.MCP_READINESS_TRANSITION_LOGS === 'true') {
+      // Log only meaningful readiness transitions; repeated probes with the same state stay quiet.
       const signature = `${publicBody.ready}|${publicBody.status}|${publicBody.reason ?? ''}`;
       if (lastReadinessSignature !== signature) {
         const previous = lastReadinessSignature;

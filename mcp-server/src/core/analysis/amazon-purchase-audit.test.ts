@@ -4,10 +4,7 @@ import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { stringify as stringifyCsv } from 'csv-stringify/sync';
 import { strToU8, zipSync } from 'fflate';
-import type {
-  APICategoryEntity,
-  APICategoryGroupEntity,
-} from '@actual-app/api/@types/loot-core/src/server/api-models.js';
+import type { APICategoryEntity, APICategoryGroupEntity } from '../api/actual-client/types.js';
 import type { Account, Transaction } from '../types/domain.js';
 import {
   applyAmazonAudit,

@@ -4,11 +4,6 @@ import path from 'node:path';
 import '../../polyfill.js';
 import api from '@actual-app/api';
 import type {
-  RuleEntity,
-  TransactionEntity,
-} from '@actual-app/api/@types/loot-core/src/types/models/index.js';
-import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
-import type {
   ActualConnectionState,
   ActualReadFreshnessMode,
   ActualReadinessStatus,
@@ -23,6 +18,9 @@ import type {
   HistoricalTransferApplyCandidateResult,
   HistoricalTransferApplyResult,
   HistoricalTransferInternalTransaction,
+  ImportTransactionsOpts,
+  RuleEntity,
+  TransactionEntity,
 } from './actual-client/types.js';
 import {
   getDateDiffInDays,
@@ -512,7 +510,7 @@ async function downloadAndLoadBudget(): Promise<{
     return getBudgetDownloadIdentifier(budgets[0]);
   })();
 
-  // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
+  // Support both legacy and current encryption env var names during migration windows.
   const budgetPassword: string | undefined =
     process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
 
@@ -566,14 +564,14 @@ function logSuccessfulInitialization(
 }
 
 /**
- * Handle initialization errors with specific migration error handling
+ * Handle initialization errors, including actionable guidance for migration-state failures.
  * @param error - The error that occurred
  */
 function handleInitializationError(error: unknown): never {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStr = errorMessage.toLowerCase();
 
-  // * Check for database migration errors
+  // Detect migration-state failures from common Actual server error text variants.
   if (
     errorStr.includes('out of sync') ||
     errorStr.includes('out-of-sync') ||
@@ -1979,8 +1977,7 @@ export async function runAQL(query: unknown): Promise<unknown> {
 export async function runQuery(query: string): Promise<unknown> {
   return runReadOperation(async () => {
     if (typeof api.runQuery === 'function') {
-      // * API signature changed - runQuery now takes query string directly or different format
-      // Cast through unknown to handle API signature mismatch (Query type vs string)
+      // Cast through unknown to handle current type-definition/runtime signature mismatch.
       return (api.runQuery as unknown as (q: string) => Promise<unknown>)(query);
     }
     throw new Error('runQuery method is not available in this version of the API');

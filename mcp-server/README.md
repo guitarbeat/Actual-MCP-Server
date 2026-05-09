@@ -65,7 +65,7 @@ Grouped tool discovery is available as JSON via the MCP resource **`actual://mcp
 
 ### Actual server compatibility
 
-The published npm package pins `@actual-app/api` to **26.3.0** (see [`package.json`](./package.json)). Bump that dependency only alongside an Actual Server version you validated end-to-end, and rerun `pnpm --filter actual-mcp test` plus startup smoke whenever either side jumps major/minor trains.
+The published npm package pins `@actual-app/api` in [`package.json`](./package.json). Keep that dependency on the latest validated release so the MCP server can consume newer Actual migrations quickly; rerun `pnpm --filter actual-mcp test` plus startup smoke whenever either side jumps major/minor trains.
 
 ## Run Modes
 
