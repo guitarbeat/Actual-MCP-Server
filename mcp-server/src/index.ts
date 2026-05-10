@@ -24,7 +24,6 @@ import {
   validateHttpBindStartupConfig,
 } from './core/auth/startup-guard.js';
 import { createHttpRuntime } from './runtime/http.js';
-import { emitStartupReadinessLog } from './runtime/startup-readiness-log.js';
 import { createActualMcpServer } from './runtime/server.js';
 import {
   scheduleToolUsageSummaryIfEnabled,
@@ -243,7 +242,6 @@ async function main(): Promise<void> {
     );
 
     await initializeApi();
-    emitStartupReadinessLog();
     return;
   }
 
@@ -255,7 +253,6 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await activeServer.connect(transport);
   await initializeApi();
-  emitStartupReadinessLog();
   console.error('Actual Budget MCP Server (stdio) started');
 }
 
