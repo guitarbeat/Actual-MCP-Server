@@ -42,6 +42,16 @@ describe('validators', () => {
       expect(validateDate('2023-1-5')).toBe(false);
     });
 
+    it('returns true for a valid century leap year', () => {
+      expect(validateDate('2000-02-29')).toBe(true);
+      expect(validateDate('2400-02-29')).toBe(true);
+    });
+
+    it('returns false for an invalid century leap year', () => {
+      expect(validateDate('1900-02-29')).toBe(false);
+      expect(validateDate('2100-02-29')).toBe(false);
+    });
+
     it('returns false for non-existent dates', () => {
       expect(validateDate('2023-02-29')).toBe(false); // Not a leap year
       expect(validateDate('2023-04-31')).toBe(false); // April has 30 days
