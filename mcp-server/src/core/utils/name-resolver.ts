@@ -27,6 +27,12 @@ export class NameResolver {
 
   private availablePayeeNames: string[] = [];
 
+  private pendingAccountPromise: Promise<void> | null = null;
+
+  private pendingCategoryPromise: Promise<void> | null = null;
+
+  private pendingPayeePromise: Promise<void> | null = null;
+
   /**
    * Resolve an account name or ID to an account ID.
    * If the input is already an ID, it passes through unchanged.
@@ -51,20 +57,29 @@ export class NameResolver {
     }
 
     if (!this.accountsFullyCached) {
-      // Fetch all accounts
-      const accounts = await fetchAllAccounts();
+      if (!this.pendingAccountPromise) {
+        this.pendingAccountPromise = (async () => {
+          try {
+            // Fetch all accounts
+            const accounts = await fetchAllAccounts();
 
-      this.availableAccountNames = accounts.map((a: Account) => a.name);
+            this.availableAccountNames = accounts.map((a: Account) => a.name);
 
-      // Bulk warm the cache with all accounts to optimize subsequent lookups
-      for (const account of accounts) {
-        const normName = normalizeName(account.name);
-        // Only set if not already present to preserve first-match behavior (similar to find)
-        if (!this.accountCache.has(normName)) {
-          this.accountCache.set(normName, account.id);
-        }
+            // Bulk warm the cache with all accounts to optimize subsequent lookups
+            for (const account of accounts) {
+              const normName = normalizeName(account.name);
+              // Only set if not already present to preserve first-match behavior (similar to find)
+              if (!this.accountCache.has(normName)) {
+                this.accountCache.set(normName, account.id);
+              }
+            }
+            this.accountsFullyCached = true;
+          } finally {
+            this.pendingAccountPromise = null;
+          }
+        })();
       }
-      this.accountsFullyCached = true;
+      await this.pendingAccountPromise;
     }
 
     // Check cache again after warming
@@ -102,19 +117,28 @@ export class NameResolver {
     }
 
     if (!this.categoriesFullyCached) {
-      // Fetch all categories
-      const categories = await fetchAllCategories();
+      if (!this.pendingCategoryPromise) {
+        this.pendingCategoryPromise = (async () => {
+          try {
+            // Fetch all categories
+            const categories = await fetchAllCategories();
 
-      this.availableCategoryNames = categories.map((c: Category) => c.name);
+            this.availableCategoryNames = categories.map((c: Category) => c.name);
 
-      // Bulk warm the cache with all categories
-      for (const category of categories) {
-        const normName = normalizeName(category.name);
-        if (!this.categoryCache.has(normName)) {
-          this.categoryCache.set(normName, category.id);
-        }
+            // Bulk warm the cache with all categories
+            for (const category of categories) {
+              const normName = normalizeName(category.name);
+              if (!this.categoryCache.has(normName)) {
+                this.categoryCache.set(normName, category.id);
+              }
+            }
+            this.categoriesFullyCached = true;
+          } finally {
+            this.pendingCategoryPromise = null;
+          }
+        })();
       }
-      this.categoriesFullyCached = true;
+      await this.pendingCategoryPromise;
     }
 
     // Check cache again
@@ -152,19 +176,28 @@ export class NameResolver {
     }
 
     if (!this.payeesFullyCached) {
-      // Fetch all payees
-      const payees = await fetchAllPayees();
+      if (!this.pendingPayeePromise) {
+        this.pendingPayeePromise = (async () => {
+          try {
+            // Fetch all payees
+            const payees = await fetchAllPayees();
 
-      this.availablePayeeNames = payees.map((p: Payee) => p.name);
+            this.availablePayeeNames = payees.map((p: Payee) => p.name);
 
-      // Bulk warm the cache
-      for (const payee of payees) {
-        const normName = normalizeName(payee.name);
-        if (!this.payeeCache.has(normName)) {
-          this.payeeCache.set(normName, payee.id);
-        }
+            // Bulk warm the cache
+            for (const payee of payees) {
+              const normName = normalizeName(payee.name);
+              if (!this.payeeCache.has(normName)) {
+                this.payeeCache.set(normName, payee.id);
+              }
+            }
+            this.payeesFullyCached = true;
+          } finally {
+            this.pendingPayeePromise = null;
+          }
+        })();
       }
-      this.payeesFullyCached = true;
+      await this.pendingPayeePromise;
     }
 
     // Check cache again
@@ -194,6 +227,10 @@ export class NameResolver {
     this.availableAccountNames = [];
     this.availableCategoryNames = [];
     this.availablePayeeNames = [];
+
+    this.pendingAccountPromise = null;
+    this.pendingCategoryPromise = null;
+    this.pendingPayeePromise = null;
   }
 
   /**
@@ -207,16 +244,19 @@ export class NameResolver {
         this.accountCache.clear();
         this.accountsFullyCached = false;
         this.availableAccountNames = [];
+        this.pendingAccountPromise = null;
         break;
       case 'category':
         this.categoryCache.clear();
         this.categoriesFullyCached = false;
         this.availableCategoryNames = [];
+        this.pendingCategoryPromise = null;
         break;
       case 'payee':
         this.payeeCache.clear();
         this.payeesFullyCached = false;
         this.availablePayeeNames = [];
+        this.pendingPayeePromise = null;
         break;
     }
   }

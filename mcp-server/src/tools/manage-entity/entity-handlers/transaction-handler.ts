@@ -122,15 +122,20 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
       this.validateCreateData(data);
     }
 
+    const [accountId, payeeId, categoryId, transferAccountId] = await Promise.all([
+      nameResolver.resolveAccount(data.account || ''),
+      data.payee ? nameResolver.resolvePayee(data.payee) : null,
+      data.category ? nameResolver.resolveCategory(data.category) : null,
+      data.transferAccount ? nameResolver.resolveAccount(data.transferAccount) : null,
+    ]);
+
     const normalized: NormalizedTransactionData = {
-      accountId: await nameResolver.resolveAccount(data.account || ''),
+      accountId,
       date: data.date || '',
       amount: data.amount !== undefined ? convertAmountToCents(data.amount) : 0,
-      payeeId: data.payee ? await nameResolver.resolvePayee(data.payee) : null,
-      categoryId: data.category ? await nameResolver.resolveCategory(data.category) : null,
-      transferAccountId: data.transferAccount
-        ? await nameResolver.resolveAccount(data.transferAccount)
-        : null,
+      payeeId,
+      categoryId,
+      transferAccountId,
       notes: data.notes,
       cleared: data.cleared,
       idempotencyKey: data.idempotencyKey,
@@ -259,12 +264,40 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
    * @param data - Transaction update data
    */
   async update(id: string, data: TransactionData): Promise<void> {
+    // Resolve IDs in parallel
+    const resolutions = [];
+    const accountIndex =
+      data.account !== undefined
+        ? resolutions.push(nameResolver.resolveAccount(data.account)) - 1
+        : -1;
+    const payeeIndex =
+      data.payee !== undefined
+        ? resolutions.push(
+            data.payee ? nameResolver.resolvePayee(data.payee) : Promise.resolve(null),
+          ) - 1
+        : -1;
+    const categoryIndex =
+      data.category !== undefined
+        ? resolutions.push(
+            data.category ? nameResolver.resolveCategory(data.category) : Promise.resolve(null),
+          ) - 1
+        : -1;
+
+    const resolvedValues = await Promise.all(resolutions);
+
     // Build update object with only provided fields
     const updates: Record<string, unknown> = {};
 
-    // If account is provided, resolve it
-    if (data.account !== undefined) {
-      updates.account = await nameResolver.resolveAccount(data.account);
+    if (accountIndex !== -1) {
+      updates.account = resolvedValues[accountIndex];
+    }
+
+    if (payeeIndex !== -1) {
+      updates.payee = resolvedValues[payeeIndex];
+    }
+
+    if (categoryIndex !== -1) {
+      updates.category = resolvedValues[categoryIndex];
     }
 
     // If date is provided, validate and use it
@@ -278,24 +311,6 @@ export class TransactionHandler implements EntityHandler<TransactionData, Transa
     // If amount is provided, convert to cents
     if (data.amount !== undefined) {
       updates.amount = convertAmountToCents(data.amount);
-    }
-
-    // If payee is provided, resolve it
-    if (data.payee !== undefined) {
-      if (data.payee) {
-        updates.payee = await nameResolver.resolvePayee(data.payee);
-      } else {
-        updates.payee = null;
-      }
-    }
-
-    // If category is provided, resolve it
-    if (data.category !== undefined) {
-      if (data.category) {
-        updates.category = await nameResolver.resolveCategory(data.category);
-      } else {
-        updates.category = null;
-      }
     }
 
     // Copy optional fields
