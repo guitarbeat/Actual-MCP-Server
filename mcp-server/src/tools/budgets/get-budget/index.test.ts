@@ -7,8 +7,8 @@ vi.mock('../../../core/api/actual-client.js', () => ({
   getBudgetMonths: vi.fn(),
 }));
 
-function parseJsonResponse(response: any): Record<string, unknown> {
-  const firstContent = response.content[0];
+function parseJsonResponse(response: unknown): Record<string, unknown> {
+  const firstContent = (response as Record<string, unknown[]>).content[0];
   if (!('text' in firstContent)) {
     throw new Error('Expected text content');
   }
