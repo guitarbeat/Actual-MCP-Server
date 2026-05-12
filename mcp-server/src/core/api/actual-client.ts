@@ -19,6 +19,7 @@ import type {
   APIScheduleEntity,
   APITagEntity,
   ExtendedActualApi,
+  HistoricalTransferInternalTransaction,
   HistoricalTransferApplyCandidateResult,
   HistoricalTransferApplyResult,
 } from './actual-client/types.js';
