@@ -3,14 +3,40 @@ import { entityConfigurations } from './crud-factory-config.js';
 import { createUnifiedCRUDTool, createCRUDTools } from './crud-factory.js';
 
 describe('createUnifiedCRUDTool', () => {
-  const entities = Object.keys(entityConfigurations) as Array<
-    keyof typeof entityConfigurations
-  >;
+  const entityToolCases = [
+    {
+      key: 'category',
+      config: entityConfigurations.category,
+      tool: createUnifiedCRUDTool(entityConfigurations.category),
+    },
+    {
+      key: 'payee',
+      config: entityConfigurations.payee,
+      tool: createUnifiedCRUDTool(entityConfigurations.payee),
+    },
+    {
+      key: 'tag',
+      config: entityConfigurations.tag,
+      tool: createUnifiedCRUDTool(entityConfigurations.tag),
+    },
+    {
+      key: 'account',
+      config: entityConfigurations.account,
+      tool: createUnifiedCRUDTool(entityConfigurations.account),
+    },
+    {
+      key: 'rule',
+      config: entityConfigurations.rule,
+      tool: createUnifiedCRUDTool(entityConfigurations.rule),
+    },
+    {
+      key: 'categoryGroup',
+      config: entityConfigurations.categoryGroup,
+      tool: createUnifiedCRUDTool(entityConfigurations.categoryGroup),
+    },
+  ] as const;
 
-  describe.each(entities)('manage-%s', (entityKey) => {
-    const config = entityConfigurations[entityKey];
-    const tool = createUnifiedCRUDTool(config);
-
+  describe.each(entityToolCases)('manage-$key', ({ config, tool }) => {
     it('should produce a single tool named manage-{entity}', () => {
       expect(tool.schema.name).toBe(`manage-${config.entityName}`);
     });
@@ -52,12 +78,15 @@ describe('createUnifiedCRUDTool', () => {
   });
 
   it('should produce 6 tools (one per entity) instead of 18', () => {
-    const unifiedTools = entities.map(
-      (key) => createUnifiedCRUDTool(entityConfigurations[key]),
-    );
-    const legacyTools = entities.flatMap(
-      (key) => createCRUDTools(entityConfigurations[key]),
-    );
+    const unifiedTools = entityToolCases.map(({ tool }) => tool);
+    const legacyTools = [
+      ...createCRUDTools(entityConfigurations.category),
+      ...createCRUDTools(entityConfigurations.payee),
+      ...createCRUDTools(entityConfigurations.tag),
+      ...createCRUDTools(entityConfigurations.account),
+      ...createCRUDTools(entityConfigurations.rule),
+      ...createCRUDTools(entityConfigurations.categoryGroup),
+    ];
     expect(unifiedTools).toHaveLength(6);
     expect(legacyTools).toHaveLength(18);
   });
@@ -245,9 +274,7 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain(
-          'At least one condition is required',
-        );
+        expect(result.error.issues[0].message).toContain('At least one condition is required');
       }
     });
 
@@ -260,9 +287,7 @@ describe('CRUD Factory Configuration Schemas', () => {
       const result = create.schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain(
-          'At least one action is required',
-        );
+        expect(result.error.issues[0].message).toContain('At least one action is required');
       }
     });
 

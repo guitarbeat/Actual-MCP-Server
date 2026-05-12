@@ -243,10 +243,7 @@ export function createUnifiedCRUDTool<
             const validatedRecord = validated as Record<string, unknown>;
             const { id, ...updateData } = validatedRecord;
             if (Object.keys(updateData).length === 0) {
-              return error(
-                'No fields provided for update',
-                'Provide at least one field to update',
-              );
+              return error('No fields provided for update', 'Provide at least one field to update');
             }
             await handler.update(id as string, updateData);
             handler.invalidateCache();
