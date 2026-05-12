@@ -189,8 +189,8 @@ export function formatMessage(args: unknown[]): string {
   return args
     .map((arg) => {
       if (arg instanceof Error) {
-        // Include stack trace for Error objects unless in production
-        const showStack = process.env.NODE_ENV !== 'production';
+        // Include stack trace for Error objects only if explicitly requested
+        const showStack = process.env.MCP_SHOW_STACK_TRACE === 'true';
         return `${arg.message}${showStack && arg.stack ? `\n${arg.stack}` : ''}`;
       }
       if (typeof arg === 'object' && arg !== null) {

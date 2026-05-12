@@ -315,7 +315,7 @@ function logErrorWithContext(err: unknown, context: ErrorContext): void {
   console.error(`${ERROR_LOG_PREFIX} ${timestamp}${contextStr}: ${errorMessage}`);
 
   // Include stack trace for Error objects to aid debugging
-  if (errorStack && process.env.NODE_ENV !== 'production') {
+  if (errorStack && process.env.MCP_SHOW_STACK_TRACE === 'true') {
     console.error(`${ERROR_LOG_PREFIX} Stack trace:\n${errorStack}`);
   }
 }

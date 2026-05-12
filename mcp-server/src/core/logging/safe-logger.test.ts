@@ -2,28 +2,20 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { formatMessage } from './safe-logger.js';
 
 describe('formatMessage', () => {
-  const originalNodeEnv = process.env.NODE_ENV;
+  const originalShowStackTrace = process.env.MCP_SHOW_STACK_TRACE;
 
   beforeEach(() => {
-    // Reset NODE_ENV before each test
-    process.env.NODE_ENV = 'development';
+    // Reset MCP_SHOW_STACK_TRACE before each test
+    delete process.env.MCP_SHOW_STACK_TRACE;
   });
 
   afterEach(() => {
-    // Restore NODE_ENV after each test
-    process.env.NODE_ENV = originalNodeEnv;
+    // Restore MCP_SHOW_STACK_TRACE after each test
+    process.env.MCP_SHOW_STACK_TRACE = originalShowStackTrace;
   });
 
-  it('should include stack trace in development environment', () => {
-    process.env.NODE_ENV = 'development';
-    const error = new Error('Test error');
-    const result = formatMessage([error]);
-    expect(result).toContain('Test error');
-    expect(result).toContain(error.stack);
-  });
-
-  it('should include stack trace in test environment', () => {
-    process.env.NODE_ENV = 'test';
+  it('should include stack trace when MCP_SHOW_STACK_TRACE is true', () => {
+    process.env.MCP_SHOW_STACK_TRACE = 'true';
     const error = new Error('Test error');
     const result = formatMessage([error]);
     expect(result).toContain('Test error');
@@ -31,8 +23,8 @@ describe('formatMessage', () => {
   });
 
   // This test expects correct behavior (no leakage)
-  it('should NOT include stack trace in production environment', () => {
-    process.env.NODE_ENV = 'production';
+  it('should NOT include stack trace when MCP_SHOW_STACK_TRACE is not true', () => {
+    delete process.env.MCP_SHOW_STACK_TRACE;
     const error = new Error('Test error');
     const result = formatMessage([error]);
     expect(result).toContain('Test error');
