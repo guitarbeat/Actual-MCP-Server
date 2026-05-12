@@ -9,10 +9,13 @@ vi.mock('../../../core/api/actual-client.js', () => ({
 
 function parseJsonResponse(response: unknown): Record<string, unknown> {
   const firstContent = (response as Record<string, unknown[]>).content[0];
-  if (!('text' in firstContent)) {
+  if (typeof firstContent !== 'object' || firstContent === null || !('text' in firstContent)) {
     throw new Error('Expected text content');
   }
-  return JSON.parse(firstContent.text) as Record<string, unknown>;
+  return JSON.parse(String((firstContent as Record<string, unknown>).text)) as Record<
+    string,
+    unknown
+  >;
 }
 
 describe('get-budget-month tool', () => {
