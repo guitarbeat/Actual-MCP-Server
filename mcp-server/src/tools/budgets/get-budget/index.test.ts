@@ -13,6 +13,9 @@ function parseJsonResponse(response: unknown): Record<string, unknown> {
   if (!('text' in firstContent)) {
     throw new Error('Expected text content');
   }
+  if (firstContent.text === undefined) {
+    throw new Error('Expected text content to be defined');
+  }
   return JSON.parse(firstContent.text) as Record<string, unknown>;
 }
 

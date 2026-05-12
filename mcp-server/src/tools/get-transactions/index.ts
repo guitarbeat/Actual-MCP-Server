@@ -4,7 +4,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { fetchAllOnBudgetTransactionsWithMetadata } from '../../core/data/fetch-transactions.js';
 import { getDateRange } from '../../core/formatting/index.js';
 import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
-import { errorFromCatch, success, successWithJson } from '../../core/response/index.js';
+import { errorFromCatch, success } from '../../core/response/index.js';
 import type { Transaction } from '../../core/types/domain.js';
 import { GetTransactionsArgsSchema } from '../../core/types/index.js';
 import type { ToolInput, GetTransactionsArgs } from '../../core/types/index.js';
@@ -210,27 +210,33 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     const totalAmount = windowed.reduce((sum, t) => sum + t.amount, 0);
 
     if (outputFormat === 'json') {
-      return successWithJson({
-        ok: true,
-        accountReference: accountId,
-        resolvedAccountId,
-        dateRange: { start, end },
-        warnings: reportWarnings,
-        pagination: {
-          offset: pagination.offset,
-          limit: pagination.limit,
-          hasMore,
-          nextOffset: hasMore ? pagination.offset + pagination.limit : undefined,
-          cappedToMax: pagination.cappedToMax,
-          defaultedLimit: pagination.defaultedLimit,
-        },
-        totals: {
-          fetchedInResolvedWindow: transactions.length,
-          matchingAfterFilters: sorted.length,
-          returnedCount: windowed.length,
-        },
-        transactions: windowed.map(transactionToJsonRow),
-      });
+      return success(
+        JSON.stringify(
+          {
+            ok: true,
+            accountReference: accountId,
+            resolvedAccountId,
+            dateRange: { start, end },
+            warnings: reportWarnings,
+            pagination: {
+              offset: pagination.offset,
+              limit: pagination.limit,
+              hasMore,
+              nextOffset: hasMore ? pagination.offset + pagination.limit : undefined,
+              cappedToMax: pagination.cappedToMax,
+              defaultedLimit: pagination.defaultedLimit,
+            },
+            totals: {
+              fetchedInResolvedWindow: transactions.length,
+              matchingAfterFilters: sorted.length,
+              returnedCount: windowed.length,
+            },
+            transactions: windowed.map(transactionToJsonRow),
+          },
+          null,
+          2,
+        ),
+      );
     }
 
     const markdown = new GetTransactionsReportGenerator().generate(mapped, {
