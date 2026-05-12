@@ -138,10 +138,9 @@ describe('supplemental', () => {
       payee_name: 'Test Merchant',
       category: 'c-1',
       notes: '',
-      cleared: true,
-      imported_id: null,
+
       transfer_id: null,
-      subtransactions: [],
+
       imported_payee: 'Test Merchant Inc',
     };
 
