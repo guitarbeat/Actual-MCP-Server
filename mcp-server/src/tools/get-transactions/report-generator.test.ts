@@ -14,6 +14,14 @@ describe('GetTransactionsReportGenerator', () => {
     },
   ];
 
+  const basePagination = {
+    offset: 0,
+    limit: 50,
+    hasMore: false,
+    cappedToMax: false,
+    defaultedLimit: false,
+  } as const;
+
   it('should include total amount in report when provided', () => {
     const metadata = {
       accountReference: 'Checking',
@@ -22,11 +30,14 @@ describe('GetTransactionsReportGenerator', () => {
       appliedFilters: [],
       filteredCount: 1,
       totalFetched: 1,
+      totalMatchingFilters: 1,
       totalAmount: 10000, // $100.00
+      pagination: { ...basePagination },
     };
 
     const report = generator.generate(mockTransactions, metadata);
     expect(report).toContain('**Total amount:** $100.00');
+    expect(report).toContain('has_more=false');
   });
 
   it('should not include total amount when not provided', () => {
@@ -37,6 +48,8 @@ describe('GetTransactionsReportGenerator', () => {
       appliedFilters: [],
       filteredCount: 1,
       totalFetched: 1,
+      totalMatchingFilters: 1,
+      pagination: { ...basePagination },
     };
 
     const report = generator.generate(mockTransactions, metadata);
@@ -51,7 +64,9 @@ describe('GetTransactionsReportGenerator', () => {
       appliedFilters: [],
       filteredCount: 1,
       totalFetched: 1,
+      totalMatchingFilters: 1,
       warnings: ['Savings: transactions unavailable (timeout)'],
+      pagination: { ...basePagination },
     };
 
     const report = generator.generate(mockTransactions, metadata);

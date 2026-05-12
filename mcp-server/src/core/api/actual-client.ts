@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import '../../polyfill.js';
 import api from '@actual-app/api';
 import type {
   RuleEntity,
@@ -58,7 +59,7 @@ export type {
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
-const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
@@ -66,6 +67,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  lastErrorAt: null,
   debugError: null,
   activeBudgetId: null,
 };
@@ -73,13 +75,38 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
 // API initialization state
 let initialized = false;
 let initializationError: Error | null = null;
-let initializationPromise: Promise<void> | null = null;
-let checkingHealth = false; // Prevent recursion in health checks
+/** Serializes init/reconnect/shutdown so concurrent callers cannot interleave or race on shared API state. */
+let initMutexChain: Promise<void> = Promise.resolve();
 let connectionState: ActualConnectionState = { ...INITIAL_CONNECTION_STATE };
+
+/** Bounded 3s–300s. Controls how often read paths probe with `checkConnectionHealth` when idle. */
+function getConnectionHealthTtlMs(): number {
+  const raw = Number.parseInt(process.env.ACTUAL_CONNECTION_HEALTH_TTL_MS || '20000', 10);
+  if (Number.isNaN(raw)) {
+    return 20000;
+  }
+  return Math.min(Math.max(raw, 3000), 300_000);
+}
+
+/** Last confirmed healthy interaction with `@actual-app/api` (init, health probe, or successful operation). */
+let lastHealthyAt = 0;
+
+/** Dedup concurrent `checkConnectionHealth` calls so callers never mistakenly treat "check in flight" as "healthy". */
+let pendingHealthCheck: Promise<boolean> | null = null;
+
+function bumpHealthyTimestamp(): void {
+  lastHealthyAt = Date.now();
+}
 
 // Performance tracking for initialization
 let initializationTime: number | null = null;
 let initializationSkipCount = 0;
+
+/** Increments each time `markConnectionReady` runs (successful ready epochs). */
+let budgetReadyEpochCount = 0;
+
+/** Counts `initActualApi(true)` runs that entered the serialized init body (forced reconnect path). */
+let forcedInitInvocationCount = 0;
 
 // Auto-sync state
 let autoSyncInterval: NodeJS.Timeout | null = null;
@@ -88,6 +115,8 @@ let autoSyncInterval: NodeJS.Timeout | null = null;
 let backgroundRetryTimer: NodeJS.Timeout | null = null;
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_RETRY_DELAY_MS = 10000; // 10 seconds
+
+let connectionDiagnosticsInterval: NodeJS.Timeout | null = null;
 
 function nowAsIsoString(): string {
   return new Date().toISOString();
@@ -186,15 +215,19 @@ function markConnectionInitializing(): void {
   updateConnectionState({
     status: 'initializing',
     lastError: null,
+    lastErrorAt: null,
   });
 }
 
 function markConnectionReady(budgetId: string): void {
+  budgetReadyEpochCount++;
   initialized = true;
+  bumpHealthyTimestamp();
   updateConnectionState({
     status: 'ready',
     lastReadyAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
     debugError: null,
     activeBudgetId: budgetId,
   });
@@ -206,6 +239,7 @@ function markConnectionError(error: unknown): void {
   updateConnectionState({
     status: 'error',
     lastError: sanitizeConnectionError(error),
+    lastErrorAt: nowAsIsoString(),
     debugError: rawMessage,
   });
 }
@@ -214,7 +248,63 @@ function markSyncSuccess(): void {
   updateConnectionState({
     lastSyncAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
   });
+}
+
+async function settlePendingHealthCheck(): Promise<void> {
+  if (!pendingHealthCheck) {
+    return;
+  }
+  const inflight = pendingHealthCheck;
+  try {
+    await inflight;
+  } catch {
+    // Ignore; teardown or the next init will replace the session.
+  }
+}
+
+/**
+ * Fully tear down the `@actual-app/api` session and local caches. Always call this before a second
+ * `api.init()` — re-initializing without `shutdown()` leaves the client in a broken state on many versions.
+ */
+async function disposeActualBudgetSession(reason: string): Promise<void> {
+  await settlePendingHealthCheck();
+
+  if (autoSyncInterval) {
+    clearInterval(autoSyncInterval);
+    autoSyncInterval = null;
+  }
+
+  if (backgroundRetryTimer) {
+    clearTimeout(backgroundRetryTimer);
+    backgroundRetryTimer = null;
+  }
+
+  initialized = false;
+  lastHealthyAt = 0;
+
+  try {
+    await api.shutdown();
+  } catch (error) {
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.warn(
+        `[CONNECTION] api.shutdown during dispose (${reason}): ${serializeUnknownError(error)}`,
+      );
+    }
+  }
+
+  try {
+    invalidateAllReadState();
+  } catch (error) {
+    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.warn(
+        `[CONNECTION] cache clear during dispose (${reason}): ${serializeUnknownError(error)}`,
+      );
+    }
+  }
+
+  connectionState = { ...INITIAL_CONNECTION_STATE };
 }
 
 function createLiveSyncRequiredError(error: unknown): Error {
@@ -263,25 +353,25 @@ async function runReadOperation<T>(
   });
 }
 
-async function waitForInitialization(timeoutMs = 55000): Promise<void> {
-  if (!initializationPromise) {
-    return;
-  }
-
-  let timeoutHandle: NodeJS.Timeout | null = null;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(() => {
-      reject(new Error(`Initialization timed out after ${Math.floor(timeoutMs / 1000)} seconds`));
-    }, timeoutMs);
+function enqueueInit<T>(work: () => Promise<T>, timeoutMs = 55000): Promise<T> {
+  const next = initMutexChain.then(() => {
+    let timeoutHandle: NodeJS.Timeout | null = null;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        reject(new Error(`Initialization timed out after ${Math.floor(timeoutMs / 1000)} seconds`));
+      }, timeoutMs);
+    });
+    return Promise.race([work(), timeoutPromise]).finally(() => {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+    });
   });
-
-  try {
-    await Promise.race([initializationPromise, timeoutPromise]);
-  } finally {
-    if (timeoutHandle) {
-      clearTimeout(timeoutHandle);
-    }
-  }
+  initMutexChain = next.then(
+    () => {},
+    () => {},
+  );
+  return next;
 }
 
 /**
@@ -293,52 +383,52 @@ async function checkConnectionHealth(): Promise<boolean> {
     return false;
   }
 
-  // Prevent recursion - if we're already checking health, skip
-  if (checkingHealth) {
-    return true; // Assume healthy to avoid recursion
+  if (pendingHealthCheck) {
+    return pendingHealthCheck;
   }
 
-  checkingHealth = true;
-  try {
-    // Use a lightweight API call to verify connection
-    // Call raw API directly to avoid recursion with ensureConnection wrapper
-    await api.getAccounts();
-    return true;
-  } catch (error) {
-    const normalizedError = normalizeUnknownError(error);
-    const errorMessage = normalizedError.message;
-    const errorStr = errorMessage.toLowerCase();
+  pendingHealthCheck = (async (): Promise<boolean> => {
+    try {
+      await api.getAccounts();
+      bumpHealthyTimestamp();
+      return true;
+    } catch (error) {
+      const normalizedError = normalizeUnknownError(error);
+      const errorMessage = normalizedError.message;
+      const errorStr = errorMessage.toLowerCase();
 
-    // Check for connection-related errors
-    if (
-      errorStr.includes('not connected') ||
-      errorStr.includes('connection') ||
-      errorStr.includes('econnrefused') ||
-      errorStr.includes('network') ||
-      errorStr.includes('timeout') ||
-      errorStr.includes('no budget file is open') || // Budget was closed or lost
-      errorStr.includes('budget file') // Catch other budget-related errors
-    ) {
+      // Check for connection-related errors
+      if (
+        errorStr.includes('not connected') ||
+        errorStr.includes('connection') ||
+        errorStr.includes('econnrefused') ||
+        errorStr.includes('network') ||
+        errorStr.includes('timeout') ||
+        errorStr.includes('no budget file is open') ||
+        errorStr.includes('budget file')
+      ) {
+        if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+          console.error(
+            `[CONNECTION] Health check failed - connection lost or budget closed: ${errorMessage}`,
+          );
+        }
+        markConnectionError(normalizedError);
+        return false;
+      }
+
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
         console.error(
-          `[CONNECTION] Health check failed - connection lost or budget closed: ${errorMessage}`,
+          `[CONNECTION] Health check encountered a non-connection error but kept readiness: ${errorMessage}`,
         );
       }
-      markConnectionError(normalizedError);
-      return false;
-    }
 
-    // Unexpected non-connection errors should not flip readiness, but we still log them.
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      console.error(
-        `[CONNECTION] Health check encountered a non-connection error but kept readiness: ${errorMessage}`,
-      );
+      return true;
+    } finally {
+      pendingHealthCheck = null;
     }
+  })();
 
-    return true;
-  } finally {
-    checkingHealth = false;
-  }
+  return pendingHealthCheck;
 }
 
 /**
@@ -488,8 +578,16 @@ function handleInitializationError(error: unknown): never {
     console.error('  1. Update Actual Budget server to the latest version');
     console.error('  2. Restart the Actual Budget service - migrations will auto-apply');
     console.error('  3. If the issue persists, check Actual Budget server logs');
+  } else if (error instanceof Error) {
+    console.error('Failed to initialize Actual Budget API:', errorMessage);
+    if (error.stack) {
+      console.error(error.stack);
+    }
+    if ('cause' in error && error.cause !== undefined && error.cause !== null) {
+      console.error('  Cause:', serializeUnknownError(error.cause));
+    }
   } else {
-    console.error('Failed to initialize Actual Budget API:', error);
+    console.error('Failed to initialize Actual Budget API:', serializeUnknownError(error));
   }
 
   initializationError = error instanceof Error ? error : new Error(String(error));
@@ -502,33 +600,37 @@ function handleInitializationError(error: unknown): never {
  * @param forceReconnect - If true, force reconnection even if already initialized
  */
 export async function initActualApi(forceReconnect = false): Promise<void> {
-  if (initialized && !forceReconnect) {
-    initializationSkipCount++;
-    if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-      const timeSaved = initializationTime || 600;
-      console.error(
-        `[PERF] Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
+  return enqueueInit(async () => {
+    if (forceReconnect) {
+      forcedInitInvocationCount++;
+    }
+
+    if (initialized && !forceReconnect) {
+      initializationSkipCount++;
+      if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+        const timeSaved = initializationTime || 600;
+        console.error(
+          `[PERF] Initialization skipped (persistent connection) - saved ~${timeSaved}ms (skip count: ${initializationSkipCount})`,
+        );
+      }
+      return;
+    }
+
+    if (forceReconnect && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+      console.error('[CONNECTION] Forcing reconnection...');
+    }
+
+    initializationError = null;
+
+    const shouldDispose = initialized || forceReconnect || connectionState.status === 'error';
+    if (shouldDispose) {
+      await disposeActualBudgetSession(
+        forceReconnect ? 'before_force_reconnect' : 'before_reinit_after_error_or_existing_session',
       );
     }
-    return;
-  }
 
-  if (initializationPromise) {
-    await waitForInitialization();
-    if (initializationError) {
-      throw initializationError;
-    }
-    return;
-  }
+    markConnectionInitializing();
 
-  if (forceReconnect && process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
-    console.error('[CONNECTION] Forcing reconnection...');
-  }
-
-  initializationError = null;
-  markConnectionInitializing();
-
-  initializationPromise = (async () => {
     const startTime = Date.now();
 
     try {
@@ -553,15 +655,50 @@ export async function initActualApi(forceReconnect = false): Promise<void> {
       setupAutoSync();
     } catch (error) {
       handleInitializationError(error);
-    } finally {
-      initializationPromise = null;
     }
-  })();
+  });
+}
 
-  await waitForInitialization();
-  if (initializationError) {
-    throw initializationError;
+/**
+ * MCP tool entry fast path: when the budget session is ready, avoid mutex/enqueue overhead from
+ * {@link initActualApi}. Individual tool handlers still use `ensureConnection` for staleness and retries.
+ */
+export async function ensureBudgetReadyForTools(): Promise<void> {
+  if (initialized && connectionState.status === 'ready') {
+    return;
   }
+
+  await initActualApi(shouldForceInitReconnect());
+}
+
+/**
+ * Emit periodic `[MCP_DIAG]` lines when `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` is a positive integer.
+ * Intended for correlating reconnect issues with RSS on constrained hosts without full APM.
+ */
+export function scheduleConnectionDiagnosticsIfEnabled(): void {
+  if (connectionDiagnosticsInterval) {
+    return;
+  }
+
+  const parsed = Number.parseInt(process.env.MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC ?? '', 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return;
+  }
+
+  connectionDiagnosticsInterval = setInterval(() => {
+    const memory = process.memoryUsage();
+    const state = getConnectionState();
+    const budgetTail =
+      typeof state.activeBudgetId === 'string' && state.activeBudgetId.length > 8
+        ? state.activeBudgetId.slice(-8)
+        : (state.activeBudgetId ?? 'none');
+
+    console.error(
+      `[MCP_DIAG] conn=${state.status} budget_tail=${budgetTail} rss_mb=${Math.round(memory.rss / (1024 * 1024))} ready_epochs=${budgetReadyEpochCount} forced_inits=${forcedInitInvocationCount} init_skips=${initializationSkipCount}`,
+    );
+  }, parsed * 1000);
+
+  connectionDiagnosticsInterval.unref?.();
 }
 
 /**
@@ -648,37 +785,15 @@ function setupAutoSync(): void {
  * Shutdown the Actual Budget API
  */
 export async function shutdownActualApi(): Promise<void> {
-  // Clean up auto-sync interval
-  if (autoSyncInterval) {
-    clearInterval(autoSyncInterval);
-    autoSyncInterval = null;
+  if (connectionDiagnosticsInterval) {
+    clearInterval(connectionDiagnosticsInterval);
+    connectionDiagnosticsInterval = null;
   }
 
-  // Clean up background retry timer
-  if (backgroundRetryTimer) {
-    clearTimeout(backgroundRetryTimer);
-    backgroundRetryTimer = null;
-  }
-
-  if (!initialized) {
+  await enqueueInit(async () => {
+    await disposeActualBudgetSession('explicit_shutdown');
     initializationError = null;
-    updateConnectionState({
-      status: 'disconnected',
-    });
-    return;
-  }
-
-  try {
-    await api.shutdown();
-  } catch (error) {
-    console.error('Error shutting down Actual Budget API:', error);
-  } finally {
-    initialized = false;
-    initializationError = null;
-    updateConnectionState({
-      status: 'disconnected',
-    });
-  }
+  });
 }
 
 /**
@@ -708,7 +823,7 @@ export function isInitialized(): boolean {
  * Check if the API is currently initializing
  */
 export function isInitializing(): boolean {
-  return initializationPromise !== null || connectionState.status === 'initializing';
+  return connectionState.status === 'initializing';
 }
 
 /**
@@ -716,10 +831,37 @@ export function isInitializing(): boolean {
  */
 export function resetInitializationStats(): void {
   initializationSkipCount = 0;
+  budgetReadyEpochCount = 0;
+  forcedInitInvocationCount = 0;
 }
 
 export function getConnectionState(): ActualConnectionState {
   return { ...connectionState };
+}
+
+/**
+ * Returns detailed diagnostic information about the connection state
+ */
+export function getConnectionStatus(): {
+  status: string;
+  budgetId: string | null;
+  lastReadyAt: string | null;
+  lastErrorAt: string | null;
+  lastError: string | null;
+  reconnectAttempts: number;
+  lastSyncAt: string | null;
+  initialized: boolean;
+} {
+  return {
+    status: connectionState.status,
+    budgetId: connectionState.activeBudgetId,
+    lastReadyAt: connectionState.lastReadyAt,
+    lastErrorAt: connectionState.lastErrorAt,
+    lastError: connectionState.lastError,
+    reconnectAttempts: forcedInitInvocationCount,
+    lastSyncAt: connectionState.lastSyncAt,
+    initialized,
+  };
 }
 
 export async function getReadinessStatus(forceCheck?: false): Promise<ActualReadinessStatus>;
@@ -802,23 +944,48 @@ function isConnectionError(errorMessage: string): boolean {
   );
 }
 
-async function ensureReadConnectionAvailable(): Promise<void> {
-  if (initializationPromise) {
-    await waitForInitialization();
-  }
+/** True when `initActualApi(false)` fast-path must not run (`initialized && !force` skips real work). */
+function shouldForceInitReconnect(): boolean {
+  return (
+    connectionState.status === 'error' ||
+    initializationError !== null ||
+    (initialized && connectionState.status !== 'ready')
+  );
+}
 
+async function ensureReadConnectionAvailable(): Promise<void> {
   if (initialized && connectionState.status === 'ready') {
     return;
   }
 
-  await initActualApi(connectionState.status === 'error' || initializationError !== null);
+  await initActualApi(shouldForceInitReconnect());
+}
+
+/**
+ * Cached read paths bypass `ensureWriteConnectionAvailable()`, so readiness can look "fine" until the API is
+ * actually touched. Probe occasionally and reconnect before reads when the budget has gone quiet longer than TTL.
+ */
+async function reconnectStaleBudgetBeforeRead(reason: string): Promise<void> {
+  if (!initialized || connectionState.status !== 'ready') {
+    return;
+  }
+
+  const ttlMs = getConnectionHealthTtlMs();
+  if (Date.now() - lastHealthyAt < ttlMs) {
+    return;
+  }
+
+  if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
+    console.error(`[CONNECTION] Read-time health probe (${reason}, ttlMs=${String(ttlMs)})`);
+  }
+
+  const healthy = await checkConnectionHealth();
+  if (!healthy) {
+    await initActualApi(true);
+  }
 }
 
 async function ensureWriteConnectionAvailable(): Promise<void> {
-  if (initializationPromise) {
-    await waitForInitialization();
-  }
-
   if (!initialized || connectionState.status !== 'ready') {
     await initActualApi(connectionState.status === 'error' || initializationError !== null);
   }
@@ -841,7 +1008,9 @@ async function ensureConnection<T>(
   if (mode === 'write') {
     await ensureWriteConnectionAvailable();
     try {
-      return await operation();
+      const result = await operation();
+      bumpHealthyTimestamp();
+      return result;
     } catch (error) {
       const resolvedError = normalizeUnknownError(error);
       if (isConnectionError(resolvedError.message.toLowerCase())) {
@@ -857,7 +1026,10 @@ async function ensureConnection<T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       await ensureReadConnectionAvailable();
-      return await operation();
+      await reconnectStaleBudgetBeforeRead(`read_attempt_${attempt + 1}`);
+      const result = await operation();
+      bumpHealthyTimestamp();
+      return result;
     } catch (error) {
       lastError = normalizeUnknownError(error);
       const shouldRetry =

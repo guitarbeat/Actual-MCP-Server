@@ -9,6 +9,16 @@ Actual Budget MCP server for Claude Desktop, Codex, Cursor, and other MCP client
 - Transfer-aware transaction creation, starting-balance repair, account reconciliation, budget planning, schedule management, and batch transaction import.
 - Hono-based remote runtime with streamable HTTP MCP transport, bearer auth, health checks, and stdio support for desktop clients.
 
+## Agent playbook (discovery and routing)
+
+This server exposes many atomic tools for parity with Actual Budget. To reduce wrong-tool selection and wasted context:
+
+1. **Enable only the tier you need**: default read-only; add `--enable-write` for mutations; add `--enable-advanced` for multi-budget and high-risk account operations.
+2. **Fetch the catalog first**: read the MCP resource **`actual://mcp/tool-surface`** (JSON: tools grouped by read / write / advanced with one-line hints). Use it to shortlist before calling `tools/list`.
+3. **Prefer prompts for multi-step flows**: under `src/mcp/prompts/`, prompts bundle ordered steps (e.g. spending analysis, health check, uncategorized triage). Run a prompt when the user goal matches a workflow; drop to individual tools for precise CRUD or custom filters.
+4. **Use resources for narrative context**: account and budget markdown resources under `actual://...` complement tools; they do not replace tools for structured queries.
+5. **Respect pagination and limits**: list-style tools cap or paginate results. **`get-transactions`** returns newest-first slices with **`limit`**, **`offset`**, **`hasMore`**, and **`totalMatchingFilters`**; tune defaults with `ACTUAL_GET_TRANSACTIONS_DEFAULT_LIMIT` / `ACTUAL_GET_TRANSACTIONS_MAX_LIMIT` (see [`.env.example`](./.env.example)). For other list tools, set explicit `limit` / cursor fields when budgets are large.
+
 ## Install
 
 From the workspace root:
@@ -41,6 +51,21 @@ Optional variables:
 - `AUTO_SYNC_INTERVAL_MINUTES`, `CACHE_ENABLED`, and `CACHE_TTL_SECONDS` for runtime behavior. Remote deployments should set a non-zero sync interval.
 - `MCP_ALLOWED_ORIGINS` to allow browser-based MCP clients in production; server-to-server clients without an `Origin` header remain allowed.
 - `MCP_SESSION_TTL_MINUTES` to expire inactive streamable HTTP sessions and prevent unbounded session growth.
+- `MCP_TOOL_CORRELATION_LOGS` set to `true` to stderr-log MCP tool executions with shortened request/session identifiers on streamable HTTP.
+- `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` set to a positive integer for periodic `[MCP_DIAG]` lines (connection status, truncated budget id, RSS megabytes, plus `ready_epochs`, `forced_inits`, and `init_skips` counters).
+- `MCP_READINESS_TRANSITION_LOGS` set to `true` so each **change** in the public `/ready` payload (`ready|status|reason`) emits a correlated stderr line `[READINESS]` with the HTTP status that would be returned (suppresses duplicate probes when nothing changed).
+- `MCP_TOOL_USAGE_SUMMARY_INTERVAL_SEC` set to a positive integer to emit periodic `[TOOL_USAGE_SUMMARY]` lines (per-tool invocation counts since the last summary) for lightweight usage signal when correlation logs are not enough.
+- `ACTUAL_GET_TRANSACTIONS_DEFAULT_LIMIT` / `ACTUAL_GET_TRANSACTIONS_MAX_LIMIT` to bound **`get-transactions`** page size (defaults 200 / cap 5000).
+
+### Streamable HTTP sessions and budget scope
+
+Remote mode allocates one MCP server instance (`McpServer`) per authenticated streamable HTTP session, but **`@actual-app/api` and this package's Actual client remain process-global**. Idle sessions prune independently via `MCP_SESSION_TTL_MINUTES`, yet every active session still shares **one loaded budget**, cache layers, sync loops, `switch-budget` effects, and connection health probes. Provision **separate deployments or isolated processes** when you need mutually exclusive budgets—not additional bearer tokens against the same process.
+
+Grouped tool discovery is available as JSON via the MCP resource **`actual://mcp/tool-surface`** (tier metadata only; Actual data still requires authenticated tools/resources).
+
+### Actual server compatibility
+
+The published npm package pins `@actual-app/api` to **26.3.0** (see [`package.json`](./package.json)). Bump that dependency only alongside an Actual Server version you validated end-to-end, and rerun `pnpm --filter actual-mcp test` plus startup smoke whenever either side jumps major/minor trains.
 
 ## Run Modes
 
@@ -69,6 +94,8 @@ Remote deployment notes:
 - Restrict network access with your reverse proxy or platform controls when possible.
 - Use `/health` for liveness and `/ready` for Actual connectivity readiness.
 
+**Bearer vs OAuth (HTTP MCP):** this server uses a single shared **`BEARER_TOKEN`** validated in [`runtime/auth`](./src/runtime/auth.ts), which suits server-to-server or trusted reverse proxies. If you need interactive user consent, per-client credentials, or token rotation typical of OAuth 2.1 + PKCE, plan a separate gateway or IdP integration in front of `/mcp`—that flow is **not** built into this package today.
+
 ## Render
 
 This package can be deployed directly to Render as a web service. The repository root includes [`render.yaml`](../render.yaml), which points Render at [`Dockerfile`](./Dockerfile) and starts the server in remote HTTP mode with `--enable-write` and `--enable-bearer`.
@@ -78,6 +105,7 @@ Typical Render setup:
 1. Create the service from the repository Blueprint.
 2. Provide `ACTUAL_SERVER_URL`, one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
 3. Use `/health` as the liveness endpoint and `/ready` as the readiness endpoint.
+4. Optional tuneables such as `MCP_SESSION_TTL_MINUTES`, `ACTUAL_CONNECTION_HEALTH_TTL_MS`, `AUTO_SYNC_INTERVAL_MINUTES`, `MCP_ALLOWED_ORIGINS`, `MCP_TOOL_CORRELATION_LOGS`, `MCP_READINESS_TRANSITION_LOGS`, or `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` are documented in `.env.example` / `README`; add them in the Render Dashboard when you rely on defaults other than ours.
 
 If you are looking at Render Workflows examples such as:
 
@@ -202,13 +230,13 @@ pnpm run public:check
 
 <!-- TOOL_SURFACE:START -->
 
-Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 54 tools, 3 prompts, and 11 resources:
+Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 42 tools, 8 prompts, and 12 resources:
 
 - 16 read-only core tools
-- 30 write-enabled core tools
-- 8 advanced `--enable-advanced` tools
-- 3 prompts
-- 6 static resources
+- 19 write-enabled core tools
+- 7 advanced `--enable-advanced` tools
+- 8 prompts
+- 7 static resources
 - 5 templated resources
 
 The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).
