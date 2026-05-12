@@ -5,8 +5,9 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import {
   getConnectionState,
-  getReadinessSnapshot,
   getReadinessStatus,
+  getConnectionStatus,
+  DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
@@ -100,18 +101,14 @@ export function createHttpRuntime(options: {
 
   app.use('/mcp', requireBearer);
 
-  app.get('/', (c) => {
-    const snapshot = getConnectionState();
-    const readiness = getReadinessSnapshot();
-    return c.json({
+  app.get('/', (c) =>
+    c.json({
       name: 'Actual Budget MCP',
+      version: options.version,
       transport: 'streamable-http',
-      ready: snapshot.status === 'ready',
-      connectionStatus: readiness.status,
-      reason: readiness.reason,
-      lastError: readiness.lastError,
-    });
-  });
+      ready: getConnectionState().status === 'ready',
+    }),
+  );
 
   app.get('/health', (c) =>
     c.json({
@@ -120,13 +117,35 @@ export function createHttpRuntime(options: {
     }),
   );
 
+  app.get('/diagnostics', (c) => {
+    try {
+      const connectionInfo = getConnectionStatus();
+      return c.json({
+        connection: connectionInfo,
+        server: {
+          uptime: process.uptime(),
+          nodeVersion: process.version,
+          memoryUsageMB: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 10) / 10,
+        },
+        config: {
+          serverUrl: process.env.ACTUAL_SERVER_URL || null,
+          hasBudgetId: !!process.env.ACTUAL_SYNC_ID,
+          hasPassword: !!process.env.ACTUAL_PASSWORD,
+          dataDir: process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR,
+        },
+      });
+    } catch (error) {
+      console.error('Diagnostics endpoint failed:', error);
+      return c.json({ error: 'diagnostics unavailable' }, 500);
+    }
+  });
+
   app.get('/ready', async (c) => {
     const corr = truncateCorrelationId(randomUUID());
     const readiness = await getReadinessStatus(true);
     const publicBody = toPublicReadinessStatus(readiness);
 
     if (process.env.MCP_READINESS_TRANSITION_LOGS === 'true') {
-      // Log only meaningful readiness transitions; repeated probes with the same state stay quiet.
       const signature = `${publicBody.ready}|${publicBody.status}|${publicBody.reason ?? ''}`;
       if (lastReadinessSignature !== signature) {
         const previous = lastReadinessSignature;

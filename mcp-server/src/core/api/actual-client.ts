@@ -4,6 +4,11 @@ import path from 'node:path';
 import '../../polyfill.js';
 import api from '@actual-app/api';
 import type {
+  RuleEntity,
+  TransactionEntity,
+} from '@actual-app/api/@types/loot-core/src/types/models/index.js';
+import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
+import type {
   ActualConnectionState,
   ActualReadFreshnessMode,
   ActualReadinessStatus,
@@ -18,9 +23,6 @@ import type {
   HistoricalTransferApplyCandidateResult,
   HistoricalTransferApplyResult,
   HistoricalTransferInternalTransaction,
-  ImportTransactionsOpts,
-  RuleEntity,
-  TransactionEntity,
 } from './actual-client/types.js';
 import {
   getDateDiffInDays,
@@ -57,7 +59,7 @@ export type {
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
-const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
@@ -65,6 +67,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  lastErrorAt: null,
   debugError: null,
   activeBudgetId: null,
 };
@@ -212,6 +215,7 @@ function markConnectionInitializing(): void {
   updateConnectionState({
     status: 'initializing',
     lastError: null,
+    lastErrorAt: null,
   });
 }
 
@@ -223,6 +227,7 @@ function markConnectionReady(budgetId: string): void {
     status: 'ready',
     lastReadyAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
     debugError: null,
     activeBudgetId: budgetId,
   });
@@ -234,6 +239,7 @@ function markConnectionError(error: unknown): void {
   updateConnectionState({
     status: 'error',
     lastError: sanitizeConnectionError(error),
+    lastErrorAt: nowAsIsoString(),
     debugError: rawMessage,
   });
 }
@@ -242,6 +248,7 @@ function markSyncSuccess(): void {
   updateConnectionState({
     lastSyncAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
   });
 }
 
@@ -382,24 +389,9 @@ async function checkConnectionHealth(): Promise<boolean> {
 
   pendingHealthCheck = (async (): Promise<boolean> => {
     try {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          await api.getAccounts();
-          bumpHealthyTimestamp();
-          return true;
-        } catch (error) {
-          const msg = normalizeUnknownError(error).message.toLowerCase();
-          const maybeOpening = msg.includes('no budget file is open') && attempt < 2;
-          if (!maybeOpening) {
-            throw error;
-          }
-          await new Promise<void>((resolve) => {
-            setTimeout(resolve, 100);
-          });
-        }
-      }
-      // Not reachable at runtime (loop returns true or throws); satisfies TS exhaustiveness.
-      return false;
+      await api.getAccounts();
+      bumpHealthyTimestamp();
+      return true;
     } catch (error) {
       const normalizedError = normalizeUnknownError(error);
       const errorMessage = normalizedError.message;
@@ -510,7 +502,7 @@ async function downloadAndLoadBudget(): Promise<{
     return getBudgetDownloadIdentifier(budgets[0]);
   })();
 
-  // Support both legacy and current encryption env var names during migration windows.
+  // * Support both ACTUAL_BUDGET_PASSWORD and ACTUAL_BUDGET_ENCRYPTION_PASSWORD for compatibility
   const budgetPassword: string | undefined =
     process.env.ACTUAL_BUDGET_PASSWORD || process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD;
 
@@ -564,14 +556,14 @@ function logSuccessfulInitialization(
 }
 
 /**
- * Handle initialization errors, including actionable guidance for migration-state failures.
+ * Handle initialization errors with specific migration error handling
  * @param error - The error that occurred
  */
 function handleInitializationError(error: unknown): never {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStr = errorMessage.toLowerCase();
 
-  // Detect migration-state failures from common Actual server error text variants.
+  // * Check for database migration errors
   if (
     errorStr.includes('out of sync') ||
     errorStr.includes('out-of-sync') ||
@@ -722,9 +714,7 @@ export function startBackgroundRetry(): void {
       return;
     }
     attempt++;
-    const base = Math.min(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), 120_000);
-    const isRateLimited = initializationError?.message?.toLowerCase().includes('too-many-requests');
-    const delay = isRateLimited ? Math.max(base, 120_000) : base;
+    const delay = Math.min(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), 120000); // Max 2 minutes
     console.error(
       `[CONNECTION] Background retry attempt ${attempt}/${MAX_RETRY_ATTEMPTS} in ${Math.round(delay / 1000)}s...`,
     );
@@ -850,27 +840,27 @@ export function getConnectionState(): ActualConnectionState {
 }
 
 /**
- * Cheap synchronous readiness snapshot (no `getAccounts` health probe).
- * Matches {@link getReadinessStatus}(false) after any optional forced check in that API.
+ * Returns detailed diagnostic information about the connection state
  */
-export function getReadinessSnapshot(): ActualReadinessStatus {
-  const snapshot = getConnectionState();
-  let reason = snapshot.lastError || 'not_initialized';
-
-  if (snapshot.status === 'ready' && snapshot.activeBudgetId) {
-    reason = 'ready';
-  } else if (snapshot.status === 'initializing') {
-    reason = 'initializing';
-  } else if (snapshot.activeBudgetId && snapshot.status !== 'ready') {
-    reason = snapshot.lastError || 'connection_error';
-  } else if (!snapshot.activeBudgetId) {
-    reason = snapshot.lastError || 'budget_not_loaded';
-  }
-
+export function getConnectionStatus(): {
+  status: string;
+  budgetId: string | null;
+  lastReadyAt: string | null;
+  lastErrorAt: string | null;
+  lastError: string | null;
+  reconnectAttempts: number;
+  lastSyncAt: string | null;
+  initialized: boolean;
+} {
   return {
-    ...snapshot,
-    ready: snapshot.status === 'ready' && Boolean(snapshot.activeBudgetId),
-    reason,
+    status: connectionState.status,
+    budgetId: connectionState.activeBudgetId,
+    lastReadyAt: connectionState.lastReadyAt,
+    lastErrorAt: connectionState.lastErrorAt,
+    lastError: connectionState.lastError,
+    reconnectAttempts: forcedInitInvocationCount,
+    lastSyncAt: connectionState.lastSyncAt,
+    initialized,
   };
 }
 
@@ -886,7 +876,24 @@ export async function getReadinessStatus(
     }
   }
 
-  const base = getReadinessSnapshot();
+  const snapshot = getConnectionState();
+  let reason = snapshot.lastError || 'not_initialized';
+
+  if (snapshot.status === 'ready' && snapshot.activeBudgetId) {
+    reason = 'ready';
+  } else if (snapshot.status === 'initializing') {
+    reason = 'initializing';
+  } else if (snapshot.activeBudgetId && snapshot.status !== 'ready') {
+    reason = snapshot.lastError || 'connection_error';
+  } else if (!snapshot.activeBudgetId) {
+    reason = snapshot.lastError || 'budget_not_loaded';
+  }
+
+  const base: ActualReadinessStatus = {
+    ...snapshot,
+    ready: snapshot.status === 'ready' && Boolean(snapshot.activeBudgetId),
+    reason,
+  };
 
   if (forceCheck) {
     let serverHostname: string | null = null;
@@ -898,7 +905,7 @@ export async function getReadinessStatus(
       }
     }
 
-    return {
+    const extended: ActualReadinessStatusExtended = {
       ...base,
       diagnostics: {
         serverUrl: serverHostname,
@@ -913,6 +920,7 @@ export async function getReadinessStatus(
         retrying: backgroundRetryTimer !== null,
       },
     };
+    return extended;
   }
 
   return base;
@@ -924,9 +932,6 @@ export async function getReadinessStatus(
  * @returns True if it's a connection error
  */
 function isConnectionError(errorMessage: string): boolean {
-  if (errorMessage.includes('too-many-requests')) {
-    return false;
-  }
   return (
     errorMessage.includes('not connected') ||
     errorMessage.includes('connection') ||
@@ -1977,7 +1982,8 @@ export async function runAQL(query: unknown): Promise<unknown> {
 export async function runQuery(query: string): Promise<unknown> {
   return runReadOperation(async () => {
     if (typeof api.runQuery === 'function') {
-      // Cast through unknown to handle current type-definition/runtime signature mismatch.
+      // * API signature changed - runQuery now takes query string directly or different format
+      // Cast through unknown to handle API signature mismatch (Query type vs string)
       return (api.runQuery as unknown as (q: string) => Promise<unknown>)(query);
     }
     throw new Error('runQuery method is not available in this version of the API');

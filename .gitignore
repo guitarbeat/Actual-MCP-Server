@@ -50,6 +50,3 @@ upstream-comparison
 # Legacy local reconciliation/report outputs
 docs/budget-side-audit-*.md
 tmp/
-
-
-*.csv

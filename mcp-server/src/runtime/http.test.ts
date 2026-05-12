@@ -1,18 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHttpRuntime } from './http.js';
 
-const { mockGetConnectionState, mockGetReadinessStatus, mockGetReadinessSnapshot } = vi.hoisted(
+const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus } = vi.hoisted(
   () => ({
     mockGetConnectionState: vi.fn(),
     mockGetReadinessStatus: vi.fn(),
-    mockGetReadinessSnapshot: vi.fn(),
+    mockGetConnectionStatus: vi.fn(),
   }),
 );
 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
-  getReadinessSnapshot: mockGetReadinessSnapshot,
+  getConnectionStatus: mockGetConnectionStatus,
+  DEFAULT_DATA_DIR: '/mock/data',
 }));
 
 const ORIGINAL_ENV = {
@@ -35,17 +36,17 @@ const SAMPLE_READINESS_DIAGNOSTICS = {
 beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
-  mockGetReadinessSnapshot.mockReset();
+  mockGetConnectionStatus.mockReset();
   mockGetConnectionState.mockReturnValue({ status: 'ready' });
-  mockGetReadinessSnapshot.mockReturnValue({
-    ready: true,
+  mockGetConnectionStatus.mockReturnValue({
     status: 'ready',
-    reason: 'ready',
+    budgetId: 'test-budget',
     lastReadyAt: '2026-04-11T00:00:00.000Z',
-    lastSyncAt: '2026-04-11T00:00:00.000Z',
+    lastErrorAt: null,
     lastError: null,
-    debugError: 'sensitive-debug-error',
-    activeBudgetId: 'budget-123',
+    reconnectAttempts: 0,
+    lastSyncAt: '2026-04-11T00:00:00.000Z',
+    initialized: true,
   });
   mockGetReadinessStatus.mockResolvedValue({
     ready: true,
@@ -142,48 +143,6 @@ describe('createHttpRuntime', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
-  });
-
-  it('exposes connection snapshot fields on GET / without forcing a health probe', async () => {
-    mockGetConnectionState.mockReturnValue({
-      status: 'error',
-      lastReadyAt: null,
-      lastSyncAt: null,
-      lastError: 'connection_failed',
-      debugError: null,
-      activeBudgetId: null,
-    });
-    mockGetReadinessSnapshot.mockReturnValue({
-      ready: false,
-      status: 'error',
-      reason: 'connection_failed',
-      lastReadyAt: null,
-      lastSyncAt: null,
-      lastError: 'connection_failed',
-      debugError: null,
-      activeBudgetId: null,
-    });
-
-    const { app } = createHttpRuntime({
-      version: 'test',
-      enableWrite: false,
-      enableAdvanced: false,
-      enableBearer: false,
-    });
-
-    const response = await app.fetch(new Request('http://localhost/'));
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
-      name: 'Actual Budget MCP',
-      transport: 'streamable-http',
-      ready: false,
-      connectionStatus: 'error',
-      reason: 'connection_failed',
-      lastError: 'connection_failed',
-    });
-    expect(mockGetReadinessSnapshot).toHaveBeenCalled();
-    expect(mockGetReadinessStatus).not.toHaveBeenCalled();
   });
 
   it('does not expose internal readiness diagnostics from /ready', async () => {
@@ -283,5 +242,67 @@ describe('createHttpRuntime', () => {
     );
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('GET /diagnostics', () => {
+  it('should return diagnostics data without exposing secrets', async () => {
+    process.env.ACTUAL_SERVER_URL = 'http://localhost:5006';
+    process.env.ACTUAL_SYNC_ID = 'test-sync-id';
+    process.env.ACTUAL_PASSWORD = 'test-password';
+
+    const { app } = createHttpRuntime({
+      version: '1.2.3',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(new Request('http://localhost/diagnostics'));
+    expect(response.status).toBe(200);
+
+    const data = await response.json();
+    expect(data).toMatchObject({
+      connection: {
+        status: 'ready',
+        budgetId: 'test-budget',
+        initialized: true,
+      },
+      config: {
+        serverUrl: 'http://localhost:5006',
+        hasBudgetId: true,
+        hasPassword: true,
+        dataDir: expect.any(String),
+      },
+    });
+    expect(data.server).toMatchObject({
+      uptime: expect.any(Number),
+      nodeVersion: expect.any(String),
+      memoryUsageMB: expect.any(Number),
+    });
+
+    // Ensure sensitive data is not exposed
+    expect(data.config.serverUrl).toBe('http://localhost:5006');
+    expect(data.config).not.toHaveProperty('ACTUAL_PASSWORD');
+    expect(data.config).not.toHaveProperty('ACTUAL_SYNC_ID');
+  });
+
+  it('should return 500 when diagnostics are unavailable', async () => {
+    mockGetConnectionStatus.mockImplementation(() => {
+      throw new Error('Test error');
+    });
+
+    const { app } = createHttpRuntime({
+      version: '1.2.3',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(new Request('http://localhost/diagnostics'));
+    expect(response.status).toBe(500);
+
+    const data = await response.json();
+    expect(data).toEqual({ error: 'diagnostics unavailable' });
   });
 });
