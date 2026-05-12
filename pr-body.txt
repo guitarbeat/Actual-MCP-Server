@@ -1,0 +1,8 @@
+🎯 **What:** The testing gap addressed
+The `validators.test.ts` file lacked specific tests for the `DateSchema` `refine` logic concerning edge cases like century leap years (e.g. 1900, 2000, 2100, 2400).
+
+📊 **Coverage:** What scenarios are now tested
+New test cases verify that century non-leap years (1900, 2100) correctly return `false`, and century leap years (2000, 2400) correctly return `true`. This complements the existing checks for non-existent dates and standard leap years.
+
+✨ **Result:** The improvement in test coverage
+The test suite now has a more robust coverage for tricky date validation rules, improving the reliability of `DateSchema.refine` and mitigating potential bugs related to century edge cases.
