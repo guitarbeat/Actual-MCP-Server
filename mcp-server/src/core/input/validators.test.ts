@@ -1,3 +1,4 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   assertMonth,
@@ -49,6 +50,54 @@ describe('validators', () => {
       expect(validateDate('2023-00-01')).toBe(false); // Invalid month
       expect(validateDate('2023-01-00')).toBe(false); // Invalid day
       expect(validateDate('2023-01-32')).toBe(false); // Invalid day
+    });
+
+    it('property: returns true for all valid generated dates', () => {
+      fc.assert(
+        fc.property(fc.date({ noInvalidDate: true }), (date) => {
+          const year = date.getFullYear();
+          // skip years < 1000 and > 9999 since regex expects exactly 4 digits
+          if (year < 1000 || year > 9999) return true;
+
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+
+          const dateStr = `${year}-${month}-${day}`;
+          return validateDate(dateStr) === true;
+        }),
+      );
+    });
+
+    it('property: handles arbitrary strings without throwing', () => {
+      fc.assert(
+        fc.property(fc.string(), (str) => {
+          // If the random string happens to be a valid date, we ignore the return value,
+          // the main point is that it doesn't throw.
+          validateDate(str);
+          return true;
+        }),
+      );
+    });
+
+    it('property: matches native Date validity logic for all permutations', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1000, max: 9999 }),
+          fc.integer({ min: 1, max: 12 }),
+          fc.integer({ min: 1, max: 31 }),
+          (year, month, day) => {
+            const monthStr = String(month).padStart(2, '0');
+            const dayStr = String(day).padStart(2, '0');
+            const dateStr = `${year}-${monthStr}-${dayStr}`;
+
+            const d = new Date(year, month - 1, day);
+            const isValidDateObject =
+              d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+
+            return validateDate(dateStr) === isValidDateObject;
+          },
+        ),
+      );
     });
   });
 
