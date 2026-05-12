@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   assertMonth,
   assertPositiveIntegerCents,
@@ -7,6 +7,9 @@ import {
   validateDate,
   validateMonth,
   validateUUID,
+  MonthSchema,
+  UUIDSchema,
+  PositiveIntegerCentsSchema,
 } from './validators.js';
 
 describe('validators', () => {
@@ -119,6 +122,40 @@ describe('validators', () => {
       expect(() => assertUuid('invalid-uuid', 'userId')).toThrow('userId must be a valid UUID');
     });
 
+    it('throws an error if value is not a valid YYYY-MM format (like MM-YYYY)', () => {
+      expect(() => assertMonth('01-2024', 'billingMonth')).toThrow(
+        'billingMonth must be in YYYY-MM format',
+      );
+    });
+
+    it('rethrows unexpected non-Zod errors', () => {
+      const unexpectedError = new Error('Unexpected internal error');
+      const parseSpy = vi.spyOn(MonthSchema, 'parse').mockImplementation(() => {
+        throw unexpectedError;
+      });
+
+      try {
+        expect(() => assertMonth('2023-10', 'billingMonth')).toThrow('Unexpected internal error');
+      } finally {
+        parseSpy.mockRestore();
+      }
+    });
+
+    it('rethrows unexpected non-Zod errors', () => {
+      const unexpectedError = new Error('Unexpected internal error');
+      const parseSpy = vi.spyOn(UUIDSchema, 'parse').mockImplementation(() => {
+        throw unexpectedError;
+      });
+
+      try {
+        expect(() => assertUuid('123e4567-e89b-12d3-a456-426614174000', 'userId')).toThrow(
+          'Unexpected internal error',
+        );
+      } finally {
+        parseSpy.mockRestore();
+      }
+    });
+
     it('throws an error if value is not a string type', () => {
       expect(() => assertUuid(123, 'userId')).toThrow('userId must be a valid UUID');
     });
@@ -175,6 +212,19 @@ describe('validators', () => {
       expect(() => assertPositiveIntegerCents(undefined, 'price')).toThrow(
         'price is required and must be a positive integer amount in cents',
       );
+    });
+
+    it('rethrows unexpected non-Zod errors', () => {
+      const unexpectedError = new Error('Unexpected internal error');
+      const parseSpy = vi.spyOn(PositiveIntegerCentsSchema, 'parse').mockImplementation(() => {
+        throw unexpectedError;
+      });
+
+      try {
+        expect(() => assertPositiveIntegerCents(100, 'price')).toThrow('Unexpected internal error');
+      } finally {
+        parseSpy.mockRestore();
+      }
     });
 
     it('throws an error if value is not a number', () => {
