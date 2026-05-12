@@ -1,0 +1,5 @@
+🎯 **What:** The testing gap addressed in `assertMonth` (missing property tests, whitespace handling, and invalid months).
+
+📊 **Coverage:** Added fast-check property tests to cover all valid YYYY-MM strings and assert rejection of arbitrarily invalid strings. Added unit test coverage for valid strings surrounded by whitespace and for non-existent month values.
+
+✨ **Result:** The improvement in test coverage resulted in discovering a bug where `assertMonth` failed to trim strings before running schema validation. The bug has been fixed.

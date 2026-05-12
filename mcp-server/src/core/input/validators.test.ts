@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 import {
   assertMonth,
   assertPositiveIntegerCents,
@@ -129,6 +130,10 @@ describe('validators', () => {
       expect(assertMonth('2023-10', 'billingMonth')).toBe('2023-10');
     });
 
+    it('returns the month if it is valid but surrounded by whitespace', () => {
+      expect(assertMonth('  2023-10  ', 'billingMonth')).toBe('2023-10');
+    });
+
     it('throws an error if value is null or undefined', () => {
       expect(() => assertMonth(null, 'billingMonth')).toThrow(
         'billingMonth is required and must be in YYYY-MM format',
@@ -156,9 +161,50 @@ describe('validators', () => {
       );
     });
 
+    it('throws an error for non-existent month values', () => {
+      expect(() => assertMonth('2023-00', 'billingMonth')).toThrow(
+        'billingMonth must be in YYYY-MM format',
+      );
+    });
+
     it('throws an error if value is not a string type', () => {
       expect(() => assertMonth(123, 'billingMonth')).toThrow(
         'billingMonth must be in YYYY-MM format',
+      );
+    });
+  });
+
+  describe('assertMonth property tests', () => {
+    it('accepts any valid YYYY-MM string', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1000, max: 9999 }),
+          fc.integer({ min: 1, max: 12 }),
+          (year, month) => {
+            const paddedMonth = month.toString().padStart(2, '0');
+            const validMonthString = `${year}-${paddedMonth}`;
+            expect(assertMonth(validMonthString, 'billingMonth')).toBe(validMonthString);
+          },
+        ),
+      );
+    });
+
+    it('rejects improperly formatted strings', () => {
+      fc.assert(
+        fc.property(
+          fc.string().filter((s) => !/^\d{4}-(0[1-9]|1[0-2])$/.test(s.trim())),
+          (invalidString) => {
+            if (invalidString.trim() === '') {
+              expect(() => assertMonth(invalidString, 'billingMonth')).toThrow(
+                'billingMonth is required and must be in YYYY-MM format',
+              );
+            } else {
+              expect(() => assertMonth(invalidString, 'billingMonth')).toThrow(
+                'billingMonth must be in YYYY-MM format',
+              );
+            }
+          },
+        ),
       );
     });
   });

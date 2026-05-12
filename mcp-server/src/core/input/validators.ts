@@ -110,7 +110,7 @@ export function assertMonth(value: unknown, fieldName: string): string {
   }
 
   try {
-    return MonthSchema.parse(value);
+    return typeof value === 'string' ? MonthSchema.parse(value.trim()) : MonthSchema.parse(value);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new Error(`${fieldName} must be in YYYY-MM format`);
