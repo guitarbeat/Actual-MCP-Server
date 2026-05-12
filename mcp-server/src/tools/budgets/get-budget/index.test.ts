@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MCPResponse } from '../../../core/response/index.js';
 import { handler, validateMonthFormat } from './index.js';
 import { getBudgetMonth, getBudgetMonths } from '../../../core/api/actual-client.js';
 
@@ -7,7 +8,7 @@ vi.mock('../../../core/api/actual-client.js', () => ({
   getBudgetMonths: vi.fn(),
 }));
 
-function parseJsonResponse(response: any): Record<string, unknown> {
+function parseJsonResponse(response: MCPResponse): Record<string, unknown> {
   const firstContent = response.content[0];
   if (!('text' in firstContent)) {
     throw new Error('Expected text content');
