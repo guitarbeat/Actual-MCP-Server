@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   assertMonth,
   assertPositiveIntegerCents,
@@ -7,6 +7,7 @@ import {
   validateDate,
   validateMonth,
   validateUUID,
+  UUIDSchema,
 } from './validators.js';
 
 describe('validators', () => {
@@ -121,6 +122,16 @@ describe('validators', () => {
 
     it('throws an error if value is not a string type', () => {
       expect(() => assertUuid(123, 'userId')).toThrow('userId must be a valid UUID');
+    });
+
+    it('re-throws non-Zod errors', () => {
+      const mockError = new Error('Some unexpected error');
+      const spy = vi.spyOn(UUIDSchema, 'parse').mockImplementation(() => {
+        throw mockError;
+      });
+
+      expect(() => assertUuid('123e4567-e89b-12d3-a456-426614174000', 'userId')).toThrow(mockError);
+      spy.mockRestore();
     });
   });
 
