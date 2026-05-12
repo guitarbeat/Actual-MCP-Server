@@ -918,25 +918,27 @@ export async function getReadinessStatus(
   return base;
 }
 
+const CONNECTION_ERROR_KEYWORDS = [
+  'not connected',
+  'connection',
+  'econnrefused',
+  'network',
+  'timeout',
+  'unknown operator', // Some API errors indicate connection issues
+  'no budget file is open', // Budget was closed or lost
+  'budget file', // Catch other budget-related errors
+];
+
 /**
  * Check if error is a connection error
  * @param errorMessage - Lowercase error message
  * @returns True if it's a connection error
  */
-function isConnectionError(errorMessage: string): boolean {
+export function isConnectionError(errorMessage: string): boolean {
   if (errorMessage.includes('too-many-requests')) {
     return false;
   }
-  return (
-    errorMessage.includes('not connected') ||
-    errorMessage.includes('connection') ||
-    errorMessage.includes('econnrefused') ||
-    errorMessage.includes('network') ||
-    errorMessage.includes('timeout') ||
-    errorMessage.includes('unknown operator') || // Some API errors indicate connection issues
-    errorMessage.includes('no budget file is open') || // Budget was closed or lost
-    errorMessage.includes('budget file') // Catch other budget-related errors
-  );
+  return CONNECTION_ERROR_KEYWORDS.some((keyword) => errorMessage.includes(keyword));
 }
 
 /** True when `initActualApi(false)` fast-path must not run (`initialized && !force` skips real work). */
