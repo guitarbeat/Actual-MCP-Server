@@ -3,8 +3,14 @@ import { Hono } from 'hono';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
-import { getConnectionState, getReadinessStatus } from '../core/api/actual-client.js';
+import {
+  getConnectionState,
+  getReadinessStatus,
+  getConnectionStatus,
+  DEFAULT_DATA_DIR,
+} from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
+import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
 
 interface SessionConnection {
@@ -40,6 +46,8 @@ export function createHttpRuntime(options: {
   const allowedOrigins = parseAllowedOrigins(process.env.MCP_ALLOWED_ORIGINS);
   const isProduction = process.env.NODE_ENV === 'production';
 
+  let lastReadinessSignature: string | null = null;
+
   const pruneStaleSessions = (): void => {
     if (!sessionTtlMs) {
       return;
@@ -54,6 +62,15 @@ export function createHttpRuntime(options: {
       sessions.delete(sessionId);
       void session.server.close();
     }
+  };
+
+  const runWithinMcpInvocationContext = async <Response>(
+    mcpSessionHeader: string | undefined,
+    operation: () => Promise<Response>,
+  ): Promise<Response> => {
+    const requestId = randomUUID();
+
+    return mcpInvocationStore.run({ requestId, mcpSessionId: mcpSessionHeader }, operation);
   };
 
   app.use('*', async (c, next) => {
@@ -100,9 +117,47 @@ export function createHttpRuntime(options: {
     }),
   );
 
+  app.get('/diagnostics', (c) => {
+    try {
+      const connectionInfo = getConnectionStatus();
+      return c.json({
+        connection: connectionInfo,
+        server: {
+          uptime: process.uptime(),
+          nodeVersion: process.version,
+          memoryUsageMB: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 10) / 10,
+        },
+        config: {
+          serverUrl: process.env.ACTUAL_SERVER_URL || null,
+          hasBudgetId: !!process.env.ACTUAL_SYNC_ID,
+          hasPassword: !!process.env.ACTUAL_PASSWORD,
+          dataDir: process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR,
+        },
+      });
+    } catch (error) {
+      console.error('Diagnostics endpoint failed:', error);
+      return c.json({ error: 'diagnostics unavailable' }, 500);
+    }
+  });
+
   app.get('/ready', async (c) => {
+    const corr = truncateCorrelationId(randomUUID());
     const readiness = await getReadinessStatus(true);
-    return c.json(toPublicReadinessStatus(readiness), readiness.ready ? 200 : 503);
+    const publicBody = toPublicReadinessStatus(readiness);
+
+    if (process.env.MCP_READINESS_TRANSITION_LOGS === 'true') {
+      const signature = `${publicBody.ready}|${publicBody.status}|${publicBody.reason ?? ''}`;
+      if (lastReadinessSignature !== signature) {
+        const previous = lastReadinessSignature;
+        lastReadinessSignature = signature;
+        const httpStatus = readiness.ready ? 200 : 503;
+        console.error(
+          `[mcp corr=${corr}] [READINESS] transition ${previous ?? 'none'} -> ${signature} http_status=${httpStatus}`,
+        );
+      }
+    }
+
+    return c.json(publicBody, readiness.ready ? 200 : 503);
   });
 
   app.all('/mcp', async (c) => {
@@ -127,7 +182,9 @@ export function createHttpRuntime(options: {
         }
 
         existing.lastSeenAt = Date.now();
-        return existing.transport.handleRequest(c.req.raw, { parsedBody });
+        return runWithinMcpInvocationContext(sessionId, () =>
+          existing.transport.handleRequest(c.req.raw, { parsedBody }),
+        );
       }
 
       if (!isInitializeRequest(parsedBody)) {
@@ -181,7 +238,9 @@ export function createHttpRuntime(options: {
       pruneStaleSessions();
 
       await server.connect(transport);
-      return transport.handleRequest(c.req.raw, { parsedBody });
+      return runWithinMcpInvocationContext(undefined, () =>
+        transport.handleRequest(c.req.raw, { parsedBody }),
+      );
     }
 
     if (!sessionId) {
@@ -208,7 +267,9 @@ export function createHttpRuntime(options: {
     }
 
     existing.lastSeenAt = Date.now();
-    return existing.transport.handleRequest(c.req.raw);
+    return runWithinMcpInvocationContext(sessionId, () =>
+      existing.transport.handleRequest(c.req.raw),
+    );
   });
 
   return {

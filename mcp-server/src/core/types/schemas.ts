@@ -85,9 +85,19 @@ export const GetTransactionsArgsSchema = z.object({
     ),
   limit: z
     .number()
+    .int()
+    .min(1)
     .optional()
     .describe(
-      'Maximum number of transactions to return. Useful for limiting results when you only need a sample or the most recent transactions. Applied after all other filters.',
+      'Maximum number of transactions to return after filters (page size). If omitted, a server default applies (see ACTUAL_GET_TRANSACTIONS_DEFAULT_LIMIT). Capped by ACTUAL_GET_TRANSACTIONS_MAX_LIMIT.',
+    ),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe(
+      '0-based offset into the filter-sorted transaction list (newest-first). Use with hasMore / next_offset hints in the report footer to page large result sets.',
     ),
   excludeTransfers: z
     .boolean()

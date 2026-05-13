@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import './polyfill.js';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,7 @@ import {
   getConnectionState,
   getAccounts,
   initActualApi,
+  scheduleConnectionDiagnosticsIfEnabled,
   shutdownActualApi,
   startBackgroundRetry,
 } from './core/api/actual-client.js';
@@ -23,6 +25,10 @@ import {
 } from './core/auth/startup-guard.js';
 import { createHttpRuntime } from './runtime/http.js';
 import { createActualMcpServer } from './runtime/server.js';
+import {
+  scheduleToolUsageSummaryIfEnabled,
+  shutdownToolUsageSummary,
+} from './mcp/tools/tool-usage-stats.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -188,6 +194,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
       });
     });
     await shutdownActualApi();
+    shutdownToolUsageSummary();
     clearTimeout(forceExitTimeout);
     process.exit(0);
   } catch (error) {
@@ -208,6 +215,8 @@ async function main(): Promise<void> {
 
   validateEnv();
   validateRuntimeGuards();
+  scheduleConnectionDiagnosticsIfEnabled();
+  scheduleToolUsageSummaryIfEnabled();
 
   if (useHttpTransport) {
     const bindHost = host || (enableBearer ? '0.0.0.0' : '127.0.0.1');

@@ -1,3 +1,4 @@
+import '../../../polyfill.js';
 import api from '@actual-app/api';
 import type {
   APIAccountEntity,
@@ -67,6 +68,7 @@ export interface ActualConnectionState {
   lastReadyAt: string | null;
   lastSyncAt: string | null;
   lastError: string | null;
+  lastErrorAt: string | null;
   debugError: string | null;
   activeBudgetId: string | null;
 }

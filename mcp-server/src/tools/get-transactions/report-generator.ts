@@ -15,11 +15,23 @@ interface ReportMetadata {
   resolvedAccountId: string;
   dateRange: { start: string; end: string };
   appliedFilters: string[];
+  /** Rows returned in this response (single page). */
   filteredCount: number;
+  /** Raw rows fetched for the date range before filters (pre-filter API/dataset size). */
   totalFetched: number;
+  /** Rows matching filters before pagination slicing. */
+  totalMatchingFilters: number;
   accountSummary?: { accountName: string; count: number }[];
   totalAmount?: number;
   warnings?: string[];
+  pagination: {
+    offset: number;
+    limit: number;
+    hasMore: boolean;
+    nextOffset?: number;
+    cappedToMax: boolean;
+    defaultedLimit: boolean;
+  };
 }
 
 export class GetTransactionsReportGenerator {
@@ -48,7 +60,22 @@ export class GetTransactionsReportGenerator {
       `**Account reference provided:** ${metadata.accountReference}`,
       `**Resolved account ID:** ${metadata.resolvedAccountId}`,
       `**Date range evaluated:** ${metadata.dateRange.start} → ${metadata.dateRange.end}`,
-      `**Transactions returned:** ${metadata.filteredCount} of ${metadata.totalFetched} fetched`,
+      `**Transactions in this response:** ${metadata.filteredCount}`,
+      `**Matching filters (all pages):** ${metadata.totalMatchingFilters} (${metadata.totalFetched} fetched before criteria)`,
+    );
+
+    const page = metadata.pagination;
+    sections.push(
+      '',
+      `**Pagination:** offset=${page.offset.toString()}, limit=${page.limit.toString()}, has_more=${page.hasMore ? 'true' : 'false'}${
+        page.nextOffset !== undefined ? `, next_offset=${page.nextOffset.toString()}` : ''
+      }`,
+      page.defaultedLimit
+        ? '_Default page size applied (set `limit` explicitly or tune `ACTUAL_GET_TRANSACTIONS_DEFAULT_LIMIT`)._'
+        : '',
+      page.cappedToMax
+        ? '_Requested page size was capped (`ACTUAL_GET_TRANSACTIONS_MAX_LIMIT`)._'
+        : '',
     );
 
     if (metadata.totalAmount !== undefined) {
