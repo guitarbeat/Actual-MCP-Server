@@ -9,7 +9,6 @@ import type {
 } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
 import type {
-  HistoricalTransferInternalTransaction,
   ActualConnectionState,
   ActualReadFreshnessMode,
   ActualReadinessStatus,
@@ -21,6 +20,7 @@ import type {
   APIScheduleEntity,
   APITagEntity,
   ExtendedActualApi,
+  HistoricalTransferInternalTransaction,
   HistoricalTransferApplyCandidateResult,
   HistoricalTransferApplyResult,
 } from './actual-client/types.js';
