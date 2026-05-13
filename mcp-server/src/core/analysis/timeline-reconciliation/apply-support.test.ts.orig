@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
 import {
   buildCurrentTransactionMap,
   buildRulePayload,
@@ -7,6 +6,7 @@ import {
 } from './apply-support.js';
 import type { Transaction } from '../../types/domain.js';
 import type { TimelineReconCandidate } from './types.js';
+import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
 
 describe('apply-support', () => {
   describe('buildCurrentTransactionMap', () => {
@@ -96,7 +96,7 @@ describe('apply-support', () => {
         accountId: 'acc-1',
         ruleField: 'imported_payee',
         ruleValue: 'STORE X',
-      } as unknown as TimelineReconCandidate;
+      } as TimelineReconCandidate;
 
       const payload = buildRulePayload(candidate, 'cat-1');
 
@@ -128,10 +128,10 @@ describe('apply-support', () => {
 
   describe('hasExistingExactRule', () => {
     it('should return true if candidate is missing ruleField or ruleValue', () => {
-      const candidate1 = { ruleValue: 'val' } as unknown as TimelineReconCandidate;
+      const candidate1 = { ruleValue: 'val' } as TimelineReconCandidate;
       expect(hasExistingExactRule([], candidate1, 'cat-1')).toBe(true);
 
-      const candidate2 = { ruleField: 'field' } as unknown as TimelineReconCandidate;
+      const candidate2 = { ruleField: 'field' } as TimelineReconCandidate;
       expect(hasExistingExactRule([], candidate2, 'cat-1')).toBe(true);
     });
 
@@ -140,7 +140,7 @@ describe('apply-support', () => {
         accountId: 'acc-1',
         ruleField: 'payee_name',
         ruleValue: 'Store Y',
-      } as unknown as TimelineReconCandidate;
+      } as TimelineReconCandidate;
 
       const rules = [
         {
@@ -161,7 +161,7 @@ describe('apply-support', () => {
         accountId: 'acc-1',
         ruleField: 'payee_name',
         ruleValue: 'Store Y',
-      } as unknown as TimelineReconCandidate;
+      } as TimelineReconCandidate;
 
       const rules = [
         {
@@ -203,7 +203,7 @@ describe('apply-support', () => {
         accountId: 'acc-1',
         ruleField: 'payee_name',
         ruleValue: 'Store Y',
-      } as unknown as TimelineReconCandidate;
+      } as TimelineReconCandidate;
 
       const rules = [
         {
@@ -224,7 +224,7 @@ describe('apply-support', () => {
         accountId: 'acc-1',
         ruleField: 'payee_name',
         ruleValue: 'Store Y',
-      } as unknown as TimelineReconCandidate;
+      } as TimelineReconCandidate;
 
       expect(hasExistingExactRule([], candidate, 'cat-1')).toBe(false);
     });
