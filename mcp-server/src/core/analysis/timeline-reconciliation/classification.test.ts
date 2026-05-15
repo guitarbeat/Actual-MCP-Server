@@ -6,43 +6,49 @@ import { TIMELINE_NOTE_PREFIX, INELIGIBLE_MERCHANT_PATTERNS } from './constants.
 describe('classification', () => {
   describe('isLocationEligibleTransaction', () => {
     it('returns false if transaction already has a category', () => {
-      const tx = { category: 'cat-123', imported_payee: 'Starbucks' } as Transaction;
+      const tx = { category: 'cat-123', imported_payee: 'Starbucks' } as unknown as Transaction;
       expect(isLocationEligibleTransaction(tx)).toBe(false);
     });
 
     it('returns false for transfers', () => {
-      const tx = { transfer_id: 'trans-123', imported_payee: 'Transfer' } as Transaction;
+      const tx = { transfer_id: 'trans-123', imported_payee: 'Transfer' } as unknown as Transaction;
       expect(isLocationEligibleTransaction(tx)).toBe(false);
     });
 
     it('returns false for child or parent transactions', () => {
       expect(
-        isLocationEligibleTransaction({ is_child: true, imported_payee: 'A' } as Transaction),
+        isLocationEligibleTransaction({
+          is_child: true,
+          imported_payee: 'A',
+        } as unknown as Transaction),
       ).toBe(false);
       expect(
-        isLocationEligibleTransaction({ is_parent: true, imported_payee: 'B' } as Transaction),
+        isLocationEligibleTransaction({
+          is_parent: true,
+          imported_payee: 'B',
+        } as unknown as Transaction),
       ).toBe(false);
     });
 
     it('returns false for starting balances', () => {
-      const tx = { starting_balance_flag: true, imported_payee: 'C' } as Transaction;
+      const tx = { starting_balance_flag: true, imported_payee: 'C' } as unknown as Transaction;
       expect(isLocationEligibleTransaction(tx)).toBe(false);
     });
 
     it('returns false if there is no recognizable merchant text', () => {
-      const tx = { imported_payee: null, payee_name: null } as Transaction;
+      const tx = { imported_payee: null, payee_name: null } as unknown as Transaction;
       expect(isLocationEligibleTransaction(tx)).toBe(false);
     });
 
     it('returns false if merchant text matches an ineligible pattern', () => {
       if (INELIGIBLE_MERCHANT_PATTERNS.length > 0) {
-        const tx = { imported_payee: INELIGIBLE_MERCHANT_PATTERNS[0] } as Transaction;
+        const tx = { imported_payee: INELIGIBLE_MERCHANT_PATTERNS[0] } as unknown as Transaction;
         expect(isLocationEligibleTransaction(tx)).toBe(false);
       }
     });
 
     it('returns true for a normal retail transaction', () => {
-      const tx = { imported_payee: 'Target Store 123' } as Transaction;
+      const tx = { imported_payee: 'Target Store 123' } as unknown as Transaction;
       expect(isLocationEligibleTransaction(tx)).toBe(true);
     });
   });
