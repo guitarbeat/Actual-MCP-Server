@@ -43,6 +43,25 @@ describe('mapSettledWithConcurrency', () => {
     expect(worker).toHaveBeenCalledTimes(3);
   });
 
+  it('handles synchronous exceptions as rejections', async () => {
+    const items = [1, 2, 3];
+    const worker = vi.fn((item: number) => {
+      if (item === 2) {
+        throw new Error('Sync error');
+      }
+      return Promise.resolve(item * 2);
+    });
+
+    const result = await mapSettledWithConcurrency(items, worker);
+
+    expect(result).toEqual([
+      { status: 'fulfilled', value: 2 },
+      { status: 'rejected', reason: new Error('Sync error') },
+      { status: 'fulfilled', value: 6 },
+    ]);
+    expect(worker).toHaveBeenCalledTimes(3);
+  });
+
   it('passes correct index to the worker function', async () => {
     const items = ['a', 'b', 'c'];
     const worker = vi.fn(async (item: string, index: number) => ({ item, index }));
