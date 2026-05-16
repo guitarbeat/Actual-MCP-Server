@@ -1,18 +1,13 @@
 import '../../../polyfill.js';
 import api from '@actual-app/api';
-
-type APIAccountEntity = Awaited<ReturnType<typeof api.getAccounts>>[number];
-type APICategoryGroupEntity = Awaited<ReturnType<typeof api.getCategoryGroups>>[number];
-type APICategoryEntity = Extract<
-  Awaited<ReturnType<typeof api.getCategories>>[number],
-  { group_id: string | null }
->;
-type APIPayeeEntity = Awaited<ReturnType<typeof api.getPayees>>[number];
-type APIScheduleEntity = Awaited<ReturnType<NonNullable<typeof api.getSchedules>>>[number];
-type APITagEntity = Awaited<ReturnType<typeof api.getTags>>[number];
-type RuleEntity = Awaited<ReturnType<typeof api.getRules>>[number];
-type TransactionEntity = Awaited<ReturnType<typeof api.getTransactions>>[number];
-type ImportTransactionsOpts = Parameters<typeof api.importTransactions>[2];
+import type {
+  APIAccountEntity,
+  APICategoryEntity,
+  APICategoryGroupEntity,
+  APIPayeeEntity,
+  APIScheduleEntity,
+  APITagEntity,
+} from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 
 export type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
@@ -73,6 +68,7 @@ export interface ActualConnectionState {
   lastReadyAt: string | null;
   lastSyncAt: string | null;
   lastError: string | null;
+  lastErrorAt: string | null;
   debugError: string | null;
   activeBudgetId: string | null;
 }
@@ -99,10 +95,7 @@ export type {
   APIAccountEntity,
   APICategoryEntity,
   APICategoryGroupEntity,
-  ImportTransactionsOpts,
   APIPayeeEntity,
-  RuleEntity,
   APIScheduleEntity,
   APITagEntity,
-  TransactionEntity,
 };

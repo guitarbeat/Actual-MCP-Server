@@ -105,13 +105,6 @@ export const GetTransactionsArgsSchema = z.object({
     .describe(
       'Exclude transfer transactions between accounts. Set to true to only show actual income/expense transactions. Useful when searching for uncategorized transactions that need attention.',
     ),
-  outputFormat: z
-    .enum(['markdown', 'json'])
-    .optional()
-    .default('markdown')
-    .describe(
-      'Response shape: markdown (human-readable table, default) or json (structured rows with ids and amounts for reconciliation tools). When json is chosen and limit is omitted, the server uses the maximum transaction page size.',
-    ),
 });
 
 export const AuditUncategorizedTransactionsArgsSchema = z.object({
