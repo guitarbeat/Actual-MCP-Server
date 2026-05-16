@@ -173,7 +173,7 @@ The container entrypoint starts `node build/index.js --sse --enable-bearer --ena
 
 ### Polyfill requirement
 
-`@actual-app/api` references `navigator.platform` at module load time. Node.js does not provide this global in server runtimes, so every invocation of the built server or any script that imports the API must include `--require mcp-server/polyfill.cjs`. The startup smoke test and Dockerfile already do this. When running the server locally use:
+`@actual-app/api` references `navigator.platform` at module load time. Node.js 20 does not provide this global, so every invocation of the built server or any script that imports the API must include `--require mcp-server/polyfill.cjs`. The startup smoke test and Dockerfile already do this. When running the server locally use:
 
 ```bash
 node --require mcp-server/polyfill.cjs mcp-server/build/index.js --sse --enable-write

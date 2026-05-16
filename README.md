@@ -41,15 +41,6 @@ Use the blueprint when you want to host the MCP server itself on Render:
 3. Set `ACTUAL_SERVER_URL`, one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
 4. Deploy and use `/health` and `/ready` for platform checks.
 
-### Render troubleshooting
-
-- **`GET /health` is 200 but MCP tools fail:** expected. `/health` only means the Node process is listening. Use **`GET /ready`** (HTTP 200 vs 503) for Actual + budget readiness, or **`GET /`** for `connectionStatus`, `reason`, and `lastError` alongside the legacy connection-level `ready` flag.
-- **`ACTUAL_SERVER_URL` must be reachable from Render’s outbound network**, not only from your machine. If Actual runs on a private host, open inbound from Render or expose a public URL.
-- **Self-hosted Actual (e.g. Easy Panel):** allow **HTTPS** from the internet if you use a public URL, or otherwise ensure Render’s egress IPs can reach your server (firewall / routing)—the MCP container cannot use your laptop-only network path.
-- The Blueprint sets **`AUTO_SYNC_INTERVAL_MINUTES=5`**; override in the Render dashboard if you need a different cadence.
-- For flapping readiness, set **`MCP_READINESS_TRANSITION_LOGS=true`** in the service env so each `/ready` state change logs to stderr.
-- After startup, look for **`[STARTUP]`** in logs for a one-line snapshot: `actual_api status=… readiness=… reason=… lastError=…` (no health probe; no transition-log spam).
-
 The Render Workflows SDK is a separate product from the MCP server runtime in this repo. Code like:
 
 ```ts

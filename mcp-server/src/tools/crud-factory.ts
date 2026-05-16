@@ -91,110 +91,205 @@ export interface EntityCRUDConfig<
   TDeleteSchema extends z.ZodType,
   THandler extends EntityHandler,
 > {
-  /** Entity name used as tool name prefix (e.g., "category" → "create-category") */
+  /** Entity name used in tool names (e.g., "category" → "manage-category") */
   entityName: string;
   /** Display name for success/error messages (e.g., "category", "payee") */
   displayName: string;
   /** Entity handler class constructor - instantiated for each operation */
   handlerClass: new () => THandler;
-  /** Configuration for create operation - generates "create-{entityName}" tool */
+  /** Configuration for create operation */
   create: CRUDOperationConfig<TCreateSchema>;
-  /** Configuration for update operation - generates "update-{entityName}" tool */
+  /** Configuration for update operation */
   update: CRUDOperationConfig<TUpdateSchema>;
-  /** Configuration for delete operation - generates "delete-{entityName}" tool */
+  /** Configuration for delete operation */
   delete: CRUDOperationConfig<TDeleteSchema>;
 }
 
+// ----------------------------
+// UNIFIED CRUD TOOL (recommended)
+// ----------------------------
+
 /**
- * Generate CRUD tool definitions for an entity type
+ * Build a unified JSON Schema from three separate operation schemas.
  *
- * This factory function creates standardized create, update, and delete tools
- * for any entity type, eliminating code duplication across CRUD operations.
+ * Merges all properties from the create, update, and delete schemas into a single
+ * flat schema with an `action` discriminator field. Only `action` is required at
+ * the schema level — per-action field requirements are documented in descriptions
+ * and validated at runtime by the appropriate Zod schema.
  *
- * The factory generates three tool definitions with consistent behavior:
- * - **create-{entityName}**: Validates input, calls handler.create(), invalidates cache
- * - **update-{entityName}**: Validates input, calls handler.update(), invalidates cache
- * - **delete-{entityName}**: Validates input, calls handler.delete(), invalidates cache
+ * Uses `$refStrategy: 'none'` to inline all `$defs` and avoid reference conflicts
+ * when merging properties from different schemas.
+ */
+function buildUnifiedInputSchema<
+  TCreate extends z.ZodType,
+  TUpdate extends z.ZodType,
+  TDelete extends z.ZodType,
+>(createSchema: TCreate, updateSchema: TUpdate, deleteSchema: TDelete): ToolInput {
+  const schemas = [createSchema, updateSchema, deleteSchema];
+  const allProperties: Record<string, unknown> = {
+    action: {
+      type: 'string',
+      enum: ['create', 'update', 'delete'],
+      description:
+        'The operation to perform: "create" (new entity), "update" (modify existing), or "delete" (remove permanently).',
+    },
+  };
+
+  for (const schema of schemas) {
+    const json = zodToJsonSchema(schema, { $refStrategy: 'none' }) as Record<string, unknown>;
+    const properties = json.properties as Record<string, unknown> | undefined;
+    if (properties) {
+      for (const [key, value] of Object.entries(properties)) {
+        if (!allProperties[key]) {
+          allProperties[key] = value;
+        }
+      }
+    }
+  }
+
+  return {
+    type: 'object',
+    properties: allProperties,
+    required: ['action'],
+    additionalProperties: false,
+  } as unknown as ToolInput;
+}
+
+/**
+ * Generate a single unified CRUD tool for an entity type
  *
- * Each generated tool includes:
- * - JSON schema converted from Zod schema
- * - Input validation with detailed error messages
- * - Handler instantiation and method execution
- * - Cache invalidation after successful operations
- * - Consistent success/error response formatting
+ * Instead of generating three separate tools (create-X, update-X, delete-X),
+ * this creates one **manage-X** tool with an `action` discriminator field.
+ * This reduces tool count from 3N to N and improves LLM tool selection accuracy
+ * by presenting fewer, semantically clearer choices.
  *
- * @template TCreateSchema - Zod schema type for create operation
- * @template TUpdateSchema - Zod schema type for update operation
- * @template TDeleteSchema - Zod schema type for delete operation
- * @template THandler - Entity handler class type
+ * The unified tool:
+ * - Accepts `action: "create" | "update" | "delete"` to select the operation
+ * - Validates input with the appropriate Zod schema for the selected action
+ * - Returns the same success/error responses as the individual CRUD tools
+ *
+ * @param config - Entity CRUD configuration (same structure as createCRUDTools)
+ * @returns A single tool definition named manage-{entityName}
+ *
+ * @example
+ * ```typescript
+ * const categoryTool = createUnifiedCRUDTool(entityConfigurations.category);
+ * // Creates: manage-category (replaces create-category, update-category, delete-category)
+ * ```
+ */
+export function createUnifiedCRUDTool<
+  TCreateSchema extends z.ZodType,
+  TUpdateSchema extends z.ZodType,
+  TDeleteSchema extends z.ZodType,
+  THandler extends EntityHandler,
+>(
+  config: EntityCRUDConfig<TCreateSchema, TUpdateSchema, TDeleteSchema, THandler>,
+): CategorizedToolDefinition {
+  const {
+    entityName,
+    displayName,
+    handlerClass,
+    create: createConfig,
+    update: updateConfig,
+    delete: deleteConfig,
+  } = config;
+
+  const unifiedInputSchema = buildUnifiedInputSchema(
+    createConfig.schema,
+    updateConfig.schema,
+    deleteConfig.schema,
+  );
+
+  const description =
+    `Create, update, or delete a ${displayName}. ` +
+    `Set "action" to "create", "update", or "delete" and include the relevant fields.\n\n` +
+    `── action: "create" ──\n${createConfig.description}\n\n` +
+    `── action: "update" ──\n${updateConfig.description}\n\n` +
+    `── action: "delete" ──\n${deleteConfig.description}`;
+
+  return {
+    schema: {
+      name: `manage-${entityName}`,
+      description,
+      inputSchema: unifiedInputSchema,
+    },
+    handler: async (args: Record<string, unknown>): Promise<MCPResponse> => {
+      const { action, ...rest } = args;
+
+      if (!action || !['create', 'update', 'delete'].includes(action as string)) {
+        return error(
+          `Invalid action: ${String(action)}`,
+          'Provide action as "create", "update", or "delete".',
+        );
+      }
+
+      try {
+        const handler = new handlerClass();
+
+        switch (action) {
+          case 'create': {
+            const validated = createConfig.schema.parse(rest);
+            const entityId = await handler.create(validated);
+            handler.invalidateCache();
+            const { name } = validated as Record<string, unknown>;
+            const msg =
+              name && typeof name === 'string'
+                ? `Successfully created ${displayName} "${name}" with id ${entityId}`
+                : `Successfully created ${displayName} with id ${entityId}`;
+            return success(msg);
+          }
+          case 'update': {
+            const validated = updateConfig.schema.parse(rest);
+            const validatedRecord = validated as Record<string, unknown>;
+            const { id, ...updateData } = validatedRecord;
+            if (Object.keys(updateData).length === 0) {
+              return error('No fields provided for update', 'Provide at least one field to update');
+            }
+            await handler.update(id as string, updateData);
+            handler.invalidateCache();
+            return success(`Successfully updated ${displayName} with id ${id as string}`);
+          }
+          case 'delete': {
+            const validated = deleteConfig.schema.parse(rest);
+            const validatedRecord = validated as Record<string, unknown>;
+            const { id } = validatedRecord;
+            await handler.delete(id as string);
+            handler.invalidateCache();
+            return success(`Successfully deleted ${displayName} with id ${id as string}`);
+          }
+          default:
+            return error(
+              `Unknown action: ${String(action)}`,
+              'Use "create", "update", or "delete"',
+            );
+        }
+      } catch (err) {
+        return errorFromCatch(err, {
+          fallbackMessage: `Failed to ${String(action)} ${displayName}`,
+          operation: String(action),
+          tool: `manage-${entityName}`,
+          args,
+        });
+      }
+    },
+    requiresWrite: true,
+    category: createConfig.category,
+  };
+}
+
+// ----------------------------
+// LEGACY CRUD TOOLS (deprecated — prefer createUnifiedCRUDTool)
+// ----------------------------
+
+/**
+ * Generate three separate CRUD tool definitions for an entity type
+ *
+ * @deprecated Use {@link createUnifiedCRUDTool} instead — it produces a single
+ * manage-{entityName} tool with an action discriminator, reducing tool count
+ * from 3N to N and improving LLM tool selection accuracy.
  *
  * @param config - Entity CRUD configuration with schemas, descriptions, and handler
  * @returns Array of three tool definitions [createTool, updateTool, deleteTool]
- *
- * @example Basic usage
- * ```typescript
- * import { createCRUDTools } from './crud-factory.js';
- * import { entityConfigurations } from './crud-factory-config.js';
- *
- * // Generate tools for categories
- * const categoryTools = createCRUDTools(entityConfigurations.category);
- *
- * // Add to tool registry
- * const toolRegistry = [
- *   ...categoryTools,
- *   // ... other tools
- * ];
- * ```
- *
- * @example Adding a new entity type
- * ```typescript
- * // 1. Define schemas
- * const CreateWidgetSchema = z.object({
- *   name: z.string().min(1),
- *   type: z.enum(['foo', 'bar']),
- * });
- *
- * const UpdateWidgetSchema = z.object({
- *   id: z.string().uuid(),
- *   name: z.string().optional(),
- * });
- *
- * const DeleteWidgetSchema = z.object({
- *   id: z.string().uuid(),
- * });
- *
- * // 2. Create configuration
- * const widgetConfig = {
- *   entityName: 'widget',
- *   displayName: 'widget',
- *   handlerClass: WidgetHandler,
- *   create: {
- *     schema: CreateWidgetSchema,
- *     description: 'Create a new widget...',
- *     requiresWrite: true,
- *     category: 'core',
- *   },
- *   update: {
- *     schema: UpdateWidgetSchema,
- *     description: 'Update an existing widget...',
- *     requiresWrite: true,
- *     category: 'core',
- *   },
- *   delete: {
- *     schema: DeleteWidgetSchema,
- *     description: 'Delete a widget...',
- *     requiresWrite: true,
- *     category: 'core',
- *   },
- * };
- *
- * // 3. Generate tools
- * const widgetTools = createCRUDTools(widgetConfig);
- * // Returns: [create-widget, update-widget, delete-widget]
- * ```
- *
- * @see {@link EntityCRUDConfig} for configuration structure
- * @see {@link CRUDOperationConfig} for operation-specific configuration
  */
 export function createCRUDTools<
   TCreateSchema extends z.ZodType,

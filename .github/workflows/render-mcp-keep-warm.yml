@@ -24,6 +24,7 @@ jobs:
   ping:
     name: Ping health endpoint
     timeout-minutes: 8
+    timeout-minutes: 5
     permissions: {}
     steps:
       - name: Warm Render instance
