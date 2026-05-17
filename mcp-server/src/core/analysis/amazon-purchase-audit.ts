@@ -577,22 +577,26 @@ function buildPhysicalChargeEvents(orderHistoryRows: AmazonOrderHistoryRow[]): A
   return [...grouped.values()];
 }
 
-function buildDigitalChargeEvents(digitalOrderRows: AmazonDigitalOrdersRow[]): AmazonChargeEvent[] {
-  const uniqueComponents = new Map<
-    string,
-    {
-      orderId: string;
-      eventDate: string;
-      productName: string;
-      asin: string | null;
-      amountCents: number;
-      giftEmail: string | null;
-      giftMessage: string | null;
-      shippingAddress: string | null;
-    }
-  >();
+type DigitalComponent = {
+  orderId: string;
+  eventDate: string;
+  productName: string;
+  asin: string | null;
+  amountCents: number;
+  giftEmail: string | null;
+  giftMessage: string | null;
+  shippingAddress: string | null;
+};
 
-  for (const row of digitalOrderRows) {
+function buildDigitalChargeEvents(digitalOrderRows: AmazonDigitalOrdersRow[]): AmazonChargeEvent[] {
+  const components = extractDigitalComponents(digitalOrderRows);
+  return groupDigitalComponents(components).filter((event) => event.amountCents > 0);
+}
+
+function extractDigitalComponents(rows: AmazonDigitalOrdersRow[]): DigitalComponent[] {
+  const uniqueComponents = new Map<string, DigitalComponent>();
+
+  for (const row of rows) {
     const orderId = normalizeString(row['Order ID']);
     const eventDate = normalizeIsoDate(row['Fulfilled Date'] || row['Order Date']);
     const amountCents = parseMoneyToCents(row['Transaction Amount']);
@@ -625,9 +629,13 @@ function buildDigitalChargeEvents(digitalOrderRows: AmazonDigitalOrdersRow[]): A
     });
   }
 
+  return [...uniqueComponents.values()];
+}
+
+function groupDigitalComponents(components: DigitalComponent[]): AmazonChargeEvent[] {
   const grouped = new Map<string, AmazonChargeEvent>();
 
-  for (const component of uniqueComponents.values()) {
+  for (const component of components) {
     const eventKey = `${component.orderId}|||${component.eventDate}`;
     const existing = grouped.get(eventKey);
 
@@ -682,9 +690,8 @@ function buildDigitalChargeEvents(digitalOrderRows: AmazonDigitalOrdersRow[]): A
     });
   }
 
-  return [...grouped.values()].filter((event) => event.amountCents > 0);
+  return [...grouped.values()];
 }
-
 function buildRefundEvents(refundDetailsRows: AmazonRefundDetailsRow[]): AmazonRefundEvent[] {
   const grouped = new Map<string, AmazonRefundEvent>();
 
