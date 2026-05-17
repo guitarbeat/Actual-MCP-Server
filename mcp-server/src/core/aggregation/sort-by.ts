@@ -21,15 +21,7 @@ export function sortBy<T>(
     return [...array].sort((a, b) => {
       const valA = iteratee(a);
       const valB = iteratee(b);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
-      if ((valA as any) < (valB as any)) {
-        return -1 * multiplier;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
-      if ((valA as any) > (valB as any)) {
-        return 1 * multiplier;
-      }
-      return 0;
+      return compare(valA, valB, multiplier);
     });
   }
 
@@ -37,9 +29,10 @@ export function sortBy<T>(
     for (let i = 0; i < iteratees.length; i++) {
       const iteratee = iteratees[i];
       const order = orders[i] || 'asc';
+      const multiplier = order === 'asc' ? 1 : -1;
       const valA = iteratee(a);
       const valB = iteratee(b);
-      const result = compare(valA, valB, order);
+      const result = compare(valA, valB, multiplier);
 
       if (result !== 0) {
         return result;
@@ -49,14 +42,20 @@ export function sortBy<T>(
   });
 }
 
-function compare(a: unknown, b: unknown, order: 'asc' | 'desc'): number {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
-  if ((a as any) < (b as any)) {
-    return order === 'asc' ? -1 : 1;
+function compare(a: unknown, b: unknown, multiplier: number): number {
+  // Handle empty values (null, undefined, NaN)
+  const isAEmpty = a === null || a === undefined || (typeof a === 'number' && Number.isNaN(a));
+  const isBEmpty = b === null || b === undefined || (typeof b === 'number' && Number.isNaN(b));
+
+  if (isAEmpty && isBEmpty) return 0;
+  if (isAEmpty) return 1; // Empty values always go to the end
+  if (isBEmpty) return -1;
+
+  if ((a as string | number | boolean | Date) < (b as string | number | boolean | Date)) {
+    return -1 * multiplier;
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Comparison of unknown types requires loose typing
-  if ((a as any) > (b as any)) {
-    return order === 'asc' ? 1 : -1;
+  if ((a as string | number | boolean | Date) > (b as string | number | boolean | Date)) {
+    return 1 * multiplier;
   }
   return 0;
 }

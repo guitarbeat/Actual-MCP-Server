@@ -99,4 +99,12 @@ describe('sortBy', () => {
       { group: 'a', val: 1 },
     ]);
   });
+
+  it('should sort null, undefined, and NaN to the end', () => {
+    const data = [{ val: null }, { val: 3 }, { val: undefined }, { val: NaN }, { val: 1 }];
+    const result = sortBy(data, [(d) => d.val]);
+    // 1, 3, null, undefined, NaN
+    expect(result[0].val).toBe(1);
+    expect(result[1].val).toBe(3);
+  });
 });
