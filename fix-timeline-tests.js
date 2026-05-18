@@ -5,32 +5,17 @@ const timelineTestPath = path.join(__dirname, 'mcp-server/src/core/analysis/time
 if (fs.existsSync(timelineTestPath)) {
   let content = fs.readFileSync(timelineTestPath, 'utf8');
 
-  // Fix Map<any, any> -> Record<string, Category>
-  content = content.replace(/new Map\(\)/g, '{}');
+  // Let's replace the `new Map()` that I used with `{}` since they should be records/objects but in standard tests it actually expects Map for something.
+  // The error says "currentTransactionsById.get is not a function".
+  // Which means `currentTransactionsById` is an object, not a Map!
+  // Wait, `internal.ts` calls `buildCurrentTransactionMap` which DOES return a Map.
+  // So `currentTransactionsById` is a Map.
+  // Then why is `get` not a function?
+  // Is it because `applyTimelineReconAudit` reads from JSON and parses it?!
+  // Let's check!
 
-  // Fix Map<string, {...}> -> Record<string, Category>
-  content = content.replace(/new Map\(\[\n\s*\[\n\s*'cat1',\n\s*{\n\s*id: 'cat1',\n\s*name: 'Category 1',\n\s*is_income: false,\n\s*},\n\s*\],\n\s*\]\)/g, "{ 'cat1': { id: 'cat1', name: 'Category 1', is_income: false } as any }");
-
-  // Fix amountCents -> amount
-  content = content.replace(/amountCents:/g, 'amount:');
-
-  // Fix TimelineReconPaths missing properties
-  content = content.replace(/baseDir: string;/g, 'baseDir: string; repoRoot: string; reconDir: string; timelinePath: string; candidatesPath: string; manualReviewPath: string;');
-  const pathsFixStr = `repoRoot: '', reconDir: '', timelinePath: '', candidatesPath: '', manualReviewPath: '', `;
-  content = content.replace(/\{ baseDir: '\/tmp'/g, `{ baseDir: '/tmp', ${pathsFixStr}`);
-
-  // Fix placeCache
-  content = content.replace(/placeCache: undefined/g, 'placeCache: {} as any');
-
-  // Fix '"payee" | "imported_payee" | undefined' null assignment
-  content = content.replace(/field: null/g, 'field: undefined');
-  content = content.replace(/matchedValue: null/g, 'matchedValue: undefined');
-
-  // Fix is_hidden -> hidden
-  content = content.replace(/is_hidden:/g, 'hidden:');
-
-  // Fix TransactionFetchResult
-  content = content.replace(/\{ transactions: \[\] \}/g, '{ transactions: [], successfulAccountIds: [], warnings: [] }');
-
-  fs.writeFileSync(timelineTestPath, content, 'utf8');
+  // Ah! The test mocks `fs.promises.readFile` and returns `JSON.stringify(transactions)`. Wait, no, it's about the mock!
+  // `buildTimelineReconAudit` saves the file and `applyTimelineReconAudit` reads it.
+  // Wait... no, `applyTimelineReconAudit` expects `transactions` from `actualClientModule.getTransactionsForRecon()` which returns `transactions` mock array.
+  // Let's restore the original internal.test.ts file entirely and properly disable linting on the `src/core/analysis/timeline-reconciliation/internal.test.ts` file ONLY for the `any` types.
 }
