@@ -48,7 +48,7 @@ describe('mapSettledWithConcurrency', () => {
       activeWorkers++;
       maxWorkers = Math.max(maxWorkers, activeWorkers);
       // simulate some work
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       activeWorkers--;
       return item;
     };
