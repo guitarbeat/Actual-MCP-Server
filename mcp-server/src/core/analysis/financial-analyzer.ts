@@ -154,7 +154,9 @@ export async function findUncategorizedTransactions(month: string): Promise<Unca
     .filter({
       date: { $gte: startDate, $lte: endDate },
       category: null,
+      transfer_id: null, // Exclude linked transfers; they are not categorization misses.
       is_parent: false, // Exclude parent transactions to avoid double counting
+      is_child: false, // Exclude child split rows for parity with transfer/category audits.
     })
     .select(['amount', 'payee.name']);
 

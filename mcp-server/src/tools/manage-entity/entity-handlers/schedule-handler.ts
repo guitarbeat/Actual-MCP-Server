@@ -2,7 +2,7 @@
 // SCHEDULE ENTITY HANDLER
 // ----------------------------
 
-import type { APIScheduleEntity } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
+import type { APIScheduleEntity } from '../../../core/api/actual-client/types.js';
 import {
   createSchedule,
   deleteSchedule,
@@ -17,7 +17,7 @@ import { ScheduleDataSchema, ScheduleUpdateDataSchema } from '../types.js';
 import type { EntityHandler, Operation } from './base-handler.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
-const MUTABLE_SCHEDULE_FIELDS: Array<keyof APIScheduleEntity> = [
+const MUTABLE_SCHEDULE_FIELDS: Array<Extract<keyof APIScheduleEntity, string>> = [
   'name',
   'posts_transaction',
   'payee',

@@ -90,7 +90,6 @@ export function createToolAnnotations(name: string, requiresWrite: boolean): Too
     /^delete-/.test(lowerName) ||
     /^close-/.test(lowerName) ||
     /^reset-/.test(lowerName) ||
-    /^manage-/.test(lowerName) ||
     lowerName === 'merge-payees';
   const idempotent =
     !requiresWrite ||

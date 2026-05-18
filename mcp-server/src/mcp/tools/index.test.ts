@@ -52,12 +52,12 @@ describe('getToolDefinitions', () => {
     expect(getToolDefinitions({ enableWrite: false, enableAdvanced: false })).toHaveLength(16);
   });
 
-  it('exposes 35 tools with write enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: false })).toHaveLength(35);
+  it('exposes 46 tools with write enabled', () => {
+    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: false })).toHaveLength(46);
   });
 
-  it('exposes 42 tools with write and advanced enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: true })).toHaveLength(42);
+  it('exposes 54 tools with write and advanced enabled', () => {
+    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: true })).toHaveLength(54);
   });
 
   it('preserves the legacy JSON schema and derives an SDK input schema', () => {
