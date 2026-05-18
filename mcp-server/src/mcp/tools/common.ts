@@ -140,7 +140,7 @@ function jsonSchemaToZodType(schema: unknown, root: Record<string, unknown>): z.
   const record = resolveSchema(schema, root);
 
   if (!record) {
-    return z.any();
+    return z.unknown();
   }
 
   const variants = schemaVariants(record, root);
@@ -165,12 +165,12 @@ function jsonSchemaToZodType(schema: unknown, root: Record<string, unknown>): z.
   if (record.const !== undefined) {
     return isLiteralPrimitive(record.const)
       ? describe(record, z.literal(record.const))
-      : describe(record, z.any());
+      : describe(record, z.unknown());
   }
 
   if (Array.isArray(record.enum) && record.enum.length > 0) {
     const literals = record.enum.map((value) =>
-      isLiteralPrimitive(value) ? z.literal(value) : z.any(),
+      isLiteralPrimitive(value) ? z.literal(value) : z.unknown(),
     );
 
     return describe(record, unionOf(literals));
@@ -192,7 +192,7 @@ function jsonSchemaToZodType(schema: unknown, root: Record<string, unknown>): z.
     case 'null':
       return describe(record, z.null());
     default:
-      return describe(record, z.any());
+      return describe(record, z.unknown());
   }
 }
 
@@ -203,7 +203,7 @@ function objectSchema(
   const properties = asRecord(schema.properties);
 
   if (!properties) {
-    return schema.additionalProperties === false ? z.object({}).strict() : z.record(z.any());
+    return schema.additionalProperties === false ? z.object({}).strict() : z.record(z.unknown());
   }
 
   const required = new Set(asStringArray(schema.required));
@@ -226,7 +226,7 @@ function objectSchema(
 
 function arraySchema(schema: Record<string, unknown>, root: Record<string, unknown>): z.ZodTypeAny {
   const items = resolveSchema(schema.items, root);
-  let parser = z.array(items ? jsonSchemaToZodType(items, root) : z.any());
+  let parser = z.array(items ? jsonSchemaToZodType(items, root) : z.unknown());
 
   if (typeof schema.minItems === 'number') {
     parser = parser.min(schema.minItems);
@@ -306,7 +306,7 @@ function unionOf(parsers: z.ZodTypeAny[]): z.ZodTypeAny {
   const unique = parsers.filter((parser, index) => parsers.indexOf(parser) === index);
 
   if (unique.length === 0) {
-    return z.any();
+    return z.unknown();
   }
 
   if (unique.length === 1) {
