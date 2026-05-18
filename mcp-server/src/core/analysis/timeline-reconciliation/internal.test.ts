@@ -74,7 +74,7 @@ describe('Timeline Reconciliation Internal', () => {
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
         placeCache: { places: {} },
-        categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} }
+        categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} },
       };
 
       const audit = buildTimelineReconAudit(input);
@@ -95,12 +95,12 @@ describe('Timeline Reconciliation Internal', () => {
         transactions: [
           {
             id: 't1',
-        date: '2025-01-15',
-        amountCents: 1500,
-        payeeName: 'Test Payee',
-        accountId: 'a1',
-        accountName: 'Test Account',
-        importedPayee: 'Imported Test Payee',
+            date: '2025-01-15',
+            amount: 1500,
+            payee_name: 'Test Payee',
+            account: 'a1',
+            account_name: 'Test Account',
+            imported_payee: 'Imported Test Payee',
             notes: 'Test Note',
             transfer_id: null,
             is_parent: false,
@@ -110,7 +110,9 @@ describe('Timeline Reconciliation Internal', () => {
           },
         ],
         accounts: [{ id: 'a1', name: 'Test Account', type: 'checking', closed: false }],
-        categoriesById: { 'c1': { id: 'c1', name: 'Test Category', is_income: false, group_id: 'g1' } },
+        categoriesById: {
+          c1: { id: 'c1', name: 'Test Category', is_income: false, group_id: 'g1' },
+        },
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
         placeCache: { places: {} },
@@ -153,10 +155,10 @@ describe('Timeline Reconciliation Internal', () => {
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
         placeCache: { places: {} },
-        categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} }
+        categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} },
       };
       vi.mocked(ioModule.loadReconInputs).mockResolvedValue(
-        mockInput as any,
+        mockInput as unknown as BuildTimelineReconAuditInput,
       );
       vi.mocked(ioModule.writeAuditOutputs).mockResolvedValue(undefined);
 
