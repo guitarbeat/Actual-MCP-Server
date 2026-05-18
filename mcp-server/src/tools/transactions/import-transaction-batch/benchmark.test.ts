@@ -1,6 +1,7 @@
 import { describe, it, afterEach, vi } from 'vitest';
 import { prepareImportTransactionBatches } from './data-fetcher.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
+import type { ImportedTransaction } from './types.js';
 
 describe('Performance benchmark', () => {
   afterEach(() => {
@@ -13,13 +14,13 @@ describe('Performance benchmark', () => {
     const originalResolveCategory = nameResolver.resolveCategory;
 
     nameResolver.resolveAccount = async (ref: string) => {
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       return `account_${ref}`;
     };
     nameResolver.resolvePayee = async (ref: string) => `payee_${ref}`;
     nameResolver.resolveCategory = async (ref: string) => `category_${ref}`;
 
-    const transactions = [];
+    const transactions: unknown[] = [];
     const numAccounts = 50;
     for (let i = 0; i < numAccounts; i++) {
       for (let j = 0; j < 10; j++) {
@@ -33,7 +34,7 @@ describe('Performance benchmark', () => {
     }
 
     const start = Date.now();
-    await prepareImportTransactionBatches(transactions as any);
+    await prepareImportTransactionBatches(transactions as ImportedTransaction[]);
     const end = Date.now();
     console.log(`Time taken: ${end - start} ms`);
 
