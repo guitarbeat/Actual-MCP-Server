@@ -33,7 +33,7 @@ export async function handler(
       failed: [],
     };
 
-    for (const recommendation of parsed.recommendations) {
+    const promises = parsed.recommendations.map(async (recommendation) => {
       const categoryLabel =
         recommendation.categoryName ||
         recommendation.category ||
@@ -45,7 +45,7 @@ export async function handler(
           categoryName: categoryLabel,
           reason: 'Recommendation amount is zero.',
         });
-        continue;
+        return;
       }
 
       try {
@@ -71,7 +71,9 @@ export async function handler(
           error: error instanceof Error ? error.message : String(error),
         });
       }
-    }
+    });
+
+    await Promise.all(promises);
 
     return successWithJson(report);
   } catch (error) {
