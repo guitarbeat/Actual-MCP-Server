@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFile } from 'node:fs/promises';
-import type {
-  CurrentTransactionSnapshot,
-  } from './types.js';
+import type { CurrentTransactionSnapshot } from './types.js';
 import {
   buildTimelineReconAudit,
   applyTimelineReconAudit,
@@ -144,9 +142,7 @@ describe('Timeline Reconciliation Internal', () => {
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
       };
-      vi.mocked(ioModule.loadReconInputs).mockResolvedValue(
-        mockInput,
-      );
+      vi.mocked(ioModule.loadReconInputs).mockResolvedValue(mockInput);
       vi.mocked(ioModule.writeAuditOutputs).mockResolvedValue(undefined);
 
       const audit = await generateTimelineReconAudit();
