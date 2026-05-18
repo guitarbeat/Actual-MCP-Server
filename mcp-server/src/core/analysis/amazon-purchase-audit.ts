@@ -1465,12 +1465,15 @@ export function buildAmazonAudit(input: BuildAmazonAuditInput): AmazonAuditFile 
     chargeEventsByOrderId.set(event.orderId, existing);
   }
 
+  const accountNamesById = new Map<string, string>();
+  for (const account of input.accounts) {
+    accountNamesById.set(account.id, account.name);
+  }
+
   const amazonTransactions = input.transactions.filter(isAmazonTransaction).map((transaction) => ({
     ...transaction,
     account_name:
-      transaction.account_name ||
-      input.accounts.find((account) => account.id === transaction.account)?.name ||
-      transaction.account,
+      transaction.account_name || accountNamesById.get(transaction.account) || transaction.account,
   }));
 
   const chargeTransactions = amazonTransactions.filter((transaction) => transaction.amount < 0);
