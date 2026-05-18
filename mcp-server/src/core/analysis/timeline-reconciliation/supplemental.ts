@@ -29,14 +29,14 @@ export function resolveSupplementalAccount(
   accounts: Account[],
 ): { actualAccountId: string | null; actualAccountName: string | null } {
   const normalizedExternal = normalizeComparisonText(externalAccountName);
-  const externalTokens = tokenizeForMatching(externalAccountName);
+  const externalTokensSet = new Set(tokenizeForMatching(externalAccountName));
   let bestMatch: Account | null = null;
   let bestScore = 0;
 
   for (const account of accounts) {
     const internalNormalized = normalizeComparisonText(account.name);
     const internalTokens = tokenizeForMatching(account.name);
-    const overlap = internalTokens.filter((token) => externalTokens.includes(token)).length;
+    const overlap = internalTokens.filter((token) => externalTokensSet.has(token)).length;
     const containmentBonus =
       normalizedExternal.includes(internalNormalized) ||
       internalNormalized.includes(normalizedExternal)
