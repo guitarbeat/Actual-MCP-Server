@@ -8,7 +8,7 @@ vi.mock('../../../core/api/actual-client.js', () => ({
 }));
 
 function parseJsonResponse(response: unknown): Record<string, unknown> {
-  const firstContent = response.content[0];
+  const firstContent = (response as any).content[0];
   if (!('text' in firstContent)) {
     throw new Error('Expected text content');
   }
