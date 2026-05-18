@@ -1396,6 +1396,27 @@ export async function importTransactions(
  * @param updates - Fields to update
  * @returns Promise that resolves when update is complete
  */
+
+/**
+ * Batch update transactions (ensures API is initialized)
+ *
+ * @param updates - Array of fields to update per transaction (must include id)
+ * @returns Promise that resolves when updates are complete
+ */
+export async function batchUpdateTransactions(
+  updates: Array<{ id: string } & Record<string, unknown>>,
+): Promise<void> {
+  return ensureConnection(async () => {
+    const { send } = getHistoricalTransferInternalLayer(extendedApi);
+    await send('transactions-batch-update', {
+      updated: updates,
+    });
+    cacheService.invalidatePattern('transactions:*');
+    cacheService.invalidate('accounts:all');
+    invalidateNameResolutionState();
+  }, 'write');
+}
+
 export async function updateTransaction(
   id: string,
   updates: Record<string, unknown>,
