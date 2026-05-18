@@ -5,19 +5,19 @@ describe('historical-transfer-utils', () => {
   describe('getDateDiffInDays', () => {
     it('throws an error for invalid firstDate', () => {
       expect(() => getDateDiffInDays('invalid-date', '2023-01-05')).toThrowError(
-        'Invalid dates "invalid-date" and "2023-01-05" supplied for historical transfer matching.'
+        'Invalid dates "invalid-date" and "2023-01-05" supplied for historical transfer matching.',
       );
     });
 
     it('throws an error for invalid secondDate', () => {
       expect(() => getDateDiffInDays('2023-01-01', 'not-a-date')).toThrowError(
-        'Invalid dates "2023-01-01" and "not-a-date" supplied for historical transfer matching.'
+        'Invalid dates "2023-01-01" and "not-a-date" supplied for historical transfer matching.',
       );
     });
 
     it('throws an error if both dates are invalid', () => {
       expect(() => getDateDiffInDays('foo', 'bar')).toThrowError(
-        'Invalid dates "foo" and "bar" supplied for historical transfer matching.'
+        'Invalid dates "foo" and "bar" supplied for historical transfer matching.',
       );
     });
 
@@ -31,7 +31,7 @@ describe('historical-transfer-utils', () => {
   describe('shiftDateByDays', () => {
     it('throws an error for invalid date', () => {
       expect(() => shiftDateByDays('invalid-date', 5)).toThrowError(
-        'Invalid date "invalid-date" supplied for historical transfer matching.'
+        'Invalid date "invalid-date" supplied for historical transfer matching.',
       );
     });
 
