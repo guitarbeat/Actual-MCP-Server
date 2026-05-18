@@ -44,7 +44,6 @@ export function createHttpRuntime(options: {
   });
   const sessionTtlMs = parseSessionTtl(process.env.MCP_SESSION_TTL_MINUTES);
   const allowedOrigins = parseAllowedOrigins(process.env.MCP_ALLOWED_ORIGINS);
-  const isProduction = process.env.NODE_ENV === 'production';
 
   let lastReadinessSignature: string | null = null;
 
@@ -75,9 +74,9 @@ export function createHttpRuntime(options: {
 
   app.use('*', async (c, next) => {
     const origin = c.req.header('origin');
-    const originAllowed = isOriginAllowed(origin, allowedOrigins, isProduction);
+    const originAllowed = isOriginAllowed(origin, allowedOrigins);
 
-    if (origin && !originAllowed) {
+    if (!originAllowed) {
       return c.json({ error: 'Origin not allowed' }, 403);
     }
 
@@ -327,27 +326,10 @@ function parseSessionTtl(value?: string): number | null {
   return parsed * 60 * 1000;
 }
 
-function isOriginAllowed(
-  origin: string | undefined,
-  allowedOrigins: string[],
-  isProduction: boolean,
-): boolean {
+function isOriginAllowed(origin: string | undefined, allowedOrigins: string[]): boolean {
   if (!origin) {
-    return true;
-  }
-
-  if (allowedOrigins.length > 0) {
-    return allowedOrigins.includes(origin);
-  }
-
-  if (isProduction) {
     return false;
   }
 
-  try {
-    const { hostname } = new URL(origin);
-    return hostname === 'localhost' || hostname === '127.0.0.1';
-  } catch {
-    return false;
-  }
+  return allowedOrigins.includes(origin);
 }
