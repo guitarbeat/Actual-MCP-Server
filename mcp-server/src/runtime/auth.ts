@@ -1,3 +1,4 @@
+import { getConnInfo } from '@hono/node-server/conninfo';
 import type { MiddlewareHandler } from 'hono';
 import { timingSafeStringEqual } from '../core/auth/index.js';
 
@@ -9,6 +10,26 @@ export function createBearerMiddleware(options: {
 
   return async (c, next) => {
     if (!enableBearer) {
+      const connInfo = getConnInfo(c);
+      const remoteAddress = connInfo.remote.address;
+
+      const isLoopback =
+        remoteAddress === '127.0.0.1' ||
+        remoteAddress === '::1' ||
+        remoteAddress === '::ffff:127.0.0.1';
+
+      if (!isLoopback) {
+        return c.json(
+          {
+            error: 'Authentication disabled but remote access attempted',
+            message:
+              'Unauthenticated access is only permitted from loopback addresses (localhost). Please enable bearer authentication for remote access.',
+            code: -32000,
+          },
+          403,
+        );
+      }
+
       await next();
       return;
     }
