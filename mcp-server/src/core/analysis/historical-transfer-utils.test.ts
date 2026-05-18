@@ -28,7 +28,9 @@ describe('historical-transfer-utils', () => {
       const match = getTransferLikeMatch('Bill Payment');
       expect(match).not.toBeNull();
       expect(match?.key).toBe('bill-payment');
-      expect(match?.reason).toBe('Bill-payment labels often represent card payments or account transfers, but no strict unique inverse match was found.');
+      expect(match?.reason).toBe(
+        'Bill-payment labels often represent card payments or account transfers, but no strict unique inverse match was found.',
+      );
     });
 
     it('should match venmo case-insensitively', () => {
@@ -66,8 +68,12 @@ describe('historical-transfer-utils', () => {
     });
 
     it('should throw for invalid ID format', () => {
-      expect(() => parseHistoricalTransferCandidateId('A')).toThrowError(/Invalid historical transfer candidate ID/);
-      expect(() => parseHistoricalTransferCandidateId('A::B::C')).toThrowError(/Invalid historical transfer candidate ID/);
+      expect(() => parseHistoricalTransferCandidateId('A')).toThrowError(
+        /Invalid historical transfer candidate ID/,
+      );
+      expect(() => parseHistoricalTransferCandidateId('A::B::C')).toThrowError(
+        /Invalid historical transfer candidate ID/,
+      );
     });
   });
 
