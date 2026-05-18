@@ -226,6 +226,7 @@ describe('Timeline Reconciliation Internal', () => {
       const mockCurrentTransaction: any = {
         id: 't1',
         date: '2025-01-15',
+        amount: 1500,
         amountCents: 1500,
         payee_name: 'Test Payee',
         account: 'a1',
@@ -250,11 +251,15 @@ describe('Timeline Reconciliation Internal', () => {
 
       const result = await applyTimelineReconAudit(paths as any);
 
-      /* test assertion removed */
+      expect(actualClientModule.updateTransaction).toHaveBeenCalledWith('t1', {
+        category: 'c1',
+        notes: expect.stringContaining('Reconciled'),
+        subtransactions: undefined,
+      });
 
-      // expect(result.exactUpdatesApplied).toBe(1);
+      expect(result.exactUpdatesApplied).toBe(1);
       expect(result.skippedMissingTransactions).toBe(0);
-      // expect(result.skippedChangedTransactions).toBe(0);
+      expect(result.skippedChangedTransactions).toBe(0);
       expect(result.skippedManualCandidates).toBe(0);
       expect(result.rulesCreated).toEqual([]);
     });
