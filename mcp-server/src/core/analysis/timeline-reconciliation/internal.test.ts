@@ -108,7 +108,15 @@ describe('Timeline Reconciliation Internal', () => {
           },
         ],
         accounts: [{ id: 'a1', name: 'Test Account', type: 'checking', closed: false }],
-        categoriesById: new Map([['c1', { id: 'c1', name: 'Test Category', is_income: false }]]),
+        categoriesById: {
+          c1: {
+            id: 'c1',
+            name: 'Test Category',
+            is_income: false,
+            group_id: 'g1',
+            hidden: false,
+          } as any,
+        },
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
         placeCache: { places: {} },
@@ -158,7 +166,7 @@ describe('Timeline Reconciliation Internal', () => {
         timeline: { stays: [], activities: [] },
         placeCache: { places: {} },
         categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} },
-      } as unknown as BuildTimelineReconAuditInput);
+      } as unknown as any);
       vi.mocked(ioModule.writeAuditOutputs).mockResolvedValue(undefined);
 
       const audit = await generateTimelineReconAudit();
