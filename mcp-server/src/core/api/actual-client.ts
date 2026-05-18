@@ -1966,9 +1966,31 @@ export async function batchBudgetUpdates(callback: () => Promise<void>): Promise
 }
 
 /**
+ * Type guard to check if an object is an ActualQL Query instance.
+ */
+function isActualQLQuery(query: unknown): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const q = query as any;
+  return (
+    typeof q === 'object' &&
+    q !== null &&
+    'serialize' in q &&
+    typeof q.serialize === 'function' &&
+    'state' in q &&
+    typeof q.state === 'object' &&
+    q.constructor?.name === 'Query'
+  );
+}
+
+/**
  * Run an AQL query (ensures API is initialized)
+ * Validates that the input is a legitimate Query object to prevent AQL injection.
  */
 export async function runAQL(query: unknown): Promise<unknown> {
+  if (!isActualQLQuery(query)) {
+    throw new Error('Invalid AQL query: Expected an ActualQL Query object. Use the q() builder.');
+  }
+
   return runReadOperation(async () => {
     // biome-ignore lint/suspicious/noExplicitAny: Workaround for type mismatch in actual-app/api
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
