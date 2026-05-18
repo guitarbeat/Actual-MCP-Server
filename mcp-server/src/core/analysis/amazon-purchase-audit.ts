@@ -1292,25 +1292,36 @@ function buildChargeCandidateMap(
 ): Map<string, AmazonChargeEvent[]> {
   const candidates = new Map<string, AmazonChargeEvent[]>();
 
+  const eventsByAmount = new Map<number, AmazonChargeEvent[]>();
+  for (const event of events) {
+    const group = eventsByAmount.get(event.amountCents);
+    if (group !== undefined) {
+      group.push(event);
+    } else {
+      eventsByAmount.set(event.amountCents, [event]);
+    }
+  }
+
   for (const transaction of transactions) {
-    const exactCandidates = events.filter((event) => {
-      if (Math.abs(transaction.amount) !== event.amountCents) {
-        return false;
-      }
+    const possibleEvents = eventsByAmount.get(Math.abs(transaction.amount));
+    if (possibleEvents !== undefined) {
+      const exactCandidates = possibleEvents.filter((event) => {
+        if (diffInDays(transaction.date, event.eventDate) > MATCH_WINDOW_DAYS) {
+          return false;
+        }
 
-      if (diffInDays(transaction.date, event.eventDate) > MATCH_WINDOW_DAYS) {
-        return false;
-      }
+        if (!event.paymentMethodType) {
+          return true;
+        }
 
-      if (!event.paymentMethodType) {
-        return true;
-      }
+        const mappedAccountName = paymentMethodAccountNames[event.paymentMethodType];
+        return mappedAccountName == null || mappedAccountName === transaction.account_name;
+      });
 
-      const mappedAccountName = paymentMethodAccountNames[event.paymentMethodType];
-      return mappedAccountName == null || mappedAccountName === transaction.account_name;
-    });
-
-    candidates.set(transaction.id, exactCandidates);
+      candidates.set(transaction.id, exactCandidates);
+    } else {
+      candidates.set(transaction.id, []);
+    }
   }
 
   return candidates;
@@ -1322,13 +1333,26 @@ function buildRefundCandidateMap(
 ): Map<string, AmazonRefundEvent[]> {
   const candidates = new Map<string, AmazonRefundEvent[]>();
 
+  const eventsByAmount = new Map<number, AmazonRefundEvent[]>();
+  for (const event of events) {
+    const group = eventsByAmount.get(event.amountCents);
+    if (group !== undefined) {
+      group.push(event);
+    } else {
+      eventsByAmount.set(event.amountCents, [event]);
+    }
+  }
+
   for (const transaction of transactions) {
-    const exactCandidates = events.filter(
-      (event) =>
-        transaction.amount === event.amountCents &&
-        diffInDays(transaction.date, event.eventDate) <= MATCH_WINDOW_DAYS,
-    );
-    candidates.set(transaction.id, exactCandidates);
+    const possibleEvents = eventsByAmount.get(transaction.amount);
+    if (possibleEvents !== undefined) {
+      const exactCandidates = possibleEvents.filter(
+        (event) => diffInDays(transaction.date, event.eventDate) <= MATCH_WINDOW_DAYS,
+      );
+      candidates.set(transaction.id, exactCandidates);
+    } else {
+      candidates.set(transaction.id, []);
+    }
   }
 
   return candidates;
