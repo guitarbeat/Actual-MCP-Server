@@ -1,9 +1,0 @@
-⚡ Optimize Amazon purchase audit candidate matching
-
-💡 **What:** Replaced the $O(N \times M)$ nested `Array.filter` within the `buildChargeCandidateMap` and `buildRefundCandidateMap` loops with an $O(N + M)$ approach. Events are now pre-grouped in a `Map` by their `amountCents` prior to iterating over transactions, reducing the search space to only events with matching transaction amounts.
-
-🎯 **Why:** The previous implementation searched the entire array of events for every single transaction, leading to significant CPU overhead and slow processing times for large datasets.
-
-📊 **Measured Improvement:**
-- `buildChargeCandidateMap`: Benchmark with 5,000 transactions and 5,000 events improved from ~705ms to ~262ms (~63% faster).
-- `buildRefundCandidateMap`: Benchmark with 5,000 transactions and 5,000 events improved from ~741ms to ~395ms (~47% faster).
