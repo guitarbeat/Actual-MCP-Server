@@ -70,9 +70,11 @@ describe('Timeline Reconciliation Internal', () => {
         endDate: '2025-01-31',
         transactions: [],
         accounts: [],
-        categoriesById: new Map(),
+        categoriesById: {},
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
+        placeCache: { places: {} },
+        categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} }
       };
 
       const audit = buildTimelineReconAudit(input);
@@ -93,22 +95,22 @@ describe('Timeline Reconciliation Internal', () => {
         transactions: [
           {
             id: 't1',
-            date: '2025-01-15',
-            amountCents: 1500,
-            payeeName: 'Test Payee',
-            accountId: 'a1',
-            accountName: 'Test Account',
-            importedPayee: 'Imported Test Payee',
+        date: '2025-01-15',
+        amountCents: 1500,
+        payeeName: 'Test Payee',
+        accountId: 'a1',
+        accountName: 'Test Account',
+        importedPayee: 'Imported Test Payee',
             notes: 'Test Note',
-            transferId: null,
-            isParent: false,
-            isChild: false,
-            categoryName: null,
+            transfer_id: null,
+            is_parent: false,
+            is_child: false,
+
             category: null,
           },
         ],
         accounts: [{ id: 'a1', name: 'Test Account', type: 'checking', closed: false }],
-        categoriesById: new Map([['c1', { id: 'c1', name: 'Test Category', is_income: false }]]),
+        categoriesById: { 'c1': { id: 'c1', name: 'Test Category', is_income: false, group_id: 'g1' } },
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
         placeCache: { places: {} },
@@ -129,6 +131,11 @@ describe('Timeline Reconciliation Internal', () => {
     it('should generate audit and write outputs', async () => {
       const paths = {
         baseDir: '/test',
+        repoRoot: '/test',
+        reconDir: '/test',
+        timelinePath: '/test/timeline.json',
+        candidatesPath: '/test/candidates.json',
+        manualReviewPath: '/test/manual_review.csv',
         auditPath: '/test/audit.json',
         supplementalCsvPath: '',
         placeCachePath: '',
@@ -142,12 +149,14 @@ describe('Timeline Reconciliation Internal', () => {
       const mockInput = {
         transactions: [],
         accounts: [],
-        categoriesById: new Map(),
+        categoriesById: {},
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
+        placeCache: { places: {} },
+        categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} }
       };
       vi.mocked(ioModule.loadReconInputs).mockResolvedValue(
-        mockInput as unknown as BuildTimelineReconAuditInput,
+        mockInput as any,
       );
       vi.mocked(ioModule.writeAuditOutputs).mockResolvedValue(undefined);
 
@@ -163,6 +172,11 @@ describe('Timeline Reconciliation Internal', () => {
     it('should apply audit and update transactions', async () => {
       const paths = {
         baseDir: '/test',
+        repoRoot: '/test',
+        reconDir: '/test',
+        timelinePath: '/test/timeline.json',
+        candidatesPath: '/test/candidates.json',
+        manualReviewPath: '/test/manual_review.csv',
         auditPath: '/test/audit.json',
         supplementalCsvPath: '',
         placeCachePath: '',
@@ -200,14 +214,12 @@ describe('Timeline Reconciliation Internal', () => {
             payeeName: 'Test Payee',
             importedPayee: 'Imported Test Payee',
             status: 'ready-exact',
+            confidenceTier: 'tier1-exact',
             recommendedCategoryName: 'Test Category',
             noteText: 'Reconciled',
-            matchedPlaceKey: null,
-            matchedMerchant: null,
-            ruleField: null,
-            ruleValue: null,
+            ruleField: undefined,
+            ruleValue: undefined,
             blockedReason: null,
-            reconciliationStrategy: 'exact',
           },
         ],
         manualReviews: [],
@@ -217,7 +229,7 @@ describe('Timeline Reconciliation Internal', () => {
       vi.mocked(readFile).mockResolvedValue(JSON.stringify(mockAudit));
       vi.mocked(fetchAccountsModule.fetchAllAccounts).mockResolvedValue([]);
       vi.mocked(fetchTransactionsModule.fetchAllOnBudgetTransactionsWithMetadata).mockResolvedValue(
-        { transactions: [] },
+        { transactions: [], successfulAccountIds: [], warnings: [] },
       );
 
       const mockCurrentTransaction = {
@@ -229,10 +241,10 @@ describe('Timeline Reconciliation Internal', () => {
         accountName: 'Test Account',
         importedPayee: 'Imported Test Payee',
         notes: 'Test Note',
-        transferId: null,
-        isParent: false,
-        isChild: false,
-        categoryName: null,
+        transfer_id: null,
+        is_parent: false,
+        is_child: false,
+
         category: null,
       };
 
@@ -240,7 +252,7 @@ describe('Timeline Reconciliation Internal', () => {
         new Map([['t1', mockCurrentTransaction as unknown as CurrentTransactionSnapshot]]),
       );
       vi.mocked(actualClientModule.getCategories).mockResolvedValue([
-        { id: 'c1', name: 'Test Category', is_income: false, is_hidden: false, group_id: 'g1' },
+        { id: 'c1', name: 'Test Category', is_income: false, group_id: 'g1' },
       ]);
       vi.mocked(fetchRulesModule.fetchAllRules).mockResolvedValue([]);
       vi.mocked(actualClientModule.updateTransaction).mockResolvedValue();
@@ -263,6 +275,11 @@ describe('Timeline Reconciliation Internal', () => {
     it('should throw an error for unsupported audit version', async () => {
       const paths = {
         baseDir: '/test',
+        repoRoot: '/test',
+        reconDir: '/test',
+        timelinePath: '/test/timeline.json',
+        candidatesPath: '/test/candidates.json',
+        manualReviewPath: '/test/manual_review.csv',
         auditPath: '/test/audit.json',
         supplementalCsvPath: '',
         placeCachePath: '',
@@ -284,6 +301,11 @@ describe('Timeline Reconciliation Internal', () => {
     it('should skip manual candidates', async () => {
       const paths = {
         baseDir: '/test',
+        repoRoot: '/test',
+        reconDir: '/test',
+        timelinePath: '/test/timeline.json',
+        candidatesPath: '/test/candidates.json',
+        manualReviewPath: '/test/manual_review.csv',
         auditPath: '/test/audit.json',
         supplementalCsvPath: '',
         placeCachePath: '',
@@ -321,14 +343,12 @@ describe('Timeline Reconciliation Internal', () => {
             payeeName: 'Test Payee',
             importedPayee: 'Imported Test Payee',
             status: 'manual',
+            confidenceTier: 'tier4-manual',
             recommendedCategoryName: 'Test Category',
             noteText: 'Needs review',
-            matchedPlaceKey: null,
-            matchedMerchant: null,
-            ruleField: null,
-            ruleValue: null,
+            ruleField: undefined,
+            ruleValue: undefined,
             blockedReason: null,
-            reconciliationStrategy: 'exact',
           },
         ],
         manualReviews: [],
@@ -338,11 +358,11 @@ describe('Timeline Reconciliation Internal', () => {
       vi.mocked(readFile).mockResolvedValue(JSON.stringify(mockAudit));
       vi.mocked(fetchAccountsModule.fetchAllAccounts).mockResolvedValue([]);
       vi.mocked(fetchTransactionsModule.fetchAllOnBudgetTransactionsWithMetadata).mockResolvedValue(
-        { transactions: [] },
+        { transactions: [], successfulAccountIds: [], warnings: [] },
       );
       vi.mocked(applySupportModule.buildCurrentTransactionMap).mockReturnValue(new Map());
       vi.mocked(actualClientModule.getCategories).mockResolvedValue([
-        { id: 'c1', name: 'Test Category', is_income: false, is_hidden: false, group_id: 'g1' },
+        { id: 'c1', name: 'Test Category', is_income: false, group_id: 'g1' },
       ]);
       vi.mocked(fetchRulesModule.fetchAllRules).mockResolvedValue([]);
 
@@ -355,6 +375,11 @@ describe('Timeline Reconciliation Internal', () => {
     it('should skip missing transactions', async () => {
       const paths = {
         baseDir: '/test',
+        repoRoot: '/test',
+        reconDir: '/test',
+        timelinePath: '/test/timeline.json',
+        candidatesPath: '/test/candidates.json',
+        manualReviewPath: '/test/manual_review.csv',
         auditPath: '/test/audit.json',
         supplementalCsvPath: '',
         placeCachePath: '',
@@ -392,14 +417,12 @@ describe('Timeline Reconciliation Internal', () => {
             payeeName: 'Test Payee',
             importedPayee: 'Imported Test Payee',
             status: 'ready-exact',
+            confidenceTier: 'tier1-exact',
             recommendedCategoryName: 'Test Category',
             noteText: 'Reconciled',
-            matchedPlaceKey: null,
-            matchedMerchant: null,
-            ruleField: null,
-            ruleValue: null,
+            ruleField: undefined,
+            ruleValue: undefined,
             blockedReason: null,
-            reconciliationStrategy: 'exact',
           },
         ],
         manualReviews: [],
@@ -409,12 +432,12 @@ describe('Timeline Reconciliation Internal', () => {
       vi.mocked(readFile).mockResolvedValue(JSON.stringify(mockAudit));
       vi.mocked(fetchAccountsModule.fetchAllAccounts).mockResolvedValue([]);
       vi.mocked(fetchTransactionsModule.fetchAllOnBudgetTransactionsWithMetadata).mockResolvedValue(
-        { transactions: [] },
+        { transactions: [], successfulAccountIds: [], warnings: [] },
       );
       // Return empty map so the transaction is "missing"
       vi.mocked(applySupportModule.buildCurrentTransactionMap).mockReturnValue(new Map());
       vi.mocked(actualClientModule.getCategories).mockResolvedValue([
-        { id: 'c1', name: 'Test Category', is_income: false, is_hidden: false, group_id: 'g1' },
+        { id: 'c1', name: 'Test Category', is_income: false, group_id: 'g1' },
       ]);
       vi.mocked(fetchRulesModule.fetchAllRules).mockResolvedValue([]);
 
