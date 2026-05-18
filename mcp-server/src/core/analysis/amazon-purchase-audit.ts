@@ -1942,24 +1942,26 @@ export async function applyAmazonAudit(
     }
   }
 
-  for (const categoryName of targetCategoryNames) {
-    const resolution = ensureCategoryByName(categoryName, categoriesByName, groupsByName);
+  await Promise.all(
+    Array.from(targetCategoryNames).map(async (categoryName) => {
+      const resolution = ensureCategoryByName(categoryName, categoriesByName, groupsByName);
 
-    if (!resolution.create) {
-      continue;
-    }
+      if (!resolution.create) {
+        return;
+      }
 
-    const createdCategoryId = await createCategory({
-      name: categoryName,
-      group_id: resolution.groupId,
-    });
-    categoriesByName.set(categoryName, {
-      id: createdCategoryId,
-      name: categoryName,
-      group_id: resolution.groupId,
-    });
-    categoriesCreated.push(categoryName);
-  }
+      const createdCategoryId = await createCategory({
+        name: categoryName,
+        group_id: resolution.groupId,
+      });
+      categoriesByName.set(categoryName, {
+        id: createdCategoryId,
+        name: categoryName,
+        group_id: resolution.groupId,
+      });
+      categoriesCreated.push(categoryName);
+    }),
+  );
 
   let directUpdatesApplied = 0;
   let splitUpdatesApplied = 0;
