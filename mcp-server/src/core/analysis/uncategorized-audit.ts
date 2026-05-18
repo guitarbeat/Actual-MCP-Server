@@ -1000,12 +1000,15 @@ export function buildUncategorizedAudit(
 
   const returnedGroups = allGroups.slice(0, groupLimit);
   const totalAmount = uncategorized.reduce((sum, transaction) => sum + transaction.amount, 0);
-  const ruleOpportunityCount = allGroups.filter(
-    (group) => group.suggestedAction === 'create-rule' || group.suggestedAction === 'update-rule',
-  ).length;
-  const manualReviewGroupCount = allGroups.filter(
-    (group) => group.suggestedAction === 'manual-review',
-  ).length;
+  let ruleOpportunityCount = 0;
+  let manualReviewGroupCount = 0;
+  for (const group of allGroups) {
+    if (group.suggestedAction === 'create-rule' || group.suggestedAction === 'update-rule') {
+      ruleOpportunityCount++;
+    } else if (group.suggestedAction === 'manual-review') {
+      manualReviewGroupCount++;
+    }
+  }
 
   return {
     summary: {
