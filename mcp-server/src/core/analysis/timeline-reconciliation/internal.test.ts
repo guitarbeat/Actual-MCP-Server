@@ -158,7 +158,7 @@ describe('Timeline Reconciliation Internal', () => {
         categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} },
       };
       vi.mocked(ioModule.loadReconInputs).mockResolvedValue(
-        mockInput as unknown as BuildTimelineReconAuditInput,
+        mockInput as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       );
       vi.mocked(ioModule.writeAuditOutputs).mockResolvedValue(undefined);
 
