@@ -55,11 +55,8 @@ describe('CacheService', () => {
       cacheService.invalidatePattern('accounts:*');
 
       expect(cacheService.getStats().entries).toBe(1);
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('accounts:123')).toBeUndefined();
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('accounts:abc')).toBeUndefined();
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('users:456')).toBe('data3');
     });
 
@@ -69,9 +66,7 @@ describe('CacheService', () => {
 
       cacheService.invalidatePattern('a.b');
 
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('a.b')).toBeUndefined();
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('axb')).toBe('data2');
     });
 
@@ -82,11 +77,8 @@ describe('CacheService', () => {
 
       cacheService.invalidatePattern('user(1):*');
 
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('user(1):profile')).toBeUndefined();
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('user(1):settings')).toBeUndefined();
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get('user(2):profile')).toBe('data2');
     });
 
@@ -100,7 +92,6 @@ describe('CacheService', () => {
       const duration = Date.now() - start;
 
       expect(duration).toBeLessThan(100);
-      // @ts-expect-error - testing private method for verification
       expect(cacheService.get(longKey)).toBe('data');
     });
   });

@@ -104,7 +104,7 @@ export class CacheService {
    * @param key - Cache key
    * @returns Cached data or undefined if not found/expired
    */
-  private get<T extends CacheValue>(key: string): T | undefined {
+  get<T extends CacheValue>(key: string): T | undefined {
     return this.cache.get(key) as T | undefined;
   }
 
