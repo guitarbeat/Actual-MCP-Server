@@ -13,29 +13,29 @@ describe('historical-transfers', () => {
     it('should throw if internal is missing', () => {
       const api = {} as ExtendedActualApi;
       expect(() => getHistoricalTransferInternalLayer(api)).toThrow(
-        /Historical transfer tools require Actual local data access/
+        /Historical transfer tools require Actual local data access/,
       );
     });
 
     it('should throw if internal.send is missing', () => {
       const api = {
         internal: {
-          db: { getTransaction: vi.fn(), all: vi.fn() }
-        }
+          db: { getTransaction: vi.fn(), all: vi.fn() },
+        },
       } as unknown as ExtendedActualApi;
       expect(() => getHistoricalTransferInternalLayer(api)).toThrow(
-        /Historical transfer tools require Actual local data access/
+        /Historical transfer tools require Actual local data access/,
       );
     });
 
     it('should throw if internal.db is missing', () => {
       const api = {
         internal: {
-          send: vi.fn()
-        }
+          send: vi.fn(),
+        },
       } as unknown as ExtendedActualApi;
       expect(() => getHistoricalTransferInternalLayer(api)).toThrow(
-        /Historical transfer tools require Actual local data access/
+        /Historical transfer tools require Actual local data access/,
       );
     });
 
@@ -43,11 +43,11 @@ describe('historical-transfers', () => {
       const api = {
         internal: {
           send: vi.fn(),
-          db: { all: vi.fn() }
-        }
+          db: { all: vi.fn() },
+        },
       } as unknown as ExtendedActualApi;
       expect(() => getHistoricalTransferInternalLayer(api)).toThrow(
-        /Historical transfer tools require Actual local data access/
+        /Historical transfer tools require Actual local data access/,
       );
     });
 
@@ -55,11 +55,11 @@ describe('historical-transfers', () => {
       const api = {
         internal: {
           send: vi.fn(),
-          db: { getTransaction: vi.fn() }
-        }
+          db: { getTransaction: vi.fn() },
+        },
       } as unknown as ExtendedActualApi;
       expect(() => getHistoricalTransferInternalLayer(api)).toThrow(
-        /Historical transfer tools require Actual local data access/
+        /Historical transfer tools require Actual local data access/,
       );
     });
 
@@ -70,8 +70,8 @@ describe('historical-transfers', () => {
       const api = {
         internal: {
           send: sendMock,
-          db: dbMock
-        }
+          db: dbMock,
+        },
       } as unknown as ExtendedActualApi;
 
       const result = getHistoricalTransferInternalLayer(api);
@@ -116,7 +116,7 @@ describe('historical-transfers', () => {
         id: '1',
         account: 'acct_1',
         amount: 100,
-        date: '2023-01-01'
+        date: '2023-01-01',
       } as HistoricalTransferInternalTransaction;
       expect(isValidHistoricalTransferTransaction(tx)).toBe(true);
     });
@@ -133,29 +133,30 @@ describe('historical-transfers', () => {
         id: 'tx_1',
         account: 'acct_1',
         amount: 500,
-        date: '2023-01-05'
+        date: '2023-01-05',
       } as HistoricalTransferInternalTransaction;
 
-      const ids = await getHistoricalTransferCounterpartIds(mockDb as any, tx);
+      const ids = await getHistoricalTransferCounterpartIds(
+        mockDb as unknown as NonNullable<
+          NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>
+        >,
+        tx,
+      );
 
       expect(ids).toEqual(['tx_2', 'tx_3']);
       expect(mockDb.all).toHaveBeenCalledTimes(1);
 
       const callArgs = mockDb.all.mock.calls[0];
       expect(callArgs[0]).toContain('SELECT id');
-      expect(callArgs[1]).toEqual([
-        'tx_1',
-        'acct_1',
-        -500,
-        20230102,
-        20230108,
-      ]);
+      expect(callArgs[1]).toEqual(['tx_1', 'acct_1', -500, 20230102, 20230108]);
     });
   });
 
   describe('getBatchHistoricalTransferTransactions', () => {
     it('should return empty array if ids is empty', async () => {
-      const db = { all: vi.fn().mockResolvedValue([]) } as any;
+      const db = { all: vi.fn().mockResolvedValue([]) } as unknown as NonNullable<
+        NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>
+      >;
       const results = await getBatchHistoricalTransferTransactions(db, []);
       expect(results).toEqual([]);
       expect(db.all).not.toHaveBeenCalled();
@@ -164,14 +165,19 @@ describe('historical-transfers', () => {
     it('should query db for all provided ids', async () => {
       const mockRows = [{ id: 'tx_1' }, { id: 'tx_2' }];
       const mockDb = {
-        all: vi.fn().mockImplementation(async (sql, params) => {
+        all: vi.fn().mockImplementation(async (sql, _params) => {
           if (sql.includes('IN (?,?)')) return mockRows;
           return [];
         }),
         getTransaction: vi.fn(),
       };
 
-      const results = await getBatchHistoricalTransferTransactions(mockDb as any, ['tx_1', 'tx_2']);
+      const results = await getBatchHistoricalTransferTransactions(
+        mockDb as unknown as NonNullable<
+          NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>
+        >,
+        ['tx_1', 'tx_2'],
+      );
       expect(results).toEqual(mockRows);
       expect(mockDb.all).toHaveBeenCalledTimes(1);
       expect(mockDb.all.mock.calls[0][1]).toEqual(['tx_1', 'tx_2']);
@@ -180,7 +186,9 @@ describe('historical-transfers', () => {
 
   describe('getAllPotentialHistoricalTransferCounterparts', () => {
     it('should return empty array if transactions is empty', async () => {
-      const db = { all: vi.fn().mockResolvedValue([]) } as any;
+      const db = { all: vi.fn().mockResolvedValue([]) } as unknown as NonNullable<
+        NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>
+      >;
       const results = await getAllPotentialHistoricalTransferCounterparts(db, []);
       expect(results).toEqual([]);
       expect(db.all).not.toHaveBeenCalled();
@@ -195,22 +203,22 @@ describe('historical-transfers', () => {
 
       const txs = [
         { id: 'tx_1', amount: 100, date: '2023-01-10' },
-        { id: 'tx_2', amount: -50, date: '2023-01-12' }
+        { id: 'tx_2', amount: -50, date: '2023-01-12' },
       ] as HistoricalTransferInternalTransaction[];
 
-      const results = await getAllPotentialHistoricalTransferCounterparts(mockDb as any, txs);
+      const results = await getAllPotentialHistoricalTransferCounterparts(
+        mockDb as unknown as NonNullable<
+          NonNullable<NonNullable<ExtendedActualApi['internal']>['db']>
+        >,
+        txs,
+      );
 
       expect(results).toEqual(mockRows);
       expect(mockDb.all).toHaveBeenCalledTimes(1);
 
       const callArgs = mockDb.all.mock.calls[0];
       expect(callArgs[0]).toContain('IN (?,?)');
-      expect(callArgs[1]).toEqual([
-        -100,
-        50,
-        20230107,
-        20230115,
-      ]);
+      expect(callArgs[1]).toEqual([-100, 50, 20230107, 20230115]);
     });
   });
 });
