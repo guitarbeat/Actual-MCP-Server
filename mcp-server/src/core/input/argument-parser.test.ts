@@ -16,34 +16,53 @@ describe('argument-parser', () => {
     });
 
     it('returns parsed start and end dates', () => {
-      expect(parseDateRange('2023-01-01', '2023-12-31')).toEqual({ startDate: '2023-01-01', endDate: '2023-12-31' });
+      expect(parseDateRange('2023-01-01', '2023-12-31')).toEqual({
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+      });
     });
 
     describe('error paths', () => {
       it('throws when start date is invalid string format', () => {
-        expect(() => parseDateRange('invalid')).toThrow('startDate must be a valid date in YYYY-MM-DD format');
-        expect(() => parseDateRange('2023/01/01')).toThrow('startDate must be a valid date in YYYY-MM-DD format');
-        expect(() => parseDateRange('01-01-2023')).toThrow('startDate must be a valid date in YYYY-MM-DD format');
+        expect(() => parseDateRange('invalid')).toThrow(
+          'startDate must be a valid date in YYYY-MM-DD format',
+        );
+        expect(() => parseDateRange('2023/01/01')).toThrow(
+          'startDate must be a valid date in YYYY-MM-DD format',
+        );
+        expect(() => parseDateRange('01-01-2023')).toThrow(
+          'startDate must be a valid date in YYYY-MM-DD format',
+        );
       });
 
       it('throws when start date is not a string', () => {
         // @ts-expect-error Testing invalid types
-        expect(() => parseDateRange(123)).toThrow('startDate must be a valid date in YYYY-MM-DD format');
+        expect(() => parseDateRange(123)).toThrow(
+          'startDate must be a valid date in YYYY-MM-DD format',
+        );
         // @ts-expect-error Testing invalid types
-        expect(() => parseDateRange({})).toThrow('startDate must be a valid date in YYYY-MM-DD format');
+        expect(() => parseDateRange({})).toThrow(
+          'startDate must be a valid date in YYYY-MM-DD format',
+        );
       });
 
       it('throws when end date is invalid string format', () => {
-        expect(() => parseDateRange(undefined, 'invalid')).toThrow('endDate must be a valid date in YYYY-MM-DD format');
+        expect(() => parseDateRange(undefined, 'invalid')).toThrow(
+          'endDate must be a valid date in YYYY-MM-DD format',
+        );
       });
 
       it('throws when end date is not a string', () => {
         // @ts-expect-error Testing invalid types
-        expect(() => parseDateRange(undefined, 123)).toThrow('endDate must be a valid date in YYYY-MM-DD format');
+        expect(() => parseDateRange(undefined, 123)).toThrow(
+          'endDate must be a valid date in YYYY-MM-DD format',
+        );
       });
 
       it('throws when start date is after end date', () => {
-        expect(() => parseDateRange('2023-12-31', '2023-01-01')).toThrow('startDate cannot be after endDate');
+        expect(() => parseDateRange('2023-12-31', '2023-01-01')).toThrow(
+          'startDate cannot be after endDate',
+        );
       });
     });
   });
@@ -82,7 +101,9 @@ describe('argument-parser', () => {
     });
 
     it('throws when both categoryId and categoryName are provided', () => {
-      expect(() => parseCategoryFilter('cat-123', 'Groceries')).toThrow('Cannot specify both categoryId and categoryName');
+      expect(() => parseCategoryFilter('cat-123', 'Groceries')).toThrow(
+        'Cannot specify both categoryId and categoryName',
+      );
     });
 
     it('throws when categoryId is invalid', () => {
@@ -94,9 +115,15 @@ describe('argument-parser', () => {
 
     it('throws when categoryName is invalid', () => {
       // @ts-expect-error Testing invalid types
-      expect(() => parseCategoryFilter(undefined, 123)).toThrow('categoryName must be a non-empty string');
-      expect(() => parseCategoryFilter(undefined, '')).toThrow('categoryName must be a non-empty string');
-      expect(() => parseCategoryFilter(undefined, '   ')).toThrow('categoryName must be a non-empty string');
+      expect(() => parseCategoryFilter(undefined, 123)).toThrow(
+        'categoryName must be a non-empty string',
+      );
+      expect(() => parseCategoryFilter(undefined, '')).toThrow(
+        'categoryName must be a non-empty string',
+      );
+      expect(() => parseCategoryFilter(undefined, '   ')).toThrow(
+        'categoryName must be a non-empty string',
+      );
     });
   });
 });
