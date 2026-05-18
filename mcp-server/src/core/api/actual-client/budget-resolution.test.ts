@@ -146,6 +146,7 @@ describe('budget-resolution', () => {
       { name: 'Budget 3 updated', cloudFileId: 'cloud-3' }, // No local ID
     ];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let apiClient: { getBudgets: any; loadBudget?: any };
 
     beforeEach(() => {

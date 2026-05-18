@@ -1,0 +1,17 @@
+--- mcp-server/src/core/analysis/timeline-reconciliation/internal.test.ts
++++ mcp-server/src/core/analysis/timeline-reconciliation/internal.test.ts
+@@ -216,6 +216,7 @@
+             noteText: 'Reconciled',
+             //             matchedPlaceKey: null,
+             //             matchedMerchant: null,
++            matchType: undefined,
+             ruleField: undefined,
+             ruleValue: undefined,
+             blockedReason: null,
+@@ -265,6 +266,7 @@
+         category: 'c1',
+         notes: expect.stringContaining('Reconciled'),
+         subtransactions: undefined,
+       });
+
+       expect(result.exactUpdatesApplied).toBe(1);
