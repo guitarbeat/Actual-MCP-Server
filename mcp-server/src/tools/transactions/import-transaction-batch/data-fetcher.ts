@@ -32,17 +32,39 @@ export async function prepareImportTransactionBatches(
     groupedByAccountReference.set(transaction.accountId, bucket);
   });
 
+  const batchResults = await Promise.all(
+    Array.from(groupedByAccountReference.entries()).map(async ([accountReference, entries]) => {
+      try {
+        const resolvedAccountId = await nameResolver.resolveAccount(accountReference);
+        const preparedEntries = await Promise.all(
+          entries.map(async ({ index, value }) =>
+            prepareImportTransaction(accountReference, index, value),
+          ),
+        );
+
+        return {
+          success: true,
+          accountReference,
+          resolvedAccountId,
+          entries,
+          preparedEntries,
+        } as const;
+      } catch (error) {
+        return {
+          success: false,
+          accountReference,
+          entries,
+          error: error instanceof Error ? error.message : String(error),
+        } as const;
+      }
+    }),
+  );
+
   const batchesByAccountId = new Map<string, ImportAccountBatch>();
 
-  for (const [accountReference, entries] of groupedByAccountReference.entries()) {
-    try {
-      const resolvedAccountId = await nameResolver.resolveAccount(accountReference);
-      const preparedEntries = await Promise.all(
-        entries.map(async ({ index, value }) =>
-          prepareImportTransaction(accountReference, index, value),
-        ),
-      );
-
+  for (const result of batchResults) {
+    if (result.success) {
+      const { accountReference, resolvedAccountId, entries, preparedEntries } = result;
       const existingBatch = batchesByAccountId.get(resolvedAccountId) ?? {
         accountId: resolvedAccountId,
         accountReferences: [],
@@ -67,8 +89,8 @@ export async function prepareImportTransactionBatches(
       }
 
       batchesByAccountId.set(resolvedAccountId, existingBatch);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    } else {
+      const { accountReference, entries, error } = result;
       const failedBatch: ImportAccountBatch = {
         accountId: accountReference,
         accountReferences: [accountReference],
@@ -77,7 +99,7 @@ export async function prepareImportTransactionBatches(
         preparationFailures: entries.map(({ index }) => ({
           accountReference,
           transactionIndex: index,
-          error: errorMessage,
+          error,
         })),
       };
       batchesByAccountId.set(`failed:${accountReference}`, failedBatch);
