@@ -252,6 +252,7 @@ export async function applyTimelineReconAudit(
   }
 
   const rulesCreated: string[] = [];
+  const createRulePromises: Promise<void>[] = [];
 
   for (const candidatesForRule of groupedRuleCandidates.values()) {
     if (candidatesForRule.length < MIN_RULE_CONFIRMATION_COUNT) {
@@ -271,11 +272,17 @@ export async function applyTimelineReconAudit(
       continue;
     }
 
-    await createRule(payload as unknown as Record<string, unknown>);
-    rulesCreated.push(
-      `${candidate.accountName}: ${candidate.ruleField}=${candidate.ruleValue} -> ${candidate.recommendedCategoryName}`,
+    createRulePromises.push(
+      (async () => {
+        await createRule(payload as unknown as Record<string, unknown>);
+        rulesCreated.push(
+          `${candidate.accountName}: ${candidate.ruleField}=${candidate.ruleValue} -> ${candidate.recommendedCategoryName}`,
+        );
+      })(),
     );
   }
+
+  await Promise.all(createRulePromises);
 
   return {
     exactUpdatesApplied,
