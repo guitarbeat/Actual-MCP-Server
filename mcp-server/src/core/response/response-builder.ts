@@ -252,7 +252,7 @@ function formatErrorContext(context: ErrorContext): string {
 
 const SENSITIVE_KEY_REGEX =
   /pass(word|phrase)|(?<!(input|output|max|total)_)token|secret|(private|api|access).?key|authorization|bearer|credential/i;
-const BEARER_TOKEN_REGEX = /Bearer\\s+([a-zA-Z0-9._-]+)/gi;
+const BEARER_TOKEN_REGEX = /(Bearer\s+)[a-zA-Z0-9\-._~+/]+=*/gi;
 const MAX_LOG_STRING_LENGTH = 500;
 const MAX_LOG_DEPTH = 4;
 
@@ -262,7 +262,7 @@ function sanitizeLogValue(value: unknown, depth: number, seen: WeakSet<object>):
   }
 
   if (typeof value === 'string') {
-    const redacted = value.replace(BEARER_TOKEN_REGEX, 'Bearer [REDACTED]');
+    const redacted = value.replace(BEARER_TOKEN_REGEX, '$1[REDACTED]');
     return redacted.length > MAX_LOG_STRING_LENGTH
       ? `${redacted.slice(0, MAX_LOG_STRING_LENGTH)}…`
       : redacted;

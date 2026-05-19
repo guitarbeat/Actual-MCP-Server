@@ -55,6 +55,7 @@ export type {
   ActualReadinessStatus,
   ActualReadinessStatusExtended,
   HistoricalTransferApplyResult,
+  HistoricalTransferInternalTransaction,
 } from './actual-client/types.js';
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
