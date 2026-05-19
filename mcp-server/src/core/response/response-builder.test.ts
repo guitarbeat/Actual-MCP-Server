@@ -297,5 +297,37 @@ describe('Response Builder', () => {
         );
       });
     });
+
+    describe('sanitizeLogValue', () => {
+      it('should properly redact Bearer tokens with base64 characters', () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const err = new Error('Test base64 token');
+
+        errorFromCatch(err, {
+          operation: 'testOp',
+          tool: 'testTool',
+          args: {
+            auth: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c=',
+          },
+        });
+
+        expect(consoleSpy).toHaveBeenCalled();
+        const logMessage = consoleSpy.mock.calls[0][0] as string;
+        expect(logMessage).toContain('Bearer [REDACTED]');
+        expect(logMessage).not.toContain('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9');
+      });
+
+      it('should properly redact Bearer tokens using case insensitive matching', () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const err = new Error('Test case insensitive token');
+
+        errorFromCatch(err, {
+          args: { header: 'bearer secret-token' },
+        });
+
+        const logMessage = consoleSpy.mock.calls[0][0] as string;
+        expect(logMessage).toContain('bearer [REDACTED]');
+      });
+    });
   });
 });
