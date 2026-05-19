@@ -25,7 +25,7 @@ export type ExtendedActualApi = typeof api & {
     send?: (name: string, args: Record<string, unknown>) => Promise<unknown>;
     db?: {
       getTransaction?: (id: string) => Promise<HistoricalTransferInternalTransaction | null>;
-      all?: (sql: string, params: unknown[]) => Promise<unknown[]>;
+      all?: (sql: string, params: unknown[]) => Promise<any[]>;
     };
   };
 };
