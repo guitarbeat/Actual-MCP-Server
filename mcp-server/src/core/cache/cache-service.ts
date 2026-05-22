@@ -25,10 +25,8 @@ export interface CacheStats {
  * Uses lru-cache library for optimized LRU implementation.
  */
 export class CacheService {
-  // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
   private cache: LRUCache<string, CacheValue>;
 
-  // biome-ignore lint/suspicious/noExplicitAny: Pending promises can resolve to any type
   private pendingPromises: Map<string, Promise<CacheValue>>;
 
   private hits: number;
@@ -42,7 +40,6 @@ export class CacheService {
     const defaultTtl = parseInt(process.env.CACHE_TTL_SECONDS || '300', 10) * 1000;
     this.enabled = process.env.CACHE_ENABLED !== 'false';
 
-    // biome-ignore lint/suspicious/noExplicitAny: Cache stores values of various types
     this.cache = new LRUCache<string, CacheValue>({
       max: maxEntries,
       ttl: defaultTtl,
