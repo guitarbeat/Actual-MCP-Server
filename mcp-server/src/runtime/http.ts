@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
@@ -19,8 +19,12 @@ interface SessionConnection {
   lastSeenAt: number;
 }
 
+export type HttpVariables = {
+  requestId: string;
+};
+
 export interface HttpRuntime {
-  app: Hono;
+  app: Hono<{ Variables: HttpVariables }>;
   close: () => Promise<void>;
 }
 
@@ -36,7 +40,14 @@ export function createHttpRuntime(options: {
   enableBearer: boolean;
   bearerToken?: string;
 }): HttpRuntime {
-  const app = new Hono();
+  const app = new Hono<{ Variables: HttpVariables }>();
+
+  app.use('*', async (c, next) => {
+    const id = c.req.header('x-request-id') || randomUUID();
+    c.set('requestId', id);
+    await next();
+    c.header('X-Request-ID', id);
+  });
   const sessions = new Map<string, SessionConnection>();
   const requireBearer = createBearerMiddleware({
     enableBearer: options.enableBearer,
@@ -292,7 +303,7 @@ export function createHttpApp(options: {
   enableAdvanced: boolean;
   enableBearer: boolean;
   bearerToken?: string;
-}): Hono {
+}): Hono<{ Variables: HttpVariables }> {
   return createHttpRuntime(options).app;
 }
 
@@ -350,4 +361,8 @@ function isOriginAllowed(
   } catch {
     return false;
   }
+}
+
+export function getRequestId(c: Context<{ Variables: HttpVariables }>): string {
+  return c.get('requestId');
 }

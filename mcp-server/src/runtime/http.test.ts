@@ -306,3 +306,45 @@ describe('GET /diagnostics', () => {
     expect(data).toEqual({ error: 'diagnostics unavailable' });
   });
 });
+
+describe('Request ID Middleware', () => {
+  it('sets a new X-Request-ID if none is provided', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(new Request('http://localhost/health'));
+
+    expect(response.status).toBe(200);
+    const requestId = response.headers.get('x-request-id');
+    expect(requestId).toBeTruthy();
+    // UUID v4 format regex
+    expect(requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+  });
+
+  it('uses the provided X-Request-ID header', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const customId = 'my-custom-request-id-123';
+    const response = await app.fetch(
+      new Request('http://localhost/health', {
+        headers: {
+          'x-request-id': customId,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-request-id')).toBe(customId);
+  });
+});
