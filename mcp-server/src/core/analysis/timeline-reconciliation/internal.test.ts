@@ -109,7 +109,15 @@ describe('Timeline Reconciliation Internal', () => {
           },
         ],
         accounts: [{ id: 'a1', name: 'Test Account', type: 'checking', closed: false }],
-        categoriesById: { c1: { id: 'c1', name: 'Test Category', is_income: false, hidden: false, group_id: 'g1' } } as any,
+        categoriesById: {
+          c1: {
+            id: 'c1',
+            name: 'Test Category',
+            is_income: false,
+            is_hidden: false,
+            group_id: 'g1',
+          } as any,
+        },
         supplementalRows: [],
         timeline: { stays: [], activities: [] },
         placeCache: { places: {} },
@@ -151,9 +159,7 @@ describe('Timeline Reconciliation Internal', () => {
         placeCache: { places: {} },
         categoryOverrides: { transactions: {}, merchantNames: {}, placeKeys: {} },
       };
-      vi.mocked(ioModule.loadReconInputs).mockResolvedValue(
-        mockInput as any,
-      );
+      vi.mocked(ioModule.loadReconInputs).mockResolvedValue(mockInput as any);
       vi.mocked(ioModule.writeAuditOutputs).mockResolvedValue(undefined);
 
       const audit = await generateTimelineReconAudit();
@@ -210,8 +216,6 @@ describe('Timeline Reconciliation Internal', () => {
             confidenceTier: 'tier1-exact',
             recommendedCategoryName: 'Test Category',
             noteText: 'Reconciled',
-
-
           },
         ],
         manualReviews: [],
@@ -332,8 +336,6 @@ describe('Timeline Reconciliation Internal', () => {
             confidenceTier: 'tier4-manual',
             recommendedCategoryName: 'Test Category',
             noteText: 'Needs review',
-
-
           },
         ],
         manualReviews: [],
@@ -402,8 +404,6 @@ describe('Timeline Reconciliation Internal', () => {
             confidenceTier: 'tier1-exact',
             recommendedCategoryName: 'Test Category',
             noteText: 'Reconciled',
-
-
           },
         ],
         manualReviews: [],
