@@ -12,7 +12,7 @@ import {
   type TimelineStay,
 } from './timeline-reconciliation.js';
 
-const mockCreateRule = vi.fn();
+const mockCreateRule = vi.fn().mockResolvedValue(undefined);
 const mockGetCategories = vi.fn();
 const mockUpdateTransaction = vi.fn();
 const mockFetchAllAccounts = vi.fn();
