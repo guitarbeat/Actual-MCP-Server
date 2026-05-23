@@ -27,7 +27,7 @@ vi.mock('./io.js', () => ({
 }));
 
 vi.mock('../../api/actual-client.js', () => ({
-  createRule: vi.fn(),
+  createRule: vi.fn().mockResolvedValue(undefined),
   getCategories: vi.fn(),
   updateTransaction: vi.fn(),
 }));
