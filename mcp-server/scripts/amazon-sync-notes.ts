@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import dotenv from 'dotenv';
-import { updateTransaction } from '../src/core/api/actual-client.js';
+import { batchUpdateTransactions } from '../src/core/api/actual-client.js';
 import { fetchAllAccounts } from '../src/core/data/fetch-accounts.js';
 import { fetchAllOnBudgetTransactionsWithMetadata } from '../src/core/data/fetch-transactions.js';
 import {
@@ -71,6 +71,8 @@ async function main(): Promise<void> {
   let unchanged = 0;
   let missing = 0;
 
+  const updatesToApply: Array<{ id: string; notes: string }> = [];
+
   for (const match of audit.matches) {
     const transaction = transactionsById.get(match.transactionId);
 
@@ -87,8 +89,12 @@ async function main(): Promise<void> {
       continue;
     }
 
-    await updateTransaction(match.transactionId, { notes: mergedNotes });
+    updatesToApply.push({ id: match.transactionId, notes: mergedNotes });
     updated += 1;
+  }
+
+  if (updatesToApply.length > 0) {
+    await batchUpdateTransactions(updatesToApply);
   }
 
   console.log('Amazon note sync complete.');
