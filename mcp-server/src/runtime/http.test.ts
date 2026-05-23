@@ -122,9 +122,9 @@ describe('createHttpRuntime', () => {
     expect(response.headers.get('access-control-allow-origin')).toBeNull();
   });
 
-  it('still allows localhost origins during development without explicit config', async () => {
-    process.env.NODE_ENV = 'development';
-    delete process.env.MCP_ALLOWED_ORIGINS;
+  it('rejects requests with missing origin', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
 
     const { app } = createHttpRuntime({
       version: 'test',
@@ -134,18 +134,20 @@ describe('createHttpRuntime', () => {
     });
 
     const response = await app.fetch(
-      new Request('http://localhost/health', {
+      new Request('http://localhost/mcp', {
+        method: 'GET',
         headers: {
-          Origin: 'http://localhost:5173',
+          'Mcp-Session-Id': 'missing',
         },
       }),
     );
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'Origin not allowed' });
   });
 
   it('does not expose internal readiness diagnostics from /ready', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
     const { app } = createHttpRuntime({
       version: 'test',
       enableWrite: false,
@@ -153,7 +155,9 @@ describe('createHttpRuntime', () => {
       enableBearer: false,
     });
 
-    const response = await app.fetch(new Request('http://localhost/ready'));
+    const response = await app.fetch(
+      new Request('http://localhost/ready', { headers: { Origin: 'https://good.example' } }),
+    );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
@@ -168,6 +172,7 @@ describe('createHttpRuntime', () => {
   });
 
   it('logs readiness transitions when MCP_READINESS_TRANSITION_LOGS is enabled', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
     process.env.MCP_READINESS_TRANSITION_LOGS = 'true';
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -208,9 +213,27 @@ describe('createHttpRuntime', () => {
       enableBearer: false,
     });
 
-    expect((await app.fetch(new Request('http://localhost/ready'))).status).toBe(503);
-    expect((await app.fetch(new Request('http://localhost/ready'))).status).toBe(200);
-    expect((await app.fetch(new Request('http://localhost/ready'))).status).toBe(200);
+    expect(
+      (
+        await app.fetch(
+          new Request('http://localhost/ready', { headers: { Origin: 'https://good.example' } }),
+        )
+      ).status,
+    ).toBe(503);
+    expect(
+      (
+        await app.fetch(
+          new Request('http://localhost/ready', { headers: { Origin: 'https://good.example' } }),
+        )
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await app.fetch(
+          new Request('http://localhost/ready', { headers: { Origin: 'https://good.example' } }),
+        )
+      ).status,
+    ).toBe(200);
 
     const readinessMessages = errorSpy.mock.calls
       .map((arguments_) => arguments_[0])
@@ -224,6 +247,7 @@ describe('createHttpRuntime', () => {
   });
 
   it('accepts lowercase bearer auth schemes', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
     const { app } = createHttpRuntime({
       version: 'test',
       enableWrite: false,
@@ -237,6 +261,7 @@ describe('createHttpRuntime', () => {
         method: 'GET',
         headers: {
           Authorization: 'bearer 12345678901234567890123456789012',
+          Origin: 'https://good.example',
         },
       }),
     );
@@ -246,6 +271,9 @@ describe('createHttpRuntime', () => {
 });
 
 describe('GET /diagnostics', () => {
+  beforeEach(() => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+  });
   it('should return diagnostics data without exposing secrets', async () => {
     process.env.ACTUAL_SERVER_URL = 'http://localhost:5006';
     process.env.ACTUAL_SYNC_ID = 'test-sync-id';
@@ -258,7 +286,9 @@ describe('GET /diagnostics', () => {
       enableBearer: false,
     });
 
-    const response = await app.fetch(new Request('http://localhost/diagnostics'));
+    const response = await app.fetch(
+      new Request('http://localhost/diagnostics', { headers: { Origin: 'https://good.example' } }),
+    );
     expect(response.status).toBe(200);
 
     const data = await response.json();
@@ -299,7 +329,9 @@ describe('GET /diagnostics', () => {
       enableBearer: false,
     });
 
-    const response = await app.fetch(new Request('http://localhost/diagnostics'));
+    const response = await app.fetch(
+      new Request('http://localhost/diagnostics', { headers: { Origin: 'https://good.example' } }),
+    );
     expect(response.status).toBe(500);
 
     const data = await response.json();
