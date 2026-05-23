@@ -1322,11 +1322,25 @@ function buildRefundCandidateMap(
 ): Map<string, AmazonRefundEvent[]> {
   const candidates = new Map<string, AmazonRefundEvent[]>();
 
+  const eventsByAmount = new Map<number, AmazonRefundEvent[]>();
+  for (const event of events) {
+    let arr = eventsByAmount.get(event.amountCents);
+    if (!arr) {
+      arr = [];
+      eventsByAmount.set(event.amountCents, arr);
+    }
+    arr.push(event);
+  }
+
   for (const transaction of transactions) {
-    const exactCandidates = events.filter(
-      (event) =>
-        transaction.amount === event.amountCents &&
-        diffInDays(transaction.date, event.eventDate) <= MATCH_WINDOW_DAYS,
+    const potentialCandidates = eventsByAmount.get(transaction.amount);
+    if (!potentialCandidates) {
+      candidates.set(transaction.id, []);
+      continue;
+    }
+
+    const exactCandidates = potentialCandidates.filter(
+      (event) => diffInDays(transaction.date, event.eventDate) <= MATCH_WINDOW_DAYS,
     );
     candidates.set(transaction.id, exactCandidates);
   }
