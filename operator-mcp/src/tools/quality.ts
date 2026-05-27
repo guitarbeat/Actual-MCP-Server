@@ -73,6 +73,7 @@ export async function handleOperatorHealthCheck(config: OperatorRuntimeConfig) {
         enableApply: config.enableApply,
         enableGitWrite: config.enableGitWrite,
         enableGitPush: config.enableGitPush,
+        enableDeploy: config.enableDeploy,
         allowedBranchPrefix: config.allowedBranchPrefix ?? null,
       },
       artifacts: getBuildArtifactStatus(config.repoRoot),

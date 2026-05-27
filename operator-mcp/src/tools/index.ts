@@ -43,6 +43,14 @@ import {
   handleRunTests,
   runQualityGateSchema,
 } from "./quality.js";
+import {
+  deployStatusSchema,
+  executeDeploySchema,
+  handleDeployStatus,
+  handleExecuteDeploy,
+  handlePrepareDeploy,
+  prepareDeploySchema,
+} from "./deploy.js";
 
 export function registerOperatorTools(
   server: McpServer,
@@ -413,5 +421,61 @@ export function registerOperatorTools(
       },
     },
     async () => handleOperatorHealthCheck(config),
+  );
+
+  server.registerTool(
+    "prepare-deploy",
+    {
+      title: "Prepare Deploy",
+      description:
+        "Stash dirty changes if needed, fetch, and fast-forward pull. Requires --enable-deploy and --enable-git-write.",
+      inputSchema: prepareDeploySchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+      },
+    },
+    async (args) =>
+      handlePrepareDeploy(
+        config,
+        (args ?? {}) as { remote?: string; branch?: string },
+      ),
+  );
+
+  server.registerTool(
+    "execute-deploy",
+    {
+      title: "Execute Deploy",
+      description:
+        "Run quality, build, test (optional startup smoke) and record deploy log. Requires --enable-deploy and approvalSecret.",
+      inputSchema: executeDeploySchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+      },
+    },
+    async (args) =>
+      handleExecuteDeploy(
+        config,
+        args as { includeStartupSmoke?: boolean; approvalSecret: string },
+      ),
+  );
+
+  server.registerTool(
+    "deploy-status",
+    {
+      title: "Deploy Status",
+      description: "Read recent entries from .operator/deploy-log.jsonl.",
+      inputSchema: deployStatusSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
+    },
+    async (args) =>
+      handleDeployStatus(config, (args ?? {}) as { limit?: number }),
   );
 }

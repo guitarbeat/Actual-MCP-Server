@@ -4,10 +4,12 @@ import { resolve } from "node:path";
 export interface OperatorRuntimeConfig {
   repoRoot: string;
   pendingDir: string;
+  deployLogPath: string;
   approvalSecret?: string;
   enableApply: boolean;
   enableGitWrite: boolean;
   enableGitPush: boolean;
+  enableDeploy: boolean;
   allowedBranchPrefix?: string;
 }
 
@@ -29,6 +31,7 @@ export function createOperatorConfig(options: {
   enableApply: boolean;
   enableGitWrite: boolean;
   enableGitPush: boolean;
+  enableDeploy: boolean;
   allowedBranchPrefix?: string;
 }): OperatorRuntimeConfig {
   const repoRoot = resolveRepoRoot(options.repoRoot);
@@ -42,6 +45,8 @@ export function createOperatorConfig(options: {
     enableApply: options.enableApply,
     enableGitWrite: options.enableGitWrite,
     enableGitPush: options.enableGitPush,
+    enableDeploy: options.enableDeploy,
+    deployLogPath: resolve(repoRoot, ".operator", "deploy-log.jsonl"),
     allowedBranchPrefix:
       (options.allowedBranchPrefix ?? envPrefix) || undefined,
   };

@@ -1,7 +1,7 @@
 {
   "name": "actual-mcp-operator",
-  "version": "0.2.0",
-  "description": "Operator MCP server for guarded repo self-modification (files, git, quality)",
+  "version": "0.3.0",
+  "description": "Operator MCP server for guarded repo self-modification (files, git, quality, deploy)",
   "private": true,
   "packageManager": "pnpm@10.27.0",
   "type": "module",

@@ -19,6 +19,7 @@ describe("pending-store", () => {
       enableApply: true,
       enableGitWrite: false,
       enableGitPush: false,
+      enableDeploy: false,
       approvalSecret: "x".repeat(32),
     });
 

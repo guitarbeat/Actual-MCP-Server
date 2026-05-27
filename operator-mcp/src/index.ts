@@ -32,6 +32,7 @@ const {
     "enable-apply": enableApply,
     "enable-git-write": enableGitWrite,
     "enable-git-push": enableGitPush,
+    "enable-deploy": enableDeploy,
     port,
     host,
   },
@@ -42,6 +43,7 @@ const {
     "enable-apply": { type: "boolean", default: false },
     "enable-git-write": { type: "boolean", default: false },
     "enable-git-push": { type: "boolean", default: false },
+    "enable-deploy": { type: "boolean", default: false },
     port: { type: "string" },
     host: { type: "string" },
   },
@@ -110,6 +112,7 @@ async function main(): Promise<void> {
     enableApply,
     enableGitWrite,
     enableGitPush,
+    enableDeploy,
     approvalSecret: process.env.OPERATOR_APPROVAL_SECRET,
   });
 
@@ -117,6 +120,7 @@ async function main(): Promise<void> {
   console.error(`Apply pending enabled: ${config.enableApply ? "yes" : "no"}`);
   console.error(`Git write enabled: ${config.enableGitWrite ? "yes" : "no"}`);
   console.error(`Git push enabled: ${config.enableGitPush ? "yes" : "no"}`);
+  console.error(`Deploy enabled: ${config.enableDeploy ? "yes" : "no"}`);
   if (config.allowedBranchPrefix) {
     console.error(`Allowed branch prefix: ${config.allowedBranchPrefix}`);
   }

@@ -9,6 +9,7 @@ import {
   gitCommit,
   gitStatus,
   GitServiceError,
+  isWorkingTreeDirty,
 } from "./git-service.js";
 
 function initRepo(dir: string): void {
@@ -34,6 +35,16 @@ describe("git-service", () => {
     expect(status.stdout).toContain("operator-mcp");
   });
 
+  it("detects dirty working trees from porcelain output", async () => {
+    const repoRoot = await mkdtemp(join(tmpdir(), "operator-git-"));
+    initRepo(repoRoot);
+    await mkdir(join(repoRoot, "operator-mcp"), { recursive: true });
+    await writeFile(join(repoRoot, "operator-mcp", "demo.txt"), "hi\n", "utf8");
+
+    const status = await gitStatus(repoRoot);
+    expect(isWorkingTreeDirty(status.stdout)).toBe(true);
+  });
+
   it("enforces allowed branch prefixes", () => {
     expect(() => assertAllowedBranch("main", "cursor/")).toThrow(
       GitServiceError,
@@ -52,12 +63,19 @@ describe("git-service", () => {
       cwd: repoRoot,
       stdio: "ignore",
     });
-    execFileSync("git", ["commit", "-m", "initial"], { cwd: repoRoot, stdio: "ignore" });
+    execFileSync("git", ["commit", "-m", "initial"], {
+      cwd: repoRoot,
+      stdio: "ignore",
+    });
     execFileSync("git", ["checkout", "-b", "cursor/test-branch"], {
       cwd: repoRoot,
       stdio: "ignore",
     });
-    await writeFile(join(repoRoot, "operator-mcp", "demo.txt"), "hello\n", "utf8");
+    await writeFile(
+      join(repoRoot, "operator-mcp", "demo.txt"),
+      "hello\n",
+      "utf8",
+    );
 
     const result = await gitCommit(repoRoot, {
       message: "test commit",

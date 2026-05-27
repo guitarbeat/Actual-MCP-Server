@@ -41,6 +41,16 @@ Set `OPERATOR_ALLOWED_BRANCH_PREFIX` (e.g. `cursor/`) to restrict mutating git o
 | `run-quality-gate`      | quality → build → test (optional startup smoke)   |
 | `operator-health-check` | git status, pending count, flags, build artifacts |
 
+### P4 — Deploy orchestration
+
+| Tool             | Purpose                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `prepare-deploy` | Stash if dirty → `git fetch` → `git pull --ff-only` (requires `--enable-deploy` + `--enable-git-write`) |
+| `execute-deploy` | Run quality → build → test (optional smoke); log result (requires `--enable-deploy` + approval)         |
+| `deploy-status`  | Read recent entries from `.operator/deploy-log.jsonl`                                                   |
+
+Typical flow: `prepare-deploy` → review → `apply-pending` / `git-commit` as needed → `execute-deploy` → restart processes manually when `restartRequired` is true.
+
 Resources: `operator://constraints`, `operator://pending`
 
 ## Setup
@@ -71,7 +81,8 @@ Enable mutating operations (local operator host only):
 node operator-mcp/build/index.js \
   --enable-apply \
   --enable-git-write \
-  --enable-git-push
+  --enable-git-push \
+  --enable-deploy
 ```
 
 HTTP (localhost development):
@@ -99,7 +110,8 @@ Do **not** deploy this package to public Render services alongside production bu
       "args": [
         "/absolute/path/to/workspace/operator-mcp/build/index.js",
         "--enable-apply",
-        "--enable-git-write"
+        "--enable-git-write",
+        "--enable-deploy"
       ],
       "env": {
         "OPERATOR_REPO_ROOT": "/absolute/path/to/workspace",

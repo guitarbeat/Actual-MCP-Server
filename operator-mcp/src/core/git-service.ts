@@ -60,6 +60,47 @@ export async function gitStatus(repoRoot: string): Promise<CommandResultView> {
   return toView(result);
 }
 
+export function isWorkingTreeDirty(porcelainStatus: string): boolean {
+  return porcelainStatus.split("\n").some((line) => {
+    const trimmed = line.trim();
+    return trimmed.length > 0 && !trimmed.startsWith("##");
+  });
+}
+
+export async function gitStashIfDirty(
+  repoRoot: string,
+  message: string,
+): Promise<{ stashed: boolean; result: CommandResultView }> {
+  const status = await gitStatus(repoRoot);
+  if (!isWorkingTreeDirty(status.stdout)) {
+    return { stashed: false, result: status };
+  }
+
+  const stashResult = await runGit(repoRoot, [
+    "stash",
+    "push",
+    "-u",
+    "-m",
+    message,
+  ]);
+  return { stashed: stashResult.ok, result: toView(stashResult) };
+}
+
+export async function gitFetch(
+  repoRoot: string,
+  remote: string,
+): Promise<CommandResultView> {
+  const result = await runGit(repoRoot, ["fetch", remote]);
+  return toView(result);
+}
+
+export async function gitMergeAbort(
+  repoRoot: string,
+): Promise<CommandResultView> {
+  const result = await runGit(repoRoot, ["merge", "--abort"]);
+  return toView(result);
+}
+
 export async function gitDiff(
   repoRoot: string,
   path?: string,

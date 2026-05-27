@@ -28,6 +28,8 @@ export function registerOperatorResources(
               enableApply: config.enableApply,
               enableGitWrite: config.enableGitWrite,
               enableGitPush: config.enableGitPush,
+              enableDeploy: config.enableDeploy,
+              deployLogPath: config.deployLogPath,
               allowedBranchPrefix: config.allowedBranchPrefix ?? null,
               hasApprovalSecret: Boolean(config.approvalSecret),
             },
