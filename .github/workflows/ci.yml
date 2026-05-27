@@ -48,9 +48,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint
-        run: pnpm --filter actual-mcp lint
+        run: |
+          pnpm --filter actual-mcp lint
+          pnpm --filter actual-mcp-operator lint
       - name: Format check
-        run: pnpm --filter actual-mcp format:check
+        run: |
+          pnpm --filter actual-mcp format:check
+          pnpm --filter actual-mcp-operator format:check
       - name: Secret & public-readiness checks
         run: |
           pipx install pre-commit --quiet
@@ -74,7 +78,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Type check
-        run: pnpm --filter actual-mcp type-check
+        run: |
+          pnpm --filter actual-mcp type-check
+          pnpm --filter actual-mcp-operator type-check
       - name: Tool docs check
         run: pnpm --filter actual-mcp docs:check
 
@@ -95,7 +101,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run tests with coverage
-        run: pnpm --filter actual-mcp test:coverage
+        run: |
+          pnpm --filter actual-mcp test:coverage
+          pnpm --filter actual-mcp-operator test
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always()
