@@ -17,6 +17,8 @@ describe("pending-store", () => {
     const config = createOperatorConfig({
       repoRoot,
       enableApply: true,
+      enableGitWrite: false,
+      enableGitPush: false,
       approvalSecret: "x".repeat(32),
     });
 

@@ -30,6 +30,8 @@ const {
     sse: useHttpTransport,
     "enable-bearer": enableBearer,
     "enable-apply": enableApply,
+    "enable-git-write": enableGitWrite,
+    "enable-git-push": enableGitPush,
     port,
     host,
   },
@@ -38,6 +40,8 @@ const {
     sse: { type: "boolean", default: false },
     "enable-bearer": { type: "boolean", default: false },
     "enable-apply": { type: "boolean", default: false },
+    "enable-git-write": { type: "boolean", default: false },
+    "enable-git-push": { type: "boolean", default: false },
     port: { type: "string" },
     host: { type: "string" },
   },
@@ -104,11 +108,18 @@ async function main(): Promise<void> {
 
   const config = createOperatorConfig({
     enableApply,
+    enableGitWrite,
+    enableGitPush,
     approvalSecret: process.env.OPERATOR_APPROVAL_SECRET,
   });
 
   console.error(`Operator MCP repo root: ${config.repoRoot}`);
   console.error(`Apply pending enabled: ${config.enableApply ? "yes" : "no"}`);
+  console.error(`Git write enabled: ${config.enableGitWrite ? "yes" : "no"}`);
+  console.error(`Git push enabled: ${config.enableGitPush ? "yes" : "no"}`);
+  if (config.allowedBranchPrefix) {
+    console.error(`Allowed branch prefix: ${config.allowedBranchPrefix}`);
+  }
 
   if (useHttpTransport) {
     const bindHost = host || (enableBearer ? "0.0.0.0" : "127.0.0.1");

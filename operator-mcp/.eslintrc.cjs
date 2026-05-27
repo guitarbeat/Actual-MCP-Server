@@ -35,6 +35,7 @@ module.exports = {
     "no-continue": "off",
     "no-void": "off",
     "no-restricted-syntax": "off",
+    "@typescript-eslint/no-use-before-define": "off",
   },
   ignorePatterns: [
     "build",

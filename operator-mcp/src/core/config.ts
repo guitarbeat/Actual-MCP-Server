@@ -6,6 +6,9 @@ export interface OperatorRuntimeConfig {
   pendingDir: string;
   approvalSecret?: string;
   enableApply: boolean;
+  enableGitWrite: boolean;
+  enableGitPush: boolean;
+  allowedBranchPrefix?: string;
 }
 
 export function resolveRepoRoot(explicitRoot?: string): string {
@@ -24,8 +27,12 @@ export function createOperatorConfig(options: {
   repoRoot?: string;
   approvalSecret?: string;
   enableApply: boolean;
+  enableGitWrite: boolean;
+  enableGitPush: boolean;
+  allowedBranchPrefix?: string;
 }): OperatorRuntimeConfig {
   const repoRoot = resolveRepoRoot(options.repoRoot);
+  const envPrefix = process.env.OPERATOR_ALLOWED_BRANCH_PREFIX?.trim();
 
   return {
     repoRoot,
@@ -33,5 +40,9 @@ export function createOperatorConfig(options: {
     approvalSecret:
       options.approvalSecret || process.env.OPERATOR_APPROVAL_SECRET,
     enableApply: options.enableApply,
+    enableGitWrite: options.enableGitWrite,
+    enableGitPush: options.enableGitPush,
+    allowedBranchPrefix:
+      (options.allowedBranchPrefix ?? envPrefix) || undefined,
   };
 }

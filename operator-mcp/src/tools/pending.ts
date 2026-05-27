@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { OperatorRuntimeConfig } from "../core/config.js";
-import { timingSafeStringEqual } from "../core/auth.js";
+import { verifyApprovalSecret } from "../core/approval.js";
 import {
   applyPendingRecords,
   discardPendingRecords,
@@ -9,7 +9,6 @@ import {
   proposeFileChange,
 } from "../core/pending-store.js";
 import { RepoJailError } from "../core/repo-jail.js";
-import { validateOperatorApprovalSecret } from "../core/startup-guard.js";
 import {
   errorFromCatch,
   errorResult,
@@ -98,14 +97,9 @@ export async function handleApplyPending(
     );
   }
 
-  try {
-    validateOperatorApprovalSecret(config.approvalSecret);
-  } catch (error) {
-    return errorFromCatch(error, "Operator approval secret is not configured");
-  }
-
-  if (!timingSafeStringEqual(args.approvalSecret, config.approvalSecret)) {
-    return errorResult("Invalid approval secret");
+  const approvalError = verifyApprovalSecret(config, args.approvalSecret);
+  if (approvalError) {
+    return approvalError;
   }
 
   const result = await applyPendingRecords(config, args.ids);
