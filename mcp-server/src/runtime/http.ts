@@ -327,7 +327,12 @@ function parseSessionTtl(value?: string): number | null {
 }
 
 function isOriginAllowed(origin: string | undefined, allowedOrigins: string[]): boolean {
+  // Server-to-server probes (health, smoke tests, curl) omit Origin.
   if (!origin) {
+    return allowedOrigins.length === 0;
+  }
+
+  if (allowedOrigins.length === 0) {
     return false;
   }
 

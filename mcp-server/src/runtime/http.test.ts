@@ -122,6 +122,23 @@ describe('createHttpRuntime', () => {
     expect(response.headers.get('access-control-allow-origin')).toBeNull();
   });
 
+  it('allows health checks without an Origin when no allowlist is configured', async () => {
+    delete process.env.MCP_ALLOWED_ORIGINS;
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: '12345678901234567890123456789012',
+    });
+
+    const response = await app.fetch(new Request('http://localhost/health'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ status: 'ok' });
+  });
+
   it('rejects requests with missing origin', async () => {
     process.env.NODE_ENV = 'production';
     process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
