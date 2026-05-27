@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository is a `pnpm` workspace with one product package: [`mcp-server/`](./mcp-server). Run commands from the workspace root unless a section says otherwise.
+This repository is a `pnpm` workspace with the product package [`mcp-server/`](./mcp-server) and the private operator package [`operator-mcp/`](./operator-mcp). Run commands from the workspace root unless a section says otherwise.
 
 ## Prerequisites
 
@@ -25,6 +25,7 @@ pnpm install
 - [`mcp-server/scripts/sync-tool-docs.ts`](./mcp-server/scripts/sync-tool-docs.ts): regenerates README MCP-surface counts and [`mcp-server/docs/tool-registry.md`](./mcp-server/docs/tool-registry.md)
 - [`mcp-server/scripts/public-repo-check.ts`](./mcp-server/scripts/public-repo-check.ts): blocks local artifacts, tracked env files, local paths, and leaked inspector/auth strings
 - [`docs/engineering-notes.md`](./docs/engineering-notes.md): contributor-facing implementation notes
+- [`operator-mcp/`](./operator-mcp): private operator MCP for guarded repo reads and staged writes (not published with budget MCP)
 
 ## Common Commands
 
@@ -45,6 +46,12 @@ pnpm start:mcp-server
 pnpm test:mcp-server
 pnpm docs:mcp-server
 pnpm public:check:mcp-server
+
+pnpm dev:operator-mcp
+pnpm start:operator-mcp
+pnpm build:operator-mcp
+pnpm test:operator-mcp
+pnpm quality:operator-mcp
 ```
 
 Package-level commands from the root:

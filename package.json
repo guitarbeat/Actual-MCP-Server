@@ -26,6 +26,11 @@
     "start:mcp-server": "pnpm --filter actual-mcp start",
     "test:mcp-server": "pnpm --filter actual-mcp test",
     "docs:mcp-server": "pnpm --filter actual-mcp docs:generate",
-    "public:check:mcp-server": "pnpm --filter actual-mcp public:check"
+    "public:check:mcp-server": "pnpm --filter actual-mcp public:check",
+    "dev:operator-mcp": "pnpm --filter actual-mcp-operator dev",
+    "start:operator-mcp": "pnpm --filter actual-mcp-operator start",
+    "build:operator-mcp": "pnpm --filter actual-mcp-operator build",
+    "test:operator-mcp": "pnpm --filter actual-mcp-operator test",
+    "quality:operator-mcp": "pnpm --filter actual-mcp-operator quality"
   }
 }

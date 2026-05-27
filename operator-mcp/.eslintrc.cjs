@@ -1,0 +1,45 @@
+module.exports = {
+  extends: [
+    "airbnb-base",
+    "airbnb-typescript/base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+  ],
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: "./tsconfig.eslint.json",
+    tsconfigRootDir: __dirname,
+  },
+  plugins: ["@typescript-eslint", "prettier"],
+  root: true,
+  rules: {
+    "import/prefer-default-export": "off",
+    "class-methods-use-this": "off",
+    "no-underscore-dangle": "off",
+    "no-console": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+        ignoreRestSiblings: true,
+      },
+    ],
+    "import/extensions": "off",
+    "no-plusplus": "off",
+    "no-param-reassign": "off",
+    "consistent-return": "off",
+    "import/no-extraneous-dependencies": "off",
+    "no-await-in-loop": "off",
+    "no-continue": "off",
+    "no-void": "off",
+    "no-restricted-syntax": "off",
+  },
+  ignorePatterns: [
+    "build",
+    "node_modules",
+    ".eslintrc.cjs",
+    "vitest.config.ts",
+  ],
+};

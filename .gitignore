@@ -34,6 +34,9 @@ Thumbs.db
 .agent
 .jules
 
+# Operator MCP staged changes
+.operator/
+
 # Private local workspaces and cache
 .eslintcache
 .smart-coding-cache
