@@ -1,0 +1,232 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildCurrentTransactionMap,
+  buildRulePayload,
+  hasExistingExactRule,
+} from './apply-support.js';
+import type { Transaction } from '../../types/domain.js';
+import type { TimelineReconCandidate } from './types.js';
+import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+
+describe('apply-support', () => {
+  describe('buildCurrentTransactionMap', () => {
+    it('should build a map of transactions by ID', () => {
+      const transactions = [
+        {
+          id: 'tx-1',
+          date: '2024-05-13',
+          amount: 1500,
+          payee_name: 'Store A',
+          imported_payee: 'STORE A',
+          category_name: 'Food',
+          notes: 'Groceries',
+          is_parent: false,
+          is_child: false,
+          transfer_id: null,
+        } as Transaction,
+        {
+          id: 'tx-2',
+          date: '2024-05-14',
+          amount: -500,
+          payee_name: null,
+          imported_payee: null,
+          category_name: null,
+          notes: null,
+          is_parent: true,
+          is_child: false,
+          transfer_id: 'trans-1',
+        } as unknown as Transaction,
+      ];
+
+      const map = buildCurrentTransactionMap(transactions);
+
+      expect(map.size).toBe(2);
+      expect(map.get('tx-1')).toEqual({
+        id: 'tx-1',
+        date: '2024-05-13',
+        amountCents: 1500,
+        payeeName: 'Store A',
+        importedPayee: 'STORE A',
+        categoryName: 'Food',
+        notes: 'Groceries',
+        isParent: false,
+        isChild: false,
+        transferId: null,
+      });
+
+      expect(map.get('tx-2')).toEqual({
+        id: 'tx-2',
+        date: '2024-05-14',
+        amountCents: -500,
+        payeeName: '',
+        importedPayee: null,
+        categoryName: null,
+        notes: null,
+        isParent: true,
+        isChild: false,
+        transferId: 'trans-1',
+      });
+    });
+
+    it('should handle empty transactions array', () => {
+      const map = buildCurrentTransactionMap([]);
+      expect(map.size).toBe(0);
+    });
+  });
+
+  describe('buildRulePayload', () => {
+    it('should return null if candidate is missing ruleField', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleValue: 'value',
+      } as unknown as TimelineReconCandidate;
+      expect(buildRulePayload(candidate, 'cat-1')).toBeNull();
+    });
+
+    it('should return null if candidate is missing ruleValue', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleField: 'payee_name',
+      } as unknown as TimelineReconCandidate;
+      expect(buildRulePayload(candidate, 'cat-1')).toBeNull();
+    });
+
+    it('should build a rule payload when candidate has ruleField and ruleValue', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleField: 'imported_payee',
+        ruleValue: 'STORE X',
+      } as TimelineReconCandidate;
+
+      const payload = buildRulePayload(candidate, 'cat-1');
+
+      expect(payload).toEqual({
+        stage: 'default',
+        conditionsOp: 'and',
+        conditions: [
+          {
+            field: 'account',
+            op: 'is',
+            value: 'acc-1',
+          },
+          {
+            field: 'imported_payee',
+            op: 'is',
+            value: 'STORE X',
+          },
+        ],
+        actions: [
+          {
+            field: 'category',
+            op: 'set',
+            value: 'cat-1',
+          },
+        ],
+      });
+    });
+  });
+
+  describe('hasExistingExactRule', () => {
+    it('should return true if candidate is missing ruleField or ruleValue', () => {
+      const candidate1 = { ruleValue: 'val' } as TimelineReconCandidate;
+      expect(hasExistingExactRule([], candidate1, 'cat-1')).toBe(true);
+
+      const candidate2 = { ruleField: 'field' } as TimelineReconCandidate;
+      expect(hasExistingExactRule([], candidate2, 'cat-1')).toBe(true);
+    });
+
+    it('should return true if an exact matching rule exists', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleField: 'payee_name',
+        ruleValue: 'Store Y',
+      } as TimelineReconCandidate;
+
+      const rules = [
+        {
+          id: 'rule-1',
+          conditions: [
+            { field: 'account', op: 'is', value: 'acc-1' },
+            { field: 'payee_name', op: 'is', value: 'Store Y' },
+          ],
+          actions: [{ field: 'category', op: 'set', value: 'cat-1' }],
+        } as RuleEntity,
+      ];
+
+      expect(hasExistingExactRule(rules, candidate, 'cat-1')).toBe(true);
+    });
+
+    it('should return false if no rules match the account', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleField: 'payee_name',
+        ruleValue: 'Store Y',
+      } as TimelineReconCandidate;
+
+      const rules = [
+        {
+          id: 'rule-1',
+          conditions: [
+            { field: 'account', op: 'is', value: 'acc-2' },
+            { field: 'payee_name', op: 'is', value: 'Store Y' },
+          ],
+          actions: [{ field: 'category', op: 'set', value: 'cat-1' }],
+        } as RuleEntity,
+      ];
+
+      expect(hasExistingExactRule(rules, candidate, 'cat-1')).toBe(false);
+    });
+
+    it('should return false if no rules match the merchant field/value', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleField: 'imported_payee',
+        ruleValue: 'STORE Y',
+      } as unknown as TimelineReconCandidate;
+
+      const rules = [
+        {
+          id: 'rule-1',
+          conditions: [
+            { field: 'account', op: 'is', value: 'acc-1' },
+            { field: 'payee_name', op: 'is', value: 'Store Y' },
+          ],
+          actions: [{ field: 'category', op: 'set', value: 'cat-1' }],
+        } as RuleEntity,
+      ];
+
+      expect(hasExistingExactRule(rules, candidate, 'cat-1')).toBe(false);
+    });
+
+    it('should return false if no rules have the exact category action', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleField: 'payee_name',
+        ruleValue: 'Store Y',
+      } as TimelineReconCandidate;
+
+      const rules = [
+        {
+          id: 'rule-1',
+          conditions: [
+            { field: 'account', op: 'is', value: 'acc-1' },
+            { field: 'payee_name', op: 'is', value: 'Store Y' },
+          ],
+          actions: [{ field: 'category', op: 'set', value: 'cat-2' }],
+        } as RuleEntity,
+      ];
+
+      expect(hasExistingExactRule(rules, candidate, 'cat-1')).toBe(false);
+    });
+
+    it('should return false for empty rules array', () => {
+      const candidate = {
+        accountId: 'acc-1',
+        ruleField: 'payee_name',
+        ruleValue: 'Store Y',
+      } as TimelineReconCandidate;
+
+      expect(hasExistingExactRule([], candidate, 'cat-1')).toBe(false);
+    });
+  });
+});
