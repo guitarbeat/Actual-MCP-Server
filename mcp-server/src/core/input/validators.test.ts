@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   assertMonth,
   assertPositiveIntegerCents,
@@ -7,6 +7,9 @@ import {
   validateDate,
   validateMonth,
   validateUUID,
+  MonthSchema,
+  UUIDSchema,
+  PositiveIntegerCentsSchema,
 } from './validators.js';
 
 describe('validators', () => {
@@ -122,6 +125,17 @@ describe('validators', () => {
     it('throws an error if value is not a string type', () => {
       expect(() => assertUuid(123, 'userId')).toThrow('userId must be a valid UUID');
     });
+
+    it('throws the original error if it is not a ZodError', () => {
+      const error = new Error('Not a ZodError');
+      vi.spyOn(UUIDSchema, 'parse').mockImplementationOnce(() => {
+        throw error;
+      });
+
+      expect(() => assertUuid('123e4567-e89b-12d3-a456-426614174000', 'userId')).toThrow(
+        'Not a ZodError',
+      );
+    });
   });
 
   describe('assertMonth', () => {
@@ -160,6 +174,15 @@ describe('validators', () => {
       expect(() => assertMonth(123, 'billingMonth')).toThrow(
         'billingMonth must be in YYYY-MM format',
       );
+    });
+
+    it('throws the original error if it is not a ZodError', () => {
+      const error = new Error('Not a ZodError');
+      vi.spyOn(MonthSchema, 'parse').mockImplementationOnce(() => {
+        throw error;
+      });
+
+      expect(() => assertMonth('2023-10', 'billingMonth')).toThrow('Not a ZodError');
     });
   });
 
@@ -202,6 +225,15 @@ describe('validators', () => {
       expect(() => assertPositiveIntegerCents(100.5, 'price')).toThrow(
         'price must be a positive integer amount in cents',
       );
+    });
+
+    it('throws the original error if it is not a ZodError', () => {
+      const error = new Error('Not a ZodError');
+      vi.spyOn(PositiveIntegerCentsSchema, 'parse').mockImplementationOnce(() => {
+        throw error;
+      });
+
+      expect(() => assertPositiveIntegerCents(100, 'price')).toThrow('Not a ZodError');
     });
   });
 });
