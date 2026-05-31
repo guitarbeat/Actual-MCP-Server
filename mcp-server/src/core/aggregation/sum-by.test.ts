@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 import { sumBy } from './sum-by.js';
 
 describe('sumBy', () => {
@@ -47,5 +48,41 @@ describe('sumBy', () => {
 
     const invalidData: Array<{ val: string | number }> = [{ val: 'abc' }, { val: 5 }];
     expect(sumBy(invalidData, 'val')).toBe(5);
+  });
+
+  it('should handle objects missing the specified key', () => {
+    // Objects missing 'val' will yield undefined for that property, which should be treated as 0
+    const data = [{ val: 10 }, { other: 20 } as any, { val: 30 }];
+    expect(sumBy(data, 'val')).toBe(40);
+  });
+
+  it('should handle boolean coercion correctly', () => {
+    // true -> 1, false -> 0
+    const data = [
+      { val: true as unknown as number },
+      { val: false as unknown as number },
+      { val: true as unknown as number },
+    ];
+    expect(sumBy(data, 'val')).toBe(2);
+  });
+
+  describe('property-based tests', () => {
+    it('should match native reduce logic for function iteratees', () => {
+      fc.assert(
+        fc.property(fc.array(fc.record({ val: fc.double({ noNaN: true }) })), (arr) => {
+          const expected = arr.reduce((sum, item) => sum + item.val, 0);
+          expect(sumBy(arr, (d) => d.val)).toBeCloseTo(expected, 10);
+        }),
+      );
+    });
+
+    it('should match native reduce logic for key iteratees', () => {
+      fc.assert(
+        fc.property(fc.array(fc.record({ val: fc.double({ noNaN: true }) })), (arr) => {
+          const expected = arr.reduce((sum, item) => sum + item.val, 0);
+          expect(sumBy(arr, 'val')).toBeCloseTo(expected, 10);
+        }),
+      );
+    });
   });
 });
