@@ -1,6 +1,6 @@
 import { createUnifiedCRUDTool } from '../../tools/crud-factory.js';
 import { entityConfigurations } from '../../tools/crud-factory-config.js';
-import { defineLegacyTool } from './common.js';
+import { defineTool } from './common.js';
 
 /**
  * Unified CRUD tools — one manage-{entity} tool per entity type.
@@ -16,4 +16,4 @@ export const crudToolDefinitions = [
   createUnifiedCRUDTool(entityConfigurations.account),
   createUnifiedCRUDTool(entityConfigurations.rule),
   createUnifiedCRUDTool(entityConfigurations.categoryGroup),
-].map((tool) => defineLegacyTool(tool));
+].map((tool) => defineTool(tool));

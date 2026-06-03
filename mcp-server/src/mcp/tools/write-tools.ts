@@ -16,25 +16,25 @@ import * as deleteTransaction from '../../tools/transactions/delete-transaction/
 import * as importTransactionBatch from '../../tools/transactions/import-transaction-batch/index.js';
 import * as applyHistoricalTransfers from '../../tools/transactions/apply-historical-transfers/index.js';
 import * as updateTransaction from '../../tools/transactions/update-transaction/index.js';
-import { defineLegacyTool } from './common.js';
+import { defineTool } from './common.js';
 
 export const writeToolDefinitions = [
-  defineLegacyTool({ ...setBudget, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...mergePayees, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...importTransactions, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...importTransactionBatch, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...applyBudgetPlan, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...setAccountStartingBalance, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...reconcileAccount, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...createSchedule, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...updateSchedule, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...deleteSchedule, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...createTransaction, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...applyHistoricalTransfers, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...updateTransaction, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...deleteTransaction, requiresWrite: true, category: 'core' }),
-  defineLegacyTool({ ...closeAccount, requiresWrite: true, category: 'advanced' }),
-  defineLegacyTool({ ...reopenAccount, requiresWrite: true, category: 'advanced' }),
-  defineLegacyTool({ ...holdBudget, requiresWrite: true, category: 'advanced' }),
-  defineLegacyTool({ ...resetBudgetHold, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...setBudget, requiresWrite: true, category: 'core' }),
+  defineTool({ ...mergePayees, requiresWrite: true, category: 'core' }),
+  defineTool({ ...importTransactions, requiresWrite: true, category: 'core' }),
+  defineTool({ ...importTransactionBatch, requiresWrite: true, category: 'core' }),
+  defineTool({ ...applyBudgetPlan, requiresWrite: true, category: 'core' }),
+  defineTool({ ...setAccountStartingBalance, requiresWrite: true, category: 'core' }),
+  defineTool({ ...reconcileAccount, requiresWrite: true, category: 'core' }),
+  defineTool({ ...createSchedule, requiresWrite: true, category: 'core' }),
+  defineTool({ ...updateSchedule, requiresWrite: true, category: 'core' }),
+  defineTool({ ...deleteSchedule, requiresWrite: true, category: 'core' }),
+  defineTool({ ...createTransaction, requiresWrite: true, category: 'core' }),
+  defineTool({ ...applyHistoricalTransfers, requiresWrite: true, category: 'core' }),
+  defineTool({ ...updateTransaction, requiresWrite: true, category: 'core' }),
+  defineTool({ ...deleteTransaction, requiresWrite: true, category: 'core' }),
+  defineTool({ ...closeAccount, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...reopenAccount, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...holdBudget, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...resetBudgetHold, requiresWrite: true, category: 'advanced' }),
 ];
