@@ -16,25 +16,25 @@ import * as auditHistoricalTransfers from '../../tools/transactions/audit-histor
 import * as auditUncategorizedTransactions from '../../tools/transactions/audit-uncategorized-transactions/index.js';
 import * as spendingByCategory from '../../tools/spending-by-category/index.js';
 import * as getAccountBalance from '../../tools/accounts/get-account-balance/index.js';
-import { defineLegacyTool } from './common.js';
+import { defineTool } from './common.js';
 
 export const readToolDefinitions = [
-  defineLegacyTool({ ...auditHistoricalTransfers, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...auditUncategorizedTransactions, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getTransactions, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...spendingByCategory, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...monthlySummary, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...financialInsights, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...balanceHistory, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getAccounts, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getGroupedCategories, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getPayees, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getTags, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getRules, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...recommendBudgetPlan, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getSchedules, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getAccountBalance, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getBudget, requiresWrite: false, category: 'core' }),
-  defineLegacyTool({ ...getBudgets, requiresWrite: false, category: 'advanced' }),
-  defineLegacyTool({ ...switchBudget, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...auditHistoricalTransfers, requiresWrite: false, category: 'core' }),
+  defineTool({ ...auditUncategorizedTransactions, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getTransactions, requiresWrite: false, category: 'core' }),
+  defineTool({ ...spendingByCategory, requiresWrite: false, category: 'core' }),
+  defineTool({ ...monthlySummary, requiresWrite: false, category: 'core' }),
+  defineTool({ ...financialInsights, requiresWrite: false, category: 'core' }),
+  defineTool({ ...balanceHistory, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getAccounts, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getGroupedCategories, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getPayees, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getTags, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getRules, requiresWrite: false, category: 'core' }),
+  defineTool({ ...recommendBudgetPlan, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getSchedules, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getAccountBalance, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getBudget, requiresWrite: false, category: 'core' }),
+  defineTool({ ...getBudgets, requiresWrite: false, category: 'advanced' }),
+  defineTool({ ...switchBudget, requiresWrite: true, category: 'advanced' }),
 ];

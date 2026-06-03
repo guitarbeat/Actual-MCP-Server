@@ -31,7 +31,7 @@ type LegacyToolHandler<TArgs> = {
   bivarianceHack: (args: TArgs) => Promise<CallToolResult>;
 }['bivarianceHack'];
 
-interface LegacyToolLike<TArgs = Record<string, unknown>> {
+interface ToolLike<TArgs = Record<string, unknown>> {
   schema: {
     name: string;
     description?: string;
@@ -42,7 +42,7 @@ interface LegacyToolLike<TArgs = Record<string, unknown>> {
   category: ToolCategory;
 }
 
-export function defineLegacyTool<TArgs>(tool: LegacyToolLike<TArgs>): DeclarativeToolDefinition {
+export function defineTool<TArgs>(tool: ToolLike<TArgs>): DeclarativeToolDefinition {
   const title = humanizeToolName(tool.schema.name);
 
   return {
