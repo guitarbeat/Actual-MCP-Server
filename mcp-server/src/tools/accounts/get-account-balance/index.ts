@@ -11,11 +11,13 @@ import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
 
 const GetAccountBalanceSchema = z.object({
-  id: z.string().min(1, 'Account name or ID is required'),
+  id: z.string().min(1, 'Account name or ID is required')
+    .describe('Account name or ID (supports partial matching, e.g., "Checking" matches "Chase Checking").'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-    .optional(),
+    .optional()
+    .describe('Date in YYYY-MM-DD format for historical balance. Omit for current balance.'),
 });
 
 export const schema = {
