@@ -237,7 +237,7 @@ export const RuleActionSchema = z.object({
  */
 export const RuleDataSchema = z.object({
   stage: z.enum(['pre', 'default', 'post']).nullable().optional()
-    .describe('When the rule runs: "pre" (before other rules), "default" (normal), or "post" (after other rules). Defaults to null (same as "default").'),
+    .describe('When the rule runs: "pre" (before other rules), "default" (normal), or "post" (after other rules). If null, treated the same as "default".'),
   conditionsOp: z.enum(['and', 'or'])
     .describe('How to combine conditions: "and" (all must match) or "or" (any must match).'),
   conditions: z.array(RuleConditionSchema).min(1, 'At least one condition is required')
@@ -279,7 +279,7 @@ export const RecurConfigSchema = z.object({
 export const ScheduleDataSchema = z
   .object({
     name: z.string().min(1, 'Schedule name is recommended').optional()
-      .describe('Display name for the schedule (e.g., "Monthly Rent"). Must be unique.'),
+      .describe('Display name for the schedule (e.g., "Monthly Rent"). Should be unique.'),
     account: z.string().min(1, 'Account name or ID is required').nullable().optional()
       .describe('Account name or ID where the scheduled transaction will post. Supports partial matching.'),
     accountId: z.string().min(1, 'Account name or ID is required').optional()
@@ -308,7 +308,7 @@ export const ScheduleDataSchema = z
     category: z.string().min(1, 'Category name or ID is required').nullable().optional()
       .describe('Category name or ID for the scheduled transactions. Supports partial matching.'),
     posts_transaction: z.boolean().optional()
-      .describe('Whether the schedule automatically creates transactions when due. Defaults to false.'),
+      .describe('Whether the schedule automatically creates transactions when due.'),
     resetNextDate: z.boolean().optional()
       .describe('If true, recalculate the next occurrence date after applying changes. Only used when updating an existing schedule.'),
   })
