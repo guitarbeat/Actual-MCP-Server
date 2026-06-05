@@ -422,6 +422,7 @@ async function checkConnectionHealth(): Promise<boolean> {
           );
         }
         markConnectionError(normalizedError);
+        startBackgroundRetry();
         return false;
       }
 

@@ -106,6 +106,7 @@ Typical Render setup:
 2. Provide `ACTUAL_SERVER_URL`, one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`, `ACTUAL_BUDGET_SYNC_ID`, and `BEARER_TOKEN`.
 3. Use `/health` as the liveness endpoint and `/ready` as the readiness endpoint.
 4. Optional tuneables such as `MCP_SESSION_TTL_MINUTES`, `ACTUAL_CONNECTION_HEALTH_TTL_MS`, `AUTO_SYNC_INTERVAL_MINUTES`, `MCP_ALLOWED_ORIGINS`, `MCP_TOOL_CORRELATION_LOGS`, `MCP_READINESS_TRANSITION_LOGS`, or `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` are documented in `.env.example` / `README`; add them in the Render Dashboard when you rely on defaults other than ours.
+5. If using the free tier, attach a Render Disk ($0.25/GB/mo) and set the `ACTUAL_DATA_DIR` environment variable to a path on that disk so your budget file survives cold starts.
 
 If you are looking at Render Workflows examples such as:
 

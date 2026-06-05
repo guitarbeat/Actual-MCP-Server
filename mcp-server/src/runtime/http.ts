@@ -8,6 +8,7 @@ import {
   getReadinessStatus,
   getConnectionStatus,
   DEFAULT_DATA_DIR,
+  initActualApi,
 } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
@@ -136,6 +137,16 @@ export function createHttpRuntime(options: {
     } catch (error) {
       console.error('Diagnostics endpoint failed:', error);
       return c.json({ error: 'diagnostics unavailable' }, 500);
+    }
+  });
+
+  app.post('/reconnect', requireBearer, async (c) => {
+    try {
+      await initActualApi(true);
+      return c.json({ status: 'ok', message: 'Reconnected' });
+    } catch (error) {
+      console.error('Reconnect failed:', error);
+      return c.json({ error: 'reconnect failed' }, 500);
     }
   });
 
