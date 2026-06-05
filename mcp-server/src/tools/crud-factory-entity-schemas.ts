@@ -139,9 +139,9 @@ export const CreateAccountSchema = z.object({
     }),
   }).describe('Account type: checking, savings, credit, investment, mortgage, debt, or other.'),
   offbudget: z.boolean().optional()
-    .describe('If true, this is a tracking-only account that does not affect budget calculations. Defaults to false.'),
+    .describe('If true, this is a tracking-only account that does not affect budget calculations.'),
   initialBalance: z.number().int().optional()
-    .describe('Starting balance in cents (e.g., 1000000 = $10,000). Defaults to 0.'),
+    .describe('Starting balance in cents (e.g., 1000000 = $10,000).'),
   balanceCurrent: z.number().int().nullable().optional()
     .describe('Reported bank balance in cents, stored separately from ledger history for reconciliation.'),
 });
