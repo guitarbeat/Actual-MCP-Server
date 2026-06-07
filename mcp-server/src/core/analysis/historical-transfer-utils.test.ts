@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getTransferLikeMatch, buildHistoricalTransferCandidateId } from './historical-transfer-utils.js';
+import {
+  getTransferLikeMatch,
+  buildHistoricalTransferCandidateId,
+} from './historical-transfer-utils.js';
 
 describe('historical-transfer-utils', () => {
-
   describe('buildHistoricalTransferCandidateId', () => {
     it('sorts and joins two transaction IDs with double colons', () => {
       expect(buildHistoricalTransferCandidateId('A', 'B')).toBe('A::B');
