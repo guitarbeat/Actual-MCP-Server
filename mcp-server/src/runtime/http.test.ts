@@ -32,8 +32,6 @@ const SAMPLE_READINESS_DIAGNOSTICS = {
 beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
-  mockGetConnectionState.mockReset();
-  mockGetConnectionState.mockReturnValue({ status: 'ready' });
   mockGetConnectionState.mockReturnValue({
     status: 'ready',
     budgetId: 'test-budget',
