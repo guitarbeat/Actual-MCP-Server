@@ -9,6 +9,13 @@ describe('mapSettledWithConcurrency', () => {
     expect(worker).not.toHaveBeenCalled();
   });
 
+  it('should return an empty array immediately when given an empty array even with high concurrency limit', async () => {
+    const worker = vi.fn();
+    const result = await mapSettledWithConcurrency([], worker, 100);
+    expect(result).toEqual([]);
+    expect(worker).not.toHaveBeenCalled();
+  });
+
   it('should successfully map items', async () => {
     const items = [1, 2, 3];
     const worker = async (item: number) => item * 2;
