@@ -6,7 +6,6 @@ import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import {
   getConnectionState,
   getReadinessStatus,
-  getConnectionStatus,
   DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
@@ -118,7 +117,7 @@ export function createHttpRuntime(options: {
 
   app.get('/diagnostics', (c) => {
     try {
-      const connectionInfo = getConnectionStatus();
+      const connectionInfo = getConnectionState();
       return c.json({
         connection: connectionInfo,
         server: {
