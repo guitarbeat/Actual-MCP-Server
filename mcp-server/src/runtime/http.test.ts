@@ -12,7 +12,7 @@ const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
-  getConnectionStatus: mockGetConnectionStatus,
+
   DEFAULT_DATA_DIR: '/mock/data',
 }));
 
@@ -37,7 +37,11 @@ beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
   mockGetConnectionStatus.mockReset();
-  mockGetConnectionState.mockReturnValue({ status: 'ready' });
+  mockGetConnectionState.mockReturnValue({
+    status: 'ready',
+    initialized: true,
+    budgetId: 'test-budget',
+  });
   mockGetConnectionStatus.mockReturnValue({
     status: 'ready',
     budgetId: 'test-budget',
@@ -335,7 +339,7 @@ describe('GET /diagnostics', () => {
   });
 
   it('should return 500 when diagnostics are unavailable', async () => {
-    mockGetConnectionStatus.mockImplementation(() => {
+    mockGetConnectionState.mockImplementation(() => {
       throw new Error('Test error');
     });
 
