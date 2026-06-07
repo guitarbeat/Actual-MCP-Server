@@ -9,6 +9,13 @@ import type {
   APITagEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type RuleEntity = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TransactionEntity = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ImportTransactionsOpts = any;
+
 export type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
   updateSchedule?: (

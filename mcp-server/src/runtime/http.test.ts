@@ -12,7 +12,7 @@ const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
-  getConnectionStatus: mockGetConnectionStatus,
+  getConnectionState: mockGetConnectionStatus,
   DEFAULT_DATA_DIR: '/mock/data',
 }));
 

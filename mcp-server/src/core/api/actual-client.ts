@@ -68,6 +68,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastError: null,
   debugError: null,
   activeBudgetId: null,
+  lastErrorAt: null,
 };
 
 // API initialization state
@@ -236,6 +237,7 @@ function markConnectionError(error: unknown): void {
     status: 'error',
     lastError: sanitizeConnectionError(error),
     debugError: rawMessage,
+    lastErrorAt: nowAsIsoString(),
   });
 }
 
@@ -414,6 +416,7 @@ async function checkConnectionHealth(): Promise<boolean> {
         errorStr.includes('network') ||
         errorStr.includes('timeout') ||
         errorStr.includes('no budget file is open') ||
+        errorStr.includes('budget_not_loaded') ||
         errorStr.includes('budget file')
       ) {
         if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {

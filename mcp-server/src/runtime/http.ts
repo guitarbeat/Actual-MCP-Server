@@ -3,15 +3,12 @@ import { Hono } from 'hono';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
-import {
-  getConnectionState,
-  getReadinessStatus,
-  getConnectionStatus,
-  DEFAULT_DATA_DIR,
-} from '../core/api/actual-client.js';
+import { getConnectionState, getReadinessStatus } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
+
+const DEFAULT_DATA_DIR = './data';
 
 interface SessionConnection {
   server: ReturnType<typeof createActualMcpServer>;
@@ -118,7 +115,7 @@ export function createHttpRuntime(options: {
 
   app.get('/diagnostics', (c) => {
     try {
-      const connectionInfo = getConnectionStatus();
+      const connectionInfo = getConnectionState();
       return c.json({
         connection: connectionInfo,
         server: {
