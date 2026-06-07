@@ -94,7 +94,7 @@ export function parseHistoricalTransferCandidateId(candidateId: string): [string
 
   if (parts.length !== 2) {
     throw new Error(
-      `Invalid historical transfer candidate ID "${candidateId}". Expected two transaction IDs joined by "${HISTORICAL_TRANSFER_CANDIDATE_SEPARATOR}".`,
+      `Invalid historical transfer candidate ID: "${candidateId}". Expected format: "[id1]${HISTORICAL_TRANSFER_CANDIDATE_SEPARATOR}[id2]"`,
     );
   }
 
