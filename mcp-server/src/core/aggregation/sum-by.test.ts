@@ -71,7 +71,11 @@ describe('sumBy', () => {
       fc.assert(
         fc.property(fc.array(fc.record({ val: fc.double({ noNaN: true }) })), (arr) => {
           const expected = arr.reduce((sum, item) => sum + item.val, 0);
-          expect(sumBy(arr, (d) => d.val)).toBeCloseTo(expected, 10);
+          if (Number.isNaN(expected)) {
+            expect(sumBy(arr, (d) => d.val)).toBeNaN();
+          } else {
+            expect(sumBy(arr, (d) => d.val)).toBeCloseTo(expected, 10);
+          }
         }),
       );
     });
@@ -80,7 +84,11 @@ describe('sumBy', () => {
       fc.assert(
         fc.property(fc.array(fc.record({ val: fc.double({ noNaN: true }) })), (arr) => {
           const expected = arr.reduce((sum, item) => sum + item.val, 0);
-          expect(sumBy(arr, 'val')).toBeCloseTo(expected, 10);
+          if (Number.isNaN(expected)) {
+            expect(sumBy(arr, 'val')).toBeNaN();
+          } else {
+            expect(sumBy(arr, 'val')).toBeCloseTo(expected, 10);
+          }
         }),
       );
     });
