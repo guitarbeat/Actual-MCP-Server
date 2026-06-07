@@ -3,6 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import '../../polyfill.js';
 import api from '@actual-app/api';
+import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
+import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
 import type {
   ActualConnectionState,
   ActualReadFreshnessMode,
@@ -18,9 +21,6 @@ import type {
   HistoricalTransferApplyCandidateResult,
   HistoricalTransferApplyResult,
   HistoricalTransferInternalTransaction,
-  ImportTransactionsOpts,
-  RuleEntity,
-  TransactionEntity,
 } from './actual-client/types.js';
 import {
   getDateDiffInDays,
@@ -58,7 +58,7 @@ export type {
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
-const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
@@ -66,6 +66,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  lastErrorAt: null,
   debugError: null,
   activeBudgetId: null,
 };
