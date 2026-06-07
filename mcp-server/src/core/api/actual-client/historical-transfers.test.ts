@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 import { isValidHistoricalTransferTransaction } from './historical-transfers.js';
 import type { HistoricalTransferInternalTransaction } from './types.js';
 
@@ -46,5 +47,32 @@ describe('isValidHistoricalTransferTransaction', () => {
     expect(
       isValidHistoricalTransferTransaction({ ...baseTransaction, transfer_id: 'trans1' }),
     ).toBe(false);
+  });
+
+  it('correctly evaluates all permutations of flags using fast-check', () => {
+    fc.assert(
+      fc.property(
+        fc.boolean(),
+        fc.boolean(),
+        fc.boolean(),
+        fc.boolean(),
+        fc.oneof(fc.string(), fc.constant(undefined)),
+        (tombstone, startingBalanceFlag, isParent, isChild, transferId) => {
+          const tx: HistoricalTransferInternalTransaction = {
+            ...baseTransaction,
+            tombstone,
+            starting_balance_flag: startingBalanceFlag,
+            is_parent: isParent,
+            is_child: isChild,
+            transfer_id: transferId,
+          };
+
+          const expected =
+            !tombstone && !startingBalanceFlag && !isParent && !isChild && !transferId;
+
+          expect(isValidHistoricalTransferTransaction(tx)).toBe(expected);
+        },
+      ),
+    );
   });
 });
