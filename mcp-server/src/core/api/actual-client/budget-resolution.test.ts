@@ -40,6 +40,42 @@ describe('budget-resolution', () => {
 
       expect(getBudgetIdentifiers(budget)).toEqual([]);
     });
+
+    it('filters out null and undefined values', () => {
+      const budget: BudgetFile = {
+        name: 'My Budget',
+        groupId: undefined,
+        // @ts-expect-error - testing invalid runtime data
+        cloudFileId: null,
+        id: 'local-123',
+      };
+
+      expect(getBudgetIdentifiers(budget)).toEqual(['local-123']);
+    });
+
+    it('filters out non-string values', () => {
+      const budget: BudgetFile = {
+        name: 'My Budget',
+        // @ts-expect-error - testing invalid runtime data
+        groupId: 123,
+        // @ts-expect-error - testing invalid runtime data
+        cloudFileId: true,
+        // @ts-expect-error - testing invalid runtime data
+        id: {},
+      };
+
+      expect(getBudgetIdentifiers(budget)).toEqual([]);
+    });
+
+    it('maintains priority order when some identifiers are missing', () => {
+      const budget: BudgetFile = {
+        name: 'My Budget',
+        cloudFileId: 'cloud-456',
+        id: 'local-789',
+      };
+
+      expect(getBudgetIdentifiers(budget)).toEqual(['cloud-456', 'local-789']);
+    });
   });
 
   describe('matchesBudgetIdentifier', () => {
