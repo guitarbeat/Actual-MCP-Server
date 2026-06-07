@@ -100,3 +100,6 @@ export type {
   APIScheduleEntity,
   APITagEntity,
 };
+
+// Fallback interface if it doesn't exist elsewhere
+export type ImportTransactionsOpts = Record<string, unknown>;

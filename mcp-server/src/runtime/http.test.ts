@@ -1,18 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHttpRuntime } from './http.js';
 
-const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus } = vi.hoisted(
-  () => ({
-    mockGetConnectionState: vi.fn(),
-    mockGetReadinessStatus: vi.fn(),
-    mockGetConnectionStatus: vi.fn(),
-  }),
-);
+const { mockGetConnectionState, mockGetReadinessStatus } = vi.hoisted(() => ({
+  mockGetConnectionState: vi.fn(),
+  mockGetReadinessStatus: vi.fn(),
+}));
 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
-  getConnectionStatus: mockGetConnectionStatus,
+  getConnectionStatus: mockGetConnectionState,
   DEFAULT_DATA_DIR: '/mock/data',
 }));
 
@@ -36,9 +33,9 @@ const SAMPLE_READINESS_DIAGNOSTICS = {
 beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
-  mockGetConnectionStatus.mockReset();
+  mockGetConnectionState.mockReset();
   mockGetConnectionState.mockReturnValue({ status: 'ready' });
-  mockGetConnectionStatus.mockReturnValue({
+  mockGetConnectionState.mockReturnValue({
     status: 'ready',
     budgetId: 'test-budget',
     lastReadyAt: '2026-04-11T00:00:00.000Z',
@@ -335,7 +332,7 @@ describe('GET /diagnostics', () => {
   });
 
   it('should return 500 when diagnostics are unavailable', async () => {
-    mockGetConnectionStatus.mockImplementation(() => {
+    mockGetConnectionState.mockImplementation(() => {
       throw new Error('Test error');
     });
 
