@@ -49,6 +49,21 @@ describe('TransactionMapper', () => {
       ]);
     });
 
+    it('handles a transaction with a 0 amount properly', () => {
+      const transactions: Transaction[] = [
+        {
+          id: 't1',
+          account: 'a1',
+          date: '2023-01-01',
+          amount: 0,
+        },
+      ];
+
+      const result = mapper.map(transactions);
+
+      expect(result[0].amount).toBe('formatted-0');
+    });
+
     it('falls back to payee id/string if payee_name is missing', () => {
       const transactions: Transaction[] = [
         {
