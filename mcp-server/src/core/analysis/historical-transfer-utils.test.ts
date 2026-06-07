@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getTransferLikeMatch } from './historical-transfer-utils.js';
+import { getTransferLikeMatch, toActualDbDate } from './historical-transfer-utils.js';
 
 describe('historical-transfer-utils', () => {
   describe('getTransferLikeMatch', () => {
@@ -22,6 +22,28 @@ describe('historical-transfer-utils', () => {
 
     it('returns null for an unmatched string', () => {
       expect(getTransferLikeMatch('grocery store')).toBeNull();
+    });
+  });
+
+  describe('toActualDbDate', () => {
+    it('converts a valid YYYY-MM-DD date string to a number', () => {
+      expect(toActualDbDate('2023-10-25')).toBe(20231025);
+    });
+
+    it('converts a date string without hyphens', () => {
+      expect(toActualDbDate('20231025')).toBe(20231025);
+    });
+
+    it('handles short formats if valid', () => {
+      expect(toActualDbDate('2023-1-5')).toBe(202315);
+    });
+
+    it('returns NaN for completely invalid string formats', () => {
+      expect(toActualDbDate('invalid-date')).toBeNaN();
+    });
+
+    it('returns NaN for empty strings', () => {
+      expect(toActualDbDate('')).toBeNaN();
     });
   });
 });
