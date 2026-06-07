@@ -100,3 +100,14 @@ export type {
   APIScheduleEntity,
   APITagEntity,
 };
+
+// Type definitions adapted from @actual-app/api
+// Use Actual's type directly if available, fallback to loose object to avoid incompatibility
+export type ImportTransactionsOpts =
+  import('@actual-app/api/@types/methods.js').ImportTransactionsOpts;
+
+export type RuleEntity =
+  import('@actual-app/api/@types/loot-core/src/types/models/rule.js').RuleEntity;
+
+export type TransactionEntity =
+  import('@actual-app/api/@types/loot-core/src/types/models/transaction.js').TransactionEntity;

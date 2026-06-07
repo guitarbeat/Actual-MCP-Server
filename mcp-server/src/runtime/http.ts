@@ -3,12 +3,7 @@ import { Hono } from 'hono';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
-import {
-  getConnectionState,
-  getReadinessStatus,
-  getConnectionStatus,
-  DEFAULT_DATA_DIR,
-} from '../core/api/actual-client.js';
+import { getConnectionState, getReadinessStatus } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
@@ -118,7 +113,7 @@ export function createHttpRuntime(options: {
 
   app.get('/diagnostics', (c) => {
     try {
-      const connectionInfo = getConnectionStatus();
+      const connectionInfo = getConnectionState();
       return c.json({
         connection: connectionInfo,
         server: {
@@ -130,7 +125,7 @@ export function createHttpRuntime(options: {
           serverUrl: process.env.ACTUAL_SERVER_URL || null,
           hasBudgetId: !!process.env.ACTUAL_SYNC_ID,
           hasPassword: !!process.env.ACTUAL_PASSWORD,
-          dataDir: process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR,
+          dataDir: process.env.ACTUAL_DATA_DIR || '/data',
         },
       });
     } catch (error) {

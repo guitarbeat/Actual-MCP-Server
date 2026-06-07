@@ -66,6 +66,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  lastErrorAt: null,
   debugError: null,
   activeBudgetId: null,
 };
