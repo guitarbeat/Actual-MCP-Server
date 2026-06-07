@@ -58,7 +58,7 @@ export type {
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
-const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
@@ -66,6 +66,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  lastErrorAt: null,
   debugError: null,
   activeBudgetId: null,
 };
@@ -2050,4 +2051,8 @@ export async function getIDByName(type: string, name: string): Promise<string> {
     }
     throw new Error('getIDByName method is not available in this version of the API');
   });
+}
+
+export function getConnectionStatus() {
+  return getConnectionState().status;
 }
