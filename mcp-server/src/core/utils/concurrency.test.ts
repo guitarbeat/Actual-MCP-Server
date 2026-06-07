@@ -3,7 +3,7 @@ import { mapSettledWithConcurrency } from './concurrency.js';
 
 describe('mapSettledWithConcurrency', () => {
   it('should return an empty array immediately when given an empty array', async () => {
-    const worker = vi.fn();
+    const worker = vi.fn().mockResolvedValue(undefined);
     const result = await mapSettledWithConcurrency([], worker);
     expect(result).toEqual([]);
     expect(worker).not.toHaveBeenCalled();
