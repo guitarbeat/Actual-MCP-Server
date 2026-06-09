@@ -55,6 +55,33 @@ If you want both:
 - create a separate Render Workflows project for background jobs
 - have the workflow call the deployed MCP server or other APIs as needed
 
+## Docker Compose
+
+For local development or self-hosting with Docker Compose:
+
+1. Copy the example environment file and set your credentials:
+
+   ```bash
+   cp mcp-server/.env.example .env
+   # Edit .env with your ACTUAL_SERVER_URL, ACTUAL_PASSWORD, ACTUAL_BUDGET_SYNC_ID, and BEARER_TOKEN
+   ```
+
+2. Start the server:
+
+   ```bash
+   docker compose up
+   ```
+
+   The server starts in remote HTTP mode on port 3000 with write access enabled.
+
+3. For development with additional logging:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+   ```
+
+Budget data is persisted in a named Docker volume (`actual-data`). Use `/health` for liveness checks and `/ready` for readiness checks.
+
 ## Security And Public Readiness
 
 - Rotate any previously exposed credentials, bearer tokens, sync IDs, and local inspector tokens before sharing the repository.
