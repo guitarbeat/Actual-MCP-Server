@@ -6,3 +6,4 @@
 export { type ResolvedAccountSelection, resolveAccountSelection } from './account-selector.js';
 export { NameResolver, nameResolver } from './name-resolver.js';
 export { isId, normalizeName } from './name-utils.js';
+export { withRetry, type RetryOptions } from './retry.js';

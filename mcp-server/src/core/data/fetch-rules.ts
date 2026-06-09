@@ -1,4 +1,4 @@
-import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+import type { RuleEntity } from '../../core/api/api-types.js';
 import { getRules } from '../../core/api/actual-client.js';
 
 export async function fetchAllRules(): Promise<RuleEntity[]> {

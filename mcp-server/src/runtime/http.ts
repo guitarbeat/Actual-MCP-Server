@@ -6,9 +6,11 @@ import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import {
   getConnectionState,
   getReadinessStatus,
-  getConnectionStatus,
+  initActualApi,
+  isConnectionError,
   DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
+import { withRetry } from '../core/utils/retry.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
@@ -118,7 +120,7 @@ export function createHttpRuntime(options: {
 
   app.get('/diagnostics', (c) => {
     try {
-      const connectionInfo = getConnectionStatus();
+      const connectionInfo = getConnectionState();
       return c.json({
         connection: connectionInfo,
         server: {
@@ -157,6 +159,25 @@ export function createHttpRuntime(options: {
     }
 
     return c.json(publicBody, readiness.ready ? 200 : 503);
+  });
+
+  app.post('/reconnect', requireBearer, async (c) => {
+    try {
+      await withRetry(() => initActualApi(true), {
+        maxAttempts: 3,
+        baseDelayMs: 1000,
+        shouldRetry: (error) =>
+          isConnectionError(
+            error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase(),
+          ),
+      });
+      const readiness = await getReadinessStatus(true);
+      const publicBody = toPublicReadinessStatus(readiness);
+      return c.json({ reconnected: true, ...publicBody }, readiness.ready ? 200 : 503);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Reconnect failed';
+      return c.json({ reconnected: false, error: message }, 503);
+    }
   });
 
   app.all('/mcp', async (c) => {
