@@ -230,11 +230,11 @@ pnpm run public:check
 
 <!-- TOOL_SURFACE:START -->
 
-Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 42 tools, 8 prompts, and 12 resources:
+Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 45 tools, 8 prompts, and 12 resources:
 
 - 16 read-only core tools
 - 19 write-enabled core tools
-- 7 advanced `--enable-advanced` tools
+- 10 advanced `--enable-advanced` tools
 - 8 prompts
 - 7 static resources
 - 5 templated resources
