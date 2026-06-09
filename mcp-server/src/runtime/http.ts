@@ -110,16 +110,32 @@ export function createHttpRuntime(options: {
   });
   const sessionTtlMs = parseSessionTtl(process.env.MCP_SESSION_TTL_MINUTES);
   const allowedOrigins = parseAllowedOrigins(process.env.MCP_ALLOWED_ORIGINS);
-  const rateLimitMaxRequests = parseInt(process.env.MCP_RATE_LIMIT_RPM ?? '60', 10);
+  const rateLimitMaxRequests = Math.max(
+    1,
+    parseInt(process.env.MCP_RATE_LIMIT_RPM ?? '60', 10) || 60,
+  );
 
   let lastReadinessSignature: string | null = null;
 
   const pruneStaleSessions = (): void => {
+    const now = Date.now();
+
+    // Prune rate limit store entries whose timestamp windows have expired.
+    // This runs unconditionally -- it does not depend on session TTL being set.
+    const cutoff = now - RATE_LIMIT_WINDOW_MS;
+    for (const [key, timestamps] of rateLimitStore.entries()) {
+      const valid = timestamps.filter((t) => t > cutoff);
+      if (valid.length === 0) {
+        rateLimitStore.delete(key);
+      } else {
+        rateLimitStore.set(key, valid);
+      }
+    }
+
     if (!sessionTtlMs) {
       return;
     }
 
-    const now = Date.now();
     for (const [sessionId, session] of sessions.entries()) {
       if (now - session.lastSeenAt <= sessionTtlMs) {
         continue;
@@ -127,16 +143,6 @@ export function createHttpRuntime(options: {
 
       sessions.delete(sessionId);
       void session.server.close();
-    }
-
-    // Prune rate limit store entries whose timestamp windows have expired
-    for (const [key, timestamps] of rateLimitStore.entries()) {
-      const active = timestamps.filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS);
-      if (active.length === 0) {
-        rateLimitStore.delete(key);
-      } else {
-        rateLimitStore.set(key, active);
-      }
     }
   };
 
