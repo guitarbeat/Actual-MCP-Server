@@ -407,7 +407,7 @@ describe('Wildcard CORS', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('https://app.example.com');
   });
 
-  it('rejects origin that does not match wildcard pattern', async () => {
+  it('rejects origin that does not match wildcard pattern on non-probe routes', async () => {
     process.env.MCP_ALLOWED_ORIGINS = 'http://localhost:*';
 
     const { app } = createHttpRuntime({
@@ -418,7 +418,7 @@ describe('Wildcard CORS', () => {
     });
 
     const response = await app.fetch(
-      new Request('http://localhost/health', {
+      new Request('http://localhost/diagnostics', {
         headers: { Origin: 'https://evil.example.com' },
       }),
     );
@@ -586,5 +586,59 @@ describe('POST /reconnect', () => {
     );
 
     expect(response.status).toBe(401);
+  });
+});
+
+describe('Rate limiter', () => {
+  const BEARER_TOKEN = '12345678901234567890123456789012';
+
+  beforeEach(() => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+    // Use a low limit so the test does not have to make 60 real requests
+    process.env.MCP_RATE_LIMIT_RPM = '3';
+  });
+
+  afterEach(() => {
+    delete process.env.MCP_RATE_LIMIT_RPM;
+  });
+
+  it('returns 429 with Retry-After header after exceeding the request limit', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const makeRequest = () =>
+      app.fetch(
+        new Request('http://localhost/mcp', {
+          method: 'POST',
+          headers: {
+            Origin: 'https://good.example',
+            Authorization: `Bearer ${BEARER_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ jsonrpc: '2.0', method: 'ping', id: 1 }),
+        }),
+      );
+
+    // MCP_RATE_LIMIT_RPM=3 means the 4th request should be rejected
+    const responses = await Promise.all([
+      makeRequest(),
+      makeRequest(),
+      makeRequest(),
+      makeRequest(),
+    ]);
+
+    const statuses = responses.map((r) => r.status);
+    const rejectedIndex = statuses.indexOf(429);
+    expect(rejectedIndex).toBeGreaterThanOrEqual(0);
+
+    const rejected = responses[rejectedIndex];
+    expect(rejected.headers.get('retry-after')).toBeTruthy();
+    const body = await rejected.json();
+    expect(body).toMatchObject({ error: 'Too Many Requests' });
   });
 });

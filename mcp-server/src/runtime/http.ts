@@ -14,6 +14,9 @@ import { withRetry } from '../core/utils/retry.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
+import { getLogger } from '../core/logging/logger.js';
+
+const logger = getLogger('http');
 
 // ---------------------------------------------------------------------------
 // Metrics store
@@ -49,20 +52,22 @@ export function recordToolCall(toolName: string, durationMs: number, isError: bo
 }
 
 // ---------------------------------------------------------------------------
-// Rate limiter — sliding window, 60 req/min per token
+// Rate limiter -- sliding window, configurable req/min per token
 // ---------------------------------------------------------------------------
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 60;
 const rateLimitStore = new Map<string, number[]>();
 
-function checkRateLimit(key: string): { allowed: boolean; retryAfterSec: number } {
+function checkRateLimit(
+  key: string,
+  maxRequests: number,
+): { allowed: boolean; retryAfterSec: number } {
   const now = Date.now();
   const timestamps = (rateLimitStore.get(key) ?? []).filter(
     (ts) => now - ts < RATE_LIMIT_WINDOW_MS,
   );
 
-  if (timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
+  if (timestamps.length >= maxRequests) {
     const oldest = timestamps[0] ?? now;
     const retryAfterSec = Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - now) / 1000);
     rateLimitStore.set(key, timestamps);
@@ -105,6 +110,7 @@ export function createHttpRuntime(options: {
   });
   const sessionTtlMs = parseSessionTtl(process.env.MCP_SESSION_TTL_MINUTES);
   const allowedOrigins = parseAllowedOrigins(process.env.MCP_ALLOWED_ORIGINS);
+  const rateLimitMaxRequests = parseInt(process.env.MCP_RATE_LIMIT_RPM ?? '60', 10);
 
   let lastReadinessSignature: string | null = null;
 
@@ -121,6 +127,16 @@ export function createHttpRuntime(options: {
 
       sessions.delete(sessionId);
       void session.server.close();
+    }
+
+    // Prune rate limit store entries whose timestamp windows have expired
+    for (const [key, timestamps] of rateLimitStore.entries()) {
+      const active = timestamps.filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS);
+      if (active.length === 0) {
+        rateLimitStore.delete(key);
+      } else {
+        rateLimitStore.set(key, active);
+      }
     }
   };
 
@@ -142,7 +158,12 @@ export function createHttpRuntime(options: {
 
   app.use('*', async (c, next) => {
     const origin = c.req.header('origin');
-    const originAllowed = isOriginAllowed(origin, allowedOrigins);
+    const { path } = c.req;
+
+    // /health and /ready are infrastructure probes that must not be gated by
+    // CORS origin checks. Load balancers and monitoring agents omit Origin.
+    const isBypassRoute = path === '/health' || path === '/ready';
+    const originAllowed = isBypassRoute ? true : isOriginAllowed(origin, allowedOrigins);
 
     if (!originAllowed) {
       return c.json({ error: 'Origin not allowed' }, 403);
@@ -168,12 +189,12 @@ export function createHttpRuntime(options: {
 
   app.use('/mcp', requireBearer);
 
-  // Rate limiter for /mcp (60 req/min per token or 'anonymous')
+  // Rate limiter for /mcp (configurable req/min per token or 'anonymous')
   app.use('/mcp', async (c, next) => {
     const authHeader = c.req.header('authorization') ?? '';
     const tokenMatch = /bearer\s+(\S+)/i.exec(authHeader);
     const key = tokenMatch ? tokenMatch[1] : 'anonymous';
-    const { allowed, retryAfterSec } = checkRateLimit(key);
+    const { allowed, retryAfterSec } = checkRateLimit(key, rateLimitMaxRequests);
     if (!allowed) {
       c.header('Retry-After', String(retryAfterSec));
       return c.json({ error: 'Too Many Requests' }, 429);
@@ -215,7 +236,7 @@ export function createHttpRuntime(options: {
         },
       });
     } catch (error) {
-      console.error('Diagnostics endpoint failed:', error);
+      logger.error({ err: error }, 'Diagnostics endpoint failed');
       return c.json({ error: 'diagnostics unavailable' }, 500);
     }
   });

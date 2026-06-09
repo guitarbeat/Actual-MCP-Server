@@ -141,6 +141,9 @@ When deploying to Render's free tier or standard web services, keep in mind the 
 | `PORT` | Port for the MCP HTTP server | 3000 |
 | `MCP_SESSION_TTL_MINUTES`| Time before idle HTTP sessions are pruned | |
 | `AUTO_SYNC_INTERVAL_MINUTES`| Interval for automatic syncing | 5 |
+| `MCP_ALLOWED_ORIGINS` | Comma-separated list of allowed `Origin` headers for browser-based clients | |
+| `LOG_LEVEL` | Pino log level (`trace`, `debug`, `info`, `warn`, `error`) | `info` |
+| `MCP_RATE_LIMIT_RPM` | Maximum requests per minute per bearer token on `/mcp` | 60 |
 
 ### Common Production Configurations
 
@@ -150,7 +153,7 @@ When deploying to Render's free tier or standard web services, keep in mind the 
 ## Troubleshooting
 
 - **Budget not loading after cold start:** In remote setups, the connection to Actual might drop or sleep. Use the `/reconnect` endpoint or wait for the automatic health probes to re-establish the connection.
-- **CORS errors:** If using the HTTP transport from a web-based client, ensure you set `CORS_ALLOWED_ORIGINS` in your environment to allow your client's origin.
+- **CORS errors:** If using the HTTP transport from a web-based client, ensure you set `MCP_ALLOWED_ORIGINS` in your environment to allow your client's origin.
 - **Rate limit errors:** If you encounter rate limiting, you can adjust `RATE_LIMIT_MAX` (if applicable to your proxy/setup) or ensure your client isn't polling aggressively.
 - **Health Checks:** Use the `/health` endpoint for standard liveness checks and `/ready` to verify Actual connectivity readiness.
 
