@@ -7,8 +7,10 @@ import {
   getConnectionState,
   getReadinessStatus,
   initActualApi,
+  isConnectionError,
   DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
+import { withRetry } from '../core/utils/retry.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
@@ -161,7 +163,14 @@ export function createHttpRuntime(options: {
 
   app.post('/reconnect', requireBearer, async (c) => {
     try {
-      await initActualApi(true);
+      await withRetry(() => initActualApi(true), {
+        maxAttempts: 3,
+        baseDelayMs: 1000,
+        shouldRetry: (error) =>
+          isConnectionError(
+            error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase(),
+          ),
+      });
       const readiness = await getReadinessStatus(true);
       const publicBody = toPublicReadinessStatus(readiness);
       return c.json({ reconnected: true, ...publicBody }, readiness.ready ? 200 : 503);

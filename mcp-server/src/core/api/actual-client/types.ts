@@ -26,7 +26,7 @@ export type ExtendedActualApi = typeof api & {
     db?: {
       getTransaction?: (id: string) => Promise<HistoricalTransferInternalTransaction | null>;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      all?: (sql: string, params: unknown[]) => Promise<any[]>;
+      all?: (sql: string, params?: (string | number)[]) => Promise<any[]>;
     };
   };
 };

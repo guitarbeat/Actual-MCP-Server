@@ -18,7 +18,12 @@ vi.mock('../core/api/actual-client.js', () => ({
   getReadinessStatus: mockGetReadinessStatus,
   getConnectionStatus: mockGetConnectionStatus,
   initActualApi: mockInitActualApi,
+  isConnectionError: vi.fn().mockReturnValue(true),
   DEFAULT_DATA_DIR: '/mock/data',
+}));
+
+vi.mock('../core/utils/retry.js', () => ({
+  withRetry: vi.fn().mockImplementation((fn: () => Promise<unknown>) => fn()),
 }));
 
 const ORIGINAL_ENV = {

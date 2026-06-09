@@ -8,6 +8,7 @@ const mockFsReaddirSync = vi.hoisted(() =>
   >(),
 );
 const mockFsCpSync = vi.hoisted(() => vi.fn());
+const mockInitActualApi = vi.hoisted(() => vi.fn());
 
 vi.mock('node:fs', () => ({
   default: {
@@ -22,6 +23,10 @@ vi.mock('node:fs', () => ({
 
 vi.mock('../create-budget-snapshot/index.js', () => ({
   getDataDir: () => '/mock/data',
+}));
+
+vi.mock('../../../core/api/actual-client.js', () => ({
+  initActualApi: mockInitActualApi,
 }));
 
 vi.mock('../list-budget-snapshots/index.js', () => ({
@@ -56,6 +61,7 @@ function parseJsonResponse(response: unknown): Record<string, unknown> {
 describe('restore-budget-snapshot tool', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockInitActualApi.mockResolvedValue(undefined);
   });
 
   describe('handler', () => {
@@ -113,9 +119,12 @@ describe('restore-budget-snapshot tool', () => {
       expect(payload.restored).toBe(true);
       expect(payload.snapshotId).toBe('1700000000000');
       expect(typeof payload.restoredAt).toBe('string');
+      expect(typeof payload.reconnectedAt).toBe('string');
 
       // Should have copied files back
       expect(mockFsCpSync).toHaveBeenCalledTimes(2);
+      // Should have re-initialized the API session
+      expect(mockInitActualApi).toHaveBeenCalledWith(true);
     });
 
     it('should skip snapshots subdir when restoring', async () => {

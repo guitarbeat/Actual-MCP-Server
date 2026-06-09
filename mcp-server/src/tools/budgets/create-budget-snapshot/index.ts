@@ -3,11 +3,9 @@
 // ----------------------------
 
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
+import { DEFAULT_DATA_DIR } from '../../../core/api/actual-client.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
-
-export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
 export function getDataDir(): string {
   return process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;

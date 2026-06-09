@@ -20,6 +20,10 @@ vi.mock('node:fs', () => ({
   cpSync: mockFsCpSync,
 }));
 
+vi.mock('../../../core/api/actual-client.js', () => ({
+  DEFAULT_DATA_DIR: '/mock/.actual',
+}));
+
 function parseJsonResponse(response: unknown): Record<string, unknown> {
   const res = response as { content: Array<Record<string, unknown>> };
   const firstContent = res.content[0];

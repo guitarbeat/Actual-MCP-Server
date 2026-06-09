@@ -7,16 +7,18 @@ import path from 'node:path';
 import { getDataDir } from '../create-budget-snapshot/index.js';
 import { parseSnapshotDir } from '../list-budget-snapshots/index.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
+import { initActualApi } from '../../../core/api/actual-client.js';
 
 export const schema = {
   name: 'restore-budget-snapshot',
   description:
-    'Restore the budget data directory from a previously created snapshot. This overwrites current budget data files with the snapshot contents.\n\n' +
+    'Restore the budget data directory from a previously created snapshot. This overwrites current budget data files with the snapshot contents and automatically reloads the budget session.\n\n' +
     'REQUIRED:\n' +
     '- snapshotId: The snapshot identifier returned by create-budget-snapshot or list-budget-snapshots.\n\n' +
     'EXAMPLE:\n' +
     '- Restore snapshot: {"snapshotId": "1700000000000"}\n\n' +
     'WARNING: This will overwrite the current budget data. Create a snapshot of the current state first if needed.\n\n' +
+    'NOTE: After restoring, the budget session is automatically reloaded so that subsequent operations use the restored data.\n\n' +
     'SEE ALSO:\n' +
     '- Use list-budget-snapshots to find available snapshot IDs.\n' +
     '- Use create-budget-snapshot to save the current state before restoring.',
@@ -37,6 +39,7 @@ export interface RestoreResult {
   restored: true;
   snapshotId: string;
   restoredAt: string;
+  reconnectedAt: string;
 }
 
 export async function handler(
@@ -88,10 +91,14 @@ export async function handler(
       fs.cpSync(srcEntry, destEntry, { recursive: true, force: true });
     }
 
+    // Re-initialize the Actual API session so it loads the restored data
+    await initActualApi(true);
+
     const result: RestoreResult = {
       restored: true,
       snapshotId,
       restoredAt: new Date().toISOString(),
+      reconnectedAt: new Date().toISOString(),
     };
 
     return successWithJson(result);
