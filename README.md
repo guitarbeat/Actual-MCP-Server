@@ -154,7 +154,7 @@ When deploying to Render's free tier or standard web services, keep in mind the 
 
 - **Budget not loading after cold start:** In remote setups, the connection to Actual might drop or sleep. Use the `/reconnect` endpoint or wait for the automatic health probes to re-establish the connection.
 - **CORS errors:** If using the HTTP transport from a web-based client, ensure you set `MCP_ALLOWED_ORIGINS` in your environment to allow your client's origin.
-- **Rate limit errors:** If you encounter rate limiting, you can adjust `RATE_LIMIT_MAX` (if applicable to your proxy/setup) or ensure your client isn't polling aggressively.
+- **Rate limit errors:** If you encounter rate limiting, you can adjust `MCP_RATE_LIMIT_RPM` (defaults to 60 requests per minute) or ensure your client isn't polling aggressively.
 - **Health Checks:** Use the `/health` endpoint for standard liveness checks and `/ready` to verify Actual connectivity readiness.
 
 ## Development

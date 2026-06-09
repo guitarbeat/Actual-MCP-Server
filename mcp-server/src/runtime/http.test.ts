@@ -151,6 +151,25 @@ describe('createHttpRuntime', () => {
     await expect(response.json()).resolves.toMatchObject({ status: 'ok' });
   });
 
+  it('allows health and ready probes without an Origin even when MCP_ALLOWED_ORIGINS is configured', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    // /health probe without Origin must not be rejected by the CORS gate
+    const healthResponse = await app.fetch(new Request('http://localhost/health'));
+    expect(healthResponse.status).toBe(200);
+
+    // /ready probe without Origin must not be rejected by the CORS gate
+    const readyResponse = await app.fetch(new Request('http://localhost/ready'));
+    expect([200, 503]).toContain(readyResponse.status);
+  });
+
   it('rejects requests with missing origin', async () => {
     process.env.NODE_ENV = 'production';
     process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
