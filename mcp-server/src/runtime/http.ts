@@ -6,6 +6,7 @@ import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import {
   getConnectionState,
   getReadinessStatus,
+  initActualApi,
   DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
@@ -156,6 +157,18 @@ export function createHttpRuntime(options: {
     }
 
     return c.json(publicBody, readiness.ready ? 200 : 503);
+  });
+
+  app.post('/reconnect', requireBearer, async (c) => {
+    try {
+      await initActualApi(true);
+      const readiness = await getReadinessStatus(true);
+      const publicBody = toPublicReadinessStatus(readiness);
+      return c.json({ reconnected: true, ...publicBody }, readiness.ready ? 200 : 503);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Reconnect failed';
+      return c.json({ reconnected: false, error: message }, 503);
+    }
   });
 
   app.all('/mcp', async (c) => {

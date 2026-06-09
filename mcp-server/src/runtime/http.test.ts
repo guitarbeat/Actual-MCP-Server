@@ -1,18 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHttpRuntime } from './http.js';
 
-const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus } = vi.hoisted(
-  () => ({
-    mockGetConnectionState: vi.fn(),
-    mockGetReadinessStatus: vi.fn(),
-    mockGetConnectionStatus: vi.fn(),
-  }),
-);
+const {
+  mockGetConnectionState,
+  mockGetReadinessStatus,
+  mockGetConnectionStatus,
+  mockInitActualApi,
+} = vi.hoisted(() => ({
+  mockGetConnectionState: vi.fn(),
+  mockGetReadinessStatus: vi.fn(),
+  mockGetConnectionStatus: vi.fn(),
+  mockInitActualApi: vi.fn(),
+}));
 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
   getConnectionStatus: mockGetConnectionStatus,
+  initActualApi: mockInitActualApi,
   DEFAULT_DATA_DIR: '/mock/data',
 }));
 
@@ -37,6 +42,8 @@ beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
   mockGetConnectionStatus.mockReset();
+  mockInitActualApi.mockReset();
+  mockInitActualApi.mockResolvedValue(undefined);
   mockGetConnectionState.mockReturnValue({ status: 'ready' });
   mockGetConnectionStatus.mockReturnValue({
     status: 'ready',
@@ -351,5 +358,91 @@ describe('GET /diagnostics', () => {
 
     const data = await response.json();
     expect(data).toEqual({ error: 'diagnostics unavailable' });
+  });
+});
+
+describe('POST /reconnect', () => {
+  const BEARER_TOKEN = '12345678901234567890123456789012';
+
+  beforeEach(() => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+  });
+
+  it('calls initActualApi(true) and returns 200 with reconnected:true when successful', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/reconnect', {
+        method: 'POST',
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockInitActualApi).toHaveBeenCalledWith(true);
+    expect(mockGetReadinessStatus).toHaveBeenCalledWith(true);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      reconnected: true,
+      ready: true,
+      status: 'ready',
+    });
+  });
+
+  it('returns 503 with reconnected:false when initActualApi throws', async () => {
+    mockInitActualApi.mockRejectedValue(new Error('Connection refused'));
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/reconnect', {
+        method: 'POST',
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      reconnected: false,
+      error: 'Connection refused',
+    });
+  });
+
+  it('requires bearer auth when bearer is enabled', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/reconnect', {
+        method: 'POST',
+        headers: { Origin: 'https://good.example' },
+      }),
+    );
+
+    expect(response.status).toBe(401);
   });
 });
