@@ -259,4 +259,33 @@ describe('import-transaction-batch handler', () => {
       'Verify that each transaction includes a valid accountId, YYYY-MM-DD date, and amount in cents before retrying.',
     );
   });
+
+  it('accepts amount=0 as a valid integer amount', async () => {
+    mockImportTransactions.mockResolvedValue({ added: ['txn-zero'], updated: [] });
+
+    const response = await handler({
+      transactions: [
+        {
+          accountId: 'Checking',
+          date: '2026-04-01',
+          amount: 0,
+        },
+      ],
+    });
+
+    const payload = parseJsonContent(response);
+
+    expect(response.isError).toBeFalsy();
+    expect(payload.summary).toMatchObject({
+      requestedTransactions: 1,
+      preparedTransactions: 1,
+      addedTransactions: 1,
+      failedTransactions: 0,
+    });
+    expect(mockImportTransactions).toHaveBeenCalledWith(
+      'acc-checking',
+      [expect.objectContaining({ amount: 0 })],
+      {},
+    );
+  });
 });
