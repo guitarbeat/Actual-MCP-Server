@@ -53,7 +53,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `manage-account`: Create, update, or delete a account. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `reopen-account`: Reopen a closed account in Actual Budget.
 - `reset-budget-hold`: Reset (clear) a budget hold for a specific month.
-- `restore-budget-snapshot`: Restore the budget data directory from a previously created snapshot. This overwrites current budget data files with the snapshot contents.
+- `restore-budget-snapshot`: Restore the budget data directory from a previously created snapshot. This overwrites current budget data files with the snapshot contents and automatically reloads the budget session.
 - `switch-budget`: Switch to a different budget file. Downloads and loads the specified budget.
 
 ## Prompts
