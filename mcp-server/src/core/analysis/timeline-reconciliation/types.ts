@@ -1,4 +1,4 @@
-import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+import type { RuleEntity } from '../../api/api-types.js';
 import type { Account, Category, Transaction } from '../../types/domain.js';
 
 export interface TimelineReconPaths {

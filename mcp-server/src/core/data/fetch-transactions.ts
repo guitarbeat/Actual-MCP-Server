@@ -1,4 +1,4 @@
-import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
+import type { TransactionEntity } from '../../core/api/api-types.js';
 import { getTransactions } from '../../core/api/actual-client.js';
 import type { Account, Category, Payee, Transaction } from '../types/domain.js';
 import { mapSettledWithConcurrency } from '../utils/concurrency.js';

@@ -3,9 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import '../../polyfill.js';
 import api from '@actual-app/api';
-import type { ImportTransactionsOpts } from '@actual-app/api';
-import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
-import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
+import type { ImportTransactionsOpts, RuleEntity, TransactionEntity } from './api-types.js';
 import type {
   ActualConnectionState,
   ActualReadFreshnessMode,

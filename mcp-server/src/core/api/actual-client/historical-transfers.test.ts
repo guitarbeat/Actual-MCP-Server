@@ -167,31 +167,31 @@ describe('getHistoricalTransferInternalLayer', () => {
   });
 
   it('throws when internal.send is missing', () => {
-    const api = { internal: { db } } as ExtendedActualApi;
+    const api = { internal: { db } } as unknown as ExtendedActualApi;
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.db is missing', () => {
-    const api = { internal: { send } } as ExtendedActualApi;
+    const api = { internal: { send } } as unknown as ExtendedActualApi;
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.db.getTransaction is missing', () => {
     const api = {
       internal: { send, db: { all: db.all } },
-    } as ExtendedActualApi;
+    } as unknown as ExtendedActualApi;
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.db.all is missing', () => {
     const api = {
       internal: { send, db: { getTransaction: db.getTransaction } },
-    } as ExtendedActualApi;
+    } as unknown as ExtendedActualApi;
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('returns { send, db } when all required fields are present', () => {
-    const api = { internal: { send, db } } as ExtendedActualApi;
+    const api = { internal: { send, db } } as unknown as ExtendedActualApi;
     const result = getHistoricalTransferInternalLayer(api);
     expect(result.send).toBe(send);
     expect(result.db).toBe(db);
