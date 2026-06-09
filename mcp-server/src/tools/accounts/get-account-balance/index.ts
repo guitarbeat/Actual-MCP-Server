@@ -5,14 +5,19 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { formatAmount } from '../../../core/formatting/index.js';
-import { errorFromCatch, success } from '../../../core/response/index.js';
-import type { MCPResponse, ToolInput } from '../../../core/types/index.js';
+import { success } from '../../../core/response/index.js';
+import type { ToolInput } from '../../../core/types/index.js';
 import { nameResolver } from '../../../core/utils/name-resolver.js';
 import { AccountHandler } from '../../manage-entity/entity-handlers/account-handler.js';
+import { executeToolAction } from '../../shared/tool-action.js';
 
 const GetAccountBalanceSchema = z.object({
-  id: z.string().min(1, 'Account name or ID is required')
-    .describe('Account name or ID (supports partial matching, e.g., "Checking" matches "Chase Checking").'),
+  id: z
+    .string()
+    .min(1, 'Account name or ID is required')
+    .describe(
+      'Account name or ID (supports partial matching, e.g., "Checking" matches "Chase Checking").',
+    ),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
@@ -42,19 +47,17 @@ export const schema = {
   inputSchema: zodToJsonSchema(GetAccountBalanceSchema) as ToolInput,
 };
 
-export async function handler(args: z.infer<typeof GetAccountBalanceSchema>): Promise<MCPResponse> {
-  try {
-    const validated = GetAccountBalanceSchema.parse(args);
-
-    // Resolve account name to ID if needed
-    const accountId = await nameResolver.resolveAccount(validated.id);
-
-    const accountHandler = new AccountHandler();
-    const balance = await accountHandler.balance(accountId, validated.date);
-    return success(`Account ${validated.id} balance: ${formatAmount(balance)}`);
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to get account balance',
-    });
-  }
+export async function handler(args: unknown) {
+  return executeToolAction(args, {
+    parse: GetAccountBalanceSchema.parse,
+    execute: async (validated) => {
+      const accountId = await nameResolver.resolveAccount(validated.id);
+      const accountHandler = new AccountHandler();
+      const balance = await accountHandler.balance(accountId, validated.date);
+      return { id: validated.id, balance };
+    },
+    buildResponse: (_args, { id, balance }) =>
+      success(`Account ${id} balance: ${formatAmount(balance)}`),
+    fallbackMessage: 'Failed to get account balance',
+  });
 }
