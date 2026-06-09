@@ -366,6 +366,143 @@ describe('GET /diagnostics', () => {
   });
 });
 
+describe('Wildcard CORS', () => {
+  it('allows origin matching http://localhost:* pattern', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'http://localhost:*';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/health', {
+        headers: { Origin: 'http://localhost:3001' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:3001');
+  });
+
+  it('allows origin matching https://*.example.com pattern', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://*.example.com';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/health', {
+        headers: { Origin: 'https://app.example.com' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://app.example.com');
+  });
+
+  it('rejects origin that does not match wildcard pattern', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'http://localhost:*';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/health', {
+        headers: { Origin: 'https://evil.example.com' },
+      }),
+    );
+
+    expect(response.status).toBe(403);
+  });
+});
+
+describe('GET /metrics', () => {
+  beforeEach(() => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+  });
+
+  const METRICS_TOKEN = '12345678901234567890123456789012';
+
+  it('returns metrics JSON when valid bearer token provided', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: METRICS_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/metrics', {
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: `Bearer ${METRICS_TOKEN}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      uptime_seconds: expect.any(Number),
+      budget_connected: expect.any(Boolean),
+      reconnect_count: expect.any(Number),
+      active_sessions: expect.any(Number),
+      tool_calls: expect.any(Object),
+    });
+  });
+
+  it('returns 401 when bearer is enabled and no token provided', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: METRICS_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/metrics', {
+        headers: { Origin: 'https://good.example' },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('returns 401 when bearer is enabled and wrong token provided', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: METRICS_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/metrics', {
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: 'Bearer wrong-token',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+  });
+});
+
 describe('POST /reconnect', () => {
   const BEARER_TOKEN = '12345678901234567890123456789012';
 
