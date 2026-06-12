@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+import type { RuleEntity } from '../../api/api-types.js';
 import {
   buildCurrentTransactionMap,
   buildRulePayload,

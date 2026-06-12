@@ -236,10 +236,28 @@ export const RuleActionSchema = z.object({
  * Schema for rule data validation
  */
 export const RuleDataSchema = z.object({
-  stage: z.enum(['pre', 'default', 'post']).nullable().optional(),
-  conditionsOp: z.enum(['and', 'or']),
-  conditions: z.array(RuleConditionSchema).min(1, 'At least one condition is required'),
-  actions: z.array(RuleActionSchema).min(1, 'At least one action is required'),
+  stage: z
+    .enum(['pre', 'default', 'post'])
+    .nullable()
+    .optional()
+    .describe(
+      'When the rule runs: "pre" (before other rules), "default" (normal), or "post" (after other rules). If null, treated the same as "default".',
+    ),
+  conditionsOp: z
+    .enum(['and', 'or'])
+    .describe('How to combine conditions: "and" (all must match) or "or" (any must match).'),
+  conditions: z
+    .array(RuleConditionSchema)
+    .min(1, 'At least one condition is required')
+    .describe(
+      'Array of conditions that trigger the rule. Each condition specifies a field, operator, and value.',
+    ),
+  actions: z
+    .array(RuleActionSchema)
+    .min(1, 'At least one action is required')
+    .describe(
+      'Array of actions to execute when conditions match. Each action specifies a field, operator, and value.',
+    ),
 });
 
 /**
@@ -274,29 +292,77 @@ export const RecurConfigSchema = z.object({
  */
 export const ScheduleDataSchema = z
   .object({
-    name: z.string().min(1, 'Schedule name is recommended').optional(),
-    account: z.string().min(1, 'Account name or ID is required').nullable().optional(), // Name or ID
-    accountId: z.string().min(1, 'Account name or ID is required').optional(), // Name or ID (convenience field)
+    name: z
+      .string()
+      .min(1, 'Schedule name is recommended')
+      .optional()
+      .describe('Display name for the schedule (e.g., "Monthly Rent"). Should be unique.'),
+    account: z
+      .string()
+      .min(1, 'Account name or ID is required')
+      .nullable()
+      .optional()
+      .describe(
+        'Account name or ID where the scheduled transaction will post. Supports partial matching.',
+      ),
+    accountId: z
+      .string()
+      .min(1, 'Account name or ID is required')
+      .optional()
+      .describe(
+        'Convenience alias for account. Account name or ID (supports partial matching, e.g., "Chase" matches "Chase Checking").',
+      ),
     amount: z
       .union([
-        z.number(), // Dollars or cents (auto-detected, like transactions)
+        z.number(),
         z.object({
           num1: z.number(),
           num2: z.number(),
         }),
       ])
-      .optional(),
-    amountOp: z.enum(['is', 'isapprox', 'isbetween']).optional(),
+      .optional()
+      .describe(
+        'Transaction amount in dollars or cents (auto-detected: < 1000 treated as dollars, >= 1000 as cents). Negative = expense, positive = income. For "isbetween" amountOp, use {num1, num2} object.',
+      ),
+    amountOp: z
+      .enum(['is', 'isapprox', 'isbetween'])
+      .optional()
+      .describe(
+        'How to match the amount: "is" (exact), "isapprox" (approximate), or "isbetween" (range). Defaults to "is" when amount is provided.',
+      ),
     date: z
       .union([
         z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
         RecurConfigSchema,
       ])
-      .optional(),
-    payee: z.string().min(1, 'Payee name or ID is required').nullable().optional(), // Name or ID
-    category: z.string().min(1, 'Category name or ID is required').nullable().optional(), // Name or ID
-    posts_transaction: z.boolean().optional(),
-    resetNextDate: z.boolean().optional(),
+      .optional()
+      .describe(
+        'Schedule date: either a one-time date string (YYYY-MM-DD) or a RecurConfig object for recurring schedules (e.g., {frequency: "monthly", start: "2024-02-01", endMode: "never"}).',
+      ),
+    payee: z
+      .string()
+      .min(1, 'Payee name or ID is required')
+      .nullable()
+      .optional()
+      .describe(
+        'Payee name or ID to associate with scheduled transactions. Supports partial matching.',
+      ),
+    category: z
+      .string()
+      .min(1, 'Category name or ID is required')
+      .nullable()
+      .optional()
+      .describe('Category name or ID for the scheduled transactions. Supports partial matching.'),
+    posts_transaction: z
+      .boolean()
+      .optional()
+      .describe('Whether the schedule automatically creates transactions when due.'),
+    resetNextDate: z
+      .boolean()
+      .optional()
+      .describe(
+        'If true, recalculate the next occurrence date after applying changes. Only used when updating an existing schedule.',
+      ),
   })
   .strict();
 

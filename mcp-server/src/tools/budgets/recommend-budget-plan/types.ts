@@ -2,7 +2,10 @@ import { z } from 'zod';
 
 export const RecommendBudgetPlanArgsSchema = z
   .object({
-    month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),
+    month: z
+      .string()
+      .regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format')
+      .describe('Target month in YYYY-MM format to generate budget recommendations for.'),
     lookbackMonths: z
       .number()
       .int()

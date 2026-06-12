@@ -2,7 +2,7 @@
 // SCHEDULE ENTITY HANDLER
 // ----------------------------
 
-import type { APIScheduleEntity } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
+import type { APIScheduleEntity } from '../../../core/api/api-types.js';
 import {
   createSchedule,
   deleteSchedule,
