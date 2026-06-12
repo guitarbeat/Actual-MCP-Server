@@ -1,6 +1,7 @@
 import * as balanceHistory from '../../tools/balance-history/index.js';
 import * as getBudget from '../../tools/budgets/get-budget/index.js';
 import * as getBudgets from '../../tools/budgets/get-budgets/index.js';
+import * as listBudgetSnapshots from '../../tools/budgets/list-budget-snapshots/index.js';
 import * as recommendBudgetPlan from '../../tools/budgets/recommend-budget-plan/index.js';
 import * as switchBudget from '../../tools/budgets/switch-budget/index.js';
 import * as getGroupedCategories from '../../tools/categories/get-grouped-categories/index.js';
@@ -36,5 +37,6 @@ export const readToolDefinitions = [
   defineTool({ ...getAccountBalance, requiresWrite: false, category: 'core' }),
   defineTool({ ...getBudget, requiresWrite: false, category: 'core' }),
   defineTool({ ...getBudgets, requiresWrite: false, category: 'advanced' }),
+  defineTool({ ...listBudgetSnapshots, requiresWrite: false, category: 'advanced' }),
   defineTool({ ...switchBudget, requiresWrite: true, category: 'advanced' }),
 ];

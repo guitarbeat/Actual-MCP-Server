@@ -1,0 +1,16 @@
+# Development override for docker-compose.yml
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+version: "3.8"
+
+services:
+  actual-mcp:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+      target: builder
+    environment:
+      NODE_ENV: development
+      MCP_READINESS_TRANSITION_LOGS: "true"
+      MCP_TOOL_CORRELATION_LOGS: "true"
+    volumes:
+      - ./mcp-server/src:/app/mcp-server/src

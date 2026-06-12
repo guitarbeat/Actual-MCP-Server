@@ -6,12 +6,78 @@ import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import {
   getConnectionState,
   getReadinessStatus,
-  getConnectionStatus,
+  initActualApi,
+  isConnectionError,
   DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
+import { withRetry } from '../core/utils/retry.js';
 import { createBearerMiddleware } from './auth.js';
 import { mcpInvocationStore, truncateCorrelationId } from './mcp-invocation-context.js';
 import { createActualMcpServer } from './server.js';
+import { getLogger } from '../core/logging/logger.js';
+
+const logger = getLogger('http');
+
+// ---------------------------------------------------------------------------
+// Metrics store
+// ---------------------------------------------------------------------------
+
+interface ToolCallStats {
+  count: number;
+  totalDurationMs: number;
+  errorCount: number;
+}
+
+const metricsStore = {
+  startedAt: Date.now(),
+  reconnectCount: 0,
+  toolCalls: new Map<string, ToolCallStats>(),
+};
+
+export function recordToolCall(toolName: string, durationMs: number, isError: boolean): void {
+  const existing = metricsStore.toolCalls.get(toolName);
+  if (existing) {
+    existing.count += 1;
+    existing.totalDurationMs += durationMs;
+    if (isError) {
+      existing.errorCount += 1;
+    }
+  } else {
+    metricsStore.toolCalls.set(toolName, {
+      count: 1,
+      totalDurationMs: durationMs,
+      errorCount: isError ? 1 : 0,
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Rate limiter -- sliding window, configurable req/min per token
+// ---------------------------------------------------------------------------
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const rateLimitStore = new Map<string, number[]>();
+
+function checkRateLimit(
+  key: string,
+  maxRequests: number,
+): { allowed: boolean; retryAfterSec: number } {
+  const now = Date.now();
+  const timestamps = (rateLimitStore.get(key) ?? []).filter(
+    (ts) => now - ts < RATE_LIMIT_WINDOW_MS,
+  );
+
+  if (timestamps.length >= maxRequests) {
+    const oldest = timestamps[0] ?? now;
+    const retryAfterSec = Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - now) / 1000);
+    rateLimitStore.set(key, timestamps);
+    return { allowed: false, retryAfterSec };
+  }
+
+  timestamps.push(now);
+  rateLimitStore.set(key, timestamps);
+  return { allowed: true, retryAfterSec: 0 };
+}
 
 interface SessionConnection {
   server: ReturnType<typeof createActualMcpServer>;
@@ -44,15 +110,32 @@ export function createHttpRuntime(options: {
   });
   const sessionTtlMs = parseSessionTtl(process.env.MCP_SESSION_TTL_MINUTES);
   const allowedOrigins = parseAllowedOrigins(process.env.MCP_ALLOWED_ORIGINS);
+  const rateLimitMaxRequests = Math.max(
+    1,
+    parseInt(process.env.MCP_RATE_LIMIT_RPM ?? '60', 10) || 60,
+  );
 
   let lastReadinessSignature: string | null = null;
 
   const pruneStaleSessions = (): void => {
+    const now = Date.now();
+
+    // Prune rate limit store entries whose timestamp windows have expired.
+    // This runs unconditionally -- it does not depend on session TTL being set.
+    const cutoff = now - RATE_LIMIT_WINDOW_MS;
+    for (const [key, timestamps] of rateLimitStore.entries()) {
+      const valid = timestamps.filter((t) => t > cutoff);
+      if (valid.length === 0) {
+        rateLimitStore.delete(key);
+      } else {
+        rateLimitStore.set(key, valid);
+      }
+    }
+
     if (!sessionTtlMs) {
       return;
     }
 
-    const now = Date.now();
     for (const [sessionId, session] of sessions.entries()) {
       if (now - session.lastSeenAt <= sessionTtlMs) {
         continue;
@@ -62,6 +145,13 @@ export function createHttpRuntime(options: {
       void session.server.close();
     }
   };
+
+  // Start periodic session cleanup timer (every 60s)
+  const cleanupInterval = setInterval(pruneStaleSessions, 60_000);
+  // Prevent the interval from blocking process exit
+  if (typeof cleanupInterval.unref === 'function') {
+    cleanupInterval.unref();
+  }
 
   const runWithinMcpInvocationContext = async <Response>(
     mcpSessionHeader: string | undefined,
@@ -74,7 +164,12 @@ export function createHttpRuntime(options: {
 
   app.use('*', async (c, next) => {
     const origin = c.req.header('origin');
-    const originAllowed = isOriginAllowed(origin, allowedOrigins);
+    const { path } = c.req;
+
+    // /health and /ready are infrastructure probes that must not be gated by
+    // CORS origin checks. Load balancers and monitoring agents omit Origin.
+    const isBypassRoute = path === '/health' || path === '/ready';
+    const originAllowed = isBypassRoute ? true : isOriginAllowed(origin, allowedOrigins);
 
     if (!originAllowed) {
       return c.json({ error: 'Origin not allowed' }, 403);
@@ -100,6 +195,19 @@ export function createHttpRuntime(options: {
 
   app.use('/mcp', requireBearer);
 
+  // Rate limiter for /mcp (configurable req/min per token or 'anonymous')
+  app.use('/mcp', async (c, next) => {
+    const authHeader = c.req.header('authorization') ?? '';
+    const tokenMatch = /bearer\s+(\S+)/i.exec(authHeader);
+    const key = tokenMatch ? tokenMatch[1] : 'anonymous';
+    const { allowed, retryAfterSec } = checkRateLimit(key, rateLimitMaxRequests);
+    if (!allowed) {
+      c.header('Retry-After', String(retryAfterSec));
+      return c.json({ error: 'Too Many Requests' }, 429);
+    }
+    await next();
+  });
+
   app.get('/', (c) =>
     c.json({
       name: 'Actual Budget MCP',
@@ -118,7 +226,7 @@ export function createHttpRuntime(options: {
 
   app.get('/diagnostics', (c) => {
     try {
-      const connectionInfo = getConnectionStatus();
+      const connectionInfo = getConnectionState();
       return c.json({
         connection: connectionInfo,
         server: {
@@ -134,9 +242,27 @@ export function createHttpRuntime(options: {
         },
       });
     } catch (error) {
-      console.error('Diagnostics endpoint failed:', error);
+      logger.error({ err: error }, 'Diagnostics endpoint failed');
       return c.json({ error: 'diagnostics unavailable' }, 500);
     }
+  });
+
+  app.get('/metrics', requireBearer, (c) => {
+    const toolCallsObj: Record<
+      string,
+      { count: number; totalDurationMs: number; errorCount: number }
+    > = {};
+    for (const [name, stats] of metricsStore.toolCalls.entries()) {
+      toolCallsObj[name] = { ...stats };
+    }
+
+    return c.json({
+      uptime_seconds: Math.floor((Date.now() - metricsStore.startedAt) / 1000),
+      budget_connected: getConnectionState().status === 'ready',
+      reconnect_count: metricsStore.reconnectCount,
+      active_sessions: sessions.size,
+      tool_calls: toolCallsObj,
+    });
   });
 
   app.get('/ready', async (c) => {
@@ -157,6 +283,26 @@ export function createHttpRuntime(options: {
     }
 
     return c.json(publicBody, readiness.ready ? 200 : 503);
+  });
+
+  app.post('/reconnect', requireBearer, async (c) => {
+    try {
+      await withRetry(() => initActualApi(true), {
+        maxAttempts: 3,
+        baseDelayMs: 1000,
+        shouldRetry: (error) =>
+          isConnectionError(
+            error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase(),
+          ),
+      });
+      metricsStore.reconnectCount += 1;
+      const readiness = await getReadinessStatus(true);
+      const publicBody = toPublicReadinessStatus(readiness);
+      return c.json({ reconnected: true, ...publicBody }, readiness.ready ? 200 : 503);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Reconnect failed';
+      return c.json({ reconnected: false, error: message }, 503);
+    }
   });
 
   app.all('/mcp', async (c) => {
@@ -274,6 +420,7 @@ export function createHttpRuntime(options: {
   return {
     app,
     async close() {
+      clearInterval(cleanupInterval);
       pruneStaleSessions();
       await Promise.all(
         [...sessions.values()].map(async ({ server }) => {
@@ -336,5 +483,22 @@ function isOriginAllowed(origin: string | undefined, allowedOrigins: string[]): 
     return false;
   }
 
-  return allowedOrigins.includes(origin);
+  for (const allowed of allowedOrigins) {
+    if (allowed === origin) {
+      return true;
+    }
+
+    // Support wildcard patterns like 'http://localhost:*' or 'https://*.example.com'
+    if (allowed.includes('*')) {
+      const regexStr: string = allowed
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '[^/]*');
+      const regex: RegExp = new RegExp(`^${regexStr}$`);
+      if (regex.test(origin)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
