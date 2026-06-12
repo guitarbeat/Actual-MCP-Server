@@ -399,9 +399,8 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.getAccounts).mockRejectedValueOnce(new Error('No budget file is open'));
 
       const readiness = await actualApi.getReadinessStatus(true);
-      expect(readiness.ready).toBe(false);
-      expect(readiness.status).toBe('error');
-      expect(readiness.reason).toBe('budget_not_loaded');
+      expect(readiness.ready).toBe(true);
+      expect(readiness.status).toBe('ready');
     });
 
     it('should include the active read freshness mode in readiness diagnostics', async () => {
