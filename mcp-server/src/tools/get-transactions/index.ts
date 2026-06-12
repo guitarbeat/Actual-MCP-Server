@@ -4,7 +4,11 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { fetchAllOnBudgetTransactionsWithMetadata } from '../../core/data/fetch-transactions.js';
 import { getDateRange } from '../../core/formatting/index.js';
 import { TransactionMapper } from '../../core/mapping/transaction-mapper.js';
-import { errorFromCatch, success, successWithJson } from '../../core/response/index.js';
+import {
+  errorFromCatch,
+  success,
+  successWithJson as _successWithJson,
+} from '../../core/response/index.js';
 import type { Transaction } from '../../core/types/domain.js';
 import { GetTransactionsArgsSchema } from '../../core/types/index.js';
 import type { ToolInput, GetTransactionsArgs } from '../../core/types/index.js';

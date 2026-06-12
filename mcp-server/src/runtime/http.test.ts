@@ -1,18 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHttpRuntime } from './http.js';
 
-const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus } = vi.hoisted(
-  () => ({
-    mockGetConnectionState: vi.fn(),
-    mockGetReadinessStatus: vi.fn(),
-    mockGetConnectionStatus: vi.fn(),
-  }),
-);
+const { mockGetConnectionState, mockGetReadinessStatus } = vi.hoisted(() => ({
+  mockGetConnectionState: vi.fn(),
+  mockGetReadinessStatus: vi.fn(),
+  mockGetConnectionState: vi.fn(),
+}));
 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
-  getConnectionStatus: mockGetConnectionStatus,
+  getConnectionState: mockGetConnectionState,
   DEFAULT_DATA_DIR: '/mock/data',
 }));
 
@@ -36,17 +34,17 @@ const SAMPLE_READINESS_DIAGNOSTICS = {
 beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
-  mockGetConnectionStatus.mockReset();
+  mockGetConnectionState.mockReset();
   mockGetConnectionState.mockReturnValue({ status: 'ready' });
-  mockGetConnectionStatus.mockReturnValue({
+  mockGetConnectionState.mockReturnValue({
     status: 'ready',
-    budgetId: 'test-budget',
+    activeBudgetId: 'test-budget',
     lastReadyAt: '2026-04-11T00:00:00.000Z',
     lastErrorAt: null,
     lastError: null,
     reconnectAttempts: 0,
     lastSyncAt: '2026-04-11T00:00:00.000Z',
-    initialized: true,
+    lastReadyAt: '2024-01-01',
   });
   mockGetReadinessStatus.mockResolvedValue({
     ready: true,
@@ -312,8 +310,8 @@ describe('GET /diagnostics', () => {
     expect(data).toMatchObject({
       connection: {
         status: 'ready',
-        budgetId: 'test-budget',
-        initialized: true,
+        activeBudgetId: 'test-budget',
+        lastReadyAt: '2024-01-01',
       },
       config: {
         serverUrl: 'http://localhost:5006',
@@ -335,7 +333,7 @@ describe('GET /diagnostics', () => {
   });
 
   it('should return 500 when diagnostics are unavailable', async () => {
-    mockGetConnectionStatus.mockImplementation(() => {
+    mockGetConnectionState.mockImplementation(() => {
       throw new Error('Test error');
     });
 

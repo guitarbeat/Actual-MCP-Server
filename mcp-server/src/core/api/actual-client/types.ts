@@ -100,3 +100,7 @@ export type {
   APIScheduleEntity,
   APITagEntity,
 };
+
+export type ImportTransactionsOpts = any;
+export type RuleEntity = any;
+export type TransactionEntity = any;
