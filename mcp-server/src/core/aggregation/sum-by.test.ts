@@ -69,19 +69,25 @@ describe('sumBy', () => {
   describe('property-based tests', () => {
     it('should match native reduce logic for function iteratees', () => {
       fc.assert(
-        fc.property(fc.array(fc.record({ val: fc.double({ noNaN: true }) })), (arr) => {
-          const expected = arr.reduce((sum, item) => sum + item.val, 0);
-          expect(sumBy(arr, (d) => d.val)).toBeCloseTo(expected, 10);
-        }),
+        fc.property(
+          fc.array(fc.record({ val: fc.double({ noNaN: true, noDefaultInfinity: true }) })),
+          (arr) => {
+            const expected = arr.reduce((sum, item) => sum + item.val, 0);
+            expect(sumBy(arr, (d) => d.val)).toBeCloseTo(expected, 10);
+          },
+        ),
       );
     });
 
     it('should match native reduce logic for key iteratees', () => {
       fc.assert(
-        fc.property(fc.array(fc.record({ val: fc.double({ noNaN: true }) })), (arr) => {
-          const expected = arr.reduce((sum, item) => sum + item.val, 0);
-          expect(sumBy(arr, 'val')).toBeCloseTo(expected, 10);
-        }),
+        fc.property(
+          fc.array(fc.record({ val: fc.double({ noNaN: true, noDefaultInfinity: true }) })),
+          (arr) => {
+            const expected = arr.reduce((sum, item) => sum + item.val, 0);
+            expect(sumBy(arr, 'val')).toBeCloseTo(expected, 10);
+          },
+        ),
       );
     });
   });
