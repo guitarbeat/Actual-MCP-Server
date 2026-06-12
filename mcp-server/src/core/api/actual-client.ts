@@ -58,7 +58,7 @@ export type {
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
-const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
@@ -66,6 +66,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  lastErrorAt: null,
   debugError: null,
   activeBudgetId: null,
 };
@@ -213,6 +214,7 @@ function markConnectionInitializing(): void {
   updateConnectionState({
     status: 'initializing',
     lastError: null,
+    lastErrorAt: null,
   });
 }
 
@@ -224,6 +226,7 @@ function markConnectionReady(budgetId: string): void {
     status: 'ready',
     lastReadyAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
     debugError: null,
     activeBudgetId: budgetId,
   });
@@ -243,6 +246,7 @@ function markSyncSuccess(): void {
   updateConnectionState({
     lastSyncAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
   });
 }
 

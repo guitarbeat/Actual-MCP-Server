@@ -9,6 +9,9 @@ import type {
   APITagEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 
+export type TransactionEntity = any;
+export type RuleEntity = any;
+export type ImportTransactionsOpts = any;
 export type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
   updateSchedule?: (
