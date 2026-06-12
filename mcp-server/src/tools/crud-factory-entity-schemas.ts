@@ -130,30 +130,67 @@ export const CreateAccountSchema = z.object({
   name: z
     .string()
     .min(1, 'Account name is required')
-    .max(100, 'Account name must be less than 100 characters'),
-  type: z.enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'], {
-    errorMap: () => ({
-      message:
-        'Account type must be one of: checking, savings, credit, investment, mortgage, debt, other',
-    }),
-  }),
-  offbudget: z.boolean().optional(),
-  initialBalance: z.number().int().optional(),
-  balanceCurrent: z.number().int().nullable().optional(),
+    .max(100, 'Account name must be less than 100 characters')
+    .describe('Display name for the account (e.g., "Chase Checking", "Amazon Card").'),
+  type: z
+    .enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'], {
+      errorMap: () => ({
+        message:
+          'Account type must be one of: checking, savings, credit, investment, mortgage, debt, other',
+      }),
+    })
+    .describe('Account type: checking, savings, credit, investment, mortgage, debt, or other.'),
+  offbudget: z
+    .boolean()
+    .optional()
+    .describe('If true, this is a tracking-only account that does not affect budget calculations.'),
+  initialBalance: z
+    .number()
+    .int()
+    .optional()
+    .describe('Starting balance in cents (e.g., 1000000 = $10,000).'),
+  balanceCurrent: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .describe(
+      'Reported bank balance in cents, stored separately from ledger history for reconciliation.',
+    ),
 });
 
 export const UpdateAccountSchema = z.object({
-  id: z.string().uuid('Account ID must be a valid UUID'),
-  name: z.string().min(1).max(100, 'Account name must be less than 100 characters').optional(),
+  id: z
+    .string()
+    .uuid('Account ID must be a valid UUID')
+    .describe('UUID of the account to update. Use get-accounts to find account IDs.'),
+  name: z
+    .string()
+    .min(1)
+    .max(100, 'Account name must be less than 100 characters')
+    .optional()
+    .describe('New display name for the account.'),
   type: z
     .enum(['checking', 'savings', 'credit', 'investment', 'mortgage', 'debt', 'other'])
-    .optional(),
-  offbudget: z.boolean().optional(),
-  balanceCurrent: z.number().int().nullable().optional(),
+    .optional()
+    .describe('New account type.'),
+  offbudget: z
+    .boolean()
+    .optional()
+    .describe('Set to true to move off-budget (tracking only), false for on-budget.'),
+  balanceCurrent: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .describe('Updated reported bank balance in cents, or null to clear it.'),
 });
 
 export const DeleteAccountSchema = z.object({
-  id: z.string().uuid('Account ID must be a valid UUID'),
+  id: z
+    .string()
+    .uuid('Account ID must be a valid UUID')
+    .describe('UUID of the account to delete. Use get-accounts to find account IDs.'),
 });
 
 // ----------------------------
@@ -162,12 +199,18 @@ export const DeleteAccountSchema = z.object({
 
 export const UpdateRuleSchema = z
   .object({
-    id: z.string().uuid('Rule ID must be a valid UUID'),
+    id: z
+      .string()
+      .uuid('Rule ID must be a valid UUID')
+      .describe('UUID of the rule to update. Use get-rules to find rule IDs.'),
   })
   .merge(RuleDataSchema.partial());
 
 export const DeleteRuleSchema = z.object({
-  id: z.string().uuid('Rule ID must be a valid UUID'),
+  id: z
+    .string()
+    .uuid('Rule ID must be a valid UUID')
+    .describe('UUID of the rule to delete. Use get-rules to find rule IDs.'),
 });
 
 // ----------------------------

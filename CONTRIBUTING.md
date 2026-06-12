@@ -63,6 +63,19 @@ Repository-level implementation notes are documented in [docs/engineering-notes.
 4. Update documentation if necessary.
 5. Submit a Pull Request.
 
+## Branch Protection
+
+The `main` branch is protected by the CI pass gate (`CI Pass` status check). All of the following jobs must pass before merging:
+
+- **Lint & Format** — ESLint and Prettier checks
+- **Type Check** — TypeScript compilation and tool docs drift check
+- **Test** — vitest coverage run
+- **Build** — TypeScript build and startup smoke test
+- **Docker Build** — container image build validation
+- **Security Audit** — `pnpm audit --audit-level=high` for all packages
+
+Enable branch protection in the repository settings under **Settings > Branches** and require the `CI Pass` status check.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.

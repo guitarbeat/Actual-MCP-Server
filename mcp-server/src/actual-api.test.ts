@@ -396,7 +396,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
-      vi.mocked(api.getAccounts).mockRejectedValueOnce(new Error('No budget file is open'));
+      vi.mocked(api.getAccounts).mockRejectedValue(new Error('No budget file is open'));
 
       const readiness = await actualApi.getReadinessStatus(true);
       expect(readiness.ready).toBe(false);
@@ -972,6 +972,8 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.importTransactions).mockResolvedValue({
         added: ['txn-1'],
         updated: [],
+        updatedPreview: [],
+        errors: [],
       });
     });
 
@@ -997,7 +999,7 @@ describe('Auto-load functionality', () => {
       );
       expect(cacheService.invalidatePattern).toHaveBeenCalledWith('transactions:*');
       expect(cacheService.invalidate).toHaveBeenCalledWith('accounts:all');
-      expect(result).toEqual({ added: ['txn-1'], updated: [] });
+      expect(result).toEqual({ added: ['txn-1'], updated: [], updatedPreview: [], errors: [] });
     });
 
     it('should pass opts parameter to API', async () => {
@@ -1023,13 +1025,14 @@ describe('Auto-load functionality', () => {
         ],
         { defaultCleared: true },
       );
-      expect(result).toEqual({ added: ['txn-1'], updated: [] });
+      expect(result).toEqual({ added: ['txn-1'], updated: [], updatedPreview: [], errors: [] });
     });
 
     it('should throw when API reports errors', async () => {
       vi.mocked(api.importTransactions).mockResolvedValue({
         added: [],
         updated: [],
+        updatedPreview: [],
         errors: [{ message: 'duplicate transaction' }],
       });
 
@@ -1047,6 +1050,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.importTransactions).mockResolvedValue({
         added: [],
         updated: [],
+        updatedPreview: [],
         errors: [{ message: 'duplicate transaction' }, { message: 'invalid amount' }],
       });
 
@@ -1216,7 +1220,7 @@ describe('Auto-load functionality', () => {
         { id: 'payee-credit', name: 'Transfer: Credit Card', transfer_acct: 'credit' },
       );
 
-      const internalDb = api.internal.db;
+      const internalDb = api.internal!.db;
       vi.mocked(internalDb.getTransaction).mockImplementation(async (id: string) => {
         if (id === 'txn-out') {
           return {
@@ -1250,72 +1254,74 @@ describe('Auto-load functionality', () => {
 
         return null;
       });
-      vi.mocked(internalDb.all).mockImplementation(async (sql: string, params: unknown[]) => {
-        if (sql.includes('id IN')) {
-          // getBatchHistoricalTransferTransactions — return full transaction objects
-          const ids = params as string[];
-          const txns: Record<string, Record<string, unknown>> = {
-            'txn-out': {
-              id: 'txn-out',
-              account: 'checking',
-              amount: -1234,
-              date: '2025-01-15',
-              category: 'cat-1',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-            'txn-in': {
-              id: 'txn-in',
-              account: 'credit',
-              amount: 1234,
-              date: '2025-01-16',
-              category: 'cat-2',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-          };
-          return ids.filter((id) => id in txns).map((id) => txns[id]);
-        }
+      vi.mocked(internalDb.all).mockImplementation(
+        async (sql: string, params?: (string | number)[]) => {
+          if (sql.includes('id IN')) {
+            // getBatchHistoricalTransferTransactions — return full transaction objects
+            const ids = params as string[];
+            const txns: Record<string, Record<string, unknown>> = {
+              'txn-out': {
+                id: 'txn-out',
+                account: 'checking',
+                amount: -1234,
+                date: '2025-01-15',
+                category: 'cat-1',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+              'txn-in': {
+                id: 'txn-in',
+                account: 'credit',
+                amount: 1234,
+                date: '2025-01-16',
+                category: 'cat-2',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+            };
+            return ids.filter((id) => id in txns).map((id) => txns[id]);
+          }
 
-        if (sql.includes('amount IN')) {
-          // getAllPotentialHistoricalTransferCounterparts — return matching counterparts
-          return [
-            {
-              id: 'txn-out',
-              account: 'checking',
-              amount: -1234,
-              date: '2025-01-15',
-              category: 'cat-1',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-            {
-              id: 'txn-in',
-              account: 'credit',
-              amount: 1234,
-              date: '2025-01-16',
-              category: 'cat-2',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-          ];
-        }
+          if (sql.includes('amount IN')) {
+            // getAllPotentialHistoricalTransferCounterparts — return matching counterparts
+            return [
+              {
+                id: 'txn-out',
+                account: 'checking',
+                amount: -1234,
+                date: '2025-01-15',
+                category: 'cat-1',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+              {
+                id: 'txn-in',
+                account: 'credit',
+                amount: 1234,
+                date: '2025-01-16',
+                category: 'cat-2',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+            ];
+          }
 
-        return [];
-      });
-      vi.mocked(api.internal.send).mockResolvedValue({
+          return [];
+        },
+      );
+      vi.mocked(api.internal!.send).mockResolvedValue({
         updated: [],
       });
     });
@@ -1336,7 +1342,7 @@ describe('Auto-load functionality', () => {
           },
         ],
       });
-      expect(api.internal.send).toHaveBeenCalledWith('transactions-batch-update', {
+      expect(api.internal!.send).toHaveBeenCalledWith('transactions-batch-update', {
         updated: [
           {
             id: 'txn-in',
@@ -1354,12 +1360,12 @@ describe('Auto-load functionality', () => {
         runTransfers: false,
       });
       // Batch fetch of involved transactions
-      expect(api.internal.db.all).toHaveBeenNthCalledWith(1, expect.stringContaining('id IN'), [
+      expect(api.internal!.db.all).toHaveBeenNthCalledWith(1, expect.stringContaining('id IN'), [
         'txn-in',
         'txn-out',
       ]);
       // Batch fetch of potential counterparts by inverse amounts and date range
-      expect(api.internal.db.all).toHaveBeenNthCalledWith(
+      expect(api.internal!.db.all).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining('amount IN'),
         expect.arrayContaining([-1234, 1234, 20250112, 20250119]),
@@ -1369,82 +1375,84 @@ describe('Auto-load functionality', () => {
     });
 
     it('rejects candidates that no longer have a unique exact counterpart', async () => {
-      vi.mocked(api.internal.db.all).mockImplementation(async (sql: string, params: unknown[]) => {
-        if (sql.includes('id IN')) {
-          const ids = params as string[];
-          const txns: Record<string, Record<string, unknown>> = {
-            'txn-out': {
-              id: 'txn-out',
-              account: 'checking',
-              amount: -1234,
-              date: '2025-01-15',
-              category: 'cat-1',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-            'txn-in': {
-              id: 'txn-in',
-              account: 'credit',
-              amount: 1234,
-              date: '2025-01-16',
-              category: 'cat-2',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-          };
-          return ids.filter((id) => id in txns).map((id) => txns[id]);
-        }
+      vi.mocked(api.internal!.db.all).mockImplementation(
+        async (sql: string, params?: (string | number)[]) => {
+          if (sql.includes('id IN')) {
+            const ids = params as string[];
+            const txns: Record<string, Record<string, unknown>> = {
+              'txn-out': {
+                id: 'txn-out',
+                account: 'checking',
+                amount: -1234,
+                date: '2025-01-15',
+                category: 'cat-1',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+              'txn-in': {
+                id: 'txn-in',
+                account: 'credit',
+                amount: 1234,
+                date: '2025-01-16',
+                category: 'cat-2',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+            };
+            return ids.filter((id) => id in txns).map((id) => txns[id]);
+          }
 
-        if (sql.includes('amount IN')) {
-          // Return an extra counterpart to make the match non-unique
-          return [
-            {
-              id: 'txn-out',
-              account: 'checking',
-              amount: -1234,
-              date: '2025-01-15',
-              category: 'cat-1',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-            {
-              id: 'txn-in',
-              account: 'credit',
-              amount: 1234,
-              date: '2025-01-16',
-              category: 'cat-2',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-            {
-              id: 'txn-other',
-              account: 'savings',
-              amount: 1234,
-              date: '2025-01-15',
-              category: 'cat-3',
-              transfer_id: null,
-              starting_balance_flag: false,
-              is_parent: false,
-              is_child: false,
-              tombstone: false,
-            },
-          ];
-        }
+          if (sql.includes('amount IN')) {
+            // Return an extra counterpart to make the match non-unique
+            return [
+              {
+                id: 'txn-out',
+                account: 'checking',
+                amount: -1234,
+                date: '2025-01-15',
+                category: 'cat-1',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+              {
+                id: 'txn-in',
+                account: 'credit',
+                amount: 1234,
+                date: '2025-01-16',
+                category: 'cat-2',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+              {
+                id: 'txn-other',
+                account: 'savings',
+                amount: 1234,
+                date: '2025-01-15',
+                category: 'cat-3',
+                transfer_id: null,
+                starting_balance_flag: false,
+                is_parent: false,
+                is_child: false,
+                tombstone: false,
+              },
+            ];
+          }
 
-        return [];
-      });
+          return [];
+        },
+      );
 
       const result = await actualApi.applyHistoricalTransfers(['txn-in::txn-out']);
 
@@ -1457,7 +1465,7 @@ describe('Auto-load functionality', () => {
           reason: expect.stringContaining('unique exact inverse counterpart'),
         }),
       );
-      expect(api.internal.send).not.toHaveBeenCalled();
+      expect(api.internal!.send).not.toHaveBeenCalled();
     });
   });
 });

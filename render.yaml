@@ -26,3 +26,4 @@ services:
     # - MCP_TOOL_CORRELATION_LOGS=true — correlate stderr tool executions with HTTP request ids
     # - MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC — periodic [MCP_DIAG] lines (RSS, conn state, epoch counters)
     # - MCP_READINESS_TRANSITION_LOGS=true — correlate /ready flips vs 503/200 responses
+    # - /reconnect endpoint (POST, bearer-protected) — trigger a forced reconnect on cold starts

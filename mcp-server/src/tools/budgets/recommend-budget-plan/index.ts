@@ -1,6 +1,7 @@
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
+import { successWithJson } from '../../../core/response/index.js';
 import type { ToolInput } from '../../../core/types/index.js';
+import { executeToolAction } from '../../shared/tool-action.js';
 import { recommendBudgetPlan } from './planner.js';
 import { RecommendBudgetPlanArgsSchema } from './types.js';
 
@@ -21,16 +22,12 @@ export const schema = {
   inputSchema: zodToJsonSchema(RecommendBudgetPlanArgsSchema) as ToolInput,
 };
 
-export async function handler(
-  args: unknown,
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    const parsed = RecommendBudgetPlanArgsSchema.parse(args);
-    return successWithJson(await recommendBudgetPlan(parsed));
-  } catch (error) {
-    return errorFromCatch(error, {
-      fallbackMessage: 'Failed to recommend a budget plan',
-      suggestion: 'Verify the target month and optional lookback settings before retrying.',
-    });
-  }
+export async function handler(args: unknown) {
+  return executeToolAction(args, {
+    parse: RecommendBudgetPlanArgsSchema.parse,
+    execute: (parsed) => recommendBudgetPlan(parsed),
+    buildResponse: (_args, result) => successWithJson(result),
+    fallbackMessage: 'Failed to recommend a budget plan',
+    suggestion: 'Verify the target month and optional lookback settings before retrying.',
+  });
 }
