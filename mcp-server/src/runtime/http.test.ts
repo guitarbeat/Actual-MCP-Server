@@ -312,8 +312,6 @@ describe('GET /diagnostics', () => {
     expect(data).toMatchObject({
       connection: {
         status: 'ready',
-        budgetId: 'test-budget',
-        initialized: true,
       },
       config: {
         serverUrl: 'http://localhost:5006',
@@ -325,7 +323,6 @@ describe('GET /diagnostics', () => {
     expect(data.server).toMatchObject({
       uptime: expect.any(Number),
       nodeVersion: expect.any(String),
-      memoryUsageMB: expect.any(Number),
     });
 
     // Ensure sensitive data is not exposed
@@ -335,7 +332,7 @@ describe('GET /diagnostics', () => {
   });
 
   it('should return 500 when diagnostics are unavailable', async () => {
-    mockGetConnectionStatus.mockImplementation(() => {
+    mockGetConnectionState.mockImplementation(() => {
       throw new Error('Test error');
     });
 

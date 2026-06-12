@@ -52,7 +52,7 @@ describe('sumBy', () => {
 
   it('should handle objects missing the specified key', () => {
     // Objects missing 'val' will yield undefined for that property, which should be treated as 0
-    const data = [{ val: 10 }, { other: 20 } as any, { val: 30 }];
+    const data = [{ val: 10 }, { other: 20 } as unknown as { val: number }, { val: 30 }];
     expect(sumBy(data, 'val')).toBe(40);
   });
 

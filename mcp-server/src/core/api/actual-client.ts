@@ -58,7 +58,7 @@ export type {
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
-const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
@@ -68,6 +68,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastError: null,
   debugError: null,
   activeBudgetId: null,
+  lastErrorAt: null,
 };
 
 // API initialization state

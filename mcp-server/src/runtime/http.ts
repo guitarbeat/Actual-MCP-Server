@@ -6,7 +6,6 @@ import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import {
   getConnectionState,
   getReadinessStatus,
-  getConnectionStatus,
   DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
@@ -118,19 +117,20 @@ export function createHttpRuntime(options: {
 
   app.get('/diagnostics', (c) => {
     try {
-      const connectionInfo = getConnectionStatus();
+      const connectionInfo = getConnectionState();
       return c.json({
         connection: connectionInfo,
         server: {
           uptime: process.uptime(),
           nodeVersion: process.version,
-          memoryUsageMB: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 10) / 10,
         },
         config: {
-          serverUrl: process.env.ACTUAL_SERVER_URL || null,
-          hasBudgetId: !!process.env.ACTUAL_SYNC_ID,
+          serverUrl: process.env.ACTUAL_SERVER_URL
+            ? process.env.ACTUAL_SERVER_URL.replace(/:\/\/[^@]+@/, '://***:***@')
+            : null,
           hasPassword: !!process.env.ACTUAL_PASSWORD,
-          dataDir: process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR,
+          hasBudgetId: !!process.env.ACTUAL_SYNC_ID,
+          dataDir: DEFAULT_DATA_DIR,
         },
       });
     } catch (error) {
