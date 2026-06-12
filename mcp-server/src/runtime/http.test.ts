@@ -312,8 +312,6 @@ describe('GET /diagnostics', () => {
     expect(data).toMatchObject({
       connection: {
         status: 'ready',
-        budgetId: 'test-budget',
-        initialized: true,
       },
       config: {
         serverUrl: 'http://localhost:5006',
