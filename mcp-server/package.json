@@ -19,7 +19,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
     "dev": "tsx src/index.ts",
     "start": "node build/index.js",
@@ -52,7 +52,7 @@
     "prepublishOnly": "pnpm run build && pnpm run docs:check && pnpm run public:check"
   },
   "dependencies": {
-    "@actual-app/api": "26.3.0",
+    "@actual-app/api": "26.5.1",
     "@hono/node-server": "^1.19.14",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "csv-parse": "^6.1.0",
@@ -62,8 +62,10 @@
     "fflate": "^0.8.2",
     "hono": "^4.12.16",
     "lru-cache": "^11.3.5",
+    "pino": "^10.3.1",
     "zod": "^3.25.76",
-    "zod-to-json-schema": "^3.25.1"
+    "zod-to-json-schema": "^3.25.1",
+    "tsc-alias": "^1.8.17"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
