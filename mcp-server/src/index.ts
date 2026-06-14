@@ -9,7 +9,7 @@ import type { ServerType } from '@hono/node-server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import {
-  getConnectionState,
+  getConnectionStatus,
   getAccounts,
   initActualApi,
   scheduleConnectionDiagnosticsIfEnabled,
@@ -236,7 +236,7 @@ async function main(): Promise<void> {
       },
       (info) => {
         console.error(
-          `[HTTP] MCP server listening on http://${info.address}:${info.port}/mcp (state: ${getConnectionState().status})`,
+          `[HTTP] MCP server listening on http://${info.address}:${info.port}/mcp (state: ${getConnectionStatus().status})`,
         );
       },
     );

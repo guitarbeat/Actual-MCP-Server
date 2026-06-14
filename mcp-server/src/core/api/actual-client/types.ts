@@ -8,6 +8,12 @@ import type {
   APIScheduleEntity,
   APITagEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
+import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.d.js';
+import type {
+  ImportTransactionEntity,
+  RuleEntity,
+  TransactionEntity,
+} from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 
 export type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
@@ -93,6 +99,10 @@ export interface ActualReadinessStatusExtended extends ActualReadinessStatus {
 }
 
 export type {
+  ImportTransactionEntity,
+  ImportTransactionsOpts,
+  RuleEntity,
+  TransactionEntity,
   APIAccountEntity,
   APICategoryEntity,
   APICategoryGroupEntity,

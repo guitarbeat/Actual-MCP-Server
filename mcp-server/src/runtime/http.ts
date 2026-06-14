@@ -4,9 +4,8 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { ActualReadinessStatus } from '../core/api/actual-client/types.js';
 import {
-  getConnectionState,
-  getReadinessStatus,
   getConnectionStatus,
+  getReadinessStatus,
   DEFAULT_DATA_DIR,
 } from '../core/api/actual-client.js';
 import { createBearerMiddleware } from './auth.js';
@@ -105,7 +104,7 @@ export function createHttpRuntime(options: {
       name: 'Actual Budget MCP',
       version: options.version,
       transport: 'streamable-http',
-      ready: getConnectionState().status === 'ready',
+      ready: getConnectionStatus().status === 'ready',
     }),
   );
 

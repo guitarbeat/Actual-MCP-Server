@@ -58,7 +58,7 @@ export type {
 
 const extendedApi: ExtendedActualApi = api as ExtendedActualApi;
 
-const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
+export const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 const DEFAULT_READ_FRESHNESS_MODE = 'cached';
 
 const INITIAL_CONNECTION_STATE: ActualConnectionState = {
@@ -66,6 +66,7 @@ const INITIAL_CONNECTION_STATE: ActualConnectionState = {
   lastReadyAt: null,
   lastSyncAt: null,
   lastError: null,
+  lastErrorAt: null,
   debugError: null,
   activeBudgetId: null,
 };
@@ -695,7 +696,7 @@ export function scheduleConnectionDiagnosticsIfEnabled(): void {
 
   connectionDiagnosticsInterval = setInterval(() => {
     const memory = process.memoryUsage();
-    const state = getConnectionState();
+    const state = getConnectionStatus();
     const budgetTail =
       typeof state.activeBudgetId === 'string' && state.activeBudgetId.length > 8
         ? state.activeBudgetId.slice(-8)
@@ -845,7 +846,7 @@ export function resetInitializationStats(): void {
   forcedInitInvocationCount = 0;
 }
 
-export function getConnectionState(): ActualConnectionState {
+export function getConnectionStatus(): ActualConnectionState {
   return { ...connectionState };
 }
 
@@ -854,7 +855,7 @@ export function getConnectionState(): ActualConnectionState {
  * Matches {@link getReadinessStatus}(false) after any optional forced check in that API.
  */
 export function getReadinessSnapshot(): ActualReadinessStatus {
-  const snapshot = getConnectionState();
+  const snapshot = getConnectionStatus();
   let reason = snapshot.lastError || 'not_initialized';
 
   if (snapshot.status === 'ready' && snapshot.activeBudgetId) {
