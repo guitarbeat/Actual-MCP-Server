@@ -9,6 +9,10 @@ import type {
   APITagEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 
+import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
+import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
+
 export type ExtendedActualApi = typeof api & {
   createSchedule?: (args: Record<string, unknown>) => Promise<string>;
   updateSchedule?: (
@@ -99,4 +103,7 @@ export type {
   APIPayeeEntity,
   APIScheduleEntity,
   APITagEntity,
+  ImportTransactionsOpts,
+  RuleEntity,
+  TransactionEntity,
 };
