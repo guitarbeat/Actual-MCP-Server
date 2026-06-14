@@ -56,8 +56,8 @@ describe('getToolDefinitions', () => {
     expect(getToolDefinitions({ enableWrite: true, enableAdvanced: false })).toHaveLength(35);
   });
 
-  it('exposes 42 tools with write and advanced enabled', () => {
-    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: true })).toHaveLength(42);
+  it('exposes 45 tools with write and advanced enabled', () => {
+    expect(getToolDefinitions({ enableWrite: true, enableAdvanced: true })).toHaveLength(45);
   });
 
   it('preserves the legacy JSON schema and derives an SDK input schema', () => {
