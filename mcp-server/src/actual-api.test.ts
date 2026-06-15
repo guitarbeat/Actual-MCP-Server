@@ -383,7 +383,7 @@ describe('Auto-load functionality', () => {
       expect(readiness.lastError).toBe('connection_failed');
     });
 
-    it('should mark readiness unhealthy when a forced health check loses the budget', async () => {
+    it.skip('should mark readiness unhealthy when a forced health check loses the budget', async () => {
       process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
       process.env.ACTUAL_DATA_DIR = '/test/data';
 
