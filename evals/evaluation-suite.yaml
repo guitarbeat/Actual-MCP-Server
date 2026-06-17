@@ -1,0 +1,178 @@
+# Actual Budget MCP Server — Evaluation Suite
+# 10 complex questions testing multi-tool workflows
+# Per: anthropics/skills → mcp-builder § Phase 4
+
+schema_version: 1
+
+evaluations:
+  - id: eval-01
+    title: Monthly spending comparison
+    difficulty: medium
+    tools_required: [spending-by-category, monthly-summary]
+    question: >
+      What was the total spending in the "Food" category for the last 3 months,
+      and which month had the highest food spending?
+    expected_behavior: >
+      Agent should call spending-by-category for each of the 3 most recent months
+      (or use monthly-summary), compare the Food category totals, and identify
+      the month with the highest value. Should present amounts and the winner clearly.
+    success_criteria:
+      - Retrieves data for 3 consecutive months
+      - Correctly identifies the Food category
+      - Compares totals and identifies the maximum
+      - Presents dollar amounts
+
+  - id: eval-02
+    title: Budget variance analysis
+    difficulty: hard
+    tools_required: [get-budget, spending-by-category, get-grouped-categories]
+    question: >
+      Which budget categories are currently over budget this month, and by how much?
+      Also list any categories with no spending at all.
+    expected_behavior: >
+      Agent should get the current month's budget allocations via get-budget,
+      get actual spending via spending-by-category, compare them, and identify
+      overspending and zero-spend categories. Should use get-grouped-categories
+      to resolve category names if needed.
+    success_criteria:
+      - Retrieves both budget and actual spending
+      - Correctly calculates variance (actual − budget)
+      - Lists over-budget categories with amounts
+      - Lists zero-spend categories
+
+  - id: eval-03
+    title: Account reconciliation check
+    difficulty: medium
+    tools_required: [get-accounts, get-account-balance, get-transactions]
+    question: >
+      What is the current balance of my Chase Checking account, and what were
+      the 5 most recent transactions in it?
+    expected_behavior: >
+      Agent should use get-accounts to find the Chase Checking account ID,
+      then get-account-balance for the current balance, and get-transactions
+      filtered to that account with a limit of 5, sorted by date descending.
+    success_criteria:
+      - Resolves account name to ID correctly
+      - Retrieves accurate balance
+      - Lists 5 most recent transactions with dates, payees, and amounts
+
+  - id: eval-04
+    title: Payee spending analysis
+    difficulty: medium
+    tools_required: [get-payees, get-transactions]
+    question: >
+      How much have I spent at Amazon in the last 6 months? Break it down by month.
+    expected_behavior: >
+      Agent should use get-payees to find Amazon-related payees (may be multiple),
+      then get-transactions filtered by those payees over the last 6 months,
+      and aggregate by month.
+    success_criteria:
+      - Identifies all Amazon-related payees
+      - Retrieves transactions for correct date range
+      - Aggregates by month correctly
+      - Presents monthly totals
+
+  - id: eval-05
+    title: Multi-account net worth
+    difficulty: easy
+    tools_required: [get-accounts, get-account-balance]
+    question: >
+      What is my total net worth across all open accounts? Separate assets
+      (checking, savings, investment) from liabilities (credit cards).
+    expected_behavior: >
+      Agent should get all accounts, classify them as assets or liabilities
+      by type, sum balances for each group, and compute net worth (assets − liabilities).
+    success_criteria:
+      - Retrieves all open accounts
+      - Correctly classifies account types
+      - Sums assets and liabilities separately
+      - Computes net worth
+
+  - id: eval-06
+    title: Create recurring bill
+    difficulty: hard
+    tools_required: [get-accounts, get-payees, get-grouped-categories, create-schedule]
+    question: >
+      Set up a monthly schedule for my Netflix subscription at $15.99 on the 15th
+      of each month, from my Chase Checking account, categorized under Entertainment.
+    expected_behavior: >
+      Agent should resolve the account (Chase Checking), payee (Netflix — create if
+      needed), and category (Entertainment) IDs, then call create-schedule with the
+      correct recurrence pattern, amount, and linked account/payee/category.
+    success_criteria:
+      - Resolves all entity names to IDs
+      - Creates schedule with correct amount (1599 in cents)
+      - Sets monthly recurrence on the 15th
+      - Links correct account, payee, and category
+
+  - id: eval-07
+    title: Uncategorized transaction cleanup
+    difficulty: medium
+    tools_required: [audit-uncategorized-transactions, update-transaction, get-grouped-categories]
+    question: >
+      Find all uncategorized transactions and categorize any that are clearly
+      identifiable by their payee name (e.g., Spotify → Entertainment,
+      Whole Foods → Groceries).
+    expected_behavior: >
+      Agent should call audit-uncategorized-transactions to find them,
+      get-grouped-categories to get valid category IDs, then update-transaction
+      for each identifiable transaction with the appropriate category.
+    success_criteria:
+      - Finds uncategorized transactions
+      - Makes reasonable category assignments based on payee names
+      - Uses valid category IDs
+      - Updates transactions correctly
+
+  - id: eval-08
+    title: Budget planning with history
+    difficulty: hard
+    tools_required: [spending-by-category, recommend-budget-plan, apply-budget-plan]
+    question: >
+      Based on my spending history, create and apply a budget for next month.
+      Make sure no category is budgeted less than 80% of its 3-month average.
+    expected_behavior: >
+      Agent should call recommend-budget-plan to get AI-generated recommendations,
+      review them against spending-by-category data for the last 3 months,
+      adjust any categories below the 80% floor, then apply-budget-plan.
+    success_criteria:
+      - Retrieves spending history for context
+      - Gets budget recommendations
+      - Validates 80% floor rule
+      - Applies final budget
+
+  - id: eval-09
+    title: Transfer detection audit
+    difficulty: hard
+    tools_required: [audit-historical-transfers, apply-historical-transfers, get-accounts]
+    question: >
+      Run the transfer detection audit and apply any high-confidence matches.
+      Report how many transfers were found and applied.
+    expected_behavior: >
+      Agent should call audit-historical-transfers to find unlinked transfer pairs,
+      review the confidence scores, then apply-historical-transfers for matches
+      above a reasonable threshold. Should report summary statistics.
+    success_criteria:
+      - Runs the audit successfully
+      - Filters by confidence score
+      - Applies only high-confidence matches
+      - Reports counts (found, applied, skipped)
+
+  - id: eval-10
+    title: Financial health dashboard
+    difficulty: hard
+    tools_required: [monthly-summary, financial-insights, balance-history, get-accounts, spending-by-category]
+    question: >
+      Give me a complete financial health overview: monthly income vs expenses
+      trend for the last 6 months, current savings rate, top 5 spending categories,
+      and any concerning trends.
+    expected_behavior: >
+      Agent should orchestrate multiple read tools to build a comprehensive
+      picture: monthly-summary for income/expense trends, financial-insights
+      for analysis, balance-history for account trends, spending-by-category
+      for top categories. Should synthesize into actionable insights.
+    success_criteria:
+      - Retrieves 6 months of data
+      - Calculates savings rate (income − expenses) / income
+      - Identifies top 5 categories
+      - Flags concerning trends (increasing spend, declining savings)
+      - Presents coherent narrative

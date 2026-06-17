@@ -98,7 +98,7 @@ describe('getToolDefinitions', () => {
     expect(getTool('delete-transaction').annotations).toMatchObject({
       readOnlyHint: false,
       destructiveHint: true,
-      idempotentHint: false,
+      idempotentHint: true, // deleting an already-deleted resource is a no-op
       openWorldHint: false,
     });
   });
