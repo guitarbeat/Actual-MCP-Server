@@ -18,3 +18,44 @@ services:
       - ./package.json:/app/package.json
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+# Docker Compose for Actual Budget MCP Server
+# Copy mcp-server/.env.example to .env and fill in values, then run: docker compose up
+version: "3.8"
+
+services:
+  actual-mcp:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL}
+      ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
+      ACTUAL_SESSION_TOKEN: ${ACTUAL_SESSION_TOKEN:-}
+      ACTUAL_BUDGET_SYNC_ID: ${ACTUAL_BUDGET_SYNC_ID}
+      BEARER_TOKEN: ${BEARER_TOKEN}
+      ACTUAL_BUDGET_ENCRYPTION_PASSWORD: ${ACTUAL_BUDGET_ENCRYPTION_PASSWORD:-}
+      AUTO_SYNC_INTERVAL_MINUTES: ${AUTO_SYNC_INTERVAL_MINUTES:-5}
+      MCP_SESSION_TTL_MINUTES: ${MCP_SESSION_TTL_MINUTES:-60}
+    volumes:
+      - actual-data:/app/.actual
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  actual-data:
+    driver: local
