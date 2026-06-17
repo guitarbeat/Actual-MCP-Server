@@ -7,7 +7,7 @@ import type {
   APIPayeeEntity,
   APIScheduleEntity,
   APITagEntity,
-} from '@actual-app/api/@types/loot-core/src/server/api-models.js';
+} from '../api-types.js';
 
 export type TransactionEntity = any;
 export type RuleEntity = any;
@@ -29,7 +29,7 @@ export type ExtendedActualApi = typeof api & {
     db?: {
       getTransaction?: (id: string) => Promise<HistoricalTransferInternalTransaction | null>;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      all?: (sql: string, params: unknown[]) => Promise<any[]>;
+      all?: (sql: string, params?: (string | number)[]) => Promise<any[]>;
     };
   };
 };

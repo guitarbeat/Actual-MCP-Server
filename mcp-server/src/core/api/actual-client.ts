@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import '../../polyfill.js';
 import api from '@actual-app/api';
+import type { ImportTransactionsOpts, RuleEntity, TransactionEntity } from './api-types.js';
 import type {
   ActualConnectionState,
   ActualReadFreshnessMode,
@@ -18,9 +19,6 @@ import type {
   HistoricalTransferApplyCandidateResult,
   HistoricalTransferApplyResult,
   HistoricalTransferInternalTransaction,
-  ImportTransactionsOpts,
-  RuleEntity,
-  TransactionEntity,
 } from './actual-client/types.js';
 import {
   getDateDiffInDays,
@@ -238,6 +236,7 @@ function markConnectionError(error: unknown): void {
   updateConnectionState({
     status: 'error',
     lastError: sanitizeConnectionError(error),
+    lastErrorAt: nowAsIsoString(),
     debugError: rawMessage,
   });
 }
