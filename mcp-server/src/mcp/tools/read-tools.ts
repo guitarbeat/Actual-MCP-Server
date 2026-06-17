@@ -1,6 +1,7 @@
 import * as balanceHistory from '../../tools/balance-history/index.js';
 import * as getBudget from '../../tools/budgets/get-budget/index.js';
 import * as getBudgets from '../../tools/budgets/get-budgets/index.js';
+import * as listBudgetSnapshots from '../../tools/budgets/list-budget-snapshots/index.js';
 import * as recommendBudgetPlan from '../../tools/budgets/recommend-budget-plan/index.js';
 import * as switchBudget from '../../tools/budgets/switch-budget/index.js';
 import * as getGroupedCategories from '../../tools/categories/get-grouped-categories/index.js';
@@ -16,6 +17,8 @@ import * as auditHistoricalTransfers from '../../tools/transactions/audit-histor
 import * as auditUncategorizedTransactions from '../../tools/transactions/audit-uncategorized-transactions/index.js';
 import * as spendingByCategory from '../../tools/spending-by-category/index.js';
 import * as getAccountBalance from '../../tools/accounts/get-account-balance/index.js';
+import * as listBackups from '../../tools/backups/list-backups/index.js';
+
 import { defineTool } from './common.js';
 
 export const readToolDefinitions = [
@@ -36,5 +39,8 @@ export const readToolDefinitions = [
   defineTool({ ...getAccountBalance, requiresWrite: false, category: 'core' }),
   defineTool({ ...getBudget, requiresWrite: false, category: 'core' }),
   defineTool({ ...getBudgets, requiresWrite: false, category: 'advanced' }),
+  defineTool({ ...listBudgetSnapshots, requiresWrite: false, category: 'advanced' }),
   defineTool({ ...switchBudget, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...listBackups, requiresWrite: false, category: 'advanced' }),
+
 ];

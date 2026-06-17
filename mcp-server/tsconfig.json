@@ -13,7 +13,12 @@
     "declarationDir": "./build",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@tools/*": ["./src/tools/*"],
+      "@mcp/*": ["./src/mcp/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "build"]

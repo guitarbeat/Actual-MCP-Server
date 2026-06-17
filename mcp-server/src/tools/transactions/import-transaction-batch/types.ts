@@ -39,7 +39,11 @@ export const ImportTransactionBatchArgsSchema = z
   .object({
     transactions: z
       .array(ImportedTransactionSchema)
-      .min(1, 'At least one transaction is required for batch import.'),
+      .min(1, 'At least one transaction is required for batch import.')
+      .describe(
+        'Array of transactions to import. Each transaction must include accountId, date, and amount at minimum.',
+      ),
+      .describe('Array of transactions to import. Each transaction must include accountId, date, and amount at minimum.'),
     defaultCleared: z
       .boolean()
       .optional()

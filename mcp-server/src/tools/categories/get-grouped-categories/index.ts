@@ -3,12 +3,10 @@
 // ----------------------------
 
 import { fetchAllCategoryGroups } from '../../../core/data/fetch-categories.js';
-import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
+import { successWithJson } from '../../../core/response/index.js';
 import type { CategoryGroup } from '../../../core/types/domain.js';
-import {
-  type GetGroupedCategoriesArgs,
-  GetGroupedCategoriesArgsSchema,
-} from '../../../core/types/index.js';
+import { GetGroupedCategoriesArgsSchema } from '../../../core/types/index.js';
+import { executeToolAction } from '../../shared/tool-action.js';
 
 export const schema = {
   name: 'get-grouped-categories',
@@ -32,16 +30,14 @@ export const schema = {
   },
 };
 
-export async function handler(
-  args: GetGroupedCategoriesArgs | undefined = undefined,
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
-  try {
-    GetGroupedCategoriesArgsSchema.parse(args ?? {});
-
-    const categoryGroups: CategoryGroup[] = await fetchAllCategoryGroups();
-
-    return successWithJson(categoryGroups);
-  } catch (err) {
-    return errorFromCatch(err);
-  }
+export async function handler(args: unknown) {
+  return executeToolAction(args ?? {}, {
+    parse: (rawArgs) => GetGroupedCategoriesArgsSchema.parse(rawArgs),
+    execute: async () => {
+      const categoryGroups: CategoryGroup[] = await fetchAllCategoryGroups();
+      return categoryGroups;
+    },
+    buildResponse: (_parsedArgs, categoryGroups) => successWithJson(categoryGroups),
+    fallbackMessage: 'Failed to get grouped categories',
+  });
 }

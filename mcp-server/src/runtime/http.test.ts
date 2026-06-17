@@ -1,19 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHttpRuntime } from './http.js';
 
-const { mockGetConnectionState, mockGetReadinessStatus, mockGetConnectionStatus } = vi.hoisted(
-  () => ({
-    mockGetConnectionState: vi.fn(),
-    mockGetReadinessStatus: vi.fn(),
-    mockGetConnectionStatus: vi.fn(),
-  }),
-);
+const {
+  mockGetConnectionState,
+  mockGetReadinessStatus,
+  mockGetConnectionStatus,
+  mockInitActualApi,
+} = vi.hoisted(() => ({
+  mockGetConnectionState: vi.fn(),
+  mockGetReadinessStatus: vi.fn(),
+  mockGetConnectionStatus: vi.fn(),
+  mockInitActualApi: vi.fn(),
+}));
 
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
   getConnectionState: mockGetConnectionStatus,
+  getConnectionStatus: mockGetConnectionStatus,
+  initActualApi: mockInitActualApi,
+  isConnectionError: vi.fn().mockReturnValue(true),
   DEFAULT_DATA_DIR: '/mock/data',
+}));
+
+vi.mock('../core/utils/retry.js', () => ({
+  withRetry: vi.fn().mockImplementation((fn: () => Promise<unknown>) => fn()),
 }));
 
 const ORIGINAL_ENV = {
@@ -37,6 +48,8 @@ beforeEach(() => {
   mockGetConnectionState.mockReset();
   mockGetReadinessStatus.mockReset();
   mockGetConnectionStatus.mockReset();
+  mockInitActualApi.mockReset();
+  mockInitActualApi.mockResolvedValue(undefined);
   mockGetConnectionState.mockReturnValue({ status: 'ready' });
   mockGetConnectionStatus.mockReturnValue({
     status: 'ready',
@@ -137,6 +150,25 @@ describe('createHttpRuntime', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ status: 'ok' });
+  });
+
+  it('allows health and ready probes without an Origin even when MCP_ALLOWED_ORIGINS is configured', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    // /health probe without Origin must not be rejected by the CORS gate
+    const healthResponse = await app.fetch(new Request('http://localhost/health'));
+    expect(healthResponse.status).toBe(200);
+
+    // /ready probe without Origin must not be rejected by the CORS gate
+    const readyResponse = await app.fetch(new Request('http://localhost/ready'));
+    expect([200, 503]).toContain(readyResponse.status);
   });
 
   it('rejects requests with missing origin', async () => {
@@ -333,7 +365,7 @@ describe('GET /diagnostics', () => {
   });
 
   it('should return 500 when diagnostics are unavailable', async () => {
-    mockGetConnectionStatus.mockImplementation(() => {
+    mockGetConnectionState.mockImplementation(() => {
       throw new Error('Test error');
     });
 
@@ -351,5 +383,282 @@ describe('GET /diagnostics', () => {
 
     const data = await response.json();
     expect(data).toEqual({ error: 'diagnostics unavailable' });
+  });
+});
+
+describe('Wildcard CORS', () => {
+  it('allows origin matching http://localhost:* pattern', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'http://localhost:*';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/health', {
+        headers: { Origin: 'http://localhost:3001' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:3001');
+  });
+
+  it('allows origin matching https://*.example.com pattern', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://*.example.com';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/health', {
+        headers: { Origin: 'https://app.example.com' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://app.example.com');
+  });
+
+  it('rejects origin that does not match wildcard pattern on non-probe routes', async () => {
+    process.env.MCP_ALLOWED_ORIGINS = 'http://localhost:*';
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: false,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/diagnostics', {
+        headers: { Origin: 'https://evil.example.com' },
+      }),
+    );
+
+    expect(response.status).toBe(403);
+  });
+});
+
+describe('GET /metrics', () => {
+  beforeEach(() => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+  });
+
+  const METRICS_TOKEN = '12345678901234567890123456789012';
+
+  it('returns metrics JSON when valid bearer token provided', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: METRICS_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/metrics', {
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: `Bearer ${METRICS_TOKEN}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      uptime_seconds: expect.any(Number),
+      budget_connected: expect.any(Boolean),
+      reconnect_count: expect.any(Number),
+      active_sessions: expect.any(Number),
+      tool_calls: expect.any(Object),
+    });
+  });
+
+  it('returns 401 when bearer is enabled and no token provided', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: METRICS_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/metrics', {
+        headers: { Origin: 'https://good.example' },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('returns 401 when bearer is enabled and wrong token provided', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: METRICS_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/metrics', {
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: 'Bearer wrong-token',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+  });
+});
+
+describe('POST /reconnect', () => {
+  const BEARER_TOKEN = '12345678901234567890123456789012';
+
+  beforeEach(() => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+  });
+
+  it('calls initActualApi(true) and returns 200 with reconnected:true when successful', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/reconnect', {
+        method: 'POST',
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockInitActualApi).toHaveBeenCalledWith(true);
+    expect(mockGetReadinessStatus).toHaveBeenCalledWith(true);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      reconnected: true,
+      ready: true,
+      status: 'ready',
+    });
+  });
+
+  it('returns 503 with reconnected:false when initActualApi throws', async () => {
+    mockInitActualApi.mockRejectedValue(new Error('Connection refused'));
+
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/reconnect', {
+        method: 'POST',
+        headers: {
+          Origin: 'https://good.example',
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      reconnected: false,
+      error: 'Connection refused',
+    });
+  });
+
+  it('requires bearer auth when bearer is enabled', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const response = await app.fetch(
+      new Request('http://localhost/reconnect', {
+        method: 'POST',
+        headers: { Origin: 'https://good.example' },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+  });
+});
+
+describe('Rate limiter', () => {
+  const BEARER_TOKEN = '12345678901234567890123456789012';
+
+  beforeEach(() => {
+    process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
+    // Use a low limit so the test does not have to make 60 real requests
+    process.env.MCP_RATE_LIMIT_RPM = '3';
+  });
+
+  afterEach(() => {
+    delete process.env.MCP_RATE_LIMIT_RPM;
+  });
+
+  it('returns 429 with Retry-After header after exceeding the request limit', async () => {
+    const { app } = createHttpRuntime({
+      version: 'test',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken: BEARER_TOKEN,
+    });
+
+    const makeRequest = () =>
+      app.fetch(
+        new Request('http://localhost/mcp', {
+          method: 'POST',
+          headers: {
+            Origin: 'https://good.example',
+            Authorization: `Bearer ${BEARER_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ jsonrpc: '2.0', method: 'ping', id: 1 }),
+        }),
+      );
+
+    // MCP_RATE_LIMIT_RPM=3 means the 4th request should be rejected
+    const responses = await Promise.all([
+      makeRequest(),
+      makeRequest(),
+      makeRequest(),
+      makeRequest(),
+    ]);
+
+    const statuses = responses.map((r) => r.status);
+    const rejectedIndex = statuses.indexOf(429);
+    expect(rejectedIndex).toBeGreaterThanOrEqual(0);
+
+    const rejected = responses[rejectedIndex];
+    expect(rejected.headers.get('retry-after')).toBeTruthy();
+    const body = await rejected.json();
+    expect(body).toMatchObject({ error: 'Too Many Requests' });
   });
 });

@@ -2,7 +2,11 @@ import { z } from 'zod';
 import type { Transaction } from '../../../core/types/domain.js';
 
 export const SetAccountStartingBalanceArgsSchema = z.object({
-  account: z.string().min(1, 'Account name or ID is required.'),
+  account: z
+    .string()
+    .min(1, 'Account name or ID is required.')
+  account: z.string().min(1, 'Account name or ID is required.')
+    .describe('Account name or ID to set the starting balance for. Supports partial matching.'),
   amount: z
     .number()
     .finite('Amount must be a finite number.')
@@ -10,8 +14,17 @@ export const SetAccountStartingBalanceArgsSchema = z.object({
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format.')
-    .optional(),
-  notes: z.string().max(500, 'Notes must be less than 500 characters.').optional(),
+    .optional()
+    .describe(
+      'Effective date in YYYY-MM-DD format. If omitted, uses the day before the earliest non-starting-balance transaction.',
+    ),
+  notes: z
+    .string()
+    .max(500, 'Notes must be less than 500 characters.')
+    .optional()
+    .describe('Effective date in YYYY-MM-DD format. If omitted, uses the day before the earliest non-starting-balance transaction.'),
+  notes: z.string().max(500, 'Notes must be less than 500 characters.').optional()
+    .describe('Optional notes for the starting balance transaction.'),
 });
 
 export interface SetAccountStartingBalanceArgs {
