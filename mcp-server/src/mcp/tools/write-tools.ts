@@ -18,6 +18,9 @@ import * as deleteTransaction from '../../tools/transactions/delete-transaction/
 import * as importTransactionBatch from '../../tools/transactions/import-transaction-batch/index.js';
 import * as applyHistoricalTransfers from '../../tools/transactions/apply-historical-transfers/index.js';
 import * as updateTransaction from '../../tools/transactions/update-transaction/index.js';
+import * as backupBudget from '../../tools/backups/make-backup/index.js';
+import * as restoreBudget from '../../tools/backups/restore-budget/index.js';
+
 import { defineTool } from './common.js';
 
 export const writeToolDefinitions = [
@@ -39,6 +42,9 @@ export const writeToolDefinitions = [
   defineTool({ ...reopenAccount, requiresWrite: true, category: 'advanced' }),
   defineTool({ ...holdBudget, requiresWrite: true, category: 'advanced' }),
   defineTool({ ...resetBudgetHold, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...backupBudget, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...restoreBudget, requiresWrite: true, category: 'advanced' }),
+
   defineTool({ ...createBudgetSnapshot, requiresWrite: true, category: 'advanced' }),
   defineTool({ ...restoreBudgetSnapshot, requiresWrite: true, category: 'advanced' }),
 ];

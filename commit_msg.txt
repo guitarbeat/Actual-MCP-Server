@@ -1,0 +1,5 @@
+Title: Feat: Add budget backup tools
+What: Added `backup-budget`, `list-backups`, and `restore-budget` tools to allow taking budget snapshots and restoring from them via Actual's native internal backup system.
+Why: Addresses GitHub issue #373 to ensure users have a way to safely snapshot their budget state before performing bulk modifications.
+Verification: Created unit tests for the tools validating failure/success states, mock interactions with `actualApi.internal.send`, and confirmed the tool registry updates and compiles without regressions.
+Result: Three new MCP tools (`backup-budget`, `list-backups`, `restore-budget`) are registered and usable by MCP clients.

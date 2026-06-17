@@ -17,6 +17,8 @@ import * as auditHistoricalTransfers from '../../tools/transactions/audit-histor
 import * as auditUncategorizedTransactions from '../../tools/transactions/audit-uncategorized-transactions/index.js';
 import * as spendingByCategory from '../../tools/spending-by-category/index.js';
 import * as getAccountBalance from '../../tools/accounts/get-account-balance/index.js';
+import * as listBackups from '../../tools/backups/list-backups/index.js';
+
 import { defineTool } from './common.js';
 
 export const readToolDefinitions = [
@@ -39,4 +41,6 @@ export const readToolDefinitions = [
   defineTool({ ...getBudgets, requiresWrite: false, category: 'advanced' }),
   defineTool({ ...listBudgetSnapshots, requiresWrite: false, category: 'advanced' }),
   defineTool({ ...switchBudget, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...listBackups, requiresWrite: false, category: 'advanced' }),
+
 ];

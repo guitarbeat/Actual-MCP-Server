@@ -56,6 +56,7 @@ describe('getToolDefinitions', () => {
     expect(getToolDefinitions({ enableWrite: true, enableAdvanced: false })).toHaveLength(35);
   });
 
+  it('exposes 45 tools with write and advanced enabled', () => {
   it('exposes 42 tools with write and advanced enabled', () => {
     expect(getToolDefinitions({ enableWrite: true, enableAdvanced: true })).toHaveLength(45);
   });
