@@ -90,16 +90,25 @@ export function createToolAnnotations(name: string, requiresWrite: boolean): Too
     /^delete-/.test(lowerName) ||
     /^close-/.test(lowerName) ||
     /^reset-/.test(lowerName) ||
+    /^restore-/.test(lowerName) ||
     /^manage-/.test(lowerName) ||
     lowerName === 'merge-payees';
+
+  // Idempotent: calling twice with the same args produces the same result.
+  // - All read-only tools are inherently idempotent.
+  // - Write tools that set/update/delete to a target state are idempotent
+  //   (e.g., set-budget → same amount, delete-X → already gone, update-X → same fields).
+  // - Non-idempotent: create-X (duplicates), merge-X (already merged), import-X (duplicates).
   const idempotent =
     !requiresWrite ||
-    /^get-/.test(lowerName) ||
-    /^audit-/.test(lowerName) ||
-    /^monthly-/.test(lowerName) ||
-    /^spending-/.test(lowerName) ||
-    /^financial-/.test(lowerName) ||
-    /^balance-/.test(lowerName);
+    /^set-/.test(lowerName) ||
+    /^update-/.test(lowerName) ||
+    /^delete-/.test(lowerName) ||
+    /^close-/.test(lowerName) ||
+    /^reopen-/.test(lowerName) ||
+    /^rename-/.test(lowerName) ||
+    /^apply-/.test(lowerName) ||
+    /^restore-/.test(lowerName);
 
   return {
     readOnlyHint: !requiresWrite,
