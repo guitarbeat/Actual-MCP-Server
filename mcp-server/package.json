@@ -52,7 +52,7 @@
     "prepublishOnly": "pnpm run build && pnpm run docs:check && pnpm run public:check"
   },
   "dependencies": {
-    "@actual-app/api": "26.5.1",
+    "@actual-app/api": "26.6.0",
     "@hono/node-server": "^1.19.14",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "csv-parse": "^6.1.0",
