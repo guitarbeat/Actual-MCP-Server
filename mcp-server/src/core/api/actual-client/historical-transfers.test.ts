@@ -166,6 +166,7 @@ describe('getHistoricalTransferInternalLayer', () => {
     expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
       'Historical transfer tools require Actual local data access.',
     );
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.send is missing', () => {
@@ -173,6 +174,7 @@ describe('getHistoricalTransferInternalLayer', () => {
     expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
       'Historical transfer tools require Actual local data access.',
     );
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.db is missing', () => {
@@ -180,6 +182,7 @@ describe('getHistoricalTransferInternalLayer', () => {
     expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
       'Historical transfer tools require Actual local data access.',
     );
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.db.getTransaction is missing', () => {
@@ -189,6 +192,7 @@ describe('getHistoricalTransferInternalLayer', () => {
     expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
       'Historical transfer tools require Actual local data access.',
     );
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.db.all is missing', () => {
@@ -198,6 +202,7 @@ describe('getHistoricalTransferInternalLayer', () => {
     expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
       'Historical transfer tools require Actual local data access.',
     );
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('returns { send, db } when all required fields are present', () => {
