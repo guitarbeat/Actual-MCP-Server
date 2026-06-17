@@ -396,6 +396,7 @@ describe('Auto-load functionality', () => {
       vi.mocked(api.downloadBudget).mockResolvedValue(undefined);
 
       await actualApi.initActualApi();
+      // getAccounts is retried 3 times in checkConnectionHealth
       vi.mocked(api.getAccounts).mockRejectedValue(new Error('No budget file is open'));
 
       const readiness = await actualApi.getReadinessStatus(true);

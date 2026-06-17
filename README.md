@@ -103,6 +103,15 @@ Budget data is persisted in a named Docker volume (`actual-data`). Use `/health`
 `-- .pre-commit-config.yaml # Public repo hygiene checks
 ```
 
+## Branch Protection
+
+It is strongly recommended to enable branch protection on your repository's `main` branch to enforce code quality and security standards.
+
+When configuring branch protection, enable the following required status checks:
+- `CI Pass` (This job aggregates the results of Lint, Type Check, Test, Build, and Docker Build checks)
+- `Analyze (javascript-typescript)` (from CodeQL)
+
+This prevents merging code with failing tests, regressions, or high-severity vulnerabilities.
 ## Architecture
 
 The system consists of three main components communicating via the Model Context Protocol (MCP) or Actual's internal sync:
