@@ -163,16 +163,25 @@ describe('getHistoricalTransferInternalLayer', () => {
 
   it('throws when internal is missing entirely', () => {
     const api = {} as ExtendedActualApi;
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
+      'Historical transfer tools require Actual local data access.',
+    );
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.send is missing', () => {
     const api = { internal: { db } } as unknown as ExtendedActualApi;
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
+      'Historical transfer tools require Actual local data access.',
+    );
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
   it('throws when internal.db is missing', () => {
     const api = { internal: { send } } as unknown as ExtendedActualApi;
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
+      'Historical transfer tools require Actual local data access.',
+    );
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
@@ -180,6 +189,9 @@ describe('getHistoricalTransferInternalLayer', () => {
     const api = {
       internal: { send, db: { all: db.all } },
     } as unknown as ExtendedActualApi;
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
+      'Historical transfer tools require Actual local data access.',
+    );
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 
@@ -187,6 +199,9 @@ describe('getHistoricalTransferInternalLayer', () => {
     const api = {
       internal: { send, db: { getTransaction: db.getTransaction } },
     } as unknown as ExtendedActualApi;
+    expect(() => getHistoricalTransferInternalLayer(api)).toThrowError(
+      'Historical transfer tools require Actual local data access.',
+    );
     expect(() => getHistoricalTransferInternalLayer(api)).toThrow();
   });
 

@@ -10,6 +10,9 @@ import { ScheduleHandler } from '../../manage-entity/entity-handlers/schedule-ha
 import { executeMutationTool } from '../../shared/mutation-tool.js';
 
 const DeleteScheduleSchema = z.object({
+  id: z
+    .string()
+    .uuid('Schedule ID must be a valid UUID')
   id: z.string().uuid('Schedule ID must be a valid UUID')
     .describe('UUID of the schedule to delete. Use get-schedules to find schedule IDs.'),
 });
