@@ -5,6 +5,7 @@ export const SetAccountStartingBalanceArgsSchema = z.object({
   account: z
     .string()
     .min(1, 'Account name or ID is required.')
+  account: z.string().min(1, 'Account name or ID is required.')
     .describe('Account name or ID to set the starting balance for. Supports partial matching.'),
   amount: z
     .number()
@@ -21,6 +22,8 @@ export const SetAccountStartingBalanceArgsSchema = z.object({
     .string()
     .max(500, 'Notes must be less than 500 characters.')
     .optional()
+    .describe('Effective date in YYYY-MM-DD format. If omitted, uses the day before the earliest non-starting-balance transaction.'),
+  notes: z.string().max(500, 'Notes must be less than 500 characters.').optional()
     .describe('Optional notes for the starting balance transaction.'),
 });
 
