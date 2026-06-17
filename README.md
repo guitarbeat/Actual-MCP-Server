@@ -28,6 +28,17 @@ pnpm --filter actual-mcp build
 pnpm --filter actual-mcp test
 ```
 
+## Quick Start with Docker Compose
+
+For a simpler local development setup without installing Node or pnpm locally, you can use Docker Compose:
+
+1. Clone the repository: `git clone <your-repo-url>` and `cd actual-mcp`
+2. Copy the environment template: `cp .env.example .env`
+3. Fill in the required values in `.env`
+4. Run the services: `docker-compose up` (or `docker compose up`)
+
+This will build the server, start it in development mode with hot-reloading, and expose it on port 3000.
+
 For package-specific setup and MCP client configuration, use [`mcp-server/README.md`](./mcp-server/README.md).
 
 ## Render Deployment

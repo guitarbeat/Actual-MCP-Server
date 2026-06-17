@@ -1,3 +1,23 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+      target: builder
+    command: pnpm --filter actual-mcp dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./mcp-server:/app/mcp-server
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
 # Docker Compose for Actual Budget MCP Server
 # Copy mcp-server/.env.example to .env and fill in values, then run: docker compose up
 version: "3.8"
