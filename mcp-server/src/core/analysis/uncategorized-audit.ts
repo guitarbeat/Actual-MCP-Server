@@ -1,4 +1,4 @@
-import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
+import type { RuleEntity } from '../api/api-types.js';
 import { fetchAllAccounts } from '../data/fetch-accounts.js';
 import { fetchAllCategoriesMap } from '../data/fetch-categories.js';
 import {

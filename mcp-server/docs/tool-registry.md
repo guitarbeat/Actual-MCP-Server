@@ -47,6 +47,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 
 - `backup-budget`: Creates a backup or snapshot of the currently loaded budget.
 - `close-account`: Close an account in Actual Budget. This keeps transaction history but marks the account as closed.
+- `create-budget-snapshot`: Create a point-in-time backup snapshot of the budget data directory. Use this before risky operations such as bulk imports or applying budget plans.
 - `get-budget-files`: List all available budget files (local and remote). Use to see available budget files before switching.
 - `hold-budget`: Hold budget amount for the next month. Use to save for large purchases or irregular expenses.
 - `list-backups`: Returns a list of available backups with timestamps.
@@ -54,6 +55,11 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `reopen-account`: Reopen a closed account in Actual Budget.
 - `reset-budget-hold`: Reset (clear) a budget hold for a specific month.
 - `restore-budget`: Restores the budget from a specified backup ID.
+- `list-budget-snapshots`: List all available budget snapshots sorted by creation time (most recent first). Use this to find a snapshotId before restoring.
+- `manage-account`: Create, update, or delete a account. Set "action" to "create", "update", or "delete" and include the relevant fields.
+- `reopen-account`: Reopen a closed account in Actual Budget.
+- `reset-budget-hold`: Reset (clear) a budget hold for a specific month.
+- `restore-budget-snapshot`: Restore the budget data directory from a previously created snapshot. This overwrites current budget data files with the snapshot contents and automatically reloads the budget session.
 - `switch-budget`: Switch to a different budget file. Downloads and loads the specified budget.
 
 ## Prompts

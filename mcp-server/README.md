@@ -65,7 +65,7 @@ Grouped tool discovery is available as JSON via the MCP resource **`actual://mcp
 
 ### Actual server compatibility
 
-The published npm package pins `@actual-app/api` to **26.3.0** (see [`package.json`](./package.json)). Bump that dependency only alongside an Actual Server version you validated end-to-end, and rerun `pnpm --filter actual-mcp test` plus startup smoke whenever either side jumps major/minor trains.
+The published npm package pins `@actual-app/api` to **26.5.1** (see [`package.json`](./package.json)). Bump that dependency only alongside an Actual Server version you validated end-to-end, and rerun `pnpm --filter actual-mcp test` plus startup smoke whenever either side jumps major/minor trains.
 
 ## Run Modes
 
@@ -242,6 +242,67 @@ Generated from the declarative MCP modules under `src/mcp/`. The current surface
 The full generated inventory lives in [docs/tool-registry.md](docs/tool-registry.md).
 
 <!-- TOOL_SURFACE:END -->
+
+## Environment Variables Reference
+
+| Variable                                  | Default                             | Description                                                                                                                                      |
+| ----------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ACTUAL_SERVER_URL`                       | _(required)_                        | URL of your Actual Budget server                                                                                                                 |
+| `ACTUAL_PASSWORD`                         | _(required if no token)_            | Password for remote-server auth. Set exactly one of `ACTUAL_PASSWORD` or `ACTUAL_SESSION_TOKEN`                                                  |
+| `ACTUAL_SESSION_TOKEN`                    | _(required if no password)_         | Session token for remote-server auth. Alternative to `ACTUAL_PASSWORD`                                                                           |
+| `ACTUAL_BUDGET_SYNC_ID`                   | _(required)_                        | Sync/group ID of the budget to load                                                                                                              |
+| `ACTUAL_BUDGET_ENCRYPTION_PASSWORD`       | _(empty)_                           | Decryption password for encrypted budgets                                                                                                        |
+| `BEARER_TOKEN`                            | _(required when `--enable-bearer`)_ | Shared secret for HTTP bearer auth. Must meet minimum length; checked at startup                                                                 |
+| `PORT`                                    | `3000`                              | HTTP listener port in remote mode                                                                                                                |
+| `ACTUAL_READ_FRESHNESS_MODE`              | `cached`                            | `cached` serves from cache; `strict-live` syncs before every read and fails on stale data                                                        |
+| `ACTUAL_CONNECTION_HEALTH_TTL_MS`         | `20000`                             | How long (ms) read paths may skip a lightweight health probe (bounded 3000-300000)                                                               |
+| `AUTO_SYNC_INTERVAL_MINUTES`              | `5`                                 | How often to sync with the Actual server in the background. Set non-zero for remote deployments                                                  |
+| `CACHE_ENABLED`                           | `true`                              | Enable in-memory response cache                                                                                                                  |
+| `CACHE_TTL_SECONDS`                       | `300`                               | Cache entry lifetime in seconds                                                                                                                  |
+| `MCP_SESSION_TTL_MINUTES`                 | _(disabled)_                        | Expire idle streamable HTTP sessions after this many minutes. Omit to disable pruning                                                            |
+| `MCP_ALLOWED_ORIGINS`                     | _(empty)_                           | Comma-separated list of allowed `Origin` headers for browser-based clients. Server-to-server requests without `Origin` are controlled separately |
+| `MCP_TOOL_CORRELATION_LOGS`               | `false`                             | When `true` (HTTP mode), emit stderr lines with shortened request/session IDs per tool invocation                                                |
+| `MCP_READINESS_TRANSITION_LOGS`           | `false`                             | When `true`, emit a `[READINESS]` stderr line on each change to the `/ready` payload                                                             |
+| `MCP_CONNECTION_DIAGNOSTICS_INTERVAL_SEC` | _(disabled)_                        | Positive integer to emit periodic `[MCP_DIAG]` connection and memory lines                                                                       |
+| `MCP_TOOL_USAGE_SUMMARY_INTERVAL_SEC`     | _(disabled)_                        | Positive integer to emit periodic `[TOOL_USAGE_SUMMARY]` per-tool invocation counts                                                              |
+| `ACTUAL_GET_TRANSACTIONS_DEFAULT_LIMIT`   | `200`                               | Default page size for `get-transactions`                                                                                                         |
+| `ACTUAL_GET_TRANSACTIONS_MAX_LIMIT`       | `5000`                              | Maximum allowed page size for `get-transactions`                                                                                                 |
+| `ACTUAL_TOOL_TEST_SANDBOX_BUDGET_ID`      | _(empty)_                           | Sync ID of the dedicated sandbox budget used by the write-phase smoke tests                                                                      |
+| `ACTUAL_TOOL_TEST_PREFIX`                 | `__mcp_tool_test__`                 | Prefix for fixture data created by smoke tests                                                                                                   |
+
+## Architecture Overview
+
+The server is organized into four main layers:
+
+- **MCP surface** (`src/mcp/`): Declarative tool, prompt, and resource registration. Tools are grouped into read-only (default), write (`--enable-write`), and advanced (`--enable-advanced`) tiers. The MCP resource `actual://mcp/tool-surface` exposes the tool catalog as JSON.
+- **Tool implementations** (`src/tools/`): Individual handlers for each MCP tool. Each tool exports a `schema` (JSON Schema) and a `handler` function.
+- **Domain logic** (`src/core/`): Shared utilities for aggregation, analysis, data access, formatting, input parsing, and caching. The Actual Budget API client (`src/core/api/actual-client.ts`) is process-global and serializes all init/reconnect operations.
+- **Runtime** (`src/runtime/`): Hono-based HTTP server for remote mode. Handles MCP sessions, bearer auth, and health/readiness endpoints. Stdio mode is used for desktop clients.
+
+> **Note**: `@actual-app/api` and the Actual client are process-global. All active MCP sessions share one loaded budget. Use separate deployments for mutually exclusive budgets.
+
+## HTTP Endpoints Reference
+
+| Endpoint       | Method          | Auth                            | Description                                                               |
+| -------------- | --------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| `/`            | GET             | None                            | Server name, version, and ready status                                    |
+| `/health`      | GET             | None                            | Liveness check -- always returns `{ status: "ok" }`                       |
+| `/ready`       | GET             | None                            | Readiness check -- 200 when budget is loaded, 503 otherwise               |
+| `/diagnostics` | GET             | None                            | Connection state, memory usage, and config summary                        |
+| `/mcp`         | GET/POST/DELETE | Bearer (when `--enable-bearer`) | MCP protocol endpoint (streamable HTTP transport)                         |
+| `/reconnect`   | POST            | Bearer (when `--enable-bearer`) | Force a reconnect to the Actual Budget server -- useful after cold starts |
+
+## Troubleshooting
+
+| Symptom                                               | Likely cause                     | Fix                                                                                              |
+| ----------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `/ready` returns 503 with `no_budgets_found`          | No budget downloaded yet         | Verify `ACTUAL_BUDGET_SYNC_ID` matches a budget on your Actual server                            |
+| `/ready` returns 503 with `authentication_failed`     | Wrong password or session token  | Check `ACTUAL_PASSWORD` / `ACTUAL_SESSION_TOKEN` -- set exactly one, not both                    |
+| `/ready` returns 503 with `migration_in_progress`     | Actual server schema out of sync | Update your Actual Budget server to the latest version and restart it                            |
+| Server unresponsive after Render free-tier cold start | State reset on wake              | POST to `/reconnect` (bearer protected) or set `AUTO_SYNC_INTERVAL_MINUTES` to keep warm         |
+| Bearer auth fails with 401                            | Token too short or mismatch      | `BEARER_TOKEN` must meet minimum length; check the value matches your client config              |
+| MCP client times out on first tool call               | Budget sync in progress          | Wait for `/ready` to return 200 before running tools, or set `ACTUAL_READ_FRESHNESS_MODE=cached` |
+| Memory growing in long-running containers             | Session leak                     | Set `MCP_SESSION_TTL_MINUTES` to expire idle sessions                                            |
 
 ## Inspector And Development
 

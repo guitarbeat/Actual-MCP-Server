@@ -5,7 +5,9 @@ import * as setAccountStartingBalance from '../../tools/accounts/set-account-sta
 import * as holdBudget from '../../tools/budget/hold-budget/index.js';
 import * as resetBudgetHold from '../../tools/budget/reset-budget-hold/index.js';
 import * as applyBudgetPlan from '../../tools/budgets/apply-budget-plan/index.js';
+import * as createBudgetSnapshot from '../../tools/budgets/create-budget-snapshot/index.js';
 import * as importTransactions from '../../tools/budgets/import-transactions/index.js';
+import * as restoreBudgetSnapshot from '../../tools/budgets/restore-budget-snapshot/index.js';
 import * as mergePayees from '../../tools/payees/merge-payees/index.js';
 import * as createSchedule from '../../tools/schedules/create-schedule/index.js';
 import * as deleteSchedule from '../../tools/schedules/delete-schedule/index.js';
@@ -43,4 +45,6 @@ export const writeToolDefinitions = [
   defineTool({ ...backupBudget, requiresWrite: true, category: 'advanced' }),
   defineTool({ ...restoreBudget, requiresWrite: true, category: 'advanced' }),
 
+  defineTool({ ...createBudgetSnapshot, requiresWrite: true, category: 'advanced' }),
+  defineTool({ ...restoreBudgetSnapshot, requiresWrite: true, category: 'advanced' }),
 ];
