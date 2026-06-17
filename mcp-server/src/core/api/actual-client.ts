@@ -212,6 +212,7 @@ function markConnectionInitializing(): void {
   updateConnectionState({
     status: 'initializing',
     lastError: null,
+    lastErrorAt: null,
   });
 }
 
@@ -223,6 +224,7 @@ function markConnectionReady(budgetId: string): void {
     status: 'ready',
     lastReadyAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
     debugError: null,
     activeBudgetId: budgetId,
   });
@@ -243,6 +245,7 @@ function markSyncSuccess(): void {
   updateConnectionState({
     lastSyncAt: nowAsIsoString(),
     lastError: null,
+    lastErrorAt: null,
   });
 }
 
