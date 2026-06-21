@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -16,14 +17,40 @@ function repoRootFromModule(): string {
   return resolve(fileURLToPath(new URL('../../../../../', import.meta.url)));
 }
 
-export function resolveTimelineReconPaths(repoRoot = repoRootFromModule()): TimelineReconPaths {
+export interface TimelineReconPathOverrides {
+  supplementalCsvPath?: string;
+  timelinePath?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export function resolveTimelineReconPaths(
+  repoRoot = repoRootFromModule(),
+  overrides?: TimelineReconPathOverrides,
+): TimelineReconPaths {
   const reconDir = resolveLocalReconciliationPath('timeline', repoRoot);
+
+  let supplementalCsvPath: string;
+  if (overrides?.supplementalCsvPath) {
+    supplementalCsvPath = overrides.supplementalCsvPath;
+  } else {
+    // support "latest" by scanning for most recent *transactions*.csv
+    const files = readdirSync(reconDir).filter((f) => f.includes('transactions') && f.endsWith('.csv'));
+    if (files.length > 0) {
+      files.sort().reverse(); // lexicographic on timestamped names works for recent-first
+      supplementalCsvPath = resolve(reconDir, files[0]);
+    } else {
+      supplementalCsvPath = resolve(reconDir, SUPPLEMENTAL_TRANSACTIONS_FILENAME);
+    }
+  }
 
   return {
     repoRoot,
     reconDir,
-    supplementalCsvPath: resolve(reconDir, SUPPLEMENTAL_TRANSACTIONS_FILENAME),
-    timelinePath: resolve(reconDir, LOCATION_HISTORY_FILENAME),
+    supplementalCsvPath,
+    timelinePath: overrides?.timelinePath
+      ? overrides.timelinePath
+      : resolve(reconDir, LOCATION_HISTORY_FILENAME),
     auditPath: resolve(reconDir, TIMELINE_RECON_AUDIT_FILENAME),
     candidatesPath: resolve(reconDir, TIMELINE_RECON_CANDIDATES_FILENAME),
     manualReviewPath: resolve(reconDir, TIMELINE_RECON_MANUAL_REVIEW_FILENAME),

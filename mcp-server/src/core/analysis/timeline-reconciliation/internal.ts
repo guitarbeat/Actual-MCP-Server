@@ -9,6 +9,7 @@ import {
   RECON_START_DATE,
   TIMELINE_ANALYSIS_VERSION,
 } from './constants.js';
+import type { TimelineReconPathOverrides } from './paths.js';
 import {
   buildCurrentTransactionMap,
   buildRulePayload,
@@ -143,12 +144,15 @@ export function buildTimelineReconAudit(
 
 export async function generateTimelineReconAudit(
   paths = resolveTimelineReconPaths(),
+  overrides?: TimelineReconPathOverrides,
 ): Promise<TimelineReconAuditFile> {
-  const inputs = await loadReconInputs(paths);
+  const inputs = await loadReconInputs(paths, overrides);
+  const startDate = overrides?.startDate;
+  const endDate = overrides?.endDate;
   const audit = buildTimelineReconAudit({
     ...inputs,
-    startDate: RECON_START_DATE,
-    endDate: RECON_END_DATE,
+    ...(startDate ? { startDate } : {}),
+    ...(endDate ? { endDate } : {}),
   });
   await writeAuditOutputs(audit, paths);
   return audit;
@@ -156,6 +160,7 @@ export async function generateTimelineReconAudit(
 
 export async function applyTimelineReconAudit(
   paths = resolveTimelineReconPaths(),
+  overrides?: TimelineReconPathOverrides,
 ): Promise<TimelineApplyResult> {
   const audit = JSON.parse(await readFile(paths.auditPath, 'utf8')) as TimelineReconAuditFile;
 
@@ -165,11 +170,14 @@ export async function applyTimelineReconAudit(
     );
   }
 
+  const startDate = overrides?.startDate ?? (audit as any).startDate ?? RECON_START_DATE;
+  const endDate = overrides?.endDate ?? (audit as any).endDate ?? RECON_END_DATE;
+
   const accounts = await fetchAllAccounts();
   const { transactions } = await fetchAllOnBudgetTransactionsWithMetadata(
     accounts,
-    RECON_START_DATE,
-    RECON_END_DATE,
+    startDate,
+    endDate,
   );
   const currentTransactionsById = buildCurrentTransactionMap(transactions);
   const [categories, existingRules] = await Promise.all([getCategories(), fetchAllRules()]);

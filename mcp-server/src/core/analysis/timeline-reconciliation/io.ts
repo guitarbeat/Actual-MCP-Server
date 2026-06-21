@@ -18,6 +18,7 @@ import type {
   TimelineReconPaths,
 } from './types.js';
 import type { Account, Category, Transaction } from '../../types/domain.js';
+import type { TimelineReconPathOverrides } from './paths.js';
 
 export async function ensureJsonFile<T>(path: string, defaultValue: T): Promise<T> {
   await mkdir(dirname(path), { recursive: true });
@@ -83,7 +84,10 @@ export async function writeAuditOutputs(
   await writeFile(paths.manualReviewPath, manualCsv, 'utf8');
 }
 
-export async function loadReconInputs(paths: TimelineReconPaths): Promise<{
+export async function loadReconInputs(
+  paths: TimelineReconPaths,
+  overrides?: import('./paths.js').TimelineReconPathOverrides,
+): Promise<{
   accounts: Account[];
   transactions: Transaction[];
   categoriesById: Record<string, Category>;
@@ -92,6 +96,9 @@ export async function loadReconInputs(paths: TimelineReconPaths): Promise<{
   placeCache: TimelinePlaceCacheFile;
   categoryOverrides: TimelineCategoryOverridesFile;
 }> {
+  const startDate = overrides?.startDate ?? RECON_START_DATE;
+  const endDate = overrides?.endDate ?? RECON_END_DATE;
+
   const placeCache = await ensureJsonFile<TimelinePlaceCacheFile>(paths.placeCachePath, {
     places: {},
   });
@@ -112,8 +119,8 @@ export async function loadReconInputs(paths: TimelineReconPaths): Promise<{
   ]);
   const { transactions } = await fetchAllOnBudgetTransactionsWithMetadata(
     accounts,
-    RECON_START_DATE,
-    RECON_END_DATE,
+    startDate,
+    endDate,
   );
 
   return {
@@ -123,13 +130,13 @@ export async function loadReconInputs(paths: TimelineReconPaths): Promise<{
     supplementalRows: normalizeSupplementalRows(
       parseCsvRows<SupplementalCsvRow>(supplementalCsvText),
       accounts,
-      RECON_START_DATE,
-      RECON_END_DATE,
+      startDate,
+      endDate,
     ),
     timeline: parseTimelineEntries(
       parseTimelineJson(timelineText),
-      RECON_START_DATE,
-      RECON_END_DATE,
+      startDate,
+      endDate,
     ),
     placeCache,
     categoryOverrides,

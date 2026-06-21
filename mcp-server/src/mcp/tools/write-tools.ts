@@ -20,6 +20,7 @@ import * as applyHistoricalTransfers from '../../tools/transactions/apply-histor
 import * as updateTransaction from '../../tools/transactions/update-transaction/index.js';
 import * as backupBudget from '../../tools/backups/make-backup/index.js';
 import * as restoreBudget from '../../tools/backups/restore-budget/index.js';
+import * as ingestStatementCsv from '../../tools/statements/ingest-statement-csv/index.js';
 
 import { defineTool } from './common.js';
 
@@ -47,4 +48,6 @@ export const writeToolDefinitions = [
 
   defineTool({ ...createBudgetSnapshot, requiresWrite: true, category: 'advanced' }),
   defineTool({ ...restoreBudgetSnapshot, requiresWrite: true, category: 'advanced' }),
+
+  defineTool({ ...ingestStatementCsv, requiresWrite: true, category: 'core' }),
 ];

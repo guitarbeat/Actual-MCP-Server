@@ -133,7 +133,7 @@ Limits: summarize top variances first; defer full ledger pulls to narrower follo
     },
     async buildMessages({ accountHint }) {
       const balanceNotes =
-        'Ask for the institution statement ending balance before calling reconcile-account.';
+        'For best results on recent imports or mismatches, first use ingest-statement-csv with your latest bank/statement CSV export, then provide the balance/date to reconcile-account.';
 
       return {
         messages: [
@@ -145,7 +145,8 @@ Limits: summarize top variances first; defer full ledger pulls to narrower follo
 1. \`get-accounts\` to resolve the target account UUID.
 2. \`get-account-balance\` for current cleared/uncleared snapshot if helpful.
 3. \`get-transactions\` with a tight date window and sane limit/ offset — sample recent rows before bulk pulls.
-4. \`reconcile-account\` only after the user confirms the statement balance (${balanceNotes}).
+4. Use \`ingest-statement-csv\` (paste CSV content from your latest export) for recent data if doing timeline/hygiene work.
+5. \`reconcile-account\` only after the user confirms the statement balance (${balanceNotes}).
 
 Idempotency: never guess balances; reconcile writes are intentional — confirm with user.`,
             },

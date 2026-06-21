@@ -127,6 +127,12 @@ const RECOMMENDED_WORKFLOWS: RecommendedWorkflowEntry[] = [
     minimumTier: 'write',
   },
   {
+    id: 'statement-ingest',
+    summary: 'Ingest recent bank/statement CSV so recon + timeline cleanup can use fresh data.',
+    starterTools: ['ingest-statement-csv'],
+    minimumTier: 'write',
+  },
+  {
     id: 'historical-transfer-batch',
     summary: 'Audit strict transfer pairs then apply with explicit candidate ids.',
     prompts: ['historical-transfer-review'],

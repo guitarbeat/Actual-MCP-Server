@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { parseArgs } from 'node:util';
 import {
   applyTimelineReconAudit,
   resolveTimelineReconPaths,
@@ -7,8 +8,23 @@ import {
 dotenv.config({ path: '.env', quiet: true });
 
 async function main(): Promise<void> {
-  const paths = resolveTimelineReconPaths();
-  const result = await applyTimelineReconAudit(paths);
+  const { values } = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      supplemental: { type: 'string' },
+      start: { type: 'string' },
+      end: { type: 'string' },
+    },
+  });
+
+  const overrides = {
+    supplementalCsvPath: values.supplemental,
+    startDate: values.start,
+    endDate: values.end,
+  };
+
+  const paths = resolveTimelineReconPaths(undefined, overrides);
+  const result = await applyTimelineReconAudit(paths, overrides);
 
   console.log('Timeline reconciliation apply complete.');
   console.log(`Exact updates applied: ${result.exactUpdatesApplied}`);
