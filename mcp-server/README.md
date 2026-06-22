@@ -18,6 +18,7 @@ This server exposes many atomic tools for parity with Actual Budget. To reduce w
 3. **Prefer prompts for multi-step flows**: under `src/mcp/prompts/`, prompts bundle ordered steps (e.g. spending analysis, health check, uncategorized triage). Run a prompt when the user goal matches a workflow; drop to individual tools for precise CRUD or custom filters.
 4. **Use resources for narrative context**: account and budget markdown resources under `actual://...` complement tools; they do not replace tools for structured queries.
 5. **Respect pagination and limits**: list-style tools cap or paginate results. **`get-transactions`** returns newest-first slices with **`limit`**, **`offset`**, **`hasMore`**, and **`totalMatchingFilters`**; tune defaults with `ACTUAL_GET_TRANSACTIONS_DEFAULT_LIMIT` / `ACTUAL_GET_TRANSACTIONS_MAX_LIMIT` (see [`.env.example`](./.env.example)). For other list tools, set explicit `limit` / cursor fields when budgets are large.
+6. **Triage large uncategorized backlogs carefully**: `audit-uncategorized-transactions` defaults to full history and can time out on remote/large data. Scope with `accountId` + `startDate` when possible. Expect iterative audit → (rules or `update-transaction` samples) → re-audit. Rules on `imported_payee` are mostly forward-looking.
 
 ## Install
 
@@ -230,11 +231,11 @@ pnpm run public:check
 
 <!-- TOOL_SURFACE:START -->
 
-Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 45 tools, 8 prompts, and 12 resources:
+Generated from the declarative MCP modules under `src/mcp/`. The current surface exposes 49 tools, 8 prompts, and 12 resources:
 
 - 16 read-only core tools
-- 19 write-enabled core tools
-- 10 advanced `--enable-advanced` tools
+- 20 write-enabled core tools
+- 13 advanced `--enable-advanced` tools
 - 8 prompts
 - 7 static resources
 - 5 templated resources

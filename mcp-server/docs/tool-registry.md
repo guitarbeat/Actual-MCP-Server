@@ -31,6 +31,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `delete-transaction`: Remove a transaction permanently. Use this when the user wants to delete a duplicate or incorrect transaction.
 - `import-transaction-batch`: Import a structured batch of transactions into Actual Budget with duplicate detection and rule execution. This keeps the existing bank-sync import tool unchanged while exposing the SDK import pipeline to MCP clients.
 - `import-transactions`: Sync transactions from connected bank accounts to update your budget. Use this when the user wants to refresh bank data.
+- `ingest-statement-csv`: Ingest a recent bank or credit card statement export (CSV text) for use in reconciliation and timeline-based cleanup.
 - `manage-category`: Create, update, or delete a category. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `manage-category-group`: Create, update, or delete a category group. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `manage-payee`: Create, update, or delete a payee. Set "action" to "create", "update", or "delete" and include the relevant fields.
@@ -50,15 +51,12 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `create-budget-snapshot`: Create a point-in-time backup snapshot of the budget data directory. Use this before risky operations such as bulk imports or applying budget plans.
 - `get-budget-files`: List all available budget files (local and remote). Use to see available budget files before switching.
 - `hold-budget`: Hold budget amount for the next month. Use to save for large purchases or irregular expenses.
-- `list-backups`: Returns a list of available backups with timestamps.
-- `manage-account`: Create, update, or delete a account. Set "action" to "create", "update", or "delete" and include the relevant fields.
-- `reopen-account`: Reopen a closed account in Actual Budget.
-- `reset-budget-hold`: Reset (clear) a budget hold for a specific month.
-- `restore-budget`: Restores the budget from a specified backup ID.
+- `list-backups`: Returns a list of available backups with timestamps and sizes.
 - `list-budget-snapshots`: List all available budget snapshots sorted by creation time (most recent first). Use this to find a snapshotId before restoring.
 - `manage-account`: Create, update, or delete a account. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `reopen-account`: Reopen a closed account in Actual Budget.
 - `reset-budget-hold`: Reset (clear) a budget hold for a specific month.
+- `restore-budget`: Restores the budget from a specified backup ID.
 - `restore-budget-snapshot`: Restore the budget data directory from a previously created snapshot. This overwrites current budget data files with the snapshot contents and automatically reloads the budget session.
 - `switch-budget`: Switch to a different budget file. Downloads and loads the specified budget.
 

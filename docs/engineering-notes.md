@@ -16,6 +16,8 @@ This repository keeps a few implementation notes in version control so contribut
 - In hot aggregation paths, prefer `for...in` loops over `Object.values()` when avoiding intermediate allocations matters.
 - Use in-place `Array.prototype.sort()` when the array is locally owned and immutability is not required.
 - List-heavy MCP tools (`get-transactions`, etc.) must **paginate** (slice / cap) **before** building large textual reports so agents do not accidentally materialize unbounded windows.
+- `audit-uncategorized-transactions` (and full-history `get-transactions` / cross-account fetches) load on-budget history from 1900-01-01 by default and perform in-memory grouping. On large histories or remote MCP deployments this can take a very long time or hit transport timeouts (observed 6000s kills). Prefer passing explicit `accountId` and/or `startDate`/`endDate` for triage. The tool returns only top groups + small samples; large clusters require repeated narrow audit → fix (via `update-transaction`) → re-audit cycles. Rules created via `manage-rule` on `imported_payee` primarily help *future* imports; historical uncategorized items still need explicit fixes.
+- For big backlogs, seed multiple "contains" rules from prior audit samples first, then do focused sub-batch fixes. Broad calls to `get-accounts`, `get-rules`, `get-payees`, and full audits are expensive—cache where possible and scope aggressively.
 
 ## Security
 

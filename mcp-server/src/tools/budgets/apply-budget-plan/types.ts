@@ -17,7 +17,6 @@ export const ApplyBudgetPlanArgsSchema = z
     month: z
       .string()
       .regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format')
-    month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format')
       .describe('Target month in YYYY-MM format (e.g., "2025-03").'),
     recommendations: z
       .array(BudgetPlanEntrySchema)
@@ -25,7 +24,6 @@ export const ApplyBudgetPlanArgsSchema = z
       .describe(
         'Array of budget allocations to apply. Each entry specifies a category and amount in cents.',
       ),
-      .describe('Array of budget allocations to apply. Each entry specifies a category and amount in cents.'),
   })
   .strict();
 
