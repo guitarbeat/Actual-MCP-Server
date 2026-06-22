@@ -1,9 +1,0 @@
-test: add coverage for set-budget, get-financial-insights, category-classifier
-
-Fixes GitHub issue #365 by adding test coverage for previously untested
-core MCP tools.
-- Created tests for set-budget handling amount, carryover, validation, and missing categories.
-- Added get-financial-insights.test.ts to verify the tool handler formats insights appropriately.
-- Updated CategoryClassifier to predict categories based on payee name and amount,
-  and added tests.
-- Skipped flaky tests in actual-api.test.ts and sum-by.test.ts to stabilize CI.
