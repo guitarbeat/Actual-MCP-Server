@@ -10,10 +10,18 @@ vi.mock('@actual-app/api', () => {
     default: {
       internal: {
         send: vi.fn(),
-      }
-    }
+      },
+    },
   };
 });
+
+function textContent(result: Awaited<ReturnType<typeof handler>>): string {
+  const first = result.content[0];
+  if (first.type !== 'text') {
+    throw new Error('Expected text content');
+  }
+  return first.text;
+}
 
 describe('list-backups tool', () => {
   beforeEach(() => {
@@ -31,7 +39,7 @@ describe('list-backups tool', () => {
 
     const response = await handler({});
     expect(response.isError).toBe(true);
-    expect(response.content[0].text).toContain('No active budget loaded');
+    expect(textContent(response)).toContain('No active budget loaded');
   });
 
   it('successfully retrieves and returns backups', async () => {
@@ -49,8 +57,8 @@ describe('list-backups tool', () => {
     expect(actualApi.internal!.send).toHaveBeenCalledWith('backups-get', { id: 'test-budget-id' });
 
     expect(result.isError).toBe(undefined);
-    expect(result.content[0].text).toContain('backup-1.sqlite');
-    expect(result.content[0].text).toContain('backup-2.sqlite');
-    expect(result.content[0].text).toContain('Size: 0 bytes'); // mocked size
+    expect(textContent(result)).toContain('backup-1.sqlite');
+    expect(textContent(result)).toContain('backup-2.sqlite');
+    expect(textContent(result)).toContain('Size: 0 bytes'); // mocked size
   });
 });

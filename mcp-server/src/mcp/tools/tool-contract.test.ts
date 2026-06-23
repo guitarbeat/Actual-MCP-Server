@@ -5,7 +5,7 @@ describe('declarative MCP tool contract', () => {
   const fullSurface = getToolDefinitions({ enableWrite: true, enableAdvanced: true });
 
   it('every enabled tool exposes MCP registration fields', () => {
-    expect(fullSurface.length).toBe(45);
+    expect(fullSurface.length).toBe(49);
 
     for (const tool of fullSurface) {
       expect(tool.name, 'missing name').toMatch(/^[a-z0-9-]+$/);

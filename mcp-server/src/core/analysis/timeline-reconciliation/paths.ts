@@ -35,7 +35,9 @@ export function resolveTimelineReconPaths(
     supplementalCsvPath = overrides.supplementalCsvPath;
   } else {
     // support "latest" by scanning for most recent *transactions*.csv
-    const files = readdirSync(reconDir).filter((f) => f.includes('transactions') && f.endsWith('.csv'));
+    const files = readdirSync(reconDir).filter(
+      (f) => f.includes('transactions') && f.endsWith('.csv'),
+    );
     if (files.length > 0) {
       files.sort().reverse(); // lexicographic on timestamped names works for recent-first
       supplementalCsvPath = resolve(reconDir, files[0]);

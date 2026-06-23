@@ -10,10 +10,18 @@ vi.mock('@actual-app/api', () => {
     default: {
       internal: {
         send: vi.fn(),
-      }
-    }
+      },
+    },
   };
 });
+
+function textContent(result: Awaited<ReturnType<typeof handler>>): string {
+  const first = result.content[0];
+  if (first.type !== 'text') {
+    throw new Error('Expected text content');
+  }
+  return first.text;
+}
 
 describe('restore-budget tool', () => {
   beforeEach(() => {
@@ -31,7 +39,7 @@ describe('restore-budget tool', () => {
 
     const response = await handler({ backupId: 'backup-123.sqlite', dryRun: false });
     expect(response.isError).toBe(true);
-    expect(response.content[0].text).toContain('No active budget loaded');
+    expect(textContent(response)).toContain('No active budget loaded');
   });
 
   it('simulates restoration if dryRun is true', async () => {
@@ -42,7 +50,7 @@ describe('restore-budget tool', () => {
 
     expect(actualApi.internal!.send).not.toHaveBeenCalledWith('backup-load', expect.anything());
     expect(response.isError).toBe(undefined);
-    expect(response.content[0].text).toContain("Dry run: Ready to restore backup 'backup-123.sqlite'");
+    expect(textContent(response)).toContain("Dry run: Ready to restore backup 'backup-123.sqlite'");
   });
 
   it('actually restores the budget if dryRun is false', async () => {
@@ -51,8 +59,11 @@ describe('restore-budget tool', () => {
 
     const response = await handler({ backupId: 'backup-123.sqlite', dryRun: false });
 
-    expect(actualApi.internal!.send).toHaveBeenCalledWith('backup-load', { id: 'test-budget-id', backupId: 'backup-123.sqlite' });
+    expect(actualApi.internal!.send).toHaveBeenCalledWith('backup-load', {
+      id: 'test-budget-id',
+      backupId: 'backup-123.sqlite',
+    });
     expect(response.isError).toBe(undefined);
-    expect(response.content[0].text).toContain("Successfully restored backup 'backup-123.sqlite'");
+    expect(textContent(response)).toContain("Successfully restored backup 'backup-123.sqlite'");
   });
 });

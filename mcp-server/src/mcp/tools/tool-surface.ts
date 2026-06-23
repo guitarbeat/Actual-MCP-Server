@@ -129,6 +129,7 @@ const RECOMMENDED_WORKFLOWS: RecommendedWorkflowEntry[] = [
   {
     id: 'statement-ingest',
     summary: 'Ingest recent bank/statement CSV so recon + timeline cleanup can use fresh data.',
+    prompts: [],
     starterTools: ['ingest-statement-csv'],
     minimumTier: 'write',
   },

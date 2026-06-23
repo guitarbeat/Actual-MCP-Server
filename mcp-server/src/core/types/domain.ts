@@ -33,6 +33,7 @@ export interface Category {
   name: string;
   group_id: string;
   is_income?: boolean;
+  hidden?: boolean;
 }
 
 export interface CategoryGroup {

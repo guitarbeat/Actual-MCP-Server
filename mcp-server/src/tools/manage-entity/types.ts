@@ -258,28 +258,6 @@ export const RuleDataSchema = z.object({
     .describe(
       'Array of actions to execute when conditions match. Each action specifies a field, operator, and value.',
     ),
-  stage: z
-    .enum(['pre', 'default', 'post'])
-    .nullable()
-    .optional()
-    .describe(
-      'When the rule runs: "pre" (before other rules), "default" (normal), or "post" (after other rules). If null, treated the same as "default".',
-    ),
-  conditionsOp: z
-    .enum(['and', 'or'])
-    .describe('How to combine conditions: "and" (all must match) or "or" (any must match).'),
-  conditions: z
-    .array(RuleConditionSchema)
-    .min(1, 'At least one condition is required')
-    .describe(
-      'Array of conditions that trigger the rule. Each condition specifies a field, operator, and value.',
-    ),
-  actions: z
-    .array(RuleActionSchema)
-    .min(1, 'At least one action is required')
-    .describe(
-      'Array of actions to execute when conditions match. Each action specifies a field, operator, and value.',
-    ),
 });
 
 /**

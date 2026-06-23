@@ -86,7 +86,7 @@ export async function writeAuditOutputs(
 
 export async function loadReconInputs(
   paths: TimelineReconPaths,
-  overrides?: import('./paths.js').TimelineReconPathOverrides,
+  overrides?: TimelineReconPathOverrides,
 ): Promise<{
   accounts: Account[];
   transactions: Transaction[];
@@ -133,11 +133,7 @@ export async function loadReconInputs(
       startDate,
       endDate,
     ),
-    timeline: parseTimelineEntries(
-      parseTimelineJson(timelineText),
-      startDate,
-      endDate,
-    ),
+    timeline: parseTimelineEntries(parseTimelineJson(timelineText), startDate, endDate),
     placeCache,
     categoryOverrides,
   };

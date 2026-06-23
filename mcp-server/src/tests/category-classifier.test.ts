@@ -8,12 +8,36 @@ describe('CategoryClassifier', () => {
   const mockCategories: Category[] = [
     { id: 'cat_income', name: 'Income', is_income: true, group_id: 'group_1', hidden: false },
     { id: 'cat_interest', name: 'Interest', is_income: true, group_id: 'group_1', hidden: false },
-    { id: 'cat_groceries', name: 'Groceries', is_income: false, group_id: 'group_2', hidden: false },
+    {
+      id: 'cat_groceries',
+      name: 'Groceries',
+      is_income: false,
+      group_id: 'group_2',
+      hidden: false,
+    },
     { id: 'cat_shopping', name: 'Shopping', is_income: false, group_id: 'group_2', hidden: false },
-    { id: 'cat_transportation', name: 'Transportation', is_income: false, group_id: 'group_2', hidden: false },
-    { id: 'cat_restaurants', name: 'Restaurants', is_income: false, group_id: 'group_2', hidden: false },
+    {
+      id: 'cat_transportation',
+      name: 'Transportation',
+      is_income: false,
+      group_id: 'group_2',
+      hidden: false,
+    },
+    {
+      id: 'cat_restaurants',
+      name: 'Restaurants',
+      is_income: false,
+      group_id: 'group_2',
+      hidden: false,
+    },
     { id: 'cat_rent', name: 'Rent', is_income: false, group_id: 'group_3', hidden: false },
-    { id: 'cat_investment', name: 'Investment', is_income: false, group_id: 'group_3', hidden: false },
+    {
+      id: 'cat_investment',
+      name: 'Investment',
+      is_income: false,
+      group_id: 'group_3',
+      hidden: false,
+    },
     { id: 'cat_savings', name: 'Savings', is_income: false, group_id: 'group_3', hidden: false },
   ];
 
@@ -34,7 +58,7 @@ describe('CategoryClassifier', () => {
     it('should classify payroll as income when amount is positive', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Acme Corp Payroll', amount: 500000 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBe('cat_income');
     });
@@ -42,7 +66,7 @@ describe('CategoryClassifier', () => {
     it('should classify interest as interest when amount is positive', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Bank Interest', amount: 1500 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBe('cat_interest');
     });
@@ -50,7 +74,7 @@ describe('CategoryClassifier', () => {
     it('should classify amazon as shopping', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Amazon.com', amount: -4500 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBe('cat_shopping');
     });
@@ -58,7 +82,7 @@ describe('CategoryClassifier', () => {
     it('should classify whole foods as groceries', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Whole Foods Market', amount: -12050 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBe('cat_groceries');
     });
@@ -66,7 +90,7 @@ describe('CategoryClassifier', () => {
     it('should classify uber as transportation', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Uber Trip', amount: -2500 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBe('cat_transportation');
     });
@@ -74,7 +98,7 @@ describe('CategoryClassifier', () => {
     it('should classify starbucks as restaurants', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Starbucks Store', amount: -550 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBe('cat_restaurants');
     });
@@ -82,7 +106,7 @@ describe('CategoryClassifier', () => {
     it('should classify large even negative amounts as rent/mortgage', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Unknown Property Management', amount: -150000 }, // -$1500.00
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBe('cat_rent');
     });
@@ -90,7 +114,7 @@ describe('CategoryClassifier', () => {
     it('should return null for unknown payees with non-matching amounts', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: 'Random Store', amount: -4200 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBeNull();
     });
@@ -98,7 +122,7 @@ describe('CategoryClassifier', () => {
     it('should return null for null payee names', () => {
       const categoryId = classifier.classifyTransaction(
         { payee_name: null, amount: -4200 },
-        mockCategories
+        mockCategories,
       );
       expect(categoryId).toBeNull();
     });

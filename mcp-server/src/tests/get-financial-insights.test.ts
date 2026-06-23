@@ -9,28 +9,34 @@ vi.mock('../core/analysis/financial-analyzer.js', () => ({
     partial: false,
     warnings: [],
     overspending: [
-      { groupName: 'Group', categoryName: 'Cat', budgeted: 100, spent: -200, overage: 100 }
+      { groupName: 'Group', categoryName: 'Cat', budgeted: 100, spent: -200, overage: 100 },
     ],
     uncategorized: {
       count: 2,
       totalAmount: 1500,
-      topPayees: ['Payee 1', 'Payee 2']
+      topPayees: ['Payee 1', 'Payee 2'],
     },
     accountHealth: [
       { name: 'Checking', balance: -5000, status: 'negative' },
-      { name: 'Savings', balance: 100000, status: 'healthy' }
+      { name: 'Savings', balance: 100000, status: 'healthy' },
     ],
-    upcomingSchedules: [
-      { name: 'Rent', amount: -150000, nextDate: '2024-05-15' }
-    ],
+    upcomingSchedules: [{ name: 'Rent', amount: -150000, nextDate: '2024-05-15' }],
     trends: {
       currentMonthSpending: -50000,
       previousMonthSpending: -40000,
       spendingChange: 25,
-      savingsRate: 10
-    }
-  })
+      savingsRate: 10,
+    },
+  }),
 }));
+
+function textContent(result: Awaited<ReturnType<typeof handler>>): string {
+  const first = result.content[0];
+  if (first.type !== 'text') {
+    throw new Error('Expected text content');
+  }
+  return first.text;
+}
 
 describe('get-financial-insights tool', () => {
   beforeEach(() => {
@@ -51,11 +57,11 @@ describe('get-financial-insights tool', () => {
 
       expect(financialAnalyzer.generateInsightsSummary).toHaveBeenCalledWith('2024-05', {
         includeSchedules: undefined,
-        scheduleDays: undefined
+        scheduleDays: undefined,
       });
 
       expect(result.isError).toBeFalsy();
-      const content = JSON.parse(result.content[0].text);
+      const content = JSON.parse(textContent(result));
       expect(content.month).toBe('2024-05');
       expect(content.summary).toBe('Mock summary');
       expect(content.overspending).toBeDefined();

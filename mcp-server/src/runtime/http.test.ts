@@ -16,7 +16,6 @@ const {
 vi.mock('../core/api/actual-client.js', () => ({
   getConnectionState: mockGetConnectionState,
   getReadinessStatus: mockGetReadinessStatus,
-  getConnectionState: mockGetConnectionStatus,
   getConnectionStatus: mockGetConnectionStatus,
   initActualApi: mockInitActualApi,
   isConnectionError: vi.fn().mockReturnValue(true),

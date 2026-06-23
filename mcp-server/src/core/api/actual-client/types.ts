@@ -1,5 +1,6 @@
 import '../../../polyfill.js';
 import api from '@actual-app/api';
+
 import type {
   APIAccountEntity,
   APICategoryEntity,
@@ -9,10 +10,7 @@ import type {
   APITagEntity,
 } from '../api-types.js';
 
-import type { ImportTransactionsOpts } from '@actual-app/api/@types/methods.js';
-import type { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
-import type { TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/transaction.js';
-
+// Intentionally widen for compatibility with current @actual-app/api surface used by the server
 export type TransactionEntity = any;
 export type RuleEntity = any;
 export type ImportTransactionsOpts = any;
@@ -106,7 +104,4 @@ export type {
   APIPayeeEntity,
   APIScheduleEntity,
   APITagEntity,
-  ImportTransactionsOpts,
-  RuleEntity,
-  TransactionEntity,
 };

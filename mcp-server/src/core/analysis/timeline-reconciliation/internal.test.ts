@@ -160,7 +160,7 @@ describe('Timeline Reconciliation Internal', () => {
 
       const audit = await generateTimelineReconAudit();
 
-      expect(ioModule.loadReconInputs).toHaveBeenCalledWith(paths);
+      expect(ioModule.loadReconInputs).toHaveBeenCalledWith(paths, undefined);
       expect(ioModule.writeAuditOutputs).toHaveBeenCalledWith(expect.anything(), paths);
       expect(audit.version).toBe(TIMELINE_ANALYSIS_VERSION);
     });

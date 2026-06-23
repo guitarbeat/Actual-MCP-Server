@@ -42,5 +42,4 @@ export const readToolDefinitions = [
   defineTool({ ...listBudgetSnapshots, requiresWrite: false, category: 'advanced' }),
   defineTool({ ...switchBudget, requiresWrite: true, category: 'advanced' }),
   defineTool({ ...listBackups, requiresWrite: false, category: 'advanced' }),
-
 ];

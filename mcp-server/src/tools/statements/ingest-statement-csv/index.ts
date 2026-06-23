@@ -7,12 +7,6 @@ import { dirname, resolve } from 'node:path';
 import { errorFromCatch, successWithJson, validationError } from '../../../core/response/index.js';
 import { resolveLocalReconciliationPath } from '../../../core/analysis/local-reconciliation-workspace.js';
 
-interface IngestArgs {
-  csvContent: string;
-  filename?: string; // optional; defaults to timestamped
-  accountHint?: string; // future use for auto-mapping
-}
-
 export const schema = {
   name: 'ingest-statement-csv',
   description:
@@ -55,7 +49,9 @@ export async function handler(
       });
     }
 
-    const filename = (args.filename as string) || `${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}-transactions.csv`;
+    const filename =
+      (args.filename as string) ||
+      `${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}-transactions.csv`;
     const reconDir = resolveLocalReconciliationPath('timeline');
     const targetPath = resolve(reconDir, filename);
 
@@ -66,12 +62,14 @@ export async function handler(
       savedPath: targetPath,
       filename,
       bytes: Buffer.byteLength(csvContent, 'utf8'),
-      message: 'Statement CSV ingested. Use timeline tools or reconcile with fresh data. (For remote MCP, re-run recon after ingest.)',
+      message:
+        'Statement CSV ingested. Use timeline tools or reconcile with fresh data. (For remote MCP, re-run recon after ingest.)',
     });
   } catch (err) {
     return errorFromCatch(err, {
       fallbackMessage: 'Failed to ingest statement CSV',
-      suggestion: 'Ensure csvContent is valid text and the local .local-reconciliation dir is writable.',
+      suggestion:
+        'Ensure csvContent is valid text and the local .local-reconciliation dir is writable.',
     });
   }
 }

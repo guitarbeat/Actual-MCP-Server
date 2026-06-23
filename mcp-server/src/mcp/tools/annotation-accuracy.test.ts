@@ -26,18 +26,30 @@ const WRITE_TOOLS = ALL_TOOLS.filter((t) => !t.annotations?.readOnlyHint);
 
 describe('annotation accuracy', () => {
   describe('read-only tools', () => {
-    it.each(READ_TOOLS.map((t) => t.name))('%s → readOnly=true, destructive=false, idempotent=true', (name) => {
-      const ann = getAnnotations(name);
-      expect(ann.readOnlyHint).toBe(true);
-      expect(ann.destructiveHint).toBe(false);
-      expect(ann.idempotentHint).toBe(true);
-    });
+    it.each(READ_TOOLS.map((t) => t.name))(
+      '%s → readOnly=true, destructive=false, idempotent=true',
+      (name) => {
+        const ann = getAnnotations(name);
+        expect(ann.readOnlyHint).toBe(true);
+        expect(ann.destructiveHint).toBe(false);
+        expect(ann.idempotentHint).toBe(true);
+      },
+    );
   });
 
   describe('write tools — idempotency', () => {
     // Tools that target a specific state (set, update, delete, close, reopen, rename, apply, restore)
     // are idempotent: calling twice with the same args produces the same result.
-    const IDEMPOTENT_PREFIXES = ['set-', 'update-', 'delete-', 'close-', 'reopen-', 'rename-', 'apply-', 'restore-'];
+    const IDEMPOTENT_PREFIXES = [
+      'set-',
+      'update-',
+      'delete-',
+      'close-',
+      'reopen-',
+      'rename-',
+      'apply-',
+      'restore-',
+    ];
     const idempotentWriteTools = WRITE_TOOLS.filter((t) =>
       IDEMPOTENT_PREFIXES.some((p) => t.name.toLowerCase().startsWith(p)),
     );
@@ -72,7 +84,15 @@ describe('annotation accuracy', () => {
     });
 
     // Create/update/set/import/apply are non-destructive
-    const NON_DESTRUCTIVE_PREFIXES = ['create-', 'update-', 'set-', 'import-', 'apply-', 'rename-', 'reopen-'];
+    const NON_DESTRUCTIVE_PREFIXES = [
+      'create-',
+      'update-',
+      'set-',
+      'import-',
+      'apply-',
+      'rename-',
+      'reopen-',
+    ];
     const nonDestructiveTools = WRITE_TOOLS.filter((t) =>
       NON_DESTRUCTIVE_PREFIXES.some((p) => t.name.toLowerCase().startsWith(p)),
     );

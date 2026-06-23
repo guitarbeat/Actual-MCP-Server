@@ -51,7 +51,7 @@ describe('tool-surface', () => {
     const surface = buildToolSurfaceJson();
 
     expect(surface.schemaVersion).toBe(2);
-    expect(surface.recommendedWorkflows.length).toBe(8);
+    expect(surface.recommendedWorkflows.length).toBe(9);
     expect(surface.registeredPrompts.length).toBeGreaterThanOrEqual(8);
     expect(surface.totalTools).toBeGreaterThan(0);
 

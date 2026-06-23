@@ -10,10 +10,18 @@ vi.mock('@actual-app/api', () => {
     default: {
       internal: {
         send: vi.fn(),
-      }
-    }
+      },
+    },
   };
 });
+
+function textContent(result: Awaited<ReturnType<typeof handler>>): string {
+  const first = result.content[0];
+  if (first.type !== 'text') {
+    throw new Error('Expected text content');
+  }
+  return first.text;
+}
 
 describe('backup-budget tool', () => {
   beforeEach(() => {
@@ -31,7 +39,7 @@ describe('backup-budget tool', () => {
 
     const response = await handler({});
     expect(response.isError).toBe(true);
-    expect(response.content[0].text).toContain('No active budget loaded');
+    expect(textContent(response)).toContain('No active budget loaded');
   });
 
   it('successfully creates and returns the latest backup', async () => {
@@ -60,7 +68,7 @@ describe('backup-budget tool', () => {
     expect(actualApi.internal!.send).toHaveBeenCalledWith('backups-get', { id: 'test-budget-id' });
 
     expect(result.isError).toBe(undefined);
-    expect(result.content[0].text).toContain('Backup created successfully');
-    expect(result.content[0].text).toContain('backup-2.sqlite');
+    expect(textContent(result)).toContain('Backup created successfully');
+    expect(textContent(result)).toContain('backup-2.sqlite');
   });
 });

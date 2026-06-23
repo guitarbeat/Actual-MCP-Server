@@ -15,6 +15,14 @@ vi.mock('../core/utils/name-resolver.js', () => ({
   },
 }));
 
+function textContent(result: Awaited<ReturnType<typeof handler>>): string {
+  const first = result.content[0];
+  if (first.type !== 'text') {
+    throw new Error('Expected text content');
+  }
+  return first.text;
+}
+
 describe('set-budget tool', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,8 +51,8 @@ describe('set-budget tool', () => {
       expect(actualClient.setBudgetCarryover).not.toHaveBeenCalled();
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Successfully updated budget for category');
-      expect(result.content[0].text).toContain('amount set to $500.00');
+      expect(textContent(result)).toContain('Successfully updated budget for category');
+      expect(textContent(result)).toContain('amount set to $500.00');
     });
 
     it('should correctly set budget carryover', async () => {
@@ -61,7 +69,7 @@ describe('set-budget tool', () => {
       expect(actualClient.setBudgetCarryover).toHaveBeenCalledWith('2024-01', 'cat_123', true);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('carryover enabled');
+      expect(textContent(result)).toContain('carryover enabled');
     });
 
     it('should set both amount and carryover when provided', async () => {
@@ -78,8 +86,8 @@ describe('set-budget tool', () => {
       expect(actualClient.setBudgetCarryover).toHaveBeenCalledWith('2024-01', 'cat_123', false);
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('amount set to $15.00');
-      expect(result.content[0].text).toContain('carryover disabled');
+      expect(textContent(result)).toContain('amount set to $15.00');
+      expect(textContent(result)).toContain('carryover disabled');
     });
 
     it('should reject invalid month format', async () => {
@@ -92,7 +100,7 @@ describe('set-budget tool', () => {
       const result = await handler(args);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Month must be in YYYY-MM format');
+      expect(textContent(result)).toContain('Month must be in YYYY-MM format');
       expect(actualClient.setBudgetAmount).not.toHaveBeenCalled();
     });
 
@@ -105,7 +113,7 @@ describe('set-budget tool', () => {
       const result = await handler(args);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('At least one of amount or carryover must be provided');
+      expect(textContent(result)).toContain('At least one of amount or carryover must be provided');
       expect(actualClient.setBudgetAmount).not.toHaveBeenCalled();
       expect(actualClient.setBudgetCarryover).not.toHaveBeenCalled();
     });
@@ -113,7 +121,7 @@ describe('set-budget tool', () => {
     it('should handle missing categories gracefully', async () => {
       // Mock nameResolver to throw an error
       vi.mocked(nameResolver.resolveCategory).mockRejectedValueOnce(
-        new Error('Category not found')
+        new Error('Category not found'),
       );
 
       const args = {
@@ -125,7 +133,7 @@ describe('set-budget tool', () => {
       const result = await handler(args);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Category not found');
+      expect(textContent(result)).toContain('Category not found');
       expect(actualClient.setBudgetAmount).not.toHaveBeenCalled();
     });
   });
