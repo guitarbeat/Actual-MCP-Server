@@ -421,7 +421,7 @@ export const entityConfigurations = {
         '- balanceCurrent stores the reported bank balance separately from ledger history\n' +
         "- Off-budget accounts don't affect budget calculations",
       requiresWrite: true,
-      category: 'advanced' as const,
+      category: 'core' as const,
     },
     update: {
       schema: UpdateAccountSchema,
