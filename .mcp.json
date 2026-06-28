@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "actual-budget": {
+      "type": "http",
+      "url": "https://actual-mcp.alw.lol/mcp",
+      "headers": {
+        "Authorization": "Bearer ${ACTUAL_MCP_BEARER_TOKEN}"
+      },
+      "allowedEnvVars": ["ACTUAL_MCP_BEARER_TOKEN"]
+    }
+  }
+}
