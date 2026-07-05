@@ -20,7 +20,7 @@ importers:
         version: 26.6.0
       '@hono/node-server':
         specifier: ^1.19.14
-        version: 1.19.14(hono@4.12.25)
+        version: 1.19.14(hono@4.12.27)
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.29.0(zod@3.25.76)
@@ -40,8 +40,8 @@ importers:
         specifier: ^0.8.3
         version: 0.8.3
       hono:
-        specifier: ^4.12.25
-        version: 4.12.25
+        specifier: ^4.12.27
+        version: 4.12.27
       lru-cache:
         specifier: ^11.3.5
         version: 11.3.5
@@ -132,7 +132,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^1.19.14
-        version: 1.19.14(hono@4.12.25)
+        version: 1.19.14(hono@4.12.27)
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.29.0(zod@3.25.76)
@@ -140,8 +140,8 @@ importers:
         specifier: ^17.4.2
         version: 17.4.2
       hono:
-        specifier: ^4.12.25
-        version: 4.12.25
+        specifier: ^4.12.27
+        version: 4.12.27
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -1713,8 +1713,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  hono@4.12.25:
-    resolution: {integrity: sha512-2NFaIyNVgJmBs/ecmtGzlmluTFs5cHEWGTdu0t1HBwYzoGXOL5nUQBRMXsXWla5i4KkG//QMzVP88m1+I3fdAQ==}
+  hono@4.12.27:
+    resolution: {integrity: sha512-1yrb/+w6HWQJrUCLkJ2IF5jNIPvvFkblV5RNOYl6bV+OA6p9GLcMpHFFGTosSvHvcAUibuUukRqhlYI4z32C7Q==}
     engines: {node: '>=16.9.0'}
 
   html-escaper@2.0.2:
@@ -3240,9 +3240,9 @@ snapshots:
 
   '@eslint/js@8.57.1': {}
 
-  '@hono/node-server@1.19.14(hono@4.12.25)':
+  '@hono/node-server@1.19.14(hono@4.12.27)':
     dependencies:
-      hono: 4.12.25
+      hono: 4.12.27
 
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
@@ -3285,7 +3285,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.25)
+      '@hono/node-server': 1.19.14(hono@4.12.27)
       ajv: 8.18.0
       ajv-formats: 3.0.1(ajv@8.18.0)
       content-type: 1.0.5
@@ -3295,7 +3295,7 @@ snapshots:
       eventsource-parser: 3.0.6
       express: 5.2.1
       express-rate-limit: 8.3.2(express@5.2.1)
-      hono: 4.12.25
+      hono: 4.12.27
       jose: 6.2.2
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -4588,7 +4588,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hono@4.12.25: {}
+  hono@4.12.27: {}
 
   html-escaper@2.0.2: {}
 
