@@ -8,6 +8,7 @@ import { executeMutationTool } from '../../shared/mutation-tool.js';
 import type { ToolInput } from '../../../core/types/index.js';
 import type { TransactionData } from '../../manage-entity/entity-handlers/transaction-handler.js';
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
+import { toolOutputSchema } from '../../../mcp/tools/common.js';
 
 // Transaction data schema for create operation
 export const CreateTransactionSchema = z.object({
@@ -118,6 +119,7 @@ export const schema = {
     '- Transfers create the counterpart transaction automatically\n' +
     '- Remote retries are safest when idempotencyKey is provided',
   inputSchema: zodToJsonSchema(CreateTransactionSchema) as ToolInput,
+  outputSchema: toolOutputSchema(),
 };
 
 export async function handler(args: z.infer<typeof CreateTransactionSchema>) {

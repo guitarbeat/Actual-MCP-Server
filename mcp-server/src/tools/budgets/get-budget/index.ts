@@ -1,8 +1,10 @@
+import { z } from 'zod';
 // ----------------------------
 // GET BUDGET TOOL
 // ----------------------------
 
 import { getBudgetMonth, getBudgetMonths } from '../../../core/api/actual-client.js';
+import { toolOutputSchema } from '../../../mcp/tools/common.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 
 export const schema = {
@@ -32,6 +34,7 @@ export const schema = {
     },
     required: [],
   },
+  outputSchema: toolOutputSchema(z.unknown().describe('Budget month details or list of available months')),
 };
 
 /**
