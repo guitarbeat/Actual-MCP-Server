@@ -23,6 +23,7 @@ export interface DeclarativeToolDefinition {
   category: ToolCategory;
   inputSchema?: ToolInput;
   sdkInputSchema?: Record<string, z.ZodTypeAny>;
+  outputSchema?: Record<string, z.ZodTypeAny>;
   annotations: ToolAnnotations;
   execute: (args: Record<string, unknown>) => Promise<CallToolResult>;
 }
@@ -36,6 +37,7 @@ interface ToolLike<TArgs = Record<string, unknown>> {
     name: string;
     description?: string;
     inputSchema?: ToolInput;
+    outputSchema?: Record<string, z.ZodTypeAny>;
   };
   handler: LegacyToolHandler<TArgs>;
   requiresWrite: boolean;
@@ -53,6 +55,7 @@ export function defineTool<TArgs>(tool: ToolLike<TArgs>): DeclarativeToolDefinit
     category: tool.category,
     inputSchema: tool.schema.inputSchema,
     sdkInputSchema: jsonSchemaToZodRawShape(tool.schema.inputSchema),
+    outputSchema: tool.schema.outputSchema,
     annotations: createToolAnnotations(tool.schema.name, tool.requiresWrite),
     execute: (args) => tool.handler(args as TArgs),
   };
@@ -368,6 +371,30 @@ function resolveSchema(
     ...resolved,
     ...localOverrides,
   };
+}
+
+
+/**
+ * Creates a Zod raw shape for the standard tool output envelope.
+ * All tools wrap their response in structuredContent with common metadata fields.
+ *
+ * @param dataSchema - Optional Zod schema describing the tool-specific `data` field.
+ * @returns A Zod raw shape suitable for use as an outputSchema in tool definitions.
+ */
+export function toolOutputSchema(dataSchema?: z.ZodTypeAny): Record<string, z.ZodTypeAny> {
+  const shape: Record<string, z.ZodTypeAny> = {
+    tool: z.string().describe('Tool name that produced this result'),
+    title: z.string().describe('Human-readable tool title'),
+    category: z.enum(['core', 'advanced']).describe('Tool category'),
+    ok: z.boolean().describe('Whether the tool executed successfully'),
+    error: z.boolean().optional().describe('True when the tool encountered an error'),
+    message: z.string().optional().describe('Human-readable message or markdown content'),
+    suggestion: z.string().optional().describe('Suggested action on error'),
+  };
+  if (dataSchema) {
+    shape.data = dataSchema.optional().describe('Structured result data');
+  }
+  return shape;
 }
 
 function extractStructuredFields(

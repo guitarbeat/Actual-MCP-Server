@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // ----------------------------
 // GET GROUPED CATEGORY TOOL
 // ----------------------------
@@ -7,6 +8,7 @@ import { successWithJson } from '../../../core/response/index.js';
 import type { CategoryGroup } from '../../../core/types/domain.js';
 import { GetGroupedCategoriesArgsSchema } from '../../../core/types/index.js';
 import { executeToolAction } from '../../shared/tool-action.js';
+import { toolOutputSchema } from '../../../mcp/tools/common.js';
 
 export const schema = {
   name: 'get-grouped-categories',
@@ -28,6 +30,26 @@ export const schema = {
     properties: {},
     additionalProperties: false,
   },
+  outputSchema: toolOutputSchema(
+    z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        is_income: z.boolean().optional(),
+        categories: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+              group_id: z.string().optional(),
+              is_income: z.boolean().optional(),
+              hidden: z.boolean().optional(),
+            }),
+          )
+          .optional(),
+      }),
+    ),
+  ),
 };
 
 export async function handler(args: unknown) {

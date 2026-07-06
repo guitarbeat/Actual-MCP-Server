@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // Orchestrator for get-accounts tool
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -5,6 +6,7 @@ import { successWithJson } from '../../core/response/index.js';
 import { GetAccountsArgsSchema } from '../../core/types/index.js';
 import type { ToolInput, GetAccountsArgs } from '../../core/types/index.js';
 import { executeToolAction } from '../shared/tool-action.js';
+import { toolOutputSchema } from '../../mcp/tools/common.js';
 import { fetchAccounts } from './data-fetcher.js';
 import { parseGetAccountsInput } from './input-parser.js';
 import { generateAccountsReport } from './report-generator.js';
@@ -28,6 +30,23 @@ export const schema = {
     '- "Include closed accounts": {"includeClosed": true}\n\n' +
     'RETURNS: Account names, computed ledger balances, optional reported bank balances, types, and status',
   inputSchema: zodToJsonSchema(GetAccountsArgsSchema) as ToolInput,
+  outputSchema: toolOutputSchema(
+    z.object({
+      accounts: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          type: z.string(),
+          balance: z.string().describe('Formatted balance string'),
+          reportedBalance: z.string().optional().describe('Bank-reported balance'),
+          closed: z.boolean(),
+          offBudget: z.boolean(),
+        }),
+      ),
+      partial: z.boolean().describe('Whether results are partial due to warnings'),
+      warnings: z.array(z.string()),
+    }),
+  ),
 };
 
 export async function handler(args: GetAccountsArgs = {}) {

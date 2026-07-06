@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // ----------------------------
 // IMPORT TRANSACTIONS TOOL
 // ----------------------------
@@ -9,6 +10,7 @@ import {
   unsupportedFeatureError,
   validationError,
 } from '../../../core/response/index.js';
+import { toolOutputSchema } from '../../../mcp/tools/common.js';
 
 const API_UNAVAILABLE_ERROR_FRAGMENT = 'not available in this version of the API';
 const METHOD_NOT_FUNCTION_FRAGMENT = 'is not a function';
@@ -48,6 +50,7 @@ export const schema = {
     },
     required: ['source'],
   },
+  outputSchema: toolOutputSchema(z.string().describe('Sync result confirmation message')),
 };
 
 export async function handler(

@@ -11,6 +11,7 @@ import type { ToolInput, GetTransactionsArgs } from '../../core/types/index.js';
 import { formatAccountDataWarnings } from '../../core/utils/partial-results.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
+import { toolOutputSchema } from '../../mcp/tools/common.js';
 import { GetTransactionsInputParser } from './input-parser.js';
 import { resolveGetTransactionsPagination } from './pagination.js';
 import { GetTransactionsReportGenerator } from './report-generator.js';
@@ -26,6 +27,7 @@ export const schema = {
   description:
     'Query and filter transaction history from a specific account or across all accounts. Returns enriched transaction data including ID, date, amount, payee, and category. Results are sorted newest-first; use limit/offset for pagination (defaults apply when limit is omitted—see report footer for hasMore and next_offset).',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
+  outputSchema: toolOutputSchema(),
 };
 
 export async function handler(args: GetTransactionsArgs): Promise<CallToolResult> {

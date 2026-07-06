@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // ----------------------------
 // FINANCIAL INSIGHTS TOOL
 // Pre-analyzed financial summary to reduce context window load
@@ -13,6 +14,7 @@ import { successWithJson } from '../../core/response/index.js';
 import type { ToolInput } from '../../core/types/index.js';
 import { FinancialInsightsArgsSchema } from '../../core/types/schemas.js';
 import { executeToolAction } from '../shared/tool-action.js';
+import { toolOutputSchema } from '../../mcp/tools/common.js';
 
 export const schema = {
   name: 'get-financial-insights',
@@ -35,6 +37,30 @@ export const schema = {
     '- Extended forecast: {"scheduleDays": 30}\\n\\n' +
     'NOTE: This tool performs server-side analysis to provide concise insights.',
   inputSchema: zodToJsonSchema(FinancialInsightsArgsSchema) as ToolInput,
+  outputSchema: toolOutputSchema(
+    z.object({
+      summary: z.string().describe('Overall financial health summary'),
+      month: z.string().describe('Month analyzed (YYYY-MM)'),
+      partial: z.boolean().optional(),
+      warnings: z.array(z.string()).optional(),
+      overspending: z.unknown().describe('Overspending categories or "None"'),
+      uncategorized: z.unknown().describe('Uncategorized transactions summary or "None"'),
+      accountHealth: z.array(
+        z.object({
+          account: z.string(),
+          balance: z.string(),
+          status: z.string(),
+        }),
+      ),
+      upcomingSchedules: z.unknown().describe('Upcoming scheduled transactions or "None"'),
+      trends: z.object({
+        thisMonth: z.string(),
+        lastMonth: z.string(),
+        change: z.string(),
+        savingsRate: z.string(),
+      }),
+    }),
+  ),
 };
 
 /**

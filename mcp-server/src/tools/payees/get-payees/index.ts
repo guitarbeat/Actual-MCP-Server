@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // ----------------------------
 // GET PAYEES TOOL
 // ----------------------------
@@ -6,6 +7,7 @@ import { getPayeeRules } from '../../../core/api/actual-client.js';
 import { fetchAllPayees } from '../../../core/data/fetch-payees.js';
 import { errorFromCatch, successWithJson } from '../../../core/response/index.js';
 import type { Payee } from '../../../core/types/index.js';
+import { toolOutputSchema } from '../../../mcp/tools/common.js';
 
 export const schema = {
   name: 'get-payees',
@@ -45,6 +47,18 @@ export const schema = {
     },
     required: [],
   },
+  outputSchema: toolOutputSchema(
+    z.union([
+      z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          transfer_acct: z.string(),
+        }),
+      ),
+      z.unknown().describe('Payee rules when payeeId is provided'),
+    ]),
+  ),
 };
 
 export async function handler(

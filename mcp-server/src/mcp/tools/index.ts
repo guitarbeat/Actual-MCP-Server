@@ -60,6 +60,7 @@ export function registerTools(
         title: tool.title,
         description: tool.description,
         inputSchema: tool.sdkInputSchema,
+        outputSchema: tool.outputSchema,
         annotations: tool.annotations,
       },
       async (args) => {

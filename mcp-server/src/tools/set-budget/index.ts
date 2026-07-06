@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // ----------------------------
 // SET BUDGET TOOL
 // Consolidated tool for setting budget amount and carryover
@@ -8,6 +9,7 @@ import { formatAmount } from '../../core/formatting/index.js';
 import { successWithJson } from '../../core/response/index.js';
 import { nameResolver } from '../../core/utils/name-resolver.js';
 import { executeToolAction } from '../shared/tool-action.js';
+import { toolOutputSchema } from '../../mcp/tools/common.js';
 import { SetBudgetArgsSchema } from './types.js';
 
 export const schema = {
@@ -60,6 +62,7 @@ export const schema = {
     },
     required: ['month', 'category'],
   },
+  outputSchema: toolOutputSchema(z.string().describe('Confirmation message with updated budget details')),
 };
 
 /**

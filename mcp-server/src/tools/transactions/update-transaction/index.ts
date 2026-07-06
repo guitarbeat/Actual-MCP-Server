@@ -9,6 +9,7 @@ import type { ToolInput } from '../../../core/types/index.js';
 import type { TransactionData } from '../../manage-entity/entity-handlers/transaction-handler.js';
 import { TransactionHandler } from '../../manage-entity/entity-handlers/transaction-handler.js';
 import { executeMutationTool } from '../../shared/mutation-tool.js';
+import { toolOutputSchema } from '../../../mcp/tools/common.js';
 
 // Transaction update schema
 const UpdateTransactionSchema = z.object({
@@ -82,6 +83,7 @@ export const schema = {
     '- Use get-transactions to find the transaction ID first\n' +
     '- Only fields you provide will be changed',
   inputSchema: zodToJsonSchema(UpdateTransactionSchema) as ToolInput,
+  outputSchema: toolOutputSchema(),
 };
 
 export async function handler(args: z.infer<typeof UpdateTransactionSchema>) {
