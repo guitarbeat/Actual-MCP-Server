@@ -84,7 +84,7 @@
     "fast-check": "^4.8.0",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
-    "jiti": "^2.6.1",
+    "jiti": "^2.7.0",
     "lint-staged": "^16.2.6",
     "prettier": "^3.8.3",
     "tsc-alias": "^1.8.17",
