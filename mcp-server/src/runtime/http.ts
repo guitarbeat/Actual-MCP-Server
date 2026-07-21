@@ -224,7 +224,7 @@ export function createHttpRuntime(options: {
     }),
   );
 
-  app.get('/diagnostics', (c) => {
+  app.get('/diagnostics', requireBearer, (c) => {
     try {
       const connectionInfo = getConnectionState();
       return c.json({
@@ -236,7 +236,7 @@ export function createHttpRuntime(options: {
         },
         config: {
           serverUrl: process.env.ACTUAL_SERVER_URL || null,
-          hasBudgetId: !!process.env.ACTUAL_SYNC_ID,
+          hasBudgetId: !!process.env.ACTUAL_BUDGET_SYNC_ID,
           hasPassword: !!process.env.ACTUAL_PASSWORD,
           dataDir: process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR,
         },

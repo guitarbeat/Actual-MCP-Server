@@ -319,23 +319,57 @@ describe('createHttpRuntime', () => {
 });
 
 describe('GET /diagnostics', () => {
+  const bearerToken = '12345678901234567890123456789012';
   beforeEach(() => {
     process.env.MCP_ALLOWED_ORIGINS = 'https://good.example';
   });
+  it('requires bearer authentication when enabled', async () => {
+    const { app } = createHttpRuntime({
+      version: '1.2.3',
+      enableWrite: false,
+      enableAdvanced: false,
+      enableBearer: true,
+      bearerToken,
+    });
+
+    const unauthenticatedResponse = await app.fetch(
+      new Request('http://localhost/diagnostics', {
+        headers: { Origin: 'https://good.example' },
+      }),
+    );
+    expect(unauthenticatedResponse.status).toBe(401);
+
+    const authenticatedResponse = await app.fetch(
+      new Request('http://localhost/diagnostics', {
+        headers: {
+          Authorization: `Bearer ${bearerToken}`,
+          Origin: 'https://good.example',
+        },
+      }),
+    );
+    expect(authenticatedResponse.status).toBe(200);
+  });
+
   it('should return diagnostics data without exposing secrets', async () => {
     process.env.ACTUAL_SERVER_URL = 'http://localhost:5006';
-    process.env.ACTUAL_SYNC_ID = 'test-sync-id';
+    process.env.ACTUAL_BUDGET_SYNC_ID = 'test-sync-id';
     process.env.ACTUAL_PASSWORD = 'test-password';
 
     const { app } = createHttpRuntime({
       version: '1.2.3',
       enableWrite: false,
       enableAdvanced: false,
-      enableBearer: false,
+      enableBearer: true,
+      bearerToken,
     });
 
     const response = await app.fetch(
-      new Request('http://localhost/diagnostics', { headers: { Origin: 'https://good.example' } }),
+      new Request('http://localhost/diagnostics', {
+        headers: {
+          Authorization: `Bearer ${bearerToken}`,
+          Origin: 'https://good.example',
+        },
+      }),
     );
     expect(response.status).toBe(200);
 
@@ -360,7 +394,7 @@ describe('GET /diagnostics', () => {
     // Ensure sensitive data is not exposed
     expect(data.config.serverUrl).toBe('http://localhost:5006');
     expect(data.config).not.toHaveProperty('ACTUAL_PASSWORD');
-    expect(data.config).not.toHaveProperty('ACTUAL_SYNC_ID');
+    expect(data.config).not.toHaveProperty('ACTUAL_BUDGET_SYNC_ID');
   });
 
   it('should return 500 when diagnostics are unavailable', async () => {
@@ -372,11 +406,17 @@ describe('GET /diagnostics', () => {
       version: '1.2.3',
       enableWrite: false,
       enableAdvanced: false,
-      enableBearer: false,
+      enableBearer: true,
+      bearerToken,
     });
 
     const response = await app.fetch(
-      new Request('http://localhost/diagnostics', { headers: { Origin: 'https://good.example' } }),
+      new Request('http://localhost/diagnostics', {
+        headers: {
+          Authorization: `Bearer ${bearerToken}`,
+          Origin: 'https://good.example',
+        },
+      }),
     );
     expect(response.status).toBe(500);
 
