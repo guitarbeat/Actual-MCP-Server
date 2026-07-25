@@ -34,7 +34,9 @@ export const schema = {
     },
     required: [],
   },
-  outputSchema: toolOutputSchema(z.unknown().describe('Budget month details or list of available months')),
+  outputSchema: toolOutputSchema(
+    z.unknown().describe('Budget month details or list of available months'),
+  ),
 };
 
 /**

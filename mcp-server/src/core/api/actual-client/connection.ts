@@ -479,8 +479,7 @@ async function downloadAndLoadBudget(): Promise<{
 
   // Find the target budget to check encryption status
   const targetBudget = budgets.find((b) => matchesBudgetIdentifier(b, budgetId)) as
-    | (BudgetFile & { encryptKeyId?: string | null })
-    | undefined;
+    (BudgetFile & { encryptKeyId?: string | null }) | undefined;
   const hasEncryptionMetadata =
     targetBudget !== undefined && Object.hasOwn(targetBudget, 'encryptKeyId');
   const isEncrypted = Boolean(targetBudget?.encryptKeyId);

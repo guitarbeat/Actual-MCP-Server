@@ -5,6 +5,9 @@ on:
     branches: [main, master]
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -66,8 +69,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Dependency Audit
-        run: pnpm audit --audit-level=high
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: |
+          pnpm audit --audit-level=high
+          pnpm install --frozen-lockfile --prefer-offline
       - name: Lint
         run: |
           pnpm --filter actual-mcp lint
