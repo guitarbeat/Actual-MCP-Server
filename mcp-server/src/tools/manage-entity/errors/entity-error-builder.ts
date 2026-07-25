@@ -15,13 +15,7 @@ import type { Operation } from '../entity-handlers/base-handler.js';
  * Entity types supported by the manage-entity tool
  */
 export type EntityType =
-  | 'category'
-  | 'categoryGroup'
-  | 'payee'
-  | 'rule'
-  | 'schedule'
-  | 'transaction'
-  | 'account';
+  'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule' | 'transaction' | 'account';
 
 /**
  * Entity-specific error builder for manage-entity tool

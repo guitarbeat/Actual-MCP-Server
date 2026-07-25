@@ -62,7 +62,9 @@ export const schema = {
     },
     required: ['month', 'category'],
   },
-  outputSchema: toolOutputSchema(z.string().describe('Confirmation message with updated budget details')),
+  outputSchema: toolOutputSchema(
+    z.string().describe('Confirmation message with updated budget details'),
+  ),
 };
 
 /**
