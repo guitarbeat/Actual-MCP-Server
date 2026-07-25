@@ -29,7 +29,7 @@ jobs:
           version: 10.27.0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
       - name: Get pnpm store path
@@ -56,7 +56,7 @@ jobs:
           version: 10.27.0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
       - name: Restore pnpm store
@@ -97,7 +97,7 @@ jobs:
           version: 10.27.0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
       - name: Restore pnpm store
@@ -127,7 +127,7 @@ jobs:
           version: 10.27.0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
       - name: Restore pnpm store
@@ -162,7 +162,7 @@ jobs:
           version: 10.27.0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
       - name: Restore pnpm store
@@ -190,7 +190,7 @@ jobs:
           version: 10.27.0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
       - name: Restore pnpm store

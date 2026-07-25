@@ -14,7 +14,13 @@ import type { Operation } from './entity-handlers/base-handler.js';
  * Supported entity types for the manage-entity tool
  */
 export type EntityType =
-  'category' | 'categoryGroup' | 'payee' | 'rule' | 'schedule' | 'transaction' | 'account';
+  | 'category'
+  | 'categoryGroup'
+  | 'payee'
+  | 'rule'
+  | 'schedule'
+  | 'transaction'
+  | 'account';
 
 // ----------------------------
 // Entity-Specific Data Types
@@ -393,7 +399,13 @@ export interface TransactionData {
  * Account type enum
  */
 export type AccountType =
-  'checking' | 'savings' | 'credit' | 'investment' | 'mortgage' | 'debt' | 'other';
+  | 'checking'
+  | 'savings'
+  | 'credit'
+  | 'investment'
+  | 'mortgage'
+  | 'debt'
+  | 'other';
 
 /**
  * Data required to create or update an account

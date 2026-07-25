@@ -373,6 +373,7 @@ function resolveSchema(
   };
 }
 
+
 /**
  * Creates a Zod raw shape for the standard tool output envelope.
  * All tools wrap their response in structuredContent with common metadata fields.

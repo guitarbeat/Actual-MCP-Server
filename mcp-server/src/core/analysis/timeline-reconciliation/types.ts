@@ -148,7 +148,10 @@ export interface TimelineResolvedPlace {
 
 export type TimelineReconStatus = 'ready-exact' | 'ready-confirmed' | 'manual';
 export type TimelineReconConfidenceTier =
-  'tier1-exact' | 'tier2-validated' | 'tier3-web-confirmed' | 'tier4-manual';
+  | 'tier1-exact'
+  | 'tier2-validated'
+  | 'tier3-web-confirmed'
+  | 'tier4-manual';
 
 export interface TimelineReconCandidate {
   transactionId: string;

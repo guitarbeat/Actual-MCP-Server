@@ -32,6 +32,7 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `import-transaction-batch`: Import a structured batch of transactions into Actual Budget with duplicate detection and rule execution. This keeps the existing bank-sync import tool unchanged while exposing the SDK import pipeline to MCP clients.
 - `import-transactions`: Sync transactions from connected bank accounts to update your budget. Use this when the user wants to refresh bank data.
 - `ingest-statement-csv`: Ingest a recent bank or credit card statement export (CSV text) for use in reconciliation and timeline-based cleanup.
+- `manage-account`: Create, update, or delete a account. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `manage-category`: Create, update, or delete a category. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `manage-category-group`: Create, update, or delete a category group. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `manage-payee`: Create, update, or delete a payee. Set "action" to "create", "update", or "delete" and include the relevant fields.
@@ -53,7 +54,6 @@ Generated from the declarative MCP modules in `src/mcp/`. Edit those modules, th
 - `hold-budget`: Hold budget amount for the next month. Use to save for large purchases or irregular expenses.
 - `list-backups`: Returns a list of available backups with timestamps and sizes.
 - `list-budget-snapshots`: List all available budget snapshots sorted by creation time (most recent first). Use this to find a snapshotId before restoring.
-- `manage-account`: Create, update, or delete a account. Set "action" to "create", "update", or "delete" and include the relevant fields.
 - `reopen-account`: Reopen a closed account in Actual Budget.
 - `reset-budget-hold`: Reset (clear) a budget hold for a specific month.
 - `restore-budget`: Restores the budget from a specified backup ID.

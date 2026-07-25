@@ -18,7 +18,13 @@ import type { EntityHandler, Operation } from './base-handler.js';
  * Account type enum
  */
 export type AccountType =
-  'checking' | 'savings' | 'credit' | 'investment' | 'mortgage' | 'debt' | 'other';
+  | 'checking'
+  | 'savings'
+  | 'credit'
+  | 'investment'
+  | 'mortgage'
+  | 'debt'
+  | 'other';
 
 /**
  * Account data structure for manage-entity tool
