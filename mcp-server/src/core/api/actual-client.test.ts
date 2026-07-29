@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as actualClient from './actual-client.js';
 import { isConnectionError } from './actual-client.js';
 
 describe('isConnectionError', () => {
@@ -29,5 +30,16 @@ describe('isConnectionError', () => {
     expect(isConnectionError('validation failed')).toBe(false);
     expect(isConnectionError('unauthorized access')).toBe(false);
     expect(isConnectionError('internal server error')).toBe(false);
+  });
+});
+
+
+describe('actual-client public exports', () => {
+  it('does not expose mutable connection internals', () => {
+    expect(actualClient).not.toHaveProperty('store');
+    expect(actualClient).not.toHaveProperty('checkConnectionHealth');
+    expect(actualClient).not.toHaveProperty('markConnectionError');
+    expect(actualClient).not.toHaveProperty('registerAutoSyncOperation');
+    expect(actualClient).not.toHaveProperty('shouldForceInitReconnect');
   });
 });

@@ -32,6 +32,7 @@ import {
 import {
   checkConnectionHealth,
   initActualApi,
+  registerAutoSyncOperation,
   shouldForceInitReconnect,
 } from './connection-lifecycle.js';
 
@@ -206,6 +207,8 @@ export async function sync(): Promise<unknown> {
     throw new Error('sync method is not available in this version of the API');
   }, 'write');
 }
+
+registerAutoSyncOperation(sync);
 
 // ── Readiness status ───────────────────────────────────────────────────────────
 

@@ -31,9 +31,31 @@ export type {
   HistoricalTransferInternalTransaction,
 } from './actual-client/types.js';
 
-export * from './actual-client/connection-state.js';
-export * from './actual-client/connection-lifecycle.js';
-export * from './actual-client/connection-guard.js';
+export {
+  DEFAULT_DATA_DIR,
+  getConnectionState,
+  getInitializationStats,
+  getReadinessSnapshot,
+  isConnectionError,
+  isInitialized,
+  isInitializing,
+  markConnectionReady,
+  markSyncSuccess,
+  resetInitializationStats,
+} from './actual-client/connection-state.js';
+export {
+  ensureBudgetReadyForTools,
+  initActualApi,
+  scheduleConnectionDiagnosticsIfEnabled,
+  shutdownActualApi,
+  startBackgroundRetry,
+} from './actual-client/connection-lifecycle.js';
+export {
+  ensureConnection,
+  getReadinessStatus,
+  runReadOperation,
+  sync,
+} from './actual-client/connection-guard.js';
 export * from './actual-client/api-accounts.js';
 export * from './actual-client/api-transactions.js';
 export * from './actual-client/api-categories.js';

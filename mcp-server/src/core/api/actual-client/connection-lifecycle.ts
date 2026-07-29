@@ -5,8 +5,8 @@
  * auto-sync scheduling, and diagnostics.
  *
  * Depends on `connection-state` for mutable state. Does **not** import from
- * `connection-guard` — the `setupAutoSync` helper inlines its own sync call
- * to avoid a circular dependency.
+ * `connection-guard`; that module registers the guarded sync operation used
+ * by the auto-sync scheduler, keeping the dependency graph acyclic.
  */
 import fs from 'node:fs';
 import '../../../polyfill.js';
@@ -360,11 +360,19 @@ function handleInitializationError(error: unknown): never {
 
 // ── Auto-sync ──────────────────────────────────────────────────────────────────
 
+type AutoSyncOperation = () => Promise<unknown>;
+let autoSyncOperation: AutoSyncOperation | null = null;
+
+/** Register the guarded sync operation without introducing a lifecycle → guard cycle. */
+export function registerAutoSyncOperation(operation: AutoSyncOperation): void {
+  autoSyncOperation = operation;
+}
+
 /**
  * Setup automatic budget sync on an interval.
  *
- * Inlines the sync call (rather than importing `sync` from `connection-guard`)
- * to avoid a circular module dependency.
+ * Uses the guarded sync operation registered by `connection-guard`, preserving
+ * health checks, reconnect behavior, readiness updates, and cache invalidation.
  */
 function setupAutoSync(): void {
   // Clear any existing interval
@@ -392,11 +400,10 @@ function setupAutoSync(): void {
   // Setup interval for background sync
   store.autoSyncInterval = setInterval(async () => {
     try {
-      if (typeof api.sync === 'function') {
-        await api.sync();
-        markSyncSuccess();
-        invalidateAllReadState();
+      if (!autoSyncOperation) {
+        throw new Error('Guarded auto-sync operation has not been registered');
       }
+      await autoSyncOperation();
       if (process.env.PERFORMANCE_LOGGING_ENABLED !== 'false') {
         console.error('[AUTO-SYNC] Budget synced successfully');
       }
