@@ -10,17 +10,13 @@
  */
 import '../../../polyfill.js';
 import api from '@actual-app/api';
-import type {
-  ActualReadinessStatus,
-  ActualReadinessStatusExtended,
-} from './types.js';
+import type { ActualReadinessStatus, ActualReadinessStatusExtended } from './types.js';
 import { cacheService } from '../../cache/cache-service.js';
 import { normalizeUnknownError, serializeUnknownError } from '../../utils/error-serialization.js';
 import { invalidateAllReadState } from './cache-helpers.js';
 import {
   bumpHealthyTimestamp,
   getConnectionHealthTtlMs,
-  getConnectionState,
   getReadFreshnessMode,
   getReadinessSnapshot,
   isConnectionError,
