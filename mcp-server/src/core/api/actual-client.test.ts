@@ -33,7 +33,6 @@ describe('isConnectionError', () => {
   });
 });
 
-
 describe('actual-client public exports', () => {
   it('does not expose mutable connection internals', () => {
     expect(actualClient).not.toHaveProperty('store');
