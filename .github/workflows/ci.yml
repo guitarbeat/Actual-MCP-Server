@@ -170,9 +170,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Audit dependencies
-        run: |
-          pnpm --filter actual-mcp audit --audit-level=high
-          pnpm --filter actual-mcp-operator audit --audit-level=high
+        run: pnpm audit --audit-level=high
 
   build:
     name: Build
