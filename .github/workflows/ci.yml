@@ -67,7 +67,6 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Dependency Audit
         run: pnpm audit --audit-level=high
-        run: pnpm install --frozen-lockfile --prefer-offline
       - name: Lint
         run: |
           pnpm --filter actual-mcp lint
