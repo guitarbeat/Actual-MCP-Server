@@ -6,8 +6,7 @@ import api from '@actual-app/api';
 import type { APIAccountEntity } from './types.js';
 import { cacheService } from '../../cache/cache-service.js';
 import { invalidateNameResolutionState } from './cache-helpers.js';
-import { ensureConnection } from './connection-guard.js';
-import { runReadOperation } from './connection-guard.js';
+import { ensureConnection, runReadOperation } from './connection-guard.js';
 
 // ── Reads ──────────────────────────────────────────────────────────────────────
 
