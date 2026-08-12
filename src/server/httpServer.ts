@@ -185,7 +185,7 @@ export async function startHttpServer(
       };
 
       app.use(
-        httpPath,
+        [httpPath, '/mcp'],
         mcpAuth.bearerAuth(customJwtVerify, {
           resource: config.OIDC_RESOURCE,
           // Audience (aud=clientId) is enforced inside customJwtVerify via jose's
@@ -368,7 +368,7 @@ export async function startHttpServer(
 
   // Middleware to inject Accept header for LobeChat compatibility
   // Must be before the route handler
-  app.use(httpPath, (req: Request, _res: Response, next: () => void) => {
+  app.use([httpPath, '/mcp'], (req: Request, _res: Response, next: () => void) => {
     const accept = req.get('Accept');
     logger.debug(`[ACCEPT HEADER MIDDLEWARE] Original: ${accept || 'undefined'}`);
     // Fix Accept header if it's missing, */* , or doesn't include BOTH required types
@@ -392,7 +392,7 @@ export async function startHttpServer(
   });
 
   // Unified POST handler. Create new server/transport only on initialize (no session id).
-  app.post(httpPath, async (req: Request, res: Response) => {
+  app.post([httpPath, '/mcp'], async (req: Request, res: Response) => {
     // Authenticate the request
     if (!authenticateRequest(req, res)) {
       return;
@@ -641,7 +641,7 @@ export async function startHttpServer(
   });
 
   // GET for SSE connect (reuse transport)
-  app.get(httpPath, async (req: Request, res: Response) => {
+  app.get([httpPath, '/mcp'], async (req: Request, res: Response) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     if (!sessionId) {
       res.status(400).json({ jsonrpc: '2.0', error: { code: -32000, message: 'No session id' }, id: null });
