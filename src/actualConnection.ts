@@ -6,6 +6,7 @@ import logger from './logger.js';
 import config from './config.js';
 import { connectionPool } from './lib/ActualConnectionPool.js';
 import { createModuleLogger } from './lib/loggerFactory.js';
+import { actualApiInitOptions } from './lib/actual-init-config.js';
 
 const log = createModuleLogger('CONNECTION');
 
@@ -42,12 +43,7 @@ export async function connectToActual() {
 
   log.info(`Initializing Actual API with dataDir=${DATA_DIR}`);
 
-    await (api.init as any)({
-      dataDir: DATA_DIR,
-      serverURL: SERVER_URL,
-      password: PASSWORD,
-      token: (config as any).ACTUAL_SESSION_TOKEN || process.env.ACTUAL_SESSION_TOKEN || undefined,
-    });
+    await (api.init as any)(actualApiInitOptions(DATA_DIR, SERVER_URL, PASSWORD));
 
     log.info(`Downloading budget with sync ID: ${BUDGET_SYNC_ID}`);
 

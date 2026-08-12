@@ -70,6 +70,7 @@ import { EventEmitter } from 'events';
 import observability from '../observability.js';
 import { retry, isRetryableError } from './retry.js';
 import { withOpTimeout } from './opTimeout.js';
+import { actualApiInitOptions } from './actual-init-config.js';
 import { notFoundMsg } from './errors.js';
 import logger from '../logger.js';
 import { checkServerVersionOnce } from './server-version-guard.js';
@@ -541,12 +542,7 @@ async function initActualApiForOperation(): Promise<void> {
     // withAuthRetry does not retry it. Wrapping per-attempt (not the whole retry
     // loop) means legitimate #127 auth-rate-limit backoff (up to ~25s) is not
     // counted against ACTUAL_OP_TIMEOUT_MS.
-    await withAuthRetry(() => withOpTimeout(() => (api.init as any)({
-      dataDir: DATA_DIR,
-      serverURL: budget.serverUrl,
-      password: budget.password || '',
-      token: (config as any).ACTUAL_SESSION_TOKEN || process.env.ACTUAL_SESSION_TOKEN || undefined,
-    }), 'init'));
+    await withAuthRetry(() => withOpTimeout(() => (api.init as any)(actualApiInitOptions(DATA_DIR, budget.serverUrl, budget.password)), 'init'));
 
     logger.debug('[ADAPTER] Downloading budget');
 

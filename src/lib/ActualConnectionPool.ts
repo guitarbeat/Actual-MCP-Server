@@ -19,6 +19,7 @@ import os from 'os';
 import fs from 'fs';
 import { isApiInitialized, setApiInitialized } from './apiState.js';
 import { withOpTimeout } from './opTimeout.js';
+import { actualApiInitOptions } from './actual-init-config.js';
 
 const DEFAULT_DATA_DIR = path.resolve(os.homedir() || '.', '.actual');
 
@@ -290,12 +291,7 @@ class ActualConnectionPool {
       // Bound the session-open init/download (#270): this is the HTTP exposure.
       // A stalled upstream here would otherwise hang session open unbounded and,
       // because the api singleton is process-global, wedge other sessions too.
-      await withOpTimeout(() => (api.init as any)({
-        dataDir: DATA_DIR,
-        serverURL: SERVER_URL,
-        password: PASSWORD,
-        token: (config as any).ACTUAL_SESSION_TOKEN || process.env.ACTUAL_SESSION_TOKEN || undefined,
-      }), 'pool init');
+      await withOpTimeout(() => (api.init as any)(actualApiInitOptions(DATA_DIR, SERVER_URL, PASSWORD)), 'pool init');
 
       logger.info(`[ConnectionPool] Downloading budget for session: ${sessionId}`);
 
@@ -375,12 +371,7 @@ class ActualConnectionPool {
 
     try {
       // Bound the session-open init/download (#270), same as getConnection.
-      await withOpTimeout(() => (api.init as any)({
-        dataDir: DATA_DIR,
-        serverURL: SERVER_URL,
-        password: PASSWORD,
-        token: (config as any).ACTUAL_SESSION_TOKEN || process.env.ACTUAL_SESSION_TOKEN || undefined,
-      }), 'pool init');
+      await withOpTimeout(() => (api.init as any)(actualApiInitOptions(DATA_DIR, SERVER_URL, PASSWORD)), 'pool init');
 
       if (BUDGET_PASSWORD) {
         const apiWithOptions = api as typeof api & { downloadBudget: (id: string, options?: { password: string }) => Promise<void> };
