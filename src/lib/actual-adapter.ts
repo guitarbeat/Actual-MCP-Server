@@ -541,10 +541,11 @@ async function initActualApiForOperation(): Promise<void> {
     // withAuthRetry does not retry it. Wrapping per-attempt (not the whole retry
     // loop) means legitimate #127 auth-rate-limit backoff (up to ~25s) is not
     // counted against ACTUAL_OP_TIMEOUT_MS.
-    await withAuthRetry(() => withOpTimeout(() => api.init({
+    await withAuthRetry(() => withOpTimeout(() => (api.init as any)({
       dataDir: DATA_DIR,
       serverURL: budget.serverUrl,
       password: budget.password || '',
+      token: (config as any).ACTUAL_SESSION_TOKEN || process.env.ACTUAL_SESSION_TOKEN || undefined,
     }), 'init'));
 
     logger.debug('[ADAPTER] Downloading budget');

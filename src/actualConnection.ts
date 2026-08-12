@@ -42,10 +42,11 @@ export async function connectToActual() {
 
   log.info(`Initializing Actual API with dataDir=${DATA_DIR}`);
 
-    await api.init({
+    await (api.init as any)({
       dataDir: DATA_DIR,
       serverURL: SERVER_URL,
       password: PASSWORD,
+      token: (config as any).ACTUAL_SESSION_TOKEN || process.env.ACTUAL_SESSION_TOKEN || undefined,
     });
 
     log.info(`Downloading budget with sync ID: ${BUDGET_SYNC_ID}`);

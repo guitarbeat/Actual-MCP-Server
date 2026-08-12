@@ -4,6 +4,7 @@ import { parseIdentityMap } from './auth/identity-map.js';
 export const configSchema = z.object({
   ACTUAL_SERVER_URL: z.string().url(),
   ACTUAL_PASSWORD: z.string().default(''),
+  ACTUAL_SESSION_TOKEN: z.string().optional(),
   ACTUAL_BUDGET_SYNC_ID: z.string().min(1),
   // Optional per-budget encryption password (leave unset for unencrypted budgets)
   ACTUAL_BUDGET_PASSWORD: z.string().optional(),
